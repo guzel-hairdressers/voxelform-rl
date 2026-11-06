@@ -1,0 +1,2 @@
+# Preserve vendored shader source strings, including upstream whitespace.
+public/vendor/three.min.js -whitespace

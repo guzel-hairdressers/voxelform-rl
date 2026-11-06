@@ -1,0 +1,665 @@
+{
+  "seed": 123,
+  "device": "cpu",
+  "torch": "2.13.0",
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "cpuThreads": 1,
+  "note": "Synthetic method/scale tests, not real-site generalization or learning improvement",
+  "sourceHashes": {
+    "voxelform/__init__.py": "1fa44619f275ddedca920f9137e5fc50dd8213229442b6c1a59f45d050016d0c",
+    "voxelform/environment.py": "3faafe5fe22be9d382386eaf69e8b384cce32c2db892de3590b6141f7320a5d2",
+    "voxelform/fields.py": "145b83f2f62b0e1b7a32290d05a3a69d2316e6765cd1edc24ff2efb36f433308",
+    "voxelform/policy.py": "cb51a4c8218a13f097e17eeaa031b71eef1fcf56d84b4734142f41bdbf2d7bde",
+    "voxelform/server.py": "0ac10bc7f81a3985eeb6520628699b92141056ca397a561820f7837fc9affb61",
+    "voxelform/shadows.py": "d9e540e996be8f8bfea636d6787a5a8944ded80c65f8bdb0b02cd9adcf2edd65"
+  },
+  "cases": [
+    {
+      "scale": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "neighbors": 10,
+      "static": [
+        {
+          "method": "boundary",
+          "pitch": 1.0,
+          "setupMs": 65.04225000389852,
+          "queryMs": {
+            "median": 12.55745800153818,
+            "p95": 14.828949805814773,
+            "raw": [
+              11.963791999733075,
+              15.28145800693892,
+              13.018917001318187,
+              12.55745800153818,
+              12.334583007032052
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 35744,
+          "mismatchFraction": 0.0036773681640625,
+          "falseClearFraction": 0.002044677734375,
+          "falseShadowFraction": 0.0016326904296875,
+          "faceUnion": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "intruderCount": 0
+        },
+        {
+          "method": "boundary",
+          "pitch": 0.5,
+          "setupMs": 174.51970800175332,
+          "queryMs": {
+            "median": 12.680916988756508,
+            "p95": 13.913766396581195,
+            "raw": [
+              13.87750000867527,
+              12.577707995660603,
+              13.922832993557677,
+              10.73254099173937,
+              12.680916988756508
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 141728,
+          "mismatchFraction": 0.00201416015625,
+          "falseClearFraction": 0.0008697509765625,
+          "falseShadowFraction": 0.0011444091796875,
+          "faceUnion": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "intruderCount": 0
+        },
+        {
+          "method": "depth",
+          "pitch": 1.0,
+          "setupMs": 45.609584005433135,
+          "queryMs": {
+            "median": 5.090541992103681,
+            "p95": 5.733716607210226,
+            "raw": [
+              5.677583001670428,
+              5.090541992103681,
+              5.747750008595176,
+              5.013083005906083,
+              4.43391699809581
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 118264,
+          "mismatchFraction": 0.0055999755859375,
+          "falseClearFraction": 0.0032501220703125,
+          "falseShadowFraction": 0.002349853515625
+        },
+        {
+          "method": "depth",
+          "pitch": 0.5,
+          "setupMs": 134.27475000207778,
+          "queryMs": {
+            "median": 5.012041990994476,
+            "p95": 5.696366404299624,
+            "raw": [
+              5.007665997254662,
+              5.012041990994476,
+              5.571000001509674,
+              5.727708004997112,
+              2.8352090012049302
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 453180,
+          "mismatchFraction": 0.003021240234375,
+          "falseClearFraction": 0.0017242431640625,
+          "falseShadowFraction": 0.0012969970703125
+        }
+      ],
+      "directReferenceMs": 105.33537500305101,
+      "environmentSetupMs": 787.8993750055088,
+      "environmentNeighbors": 16,
+      "edits": [
+        {
+          "step": 0,
+          "editMs": 43.49933299818076,
+          "candidateMs": 5.4516660020453855,
+          "quality": 0.523526132106781,
+          "retention": 0.9771863222122192,
+          "potentialUsableFraction": 0.446055144071579,
+          "directSunProxy": 0.9444597959518433,
+          "roofOpportunity": 0.6692708134651184,
+          "noisePrior": 0.48784714937210083,
+          "occupiedFloorArea": 8224.0,
+          "potentialUsableArea": 3754.0,
+          "edits": 1,
+          "receivers": 2952,
+          "newReceivers": 64,
+          "evaluationSeconds": 0.04344620800111443,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 1,
+          "editMs": 42.728417000034824,
+          "candidateMs": 9.110500002861954,
+          "quality": 0.5007069706916809,
+          "retention": 0.95365971326828,
+          "potentialUsableFraction": 0.43072718381881714,
+          "directSunProxy": 0.8773980736732483,
+          "roofOpportunity": 0.6702473759651184,
+          "noisePrior": 0.4895424246788025,
+          "occupiedFloorArea": 8026.0,
+          "potentialUsableArea": 3625.0,
+          "edits": 2,
+          "receivers": 3348,
+          "newReceivers": 425,
+          "evaluationSeconds": 0.04262337498948909,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 2,
+          "editMs": 37.52129198983312,
+          "candidateMs": 9.503791996394284,
+          "quality": 0.49790158867836,
+          "retention": 0.9481939077377319,
+          "potentialUsableFraction": 0.4302518963813782,
+          "directSunProxy": 0.8687381744384766,
+          "roofOpportunity": 0.6627604365348816,
+          "noisePrior": 0.4897351861000061,
+          "occupiedFloorArea": 7980.0,
+          "potentialUsableArea": 3621.0,
+          "edits": 3,
+          "receivers": 3352,
+          "newReceivers": 57,
+          "evaluationSeconds": 0.037410709002870135,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 3,
+          "editMs": 47.49991600692738,
+          "candidateMs": 10.476916999323294,
+          "quality": 0.49788060784339905,
+          "retention": 0.9303707480430603,
+          "potentialUsableFraction": 0.43940114974975586,
+          "directSunProxy": 0.8453008532524109,
+          "roofOpportunity": 0.64453125,
+          "noisePrior": 0.4899764955043793,
+          "occupiedFloorArea": 7830.0,
+          "potentialUsableArea": 3698.0,
+          "edits": 4,
+          "receivers": 3402,
+          "newReceivers": 206,
+          "evaluationSeconds": 0.04739249999693129,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 4,
+          "editMs": 40.02716600371059,
+          "candidateMs": 10.36979201307986,
+          "quality": 0.4766325354576111,
+          "retention": 0.8990018963813782,
+          "potentialUsableFraction": 0.419201523065567,
+          "directSunProxy": 0.8074364066123962,
+          "roofOpportunity": 0.64453125,
+          "noisePrior": 0.4936354160308838,
+          "occupiedFloorArea": 7566.0,
+          "potentialUsableArea": 3528.0,
+          "edits": 5,
+          "receivers": 3666,
+          "newReceivers": 310,
+          "evaluationSeconds": 0.0399190419993829,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 5,
+          "editMs": 48.32858299778309,
+          "candidateMs": 10.10433299234137,
+          "quality": 0.4656791090965271,
+          "retention": 0.775903046131134,
+          "potentialUsableFraction": 0.4039923846721649,
+          "directSunProxy": 0.8042070269584656,
+          "roofOpportunity": 0.64453125,
+          "noisePrior": 0.49020716547966003,
+          "occupiedFloorArea": 6530.0,
+          "potentialUsableArea": 3400.0,
+          "edits": 6,
+          "receivers": 4214,
+          "newReceivers": 645,
+          "evaluationSeconds": 0.04823654099891428,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 6,
+          "editMs": 47.310708003351465,
+          "candidateMs": 8.83666699519381,
+          "quality": 0.44196435809135437,
+          "retention": 0.7112642526626587,
+          "potentialUsableFraction": 0.36074143648147583,
+          "directSunProxy": 0.8399441242218018,
+          "roofOpportunity": 0.64453125,
+          "noisePrior": 0.4886043965816498,
+          "occupiedFloorArea": 5986.0,
+          "potentialUsableArea": 3036.0,
+          "edits": 7,
+          "receivers": 4236,
+          "newReceivers": 258,
+          "evaluationSeconds": 0.04720787500264123,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 7,
+          "editMs": 48.78383300092537,
+          "candidateMs": 10.11087499500718,
+          "quality": 0.44116106629371643,
+          "retention": 0.7084125280380249,
+          "potentialUsableFraction": 0.3603849709033966,
+          "directSunProxy": 0.8394959568977356,
+          "roofOpportunity": 0.640625,
+          "noisePrior": 0.4886587858200073,
+          "occupiedFloorArea": 5962.0,
+          "potentialUsableArea": 3033.0,
+          "edits": 8,
+          "receivers": 4212,
+          "newReceivers": 14,
+          "evaluationSeconds": 0.04868795900256373,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        }
+      ],
+      "selfShadowValidation": {
+        "receiverCount": 512,
+        "frontFacingComparisons": 2556,
+        "mismatchFraction": 0.005868544802069664,
+        "falseClearFraction": 0.0003912363026756793,
+        "falseShadowFraction": 0.0054773082956671715
+      },
+      "policy": {
+        "actionMs": {
+          "median": 8.532708503480535,
+          "p95": 9.60830815747613,
+          "raw": [
+            9.6478330087848,
+            9.384334000060335,
+            7.46725000499282,
+            7.681083006900735
+          ]
+        },
+        "backpropMs": 33.78724999492988,
+        "updates": 1,
+        "loss": -0.07946983724832535,
+        "actorLoss": -0.07661477476358414,
+        "gradientNorm": 0.018051033839583397
+      }
+    },
+    {
+      "scale": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "neighbors": 20,
+      "static": [
+        {
+          "method": "boundary",
+          "pitch": 1.0,
+          "setupMs": 172.71654099749867,
+          "queryMs": {
+            "median": 16.676917002769187,
+            "p95": 18.733466605772264,
+            "raw": [
+              16.51087499340065,
+              16.676917002769187,
+              19.228625009418465,
+              15.273500001057982,
+              16.75283299118746
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 120592,
+          "mismatchFraction": 0.0031840007286518812,
+          "falseClearFraction": 0.0016988118877634406,
+          "falseShadowFraction": 0.0014851888408884406,
+          "faceUnion": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "intruderCount": 0
+        },
+        {
+          "method": "boundary",
+          "pitch": 0.5,
+          "setupMs": 1408.2116670033429,
+          "queryMs": {
+            "median": 52.61187499854714,
+            "p95": 152.46270000352524,
+            "raw": [
+              52.61187499854714,
+              159.75162500399165,
+              123.30700000165962,
+              30.878291989210993,
+              25.3455829952145
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 480016,
+          "mismatchFraction": 0.0016072591533884406,
+          "falseClearFraction": 0.0007527669076807797,
+          "falseShadowFraction": 0.0008544921875,
+          "faceUnion": [
+            [
+              0,
+              0
+            ],
+            [
+              0,
+              1
+            ],
+            [
+              1,
+              0
+            ],
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ]
+          ],
+          "intruderCount": 0
+        },
+        {
+          "method": "depth",
+          "pitch": 1.0,
+          "setupMs": 458.8065420102794,
+          "queryMs": {
+            "median": 11.276624994934537,
+            "p95": 22.33469999628141,
+            "raw": [
+              11.28400000743568,
+              9.749083998030983,
+              8.61774999066256,
+              11.276624994934537,
+              25.09737499349285
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 388568,
+          "mismatchFraction": 0.0044453940354287624,
+          "falseClearFraction": 0.0020650227088481188,
+          "falseShadowFraction": 0.00238037109375
+        },
+        {
+          "method": "depth",
+          "pitch": 0.5,
+          "setupMs": 788.8006669963943,
+          "queryMs": {
+            "median": 6.782083000871353,
+            "p95": 8.485982994898222,
+            "raw": [
+              3.3353329927194864,
+              7.401082999422215,
+              8.757207993767224,
+              6.3853329920675606,
+              6.782083000871353
+            ]
+          },
+          "queryCount": 8192,
+          "mapBytes": 1508764,
+          "mismatchFraction": 0.0020243327599018812,
+          "falseClearFraction": 0.000885009765625,
+          "falseShadowFraction": 0.0011393228778615594
+        }
+      ],
+      "directReferenceMs": 93.58466700359713,
+      "environmentSetupMs": 2870.809542000643,
+      "environmentNeighbors": 16,
+      "edits": [
+        {
+          "step": 0,
+          "editMs": 121.28649999795016,
+          "candidateMs": 29.69670799211599,
+          "quality": 0.43776002526283264,
+          "retention": 0.9808545112609863,
+          "potentialUsableFraction": 0.33011746406555176,
+          "directSunProxy": 0.8975154757499695,
+          "roofOpportunity": 0.6541340947151184,
+          "noisePrior": 0.4171382784843445,
+          "occupiedFloorArea": 32737.0,
+          "potentialUsableArea": 11018.0,
+          "edits": 1,
+          "receivers": 6846,
+          "newReceivers": 384,
+          "evaluationSeconds": 0.12111091699625831,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 1,
+          "editMs": 125.16854199930094,
+          "candidateMs": 31.87412500847131,
+          "quality": 0.4287343919277191,
+          "retention": 0.9339645504951477,
+          "potentialUsableFraction": 0.31963086128234863,
+          "directSunProxy": 0.8856591582298279,
+          "roofOpportunity": 0.65771484375,
+          "noisePrior": 0.41689571738243103,
+          "occupiedFloorArea": 31172.0,
+          "potentialUsableArea": 10668.0,
+          "edits": 2,
+          "receivers": 6832,
+          "newReceivers": 1644,
+          "evaluationSeconds": 0.12497641600202769,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 2,
+          "editMs": 112.82120901159942,
+          "candidateMs": 29.53029199852608,
+          "quality": 0.4011843502521515,
+          "retention": 0.850041925907135,
+          "potentialUsableFraction": 0.3002157211303711,
+          "directSunProxy": 0.8324565887451172,
+          "roofOpportunity": 0.6256510615348816,
+          "noisePrior": 0.42358723282814026,
+          "occupiedFloorArea": 28371.0,
+          "potentialUsableArea": 10020.0,
+          "edits": 3,
+          "receivers": 6802,
+          "newReceivers": 1080,
+          "evaluationSeconds": 0.11273895799240563,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 3,
+          "editMs": 125.72108299355023,
+          "candidateMs": 36.027707988978364,
+          "quality": 0.3798576593399048,
+          "retention": 0.8160654306411743,
+          "potentialUsableFraction": 0.2739693224430084,
+          "directSunProxy": 0.8147910833358765,
+          "roofOpportunity": 0.6256510615348816,
+          "noisePrior": 0.4207676351070404,
+          "occupiedFloorArea": 27237.0,
+          "potentialUsableArea": 9144.0,
+          "edits": 4,
+          "receivers": 7234,
+          "newReceivers": 558,
+          "evaluationSeconds": 0.12553299999854062,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 4,
+          "editMs": 126.61849999858532,
+          "candidateMs": 35.50129100040067,
+          "quality": 0.3694993257522583,
+          "retention": 0.7956315875053406,
+          "potentialUsableFraction": 0.26180487871170044,
+          "directSunProxy": 0.8108342289924622,
+          "roofOpportunity": 0.61865234375,
+          "noisePrior": 0.4244062304496765,
+          "occupiedFloorArea": 26555.0,
+          "potentialUsableArea": 8738.0,
+          "edits": 5,
+          "receivers": 7182,
+          "newReceivers": 709,
+          "evaluationSeconds": 0.12647612500586547,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 5,
+          "editMs": 127.62791600835044,
+          "candidateMs": 33.2112500036601,
+          "quality": 0.36611929535865784,
+          "retention": 0.7923358082771301,
+          "potentialUsableFraction": 0.25937798619270325,
+          "directSunProxy": 0.7984924912452698,
+          "roofOpportunity": 0.6243489384651184,
+          "noisePrior": 0.42619770765304565,
+          "occupiedFloorArea": 26445.0,
+          "potentialUsableArea": 8657.0,
+          "edits": 6,
+          "receivers": 7382,
+          "newReceivers": 231,
+          "evaluationSeconds": 0.1274432919890387,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 6,
+          "editMs": 117.8919169906294,
+          "candidateMs": 27.84129099745769,
+          "quality": 0.3573566675186157,
+          "retention": 0.7610558271408081,
+          "potentialUsableFraction": 0.25602230429649353,
+          "directSunProxy": 0.7625853419303894,
+          "roofOpportunity": 0.6243489384651184,
+          "noisePrior": 0.42557767033576965,
+          "occupiedFloorArea": 25401.0,
+          "potentialUsableArea": 8545.0,
+          "edits": 7,
+          "receivers": 7888,
+          "newReceivers": 666,
+          "evaluationSeconds": 0.11780441700830124,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        },
+        {
+          "step": 7,
+          "editMs": 131.72391601256095,
+          "candidateMs": 28.26166599697899,
+          "quality": 0.35192835330963135,
+          "retention": 0.7507190704345703,
+          "potentialUsableFraction": 0.2530560791492462,
+          "directSunProxy": 0.7442158460617065,
+          "roofOpportunity": 0.6243489384651184,
+          "noisePrior": 0.42614543437957764,
+          "occupiedFloorArea": 25056.0,
+          "potentialUsableArea": 8446.0,
+          "edits": 8,
+          "receivers": 8144,
+          "newReceivers": 421,
+          "evaluationSeconds": 0.1316392500011716,
+          "device": "cpu",
+          "fieldStatus": "uncalibrated_massing_proxies"
+        }
+      ],
+      "selfShadowValidation": {
+        "receiverCount": 512,
+        "frontFacingComparisons": 4410,
+        "mismatchFraction": 0.0063492064364254475,
+        "falseClearFraction": 0.002721088472753763,
+        "falseShadowFraction": 0.0036281179636716843
+      },
+      "policy": {
+        "actionMs": {
+          "median": 59.15914550132584,
+          "p95": 63.144081152859144,
+          "raw": [
+            63.297375003458,
+            55.27566600358114,
+            62.27541599946562,
+            56.042875003186055
+          ]
+        },
+        "backpropMs": 137.64200000150595,
+        "updates": 1,
+        "loss": -0.03980237618088722,
+        "actorLoss": -0.03675827383995056,
+        "gradientNorm": 0.0072123464196920395
+      }
+    }
+  ],
+  "failures": []
+}

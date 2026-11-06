@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoxelForm RL</title><link rel="stylesheet" href="/assets/style.css"></head><body>
+<header><div><strong>VoxelForm <span>RL</span></strong><small>Independent massing experiment · 0.1.0</small></div><div id="status">Preparing environment…</div></header>
+<main><aside><h1>Carve space.<br>Keep useful volume.</h1><p>Coherent facade and roof edits, chosen by a trainable actor–critic.</p>
+<div class="controls"><button id="train" class="primary">Train</button><button id="pause">Pause</button><button id="infer">Inference</button><button id="step">One edit</button></div>
+<div class="row"><label>Plot <select id="plan"><option value="rectangle">Rectangle</option><option value="triangle">Triangle</option><option value="courtyard">Concave corner</option><option value="branch">Branch</option></select></label><button id="new">New context</button><button id="reset">Reset volume</button></div>
+<label>View <select id="field"><option value="solid">Occupied mass</option><option value="usable">Potential usable area</option><option value="light">Diffuse sky-access field</option><option value="noise">Relative noise field</option></select></label>
+<label>Floor plan <input id="floor" type="range" min="0" max="5" value="0"><b id="floorLabel">1</b></label>
+<canvas id="planCanvas" width="600" height="450"></canvas>
+<div class="row"><a class="button" href="/api/policy">Save policy</a><label class="button">Load policy<input id="load" type="file" accept=".pt" hidden></label></div>
+<p class="note">Synthetic plots and context. Cells are 1 × 1 m, floors 3 m. These are massing proxies, not designed rooms or compliance results. Restore action currently undoes the latest cut.</p></aside>
+<section><div id="viewport"></div><div id="legend">Drag to orbit · Scroll to zoom</div><div id="metrics" class="metrics"></div><canvas id="history" width="1000" height="140"></canvas><p id="details"></p><pre id="error"></pre></section></main>
+<script type="module" src="/assets/app.js"></script></body></html>

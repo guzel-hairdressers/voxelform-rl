@@ -1,0 +1,92 @@
+{
+  "note": "Diffuse and direct-sky values have different meanings/units: compare ordering, not equality or daylight compliance.",
+  "samples": 256,
+  "cavities": [
+    {
+      "kind": "well",
+      "width": 3,
+      "heightToOpening": 22.5,
+      "diffuseProxy": 2.387623654342974e-09,
+      "directSkyFraction": 0.0078125
+    },
+    {
+      "kind": "well",
+      "width": 3,
+      "heightToOpening": 13.5,
+      "diffuseProxy": 4.717503088613739e-06,
+      "directSkyFraction": 0.015625
+    },
+    {
+      "kind": "well",
+      "width": 3,
+      "heightToOpening": 1.5,
+      "diffuseProxy": 0.10384900867938995,
+      "directSkyFraction": 0.55859375
+    },
+    {
+      "kind": "well",
+      "width": 7,
+      "heightToOpening": 22.5,
+      "diffuseProxy": 7.68934751249617e-06,
+      "directSkyFraction": 0.02734375
+    },
+    {
+      "kind": "well",
+      "width": 7,
+      "heightToOpening": 13.5,
+      "diffuseProxy": 0.0007782736211083829,
+      "directSkyFraction": 0.078125
+    },
+    {
+      "kind": "well",
+      "width": 7,
+      "heightToOpening": 1.5,
+      "diffuseProxy": 0.29469895362854004,
+      "directSkyFraction": 0.85546875
+    },
+    {
+      "kind": "well",
+      "width": 11,
+      "heightToOpening": 22.5,
+      "diffuseProxy": 0.00021475256653502584,
+      "directSkyFraction": 0.0703125
+    },
+    {
+      "kind": "well",
+      "width": 11,
+      "heightToOpening": 13.5,
+      "diffuseProxy": 0.0069615887477993965,
+      "directSkyFraction": 0.16796875
+    },
+    {
+      "kind": "well",
+      "width": 11,
+      "heightToOpening": 1.5,
+      "diffuseProxy": 0.44592374563217163,
+      "directSkyFraction": 0.9375
+    },
+    {
+      "kind": "two-turn-alcove",
+      "diffuseProxy": 8.948453089629993e-12,
+      "directSkyFraction": 0.0
+    }
+  ],
+  "noise": {
+    "analytic": [
+      0.6633297801017761,
+      0.10308025777339935,
+      0.015457123517990112
+    ],
+    "independentQuadrature": [
+      0.6633297409794215,
+      0.1030802529679154,
+      0.015457126245766287
+    ],
+    "maxAbsoluteError": 3.912235457814717e-08
+  },
+  "sourceHashes": {
+    "voxelform/fields.py": "196107d785a8f36e85b950cd0fc4647811827456ebbe04a40360de6e39755420",
+    "voxelform/shadows.py": "d9e540e996be8f8bfea636d6787a5a8944ded80c65f8bdb0b02cd9adcf2edd65",
+    "tools/validate_fields.py": "2c27a6da7cc535061eede6b7701b76d49288aa159f5e382dacc99a7a949c1711"
+  }
+}
