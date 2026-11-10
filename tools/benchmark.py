@@ -19,6 +19,7 @@ def main():
     root=Path(__file__).resolve().parents[1]
     result=dict(seed=123,device=device,torch=torch.__version__,platform=platform.platform(),cpuThreads=1,
         note='Synthetic method/scale tests, not real-site generalization or learning improvement',
+        actionSpace='direct_facade_mask_far_v1',
         sourceHashes={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted((root/'voxelform').glob('*.py'))},cases=[],failures=[])
     out=Path(args.output);out.parent.mkdir(parents=True,exist_ok=True)
     def save():out.write_text(json.dumps(result,indent=2))
@@ -44,14 +45,13 @@ def main():
             # This scene has 16 neighbours; static tests above have 10/20 explicitly.
             env,setup_ms=timed(lambda:Environment((nz,ny,nx),seed=123,device=device,sun_count=samples,plan='branch'),device)
             case['environmentSetupMs']=setup_ms;case['environmentNeighbors']=len(env.boxes)
-            edits=[]
+            from voxelform.policy import Learner
+            policy=Learner(device);edits=[]
             for step in range(8):
-                # Identical proposal values on CPU and GPU; device RNGs differ.
-                params=rng.random((24,7),dtype=np.float32);kind=rng.integers(0,5,24,dtype=np.int64)
-                (masks,features,valid),candidate_ms=timed(lambda:env.candidates(params=params,kind=kind),device)
-                index=int(valid[1:-1].nonzero()[0].detach().cpu())+1
-                _,ms=timed(lambda:env.apply(index,masks),device)
-                edits.append(dict(step=step,editMs=ms,candidateMs=candidate_ms,**env.metrics()))
+                action,generation_ms=timed(lambda:policy.choose(env,training=False,greedy=True),device)
+                if action is None:raise RuntimeError('Neural mask generation failed')
+                _,ms=timed(lambda:env.apply(action),device)
+                edits.append(dict(step=step,editMs=ms,neuralGenerationMs=generation_ms,**env.metrics()))
             case['edits']=edits
             ids,rp,n,cells,faces=env.receiver_data
             inds=np.linspace(0,len(rp)-1,min(512,len(rp)),dtype=int);points=rp[inds].cpu().numpy()+n[inds].cpu().numpy()*1e-4
@@ -66,7 +66,7 @@ def main():
             from voxelform.policy import Learner
             policy=Learner(device);timings=[]
             for _ in range(4):
-                (a,m),ms=timed(lambda:policy.choose(env),device);timings.append(ms);q=env.quality.detach().clone();env.apply(a,m);policy.record(env.quality-q-.002)
+                action,ms=timed(lambda:policy.choose(env),device);timings.append(ms);before=env.far_error;env.apply(action);policy.record(before-env.far_error)
             stats,ms=timed(policy.finish,device);case['policy']=dict(actionMs=percentile(timings),backpropMs=ms,**stats)
             print(label,'edits median ms',np.median([e['editMs'] for e in edits]),'self shadow',case['selfShadowValidation'],flush=True)
         except Exception:

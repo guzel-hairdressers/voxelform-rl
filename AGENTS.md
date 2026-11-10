@@ -1,7 +1,35 @@
 # VoxelForm RL — Agent Instructions
 
 ## Scope and design intent
-- This is an independent voxel massing project, separate from Module Lab/Thesis.
+- This is an independent voxel massing project, separate from Module Lab.
+- Cached OSM geometry may be read from the sibling Module-Lab checkout using
+  `voxelform/context.py`. Do not import its generator/policy code or mutate its
+  datasets. Preserve metric coordinates, original triangle meshes and provenance.
+- The workspace is 3D only: default orthographic axonometric, optional perspective,
+  and six-axis view snapping. Surroundings use flat shading and are opaque by
+  default, with an explicit transparency checkbox. Keep display choices separate
+  from evaluation. No floor-plan pane is wanted in this project. Solid voxel mass uses flat lit
+  shading and receives shadows from the existing shared-engine directional light;
+  do not revert it to an unlit uniform tint. Keep evaluation colours separate.
+  User mood boards favour pale blue interventions, white context and a soft
+  peach plot. Distinguish roofs and wall directions even in complete shadow
+  using face-tinted material fill; retain actual shared-engine shadows. Solid
+  cubes touch without artificial gaps. Current user preference is surface outlines,
+  not silhouettes: merged voxel boundary creases, 3 px at a building reference scale, HSL lightness 50%.
+  Preserve the blue hue (~227.90 degrees) and saturation (100%) from #1645ff.
+  Solid shading remaps shared-engine illumination/shadows to HSL L=70–95%,
+  interpolating in sRGB so hue/saturation remain fixed. No silhouette mask pass.
+  Lift display mass AND edges just above the rendered parcel top to keep bottom
+  edges out of the plot surface; this is visual only, not occupancy/evaluation.
+  The bundled LineMaterial requires resolution updated from renderer.getSize.
+  Optional
+  camera-facing tree sprites may illustrate fetched green polygons only, never
+  invented vegetation on unmapped ground. They are not surveyed trees or part
+  of environmental evaluation. The present cached dataset has no green meshes.
+- Reuse Module Lab's actual `frontend/public/scripts/urban_viewer.js` graphic
+  engine and its dependencies through `/shared-viewer/`. Do not recreate its
+  renderer, lighting, camera controller or gizmo. `public/viewer.js` is only a
+  VoxelForm overlay/protocol adapter. Do not change the sibling engine for this project.
 - Do not import modular dictionaries, module reuse objectives, module equivalence,
   or the 90% full-wall interface requirement into this project.
 - Preserve the user's existing Module Lab checkout, live server and saved policies.
@@ -13,14 +41,110 @@
 ## Representation and actions
 - A voxel is computational resolution, not a construction module.
 - Initially model occupied/empty volume; defer corridor and room-use labels.
-  Keep/undo are edit operations, not building-state categories.
-- Use stepwise coherent facade/roof/atrium cuts anchored to exterior space.
-  Do not permit arbitrary disconnected interior voxel deletions.
-- Allow restoration inside the permitted envelope. State the implemented scope
-  precisely (e.g. undo of a previous cut versus unrestricted volume addition).
-- Hardcode geometric admissibility; let the policy choose location, shape,
-  size, depth, floor range, sequence and stopping. Do not prescribe one layout.
+- Each action is one directly generated multi-voxel mask. Freeze eligibility
+  before sampling and commit in bulk. Facade cuts use a frozen 1/2/3-layer lateral band
+  (`facade_layers`, default 1). Layers expand horizontally from the current skin
+  before sampling; no new eligibility is exposed during commitment. Optional deep eligibility
+  is max(facade,clamp((same-floor depth-8)/8,0,1)); it intentionally enables interior
+  cuts beyond the shallow band, not repeated facade peeling inside one action.
+- The server uses `PatchLearner`: dense CNN fields pool to Gaussian latent means,
+  sampled/interpolated/smoothed into a coherent mask. Inference also samples.
+  Gaussian-latent A2C log probabilities include only consumed rejection retries.
+  Do not use independent-Bernoulli scores for correlated masks or reintroduce a
+  candidate-mask bank. Independent and smoothed-Bernoulli modes are controls.
+- Depth is exact horizontal centre-to-wall distance on the same floor. Roofs,
+  undersides and other floors never shorten it. GPU depth uses native tensor
+  planar scans/reductions with independently batched floors; CPU SciPy is the
+  reference/CPU option. The 3D edit field is distinct from the 2D depth field.
+- Roof-open interior courtyards may later join the side facade. New interior
+  cuts must reach exterior air after the complete action. Limit disconnected
+  openings per floor, not by a 3D sky-connected component alone. Existing
+  openings are preserved, merging is allowed, and inner courtyard walls become
+  editable facades. Defaults: at least 4m² per new opening and maximum one per
+  floor, adjustable. These are research constraints, not compliance.
+- Ordinary retained edit patches have at least four cells and at most four
+  connected regions; the adaptive allocator permits smaller patches for the last
+  16 cells (maximum four regions and courtyard safeguards still apply). Live edits
+  use workload-based amounts with no fixed cell cap; the original 256-cell control
+  remains selectable. Sampling may select larger fields, but projection only
+  prunes unsafe selected bits; it never synthesizes edits to connect a well.
+- Prefer actual GPU tensor execution for sampling, fixed-cap ranking, planar
+  depth and physical fields. Cache kernels and keep the common retry path to one
+  draw, decoding the remaining seven on-device only after rejection. Native CPU
+  connectivity/ground/air/opening checks remain; do not claim full GPU residency.
+- `voxelform.patch.v1` saves model/optimizer/config. V1–V5 imports preserve compatible
+  weights but reset incompatible sampling semantics/counters. Keep all originals.
+  Automatic coupled generation saves and a final atomic manifest preserve weights,
+  optimizer, geometry/settings after updates/pauses. Normal startup resumes paused.
+- Above the FAR target subtract; below it add; at the quantized target finish.
+  Keep this operation rule explicit and separate from the learned spatial mask.
+- FAR is gross occupied floor area / source parcel area, not the bounding box
+  or potential-usable area. Editable study presets are low 1.5, medium 3.0
+  (default), high 4.5, plus custom. They are not zoning or compliance claims.
+- Live and headless training accept FAR within ±0.1 of target by default.
+  Use integer cell bounds within that range; coarse budgets count work to the
+  nearest accepted edge. No centre-chasing penalty inside the band. Explicit
+  exact-target experimental mode (`far_tolerance=0`) remains for historical tests. Reject
+  unreachable targets. No admissible edit is a failure, not success.
+- The adaptive amount allocator freezes an episode budget at its start: let M be
+  required voxel change, N the initial lateral-facade capacity (growth eligibility
+  for addition), P=ceil(M/(0.5*N)), subject to any explicit per-edit cap. The limit
+  is P+2+ceil(0.2*P). Deep permissions do not inflate N. Zero work ends immediately.
+  Deadline exhaustion is failure, with continuous remaining-error penalty.
+- Adaptive amounts start from remaining work / remaining productive steps and
+  compensate for observed applied/generated retention (EMA, initial .65). The
+  neural correlated field still directly selects spatial edits. Conditional
+  rejected draws may request smaller amounts. The deadline never extends.
+- Probability-area, fixed-quota and learned-amount alternatives remain controls.
+  The learned variant adds countdown/work/capacity conditioning and a Gaussian
+  amount action; include its score for the consumed retry prefix. Short learning
+  tests have not established an advantage over feedback scheduling.
+- Optimizer rollouts of 32 mask actions are **not episodes**. Bootstrap nonterminal
+  rollouts, preserve pause/resume state, and do not reset volume at a rollout
+  boundary. Training starts another episode only after completion.
+- Track FAR on every edit. Environmental fields are audited every eight masks and
+  at completion; expose the audit edit and stale-field status honestly.
+- Keep solid connectivity, at least one ground anchor, and exterior-air
+  connectivity with whole-mask compiled topology checks. These do not certify
+  structural support or residential program.
 - Room labels and 1m cells must not be presented as actual livable rooms.
+
+- Keep geometric depth separate from sky access and actual daylight compliance.
+  Depth updates every mask; sky/sun audits may lag eight masks. Default reward is
+  unchanged; optional depth reward/input remain experiments. The selected depth
+  field influences edit eligibility even though the CNN still has five inputs.
+
+## Training research and updated massing objective
+- `voxelform/unified.py` / `tools/unified_training.py` implement the separate
+  unified action protocol. Do not overwrite the user's active live policy.
+  Recommended experimental variant is `--net-guided`: FAR controls net area,
+  while paired removal/roof growth is legal from the first action. Pure net
+  growth above the band and pure removal below it are masked; mixed edits remain
+  available throughout. It is not a carve-first/grow-later phase schedule.
+  Full free-operation pilot failed FAR; retain those failures. Safe removal
+  pruning + net guidance reached FAR in 10/10 controls on two plots (3 initial
+  seeds and 2 trained checkpoints, not 10 independent sites). This establishes
+  feasibility, not a learned daylight/quality advantage. Legacy checkpoint
+  flags default false on load to preserve their original decoding behavior.
+- Use bounded wall-clock tests on M4; report setup, audit and optimizer time,
+  success rates and held-out environmental metrics. Current short pilots do not
+  establish convergence or a curriculum advantage. Preserve live preview weights.
+- Optional `Environment.precompute_external()` exactly caches immutable neighbour
+  receiver visibility once per scene. Account for preparation cost; do not apply
+  it blindly to single previews. Self shadows and diffuse fields remain dynamic.
+- `light` stores sky diffusion in air, zero in solids. `facade_sky_access` samples
+  lateral facade-adjacent air with the measured sky boundary; roofs are excluded.
+  Diffuse facade sky access is separate from direct-sun potential and the viewer’s
+  artistic shadow. Do not substitute one for the other. The nine-channel research
+  actor adds diffuse facade access explicitly; `.environment_patch.v2` is an
+  experimental checkpoint format, separate from the live five-channel actor.
+- Updated user objective: permit redistributing floor area after FAR is reached,
+  potentially into several taller grounded buildings. Current production rules
+  do not yet permit this. Test paired equal-area neural subtraction/addition masks,
+  an explicit height ceiling separate from initial mass, and optional top-storey
+  duplication/roof extrusion. Retain facade snapshots and meaningful topology
+  guards, but do not preserve the old single-component/stop-at-FAR assumptions
+  as universal design requirements when implementing this new action space.
 
 ## Future interior and facade evaluation
 - If real residential rooms are introduced, retain the user's frontage target:
@@ -40,6 +164,17 @@
   glass outlines in floor plans.
 
 ## Environment and speed
+- The grid UI has exactly Auto, World, Principal 1 and Longest edge. Auto is the
+  fresh-session default; saved/legacy alignment remains intact on resume. Other
+  backend alignments remain readable for compatibility. Auto searches angle and quarter-cell offsets
+  to maximize fully contained 1 m squares using the union of ground triangles;
+  holes/concavities remain excluded. Manual modes retain centre rasterization.
+  This bounded 2D fit optimizes footprint coverage, not light or learned quality.
+  Keep original world geometry, north/south and sunlight fixed: simulation meshes
+  AND ray directions transform into grid coordinates; the viewer transforms back.
+  Changing alignment explicitly resets volume but preserves learned weights,
+  source parcel area, current floor count and settings. Save alignment in the
+  coupled autosave. Never silently rotate/reset a user's current preview.
 - Performance is a primary requirement. Measure setup, per-edit updates,
   receiver queries, learning, rendering and CPU/GPU transfers separately.
 - Keep tensor simulation/evaluation/model work on one device where practical.
@@ -93,3 +228,8 @@
   permission questions for already authorized/reversible work.
 - Respect concurrent user changes. Maintain own clearly named resumption notes;
   do not read another agent's private memories without user instruction.
+
+- Isolated `voxelform.redistribution` tests paired constant-volume removal/roof
+  growth, grounded splitting and optional top-storey copying. It is not wired
+  into production FAR termination or checkpoint semantics. Preserve this
+  distinction; do not claim learned tower layouts from geometric/gradient tests.

@@ -1,0 +1,248 @@
+"""A FAR episode contains many facade-mask edits and many optimizer rollouts."""
+import json
+import functools
+import os
+from pathlib import Path
+import threading
+import time
+import traceback
+
+import torch
+import numpy as np
+
+from .context import ContextLibrary, public_scene
+from .environment import Environment
+from .policy import Learner
+from .patch_policy import PatchLearner,PatchConfig,PatchFacades
+from .shadows import device_name, sync
+from .workload import reset_budget,WorkloadBudget,action_reward
+
+DENSITY_PRESETS={'low':1.5,'medium':3.,'high':4.5}
+
+
+class Session:
+    def __init__(self,library=None,env=None,device=None,autostart=True):
+        self.library=library or ContextLibrary();self.lock=threading.RLock()
+        self.running=False;self.single=False;self.training=True;self.ready=False;self.error=None
+        self.persistence_root=Path(os.getenv('VOXELFORM_AUTOSAVE_DIR',str(Path(__file__).resolve().parents[1]/'results/checkpoints/autosave'))) if autostart else None
+        self.last_saved=None;self.persistence_error=None
+        self.active=0.;self.started=None;self.episodes=0;self.steps=0;self.revision=0
+        self.pending_seed=123;self.plan='rectangle';self.site_id=None;self.recent=[];self.edit_trace=[]
+        self.stats=dict(updates=0,loss=0.,gradientNorm=0.);self.rollout_steps=32;self.audit_steps=8
+        self.device=device_name(device or (str(env.device) if env is not None else os.getenv('VOXELFORM_DEVICE','auto')));self.env=env
+        self.target_far=3.;self.density_preset='medium';self.episode_recorded=False
+        self.action_seconds=0.;self.learning_seconds=0.
+        if env is not None:
+            self.target_far=env.target_far;self.density_preset=next((k for k,v in DENSITY_PRESETS.items() if v==env.target_far),'custom');self.policy=Learner(self.device);self.ready=True
+        self.worker=None
+        if autostart:
+            self.worker=threading.Thread(target=self.loop,daemon=True);self.worker.start()
+
+    def clock(self):return self.active+(time.perf_counter()-self.started if self.started is not None else 0.)
+    def pause(self):
+        if self.started is not None:self.active+=time.perf_counter()-self.started;self.started=None
+        self.running=False;self.single=False
+        self.save_checkpoint()
+
+    def build(self):
+        snapshot=None;resume_path=os.getenv('VOXELFORM_RESUME_STATE');checkpoint_path=os.getenv('VOXELFORM_POLICY_PATH')
+        if not resume_path and not checkpoint_path and self.persistence_root is not None and (self.persistence_root/'latest.json').is_file():
+            manifest=json.loads((self.persistence_root/'latest.json').read_text());resume_path=str(self.persistence_root/manifest['state']);checkpoint_path=str(self.persistence_root/manifest['policy'])
+        if resume_path:
+            snapshot=json.loads(Path(resume_path).read_text())
+            self.pending_seed=snapshot['seed'];self.plan=snapshot.get('plan','rectangle')
+        catalog=self.library.catalog()
+        if not catalog:raise ValueError('No cached urban scenes found. Set VOXELFORM_CONTEXT_ROOT to Module-Lab.')
+        initial_id=snapshot.get('siteId') if snapshot else os.getenv('VOXELFORM_SITE_ID','m_nyc_0003')
+        if snapshot and initial_id is None:
+            context=None
+        else:
+            initial=next((r for r in catalog if r['site_id']==initial_id),catalog[0]);self.site_id=initial['site_id']
+            context=self.library.load(self.site_id)
+        settings=(snapshot or {}).get('settings',{})
+        allocation=settings.get('editAllocation','probability' if snapshot else 'feedback')
+        self.target_far=float(settings.get('targetFar',3.));self.density_preset=settings.get('densityPreset','medium')
+        initial_config=PatchConfig(mode=settings.get('maskMode','combined'),eligibility='depth' if settings.get('deepInterior',False) else 'facade',minimum_patch=4,maximum_patches=4,maximum_voids=settings.get('maximumInteriorVoids',1),minimum_void_area=4,batched=True,maximum_edit_voxels=settings.get('maximumEditVoxels',0 if allocation=='feedback' else 256),vertical_interior=True,allocation=allocation,budget_reserve_fraction=.2 if allocation=='feedback' else 0.)
+        initial_factory=functools.partial(PatchFacades,config=initial_config,depth_device=self.device if self.device!='cpu' else None)
+        self.env=Environment(shape=tuple((snapshot or {}).get('shape',(6,24,32))),seed=self.pending_seed,device=self.device,context=context,plan=self.plan,target_far=self.target_far,frontier_factory=initial_factory)
+        if snapshot:self.env.restore_occupancy(snapshot['occupied'])
+        self.policy=PatchLearner(self.device,config=initial_config)
+        checkpoint=checkpoint_path
+        if checkpoint:self.policy.load(torch.load(checkpoint,map_location=self.device,weights_only=True))
+        if self.env.frontier.config!=self.policy.config:self.install_patch_frontier(self.policy.config)
+        self.stats=dict(updates=self.policy.updates,directMaskUpdates=self.policy.direct_updates,importedUpdates=self.policy.imported_updates,loss=0.,gradientNorm=0.)
+        if snapshot:
+            self.active=float(snapshot.get('activeSeconds',0));self.episodes=int(snapshot.get('episodes',0));self.recent=snapshot.get('recent',[])[-100:]
+            meta=snapshot.get('episodeState',{});self.env.edits=int(meta.get('edits',0));self.env.voxels_edited=int(meta.get('voxelsEdited',0));self.env.start_count=int(meta.get('startCount',self.env.count));self.steps=self.env.edits
+            if self.env.workload is not None and meta.get('workload'):
+                self.env.workload=WorkloadBudget(**meta['workload'])
+                if self.env.count!=self.env.target_count:self.env.termination=meta.get('termination')
+            self.episode_recorded=bool(snapshot.get('episodeRecorded',False)) and self.env.terminal
+            self.env.update_depth();self.env.evaluate()
+        self.ready=True;self.revision+=1
+
+    def save_checkpoint(self):
+        if self.persistence_root is None or not self.ready:return
+        with self.lock:
+            try:
+                root=self.persistence_root;root.mkdir(parents=True,exist_ok=True);generation=f'{time.time_ns()}-{self.policy.updates}'
+                state_name=generation+'-state.json';policy_name=generation+'-policy.pt'
+                config=getattr(self.policy,'config',None)
+                snapshot=dict(seed=self.pending_seed,plan=self.plan,siteId=self.site_id,shape=list(self.env.shape),occupied=self.env.occupied.cpu().to(torch.uint8).flatten().tolist(),
+                    settings=dict(targetFar=self.target_far,densityPreset=self.density_preset,maskMode=getattr(config,'mode','independent'),deepInterior=getattr(config,'eligibility','facade')=='depth',maximumInteriorVoids=getattr(config,'maximum_voids',0),maximumEditVoxels=getattr(config,'maximum_edit_voxels',0),editAllocation=getattr(config,'allocation','probability')),
+                    activeSeconds=self.clock(),episodes=self.episodes,recent=self.recent,episodeRecorded=self.episode_recorded,
+                    episodeState=dict(edits=self.env.edits,voxelsEdited=self.env.voxels_edited,startCount=self.env.start_count,termination=self.env.termination,workload=self.env.workload.state() if self.env.workload else None))
+                torch.save(self.policy.state(),root/policy_name);(root/state_name).write_text(json.dumps(snapshot))
+                temporary=root/'latest.tmp';temporary.write_text(json.dumps(dict(state=state_name,policy=policy_name)));temporary.replace(root/'latest.json')
+                self.last_saved=generation;self.persistence_error=None
+            except Exception as exc:self.persistence_error=str(exc)
+
+    def install_patch_frontier(self,config):
+        factory=functools.partial(PatchFacades,config=config,depth_device=self.device if self.device!='cpu' else None)
+        frontier=factory(self.env.occupied.cpu().numpy(),self.env.allowed.cpu().numpy(),self.env.seed)
+        frontier.version=self.env.frontier.version
+        self.env.frontier_factory=factory;self.env.frontier=frontier;self.env.update_depth()
+        reset_budget(self.env)
+        if self.env.termination=='step_budget_exhausted' and self.env.count!=self.env.target_count:self.env.termination=None
+
+    def configure_masks(self,mode,deep_interior,maximum_voids=1,maximum_edit_voxels=256,allocation='probability'):
+        if not isinstance(deep_interior,bool):raise ValueError('deepInterior must be boolean')
+        config=PatchConfig(mode=mode,eligibility='depth' if deep_interior else 'facade',minimum_patch=4,maximum_patches=4,maximum_voids=maximum_voids,minimum_void_area=4,batched=True,maximum_edit_voxels=maximum_edit_voxels,vertical_interior=True,allocation=allocation,budget_reserve_fraction=.2 if allocation=='feedback' else 0.)
+        if isinstance(self.policy,PatchLearner) and self.policy.config==config:
+            self.pause();return
+        replacement=PatchLearner(self.device,config=config)
+        replacement.model.load_state_dict(self.policy.model.state_dict(),strict=False)
+        replacement.updates=self.policy.updates;replacement.imported_updates=self.policy.updates
+        replacement.migration='Retained weights; reset optimizer/update counter for changed mask sampling or eligibility'
+        self.pause();self.install_patch_frontier(config);self.policy=replacement
+        self.episode_recorded=False
+        self.stats=dict(updates=replacement.updates,directMaskUpdates=0,importedUpdates=replacement.imported_updates,loss=0.,gradientNorm=0.);self.revision+=1;self.save_checkpoint()
+
+    def load_policy(self,state):
+        if state.get('format')=='voxelform.patch.v1' or isinstance(self.policy,PatchLearner):
+            replacement=PatchLearner(self.device,config=getattr(self.policy,'config',PatchConfig()))
+        else:replacement=Learner(self.device)
+        replacement.load(state)
+        if isinstance(replacement,PatchLearner):self.install_patch_frontier(replacement.config)
+        self.policy=replacement
+        self.stats=dict(updates=replacement.updates,directMaskUpdates=replacement.direct_updates,importedUpdates=replacement.imported_updates,loss=0.,gradientNorm=0.);self.revision+=1;self.save_checkpoint()
+
+    def next_episode(self):
+        self.env.reset();self.steps=0;self.policy.clear();self.episode_recorded=False;self.edit_trace=[];self.revision+=1;self.save_checkpoint()
+
+    def start(self,training=True,single=False):
+        new_training=bool(training)
+        if new_training!=self.training:self.policy.clear()
+        self.training=new_training
+        if single:
+            self.pause();self.single=True
+        else:
+            self.running=True
+            if self.started is None:self.started=time.perf_counter()
+
+    def configure_far(self,target,preset='custom'):
+        self.env.validate_far(target)
+        if preset not in (*DENSITY_PRESETS,'custom'):raise ValueError('Unknown density preset')
+        if preset!='custom' and float(target)!=DENSITY_PRESETS[preset]:raise ValueError('Density preset does not match target FAR')
+        self.pause();self.env.configure_far(target);self.target_far=self.env.target_far;self.density_preset=preset
+        self.steps=0;self.episode_recorded=False;self.edit_trace=[];self.policy.clear();self.revision+=1;self.save_checkpoint()
+
+    def change_site(self,source,site_id=None,plan='rectangle'):
+        if source not in ('cached_osm','synthetic'):raise ValueError('Unknown context source')
+        if plan not in ('rectangle','triangle','courtyard','branch'):raise ValueError('Unknown synthetic plot')
+        context=self.library.load(site_id or self.site_id) if source=='cached_osm' else None
+        self.pause()
+        replacement=Environment(seed=self.pending_seed+1,device=self.device,plan=plan,context=context,target_far=self.target_far,frontier_factory=self.env.frontier_factory)
+        self.env=replacement;self.pending_seed+=1;self.plan=plan;self.site_id=context['site_id'] if context else None
+        self.steps=0;self.episode_recorded=False;self.edit_trace=[];self.policy.clear();self.revision+=1;self.save_checkpoint()
+
+    def audit_environment(self):
+        before=float(self.env.quality.detach().cpu())
+        if self.env.last_audit_edit!=self.env.edits:self.env.evaluate()
+        if self.training and self.policy.tape:
+            self.policy.add_reward(.1*(float(self.env.quality.detach().cpu())-before))
+
+    def learn_rollout(self):
+        if self.training and self.policy.tape:
+            stamp=time.perf_counter();self.stats=self.policy.finish(self.policy.bootstrap(self.env))
+            sync(self.device);self.learning_seconds=time.perf_counter()-stamp;self.save_checkpoint()
+
+    def finish_episode(self):
+        if self.episode_recorded:return
+        self.audit_environment();self.learn_rollout();self.episodes+=1;self.episode_recorded=True
+        self.recent.append(dict(episode=self.episodes,siteId=self.site_id,seed=self.pending_seed,training=self.training,
+                                densityPreset=self.density_preset,success=self.env.termination=='far_reached',**self.env.metrics()))
+        self.recent=self.recent[-100:]
+        if not self.training or self.env.termination!='far_reached' or self.env.edits==0:self.pause()
+
+    def advance_one(self):
+        """Called under the session lock. One complete current-facade mask changes here."""
+        if not (self.running or self.single):return
+        if self.env.terminal:
+            if not self.episode_recorded:self.finish_episode();self.single=False;self.revision+=1;return
+            self.next_episode()
+            if self.env.terminal:self.finish_episode();self.single=False;self.revision+=1;return
+        stamp=time.perf_counter();action=self.policy.choose(self.env,training=self.training,greedy=(not self.training) and not isinstance(self.policy,PatchLearner))
+        sync(self.device);self.action_seconds=time.perf_counter()-stamp
+        if action is None:
+            self.env.termination=self.policy.last_rejection or 'mask_generation_failed'
+            if self.training and self.policy.tape:
+                penalty=action_reward(self.env,self.env.far_error) if self.env.workload else -.1
+                if self.policy.last_attempt_recorded:self.policy.record(penalty)
+                else:self.policy.add_reward(penalty)
+            self.finish_episode();self.single=False;self.revision+=1;return
+        before=self.env.far_error;far_before=self.env.far
+        done=self.env.apply(action,audit=False);self.steps=self.env.edits
+        if self.training:self.policy.record(action_reward(self.env,before))
+        cells=np.argwhere(action.mask);low=cells.min(axis=0);high=cells.max(axis=0)
+        self.edit_trace.append(dict(step=self.steps,operation='subtract' if action.operation==-1 else 'add',
+                                    changedVoxels=action.count,facadeSnapshot=action.version,
+                                    maskSource=getattr(action,'mask_source','neural_per_voxel'),generatedVoxels=action.generated_voxels,projectionRounds=action.projection_rounds,bounds=[low[::-1].tolist(),high[::-1].tolist()],
+                                    mask=cells[:,::-1].tolist(),facadeOnly=getattr(action,'facade_only',True),surfaceLayers=1 if getattr(action,'facade_only',True) else None,
+                                    rawStructure=getattr(action,'raw_structure',{}),appliedStructure=getattr(action,'applied_structure',{}),
+                                    farBefore=far_before,farAfter=self.env.far))
+        self.edit_trace=self.edit_trace[-64:]
+        if done:self.finish_episode()
+        else:
+            if self.steps%self.audit_steps==0:self.audit_environment()
+            if self.steps%self.rollout_steps==0:self.learn_rollout()
+        self.single=False;self.revision+=1
+        if not self.running:self.save_checkpoint()
+
+    def loop(self):
+        try:
+            if not self.ready:
+                with self.lock:self.build()
+            while True:
+                with self.lock:self.advance_one()
+                time.sleep(.002 if self.running else .01)
+        except Exception:
+            with self.lock:self.error=traceback.format_exc();self.pause()
+
+    def state(self):
+        with self.lock:
+            if not self.ready:return dict(ready=False,error=self.error,device=self.device)
+            e=self.env
+            return dict(ready=True,error=self.error,running=self.running,training=self.training,
+                activeSeconds=self.clock(),episodes=self.episodes,step=self.steps,
+                maxSteps=e.workload.limit if e.workload else abs(e.start_count-e.target_count),rolloutSteps=self.rollout_steps,environmentAuditSteps=self.audit_steps,
+                episodeComplete=e.terminal,episodeRecorded=self.episode_recorded,termination=e.termination,
+                settings=dict(targetFar=self.target_far,densityPreset=self.density_preset,program='residential',
+                              densityPresets=DENSITY_PRESETS,maximumFar=e.capacity/e.plot_area,
+                              maskMode=getattr(getattr(self.policy,'config',None),'mode','independent'),
+                              deepInterior=getattr(getattr(self.policy,'config',None),'eligibility','facade')=='depth',
+                              minimumPatch=getattr(getattr(self.policy,'config',None),'minimum_patch',1),
+                              maximumInteriorVoids=getattr(getattr(self.policy,'config',None),'maximum_voids',0),
+                              minimumVoidArea=getattr(getattr(self.policy,'config',None),'minimum_void_area',1),
+                              maximumEditVoxels=getattr(getattr(self.policy,'config',None),'maximum_edit_voxels',0),editAllocation=getattr(getattr(self.policy,'config',None),'allocation','probability')),
+                seed=self.pending_seed,plan=self.plan,siteId=self.site_id,revision=self.revision,metrics=e.metrics(),learning=self.stats,
+                policyMigration=self.policy.migration,maskGenerator='neural_'+self.policy.config.mode if isinstance(self.policy,PatchLearner) else 'neural_per_voxel',
+                maskStructure=getattr(self.policy,'applied_structure',{}),maskProfile=dict(samplingSeconds=getattr(self.policy,'sampling_seconds',0.),transferSeconds=getattr(self.policy,'transfer_seconds',0.),geometrySeconds=self.policy.projection_seconds),autosave=dict(lastSaved=self.last_saved,error=self.persistence_error),
+                neuralGenerationSeconds=self.policy.generation_seconds,maskGenerationAttempts=self.policy.generation_attempts,editTrace=list(self.edit_trace),
+                context=public_scene(e.context) if e.context is not None else None,
+                actionSeconds=self.action_seconds,learningSeconds=self.learning_seconds,
+                shape=list(e.shape),occupied=e.occupied.to('cpu',torch.uint8).flatten().tolist(),
+                allowed=e.allowed.to('cpu',torch.uint8).flatten().tolist(),
+                facadeDepth=e.depth.detach().cpu().flatten().tolist(),depthBadness=e.depth_badness.detach().cpu().flatten().tolist(),
+                light=e.light.detach().cpu().flatten().tolist(),noise=e.noise.detach().cpu().flatten().tolist(),
+                usable=e.usable.to('cpu',torch.uint8).flatten().tolist(),boxes=e.boxes.tolist(),recent=self.recent)

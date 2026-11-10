@@ -1,0 +1,958 @@
+{
+  "platform": "macOS-26.5.2-arm64-arm-64bit-Mach-O",
+  "torch": "2.13.0",
+  "cpuThreads": 1,
+  "rows": [
+    {
+      "device": "cpu",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 0.3180458749993704,
+      "coldTraining": {
+        "seconds": 0.29243062500609085,
+        "steps": 11,
+        "attempts": 11,
+        "updates": 1,
+        "success": true,
+        "termination": "far_reached",
+        "quality": 0.4739192724227905,
+        "qualityChange": -0.08556371927261353,
+        "rewardSum": 1.9414436280727385,
+        "times": {
+          "reset": 0.0200807920191437,
+          "choose": 0.11207987600937486,
+          "model": 0.06851562613155693,
+          "sampling": 0.014343539020046592,
+          "transfer": 0.00010187498992308974,
+          "projection": 0.01988674997119233,
+          "apply": 0.04581016593147069,
+          "audit": 0.032062207988929003,
+          "learning": 0.08207362500252202
+        }
+      },
+      "trials": [
+        {
+          "seconds": 0.23078145796898752,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.48100534081459045,
+          "qualityChange": -0.0784776508808136,
+          "rewardSum": 1.9466976894573733,
+          "times": {
+            "reset": 0.01896416599629447,
+            "choose": 0.06869249901501462,
+            "model": 0.03976620896719396,
+            "sampling": 0.009054749039933085,
+            "transfer": 6.820796988904476e-05,
+            "projection": 0.01271337503567338,
+            "apply": 0.04201062419451773,
+            "audit": 0.03155533398967236,
+            "learning": 0.06933004199527204
+          }
+        },
+        {
+          "seconds": 0.23158254195004702,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.4567837119102478,
+          "qualityChange": -0.10269927978515625,
+          "rewardSum": 1.9442755265669391,
+          "times": {
+            "reset": 0.018912667001131922,
+            "choose": 0.07027499808464199,
+            "model": 0.040376915072556585,
+            "sampling": 0.008324209076818079,
+            "transfer": 6.504409248009324e-05,
+            "projection": 0.015009666909463704,
+            "apply": 0.04013078985735774,
+            "audit": 0.031255500041879714,
+            "learning": 0.07080650003626943
+          }
+        },
+        {
+          "seconds": 0.24575133295729756,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.4541887044906616,
+          "qualityChange": -0.10529428720474243,
+          "rewardSum": 1.9440160258249801,
+          "times": {
+            "reset": 0.019316416000947356,
+            "choose": 0.0794002499897033,
+            "model": 0.04646462493110448,
+            "sampling": 0.00927399902138859,
+            "transfer": 7.945712422952056e-05,
+            "projection": 0.01669429091271013,
+            "apply": 0.04175345797557384,
+            "audit": 0.0320410419953987,
+            "learning": 0.07296433404553682
+          }
+        },
+        {
+          "seconds": 0.23871220799628645,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.4652881324291229,
+          "qualityChange": -0.09419485926628113,
+          "rewardSum": 1.9451259686188263,
+          "times": {
+            "reset": 0.020077541994396597,
+            "choose": 0.07034479093272239,
+            "model": 0.043056373950093985,
+            "sampling": 0.00888887484325096,
+            "transfer": 7.495906902477145e-05,
+            "projection": 0.011292126961052418,
+            "apply": 0.042319332947954535,
+            "audit": 0.03220924997003749,
+            "learning": 0.0735173329594545
+          }
+        },
+        {
+          "seconds": 0.24317266698926687,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.4777756631374359,
+          "qualityChange": -0.08170732855796814,
+          "rewardSum": 1.9463747216896579,
+          "times": {
+            "reset": 0.019793584011495113,
+            "choose": 0.07464975101174787,
+            "model": 0.044164667022414505,
+            "sampling": 0.009241415013093501,
+            "transfer": 9.804096771404147e-05,
+            "projection": 0.01415712694870308,
+            "apply": 0.04141941893612966,
+            "audit": 0.03264400101033971,
+            "learning": 0.07439608301501721
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 0.040250582969747484,
+        "newReceivers": 66688,
+        "knownReceivers": 70656,
+        "cacheBytes": 663552
+      },
+      "checkpointSerializationSeconds": 0.00364754197653383,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 495403008,
+      "mpsAllocatedBytes": null
+    },
+    {
+      "device": "cpu",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 1.5575719170155935,
+      "coldTraining": {
+        "seconds": 6.433537208009511,
+        "steps": 32,
+        "attempts": 81,
+        "updates": 1,
+        "success": false,
+        "termination": "step_budget_exhausted",
+        "quality": 0.15894047915935516,
+        "qualityChange": -0.32286305725574493,
+        "rewardSum": -0.0932889098922413,
+        "times": {
+          "reset": 0.08769345801556483,
+          "choose": 3.5662440842133947,
+          "model": 1.2021128361229785,
+          "sampling": 0.4227711238199845,
+          "transfer": 0.0007737909909337759,
+          "projection": 1.8233274959493428,
+          "apply": 0.6767233309801668,
+          "audit": 0.44025741796940565,
+          "learning": 1.6601829589926638
+        }
+      },
+      "trials": [
+        {
+          "seconds": 4.677210416994058,
+          "steps": 30,
+          "attempts": 39,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14692720770835876,
+          "qualityChange": -0.33487632870674133,
+          "rewardSum": 1.9196373671293259,
+          "times": {
+            "reset": 0.12554616696434096,
+            "choose": 1.8156869560480118,
+            "model": 0.9508243749733083,
+            "sampling": 0.26373045513173565,
+            "transfer": 0.0006342100678011775,
+            "projection": 0.5088737900368869,
+            "apply": 0.605193416995462,
+            "audit": 0.3389122919761576,
+            "learning": 1.790257583023049
+          }
+        },
+        {
+          "seconds": 4.9200522910105065,
+          "steps": 30,
+          "attempts": 37,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14785535633563995,
+          "qualityChange": -0.33394818007946014,
+          "rewardSum": 1.919730181992054,
+          "times": {
+            "reset": 0.11075895797694102,
+            "choose": 1.5723308760789223,
+            "model": 0.8404139187769033,
+            "sampling": 0.22454079322051257,
+            "transfer": 0.0004580451059155166,
+            "projection": 0.4169081642758101,
+            "apply": 0.5555597060592845,
+            "audit": 0.5096465829992667,
+            "learning": 2.170534958015196
+          }
+        },
+        {
+          "seconds": 3.7402592910220847,
+          "steps": 30,
+          "attempts": 36,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1468033641576767,
+          "qualityChange": -0.3350001722574234,
+          "rewardSum": 1.9196249827742577,
+          "times": {
+            "reset": 0.14476775005459785,
+            "choose": 1.3801784581155516,
+            "model": 0.7429431221098639,
+            "sampling": 0.1633300851099193,
+            "transfer": 0.0003890818916261196,
+            "projection": 0.4021786699304357,
+            "apply": 0.48826758097857237,
+            "audit": 0.2522948328987695,
+            "learning": 1.4735400829813443
+          }
+        },
+        {
+          "seconds": 3.945098875032272,
+          "steps": 30,
+          "attempts": 34,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1543944776058197,
+          "qualityChange": -0.3274090588092804,
+          "rewardSum": 1.920384094119072,
+          "times": {
+            "reset": 0.08021295804064721,
+            "choose": 1.2237566688563675,
+            "model": 0.680271208868362,
+            "sampling": 0.154740707075689,
+            "transfer": 0.00039012409979477525,
+            "projection": 0.3177083777845837,
+            "apply": 0.4946310000959784,
+            "audit": 0.2973034160095267,
+            "learning": 1.8480282080126926
+          }
+        },
+        {
+          "seconds": 3.1364010829711333,
+          "steps": 28,
+          "attempts": 30,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1571797877550125,
+          "qualityChange": -0.3246237486600876,
+          "rewardSum": 1.9237876251339907,
+          "times": {
+            "reset": 0.1134172499878332,
+            "choose": 1.0456945807673037,
+            "model": 0.6328424179810099,
+            "sampling": 0.1461993710254319,
+            "transfer": 0.0003234150353819132,
+            "projection": 0.20136024989187717,
+            "apply": 0.43640975013840944,
+            "audit": 0.2903699579765089,
+            "learning": 1.2495789579697885
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 0.26262962498003617,
+        "newReceivers": 280064,
+        "knownReceivers": 288768,
+        "cacheBytes": 3833856
+      },
+      "checkpointSerializationSeconds": 0.0034576660254970193,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 1565802496,
+      "mpsAllocatedBytes": null
+    },
+    {
+      "device": "cpu",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 8.468002708046697,
+      "coldTraining": {
+        "seconds": 0.5370947920018807,
+        "steps": 12,
+        "attempts": 12,
+        "updates": 1,
+        "success": true,
+        "termination": "far_reached",
+        "quality": 0.12992534041404724,
+        "qualityChange": -0.060873717069625854,
+        "rewardSum": 1.9510554854358944,
+        "times": {
+          "reset": 0.04848975001368672,
+          "choose": 0.17353116703452542,
+          "model": 0.12456341704819351,
+          "sampling": 0.01648971001850441,
+          "transfer": 8.441507816314697e-05,
+          "projection": 0.01862045901361853,
+          "apply": 0.0875964600709267,
+          "audit": 0.044482751050964,
+          "learning": 0.18265625002095476
+        }
+      },
+      "trials": [
+        {
+          "seconds": 0.5364077499834821,
+          "steps": 13,
+          "attempts": 13,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.13312582671642303,
+          "qualityChange": -0.05767323076725006,
+          "rewardSum": 1.9478041054947035,
+          "times": {
+            "reset": 0.030584833992179483,
+            "choose": 0.17399154201848432,
+            "model": 0.1183202899992466,
+            "sampling": 0.015659499156754464,
+            "transfer": 0.00010170991299673915,
+            "projection": 0.02562620595563203,
+            "apply": 0.09547279088292271,
+            "audit": 0.046372582961339504,
+            "learning": 0.1896348330192268
+          }
+        },
+        {
+          "seconds": 0.5404703749809414,
+          "steps": 13,
+          "attempts": 13,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.13133005797863007,
+          "qualityChange": -0.05946899950504303,
+          "rewardSum": 1.9476245286209242,
+          "times": {
+            "reset": 0.030613542010542005,
+            "choose": 0.18041541799902916,
+            "model": 0.11831887601874769,
+            "sampling": 0.016279584902804345,
+            "transfer": 9.612407302483916e-05,
+            "projection": 0.03038391482550651,
+            "apply": 0.09855916496599093,
+            "audit": 0.04577395803062245,
+            "learning": 0.18477820797124878
+          }
+        },
+        {
+          "seconds": 0.4949889159761369,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.15422490239143372,
+          "qualityChange": -0.03657415509223938,
+          "rewardSum": 1.9534854416336334,
+          "times": {
+            "reset": 0.03038362500956282,
+            "choose": 0.16071266803191975,
+            "model": 0.10532516578678042,
+            "sampling": 0.013738874986302108,
+            "transfer": 9.075202979147434e-05,
+            "projection": 0.028295498865190893,
+            "apply": 0.08863916399423033,
+            "audit": 0.046425291046034545,
+            "learning": 0.16850858397083357
+          }
+        },
+        {
+          "seconds": 0.4890370829962194,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14368070662021637,
+          "qualityChange": -0.047118350863456726,
+          "rewardSum": 1.9524310220565113,
+          "times": {
+            "reset": 0.02990149997640401,
+            "choose": 0.1552078771055676,
+            "model": 0.10463071189587936,
+            "sampling": 0.013928208034485579,
+            "transfer": 9.52109694480896e-05,
+            "projection": 0.023476250062230974,
+            "apply": 0.0893050849554129,
+            "audit": 0.04643350001424551,
+            "learning": 0.16790345800109208
+          }
+        },
+        {
+          "seconds": 0.5009162499918602,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1366426646709442,
+          "qualityChange": -0.05415639281272888,
+          "rewardSum": 1.951727217861584,
+          "times": {
+            "reset": 0.03131958399899304,
+            "choose": 0.15371916710864753,
+            "model": 0.10423292004270479,
+            "sampling": 0.012664542067795992,
+            "transfer": 8.333200821653008e-05,
+            "projection": 0.024298291944433004,
+            "apply": 0.08743287506513298,
+            "audit": 0.04542812390718609,
+            "learning": 0.1827334170229733
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 33.559914999990724,
+        "newReceivers": 47962,
+        "knownReceivers": 51275,
+        "cacheBytes": 1305396
+      },
+      "checkpointSerializationSeconds": 0.0019257080275565386,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 1565802496,
+      "mpsAllocatedBytes": null
+    },
+    {
+      "device": "mps",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 1.3705684170126915,
+      "coldTraining": {
+        "seconds": 1.5125938749988563,
+        "steps": 10,
+        "attempts": 10,
+        "updates": 1,
+        "success": true,
+        "termination": "far_reached",
+        "quality": 0.46372389793395996,
+        "qualityChange": -0.09575909376144409,
+        "rewardSum": 1.94496954516931,
+        "times": {
+          "reset": 0.06856645795051008,
+          "choose": 0.5956488770898432,
+          "model": 0.1560961659415625,
+          "sampling": 0.369774040998891,
+          "transfer": 0.004858874017372727,
+          "projection": 0.017254458158276975,
+          "apply": 0.09357416612328961,
+          "audit": 0.23762804199941456,
+          "learning": 0.5108792079845443
+        }
+      },
+      "trials": [
+        {
+          "seconds": 0.8099601670401171,
+          "steps": 9,
+          "attempts": 9,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.4629131555557251,
+          "qualityChange": -0.09656983613967896,
+          "rewardSum": 1.9494339254769413,
+          "times": {
+            "reset": 0.05419850000180304,
+            "choose": 0.3983318340033293,
+            "model": 0.0735768738668412,
+            "sampling": 0.21667995903408155,
+            "transfer": 0.004123208054807037,
+            "projection": 0.022030331834685057,
+            "apply": 0.07146029302384704,
+            "audit": 0.15802191698458046,
+            "learning": 0.08664074999978766
+          }
+        },
+        {
+          "seconds": 0.518932249979116,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.45169490575790405,
+          "qualityChange": -0.1077880859375,
+          "rewardSum": 1.9437666459517047,
+          "times": {
+            "reset": 0.032989082974381745,
+            "choose": 0.22696300194365904,
+            "model": 0.03324074897682294,
+            "sampling": 0.1350622499594465,
+            "transfer": 0.004156499984674156,
+            "projection": 0.015667457890231162,
+            "apply": 0.0597918740240857,
+            "audit": 0.113486832997296,
+            "learning": 0.08069991698721424
+          }
+        },
+        {
+          "seconds": 0.5052845420432277,
+          "steps": 9,
+          "attempts": 9,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.48219573497772217,
+          "qualityChange": -0.07728725671768188,
+          "rewardSum": 1.9513621834191408,
+          "times": {
+            "reset": 0.03698641702067107,
+            "choose": 0.2232312069972977,
+            "model": 0.03781558299669996,
+            "sampling": 0.13085166696691886,
+            "transfer": 0.004498874943237752,
+            "projection": 0.012624082097318023,
+            "apply": 0.053951209993101656,
+            "audit": 0.11553820798872039,
+            "learning": 0.07067812501918525
+          }
+        },
+        {
+          "seconds": 0.5551615000003949,
+          "steps": 11,
+          "attempts": 11,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.47395744919776917,
+          "qualityChange": -0.08552554249763489,
+          "rewardSum": 1.9414474457502364,
+          "times": {
+            "reset": 0.03539237502263859,
+            "choose": 0.23552404198562726,
+            "model": 0.04321754106786102,
+            "sampling": 0.13605437410296872,
+            "transfer": 0.005642500065732747,
+            "projection": 0.017203252122271806,
+            "apply": 0.06465762504376471,
+            "audit": 0.11429541604593396,
+            "learning": 0.09800754202296957
+          }
+        },
+        {
+          "seconds": 0.5033853750210255,
+          "steps": 10,
+          "attempts": 10,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.45960527658462524,
+          "qualityChange": -0.09987771511077881,
+          "rewardSum": 1.9445576830343767,
+          "times": {
+            "reset": 0.03481041605118662,
+            "choose": 0.21579804288921878,
+            "model": 0.02438816789072007,
+            "sampling": 0.124055041000247,
+            "transfer": 0.0053642489947378635,
+            "projection": 0.01924324908759445,
+            "apply": 0.05403487489093095,
+            "audit": 0.12072791700484231,
+            "learning": 0.07083679101197049
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 0.4445931669906713,
+        "newReceivers": 66688,
+        "knownReceivers": 70656,
+        "cacheBytes": 663552
+      },
+      "checkpointSerializationSeconds": 0.01577195798745379,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 1565802496,
+      "mpsAllocatedBytes": 53495040
+    },
+    {
+      "device": "mps",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 1.7750297500169836,
+      "coldTraining": {
+        "seconds": 4.168498584011104,
+        "steps": 31,
+        "attempts": 34,
+        "updates": 1,
+        "success": true,
+        "termination": "far_reached",
+        "quality": 0.14762519299983978,
+        "qualityChange": -0.3341783434152603,
+        "rewardSum": 1.918144665658474,
+        "times": {
+          "reset": 0.08632191701326519,
+          "choose": 1.726278540038038,
+          "model": 0.2944020821014419,
+          "sampling": 0.8202844171901233,
+          "transfer": 0.014417917176615447,
+          "projection": 0.36875695595517755,
+          "apply": 0.9732142477878369,
+          "audit": 0.31001158407889307,
+          "learning": 1.0480782079976052
+        }
+      },
+      "trials": [
+        {
+          "seconds": 2.8775737090036273,
+          "steps": 30,
+          "attempts": 35,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14259570837020874,
+          "qualityChange": -0.33920782804489136,
+          "rewardSum": 1.9192042171955113,
+          "times": {
+            "reset": 0.04896570899290964,
+            "choose": 1.408162168925628,
+            "model": 0.16109849786153063,
+            "sampling": 0.6869976668967865,
+            "transfer": 0.014237624709494412,
+            "projection": 0.3629698751028627,
+            "apply": 0.5717770861811005,
+            "audit": 0.23782233300153166,
+            "learning": 0.5914583749836311
+          }
+        },
+        {
+          "seconds": 3.008878458000254,
+          "steps": 31,
+          "attempts": 35,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1550094485282898,
+          "qualityChange": -0.3267940878868103,
+          "rewardSum": 1.9188830912113186,
+          "times": {
+            "reset": 0.06498954095877707,
+            "choose": 1.4880073771928437,
+            "model": 0.21850829193135723,
+            "sampling": 0.6978545408928767,
+            "transfer": 0.014943498943466693,
+            "projection": 0.36367025086656213,
+            "apply": 0.6471344596939161,
+            "audit": 0.30804474995238706,
+            "learning": 0.4703709169989452
+          }
+        },
+        {
+          "seconds": 4.962780292029493,
+          "steps": 32,
+          "attempts": 92,
+          "updates": 1,
+          "success": false,
+          "termination": "step_budget_exhausted",
+          "quality": 0.15191127359867096,
+          "qualityChange": -0.32989226281642914,
+          "rewardSum": -0.08351005961497607,
+          "times": {
+            "reset": 0.07481608301168308,
+            "choose": 2.862387164903339,
+            "model": 0.2012396682985127,
+            "sampling": 1.121551172051113,
+            "transfer": 0.031406500027514994,
+            "projection": 1.2928553318488412,
+            "apply": 0.6845046241069213,
+            "audit": 0.35895179194631055,
+            "learning": 0.9627714999951422
+          }
+        },
+        {
+          "seconds": 3.4481389580178075,
+          "steps": 31,
+          "attempts": 33,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1481741964817047,
+          "qualityChange": -0.3336293399333954,
+          "rewardSum": 1.9181995660066606,
+          "times": {
+            "reset": 0.15039737499319017,
+            "choose": 1.6798844172153622,
+            "model": 0.27703558187931776,
+            "sampling": 0.769658540841192,
+            "transfer": 0.019967836095020175,
+            "projection": 0.3783266648533754,
+            "apply": 0.7200934220454656,
+            "audit": 0.32407545804744586,
+            "learning": 0.5526421249960549
+          }
+        },
+        {
+          "seconds": 3.028949207975529,
+          "steps": 29,
+          "attempts": 33,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.15345773100852966,
+          "qualityChange": -0.32834580540657043,
+          "rewardSum": 1.9218529194593428,
+          "times": {
+            "reset": 0.0816552079631947,
+            "choose": 1.4648600443033502,
+            "model": 0.17158883303636685,
+            "sampling": 0.6173885461175814,
+            "transfer": 0.02166387514444068,
+            "projection": 0.4541529587004334,
+            "apply": 0.6089526243158616,
+            "audit": 0.34737529105041176,
+            "learning": 0.5092506660148501
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 0.5433137920335867,
+        "newReceivers": 280064,
+        "knownReceivers": 288768,
+        "cacheBytes": 3833856
+      },
+      "checkpointSerializationSeconds": 0.03366954199736938,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 1565802496,
+      "mpsAllocatedBytes": 236187136
+    },
+    {
+      "device": "mps",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 5.077305625018198,
+      "coldTraining": {
+        "seconds": 1.0893021670053713,
+        "steps": 13,
+        "attempts": 13,
+        "updates": 1,
+        "success": true,
+        "termination": "far_reached",
+        "quality": 0.14025545120239258,
+        "qualityChange": -0.05054360628128052,
+        "rewardSum": 1.9485170679433004,
+        "times": {
+          "reset": 0.04956462502013892,
+          "choose": 0.3856789590208791,
+          "model": 0.08187250106129795,
+          "sampling": 0.22545812296448275,
+          "transfer": 0.00529037817614153,
+          "projection": 0.02339358301833272,
+          "apply": 0.1213252090383321,
+          "audit": 0.13980129198171198,
+          "learning": 0.3763684160076082
+        }
+      },
+      "trials": [
+        {
+          "seconds": 0.7318030410096981,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14197637140750885,
+          "qualityChange": -0.048822686076164246,
+          "rewardSum": 1.952260588535241,
+          "times": {
+            "reset": 0.03912137501174584,
+            "choose": 0.2737214579829015,
+            "model": 0.034909876820165664,
+            "sampling": 0.1514054579893127,
+            "transfer": 0.005932290921919048,
+            "projection": 0.02096387604251504,
+            "apply": 0.08796208293642849,
+            "audit": 0.14434925001114607,
+            "learning": 0.18160725000780076
+          }
+        },
+        {
+          "seconds": 0.7572885419940576,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.13939863443374634,
+          "qualityChange": -0.05140042304992676,
+          "rewardSum": 1.9520028148378645,
+          "times": {
+            "reset": 0.039404959010425955,
+            "choose": 0.27626116696046665,
+            "model": 0.030744666990358382,
+            "sampling": 0.1630296660005115,
+            "transfer": 0.005241875012870878,
+            "projection": 0.02492791711119935,
+            "apply": 0.14211483590770513,
+            "audit": 0.17510816699359566,
+            "learning": 0.1179150830139406
+          }
+        },
+        {
+          "seconds": 0.7164178750244901,
+          "steps": 13,
+          "attempts": 13,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.1394040286540985,
+          "qualityChange": -0.051395028829574585,
+          "rewardSum": 1.9484319256884715,
+          "times": {
+            "reset": 0.047915417002514005,
+            "choose": 0.30833891400834545,
+            "model": 0.05045366502599791,
+            "sampling": 0.17663154110778123,
+            "transfer": 0.009852957969997078,
+            "projection": 0.023556375002954155,
+            "apply": 0.1453008348471485,
+            "audit": 0.0992685830569826,
+            "learning": 0.10560458299005404
+          }
+        },
+        {
+          "seconds": 0.8503768749651499,
+          "steps": 12,
+          "attempts": 12,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14616848528385162,
+          "qualityChange": -0.04463057219982147,
+          "rewardSum": 1.952679799922875,
+          "times": {
+            "reset": 0.04775045899441466,
+            "choose": 0.323853959038388,
+            "model": 0.06772887491388246,
+            "sampling": 0.16302179195918143,
+            "transfer": 0.005553792929276824,
+            "projection": 0.022745335882063955,
+            "apply": 0.2216882081120275,
+            "audit": 0.12721049995161593,
+            "learning": 0.11331454198807478
+          }
+        },
+        {
+          "seconds": 0.9463439590181224,
+          "steps": 13,
+          "attempts": 13,
+          "updates": 1,
+          "success": true,
+          "termination": "far_reached",
+          "quality": 0.14325563609600067,
+          "qualityChange": -0.047543421387672424,
+          "rewardSum": 1.9488170864326613,
+          "times": {
+            "reset": 0.04892641701735556,
+            "choose": 0.32516679307445884,
+            "model": 0.05300262599484995,
+            "sampling": 0.18239441700279713,
+            "transfer": 0.004643748980015516,
+            "projection": 0.023109333065804094,
+            "apply": 0.16577625111676753,
+            "audit": 0.22946820798097178,
+            "learning": 0.16437629202846438
+          }
+        }
+      ],
+      "externalPreparation": {
+        "seconds": 18.197881000000052,
+        "newReceivers": 47962,
+        "knownReceivers": 51275,
+        "cacheBytes": 1305396
+      },
+      "checkpointSerializationSeconds": 0.03872362500987947,
+      "checkpointBytes": 152943,
+      "rssHighWaterBytes": 1565802496,
+      "mpsAllocatedBytes": 95106048
+    }
+  ],
+  "note": "Isolated headless profile, including backpropagation and episode reset; not a convergence study.",
+  "hashes": {
+    "tools/training_profile.py": "f218b14d86e06b1c6126b2905e950f1385b6683e06a92ee42cc225b309c9dc58",
+    "voxelform/__init__.py": "1fa44619f275ddedca920f9137e5fc50dd8213229442b6c1a59f45d050016d0c",
+    "voxelform/actions.py": "13e1601b81eff027cf7efaea790a41c532df9809b5947bf480e09d31f7d66139",
+    "voxelform/context.py": "b85d8a1021b900da9d5066ce5f4da18c02559b4d52b29478b6ed0bb79c3a2991",
+    "voxelform/environment.py": "e4c94932cab2515bf10b4c5b6ce3a78edc46b9024f051741336f27dde8a91908",
+    "voxelform/fields.py": "afbb4d34f6a562fe23a1055518c8330abe1d20f107d3f74b45713938092cb1d4",
+    "voxelform/patch_policy.py": "908530541fa9601a4ff0c8746ddf53b87d4b7fe21b514a1965129e913416a916",
+    "voxelform/policy.py": "15dcbb163b0c449e8caa08ab153d57882e1e7989b31a84fae71400d8570822a9",
+    "voxelform/server.py": "baef732c61b3ce9bc8e97ca81151d85fb5d77cd1effc3e97dbb23b875535fe33",
+    "voxelform/session.py": "f9361bc408fee1b2b3fb0ae8b2fe6e18c6f382053d3f8265263a0ee53384c675",
+    "voxelform/shadows.py": "631d45a257bde673c7fb1429bd82239a9ab2b80441f6e88b6410b700e1da9dfc",
+    "voxelform/workload.py": "e763f88764512470737a0b97000ed9194a62365f2d68998dbd85013e04ec0e5a"
+  }
+}

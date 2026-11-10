@@ -1,0 +1,2142 @@
+{
+  "rows": [
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 4.046021124988329,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 9,
+      "budget": {
+        "required": 3072,
+        "initial_capacity": 880,
+        "limit": 9,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 3072,
+      "remaining": 463,
+      "quality": 0.4682047367095947,
+      "depthPenalty": 0.07462488114833832,
+      "masks": [
+        {
+          "count": 369,
+          "generated": 439,
+          "patches": 4,
+          "generationMs": 1312.7296669990756
+        },
+        {
+          "count": 161,
+          "generated": 451,
+          "patches": 3,
+          "generationMs": 28.530624986160547
+        },
+        {
+          "count": 182,
+          "generated": 509,
+          "patches": 3,
+          "generationMs": 22.235709009692073
+        },
+        {
+          "count": 238,
+          "generated": 590,
+          "patches": 3,
+          "generationMs": 34.58437504014
+        },
+        {
+          "count": 147,
+          "generated": 708,
+          "patches": 3,
+          "generationMs": 34.34479102725163
+        },
+        {
+          "count": 310,
+          "generated": 988,
+          "patches": 3,
+          "generationMs": 33.7736249784939
+        },
+        {
+          "count": 701,
+          "generated": 1665,
+          "patches": 3,
+          "generationMs": 34.290082985535264
+        },
+        {
+          "count": 284,
+          "generated": 964,
+          "patches": 3,
+          "generationMs": 33.811208966653794
+        },
+        {
+          "count": 217,
+          "generated": 680,
+          "patches": 3,
+          "generationMs": 38.725290971342474
+        }
+      ],
+      "seconds": 2.1698452499695122,
+      "rssHighWaterBytes": 481230848,
+      "mpsAllocatedBytes": 51150592
+    },
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 4.046021124988329,
+      "operation": "add",
+      "success": false,
+      "termination": "mask_generation_failed",
+      "steps": 27,
+      "budget": {
+        "required": 3072,
+        "initial_capacity": 220,
+        "limit": 30,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 3072,
+      "remaining": 459,
+      "quality": 0.5010607242584229,
+      "depthPenalty": 0.15983072916666666,
+      "masks": [
+        {
+          "count": 89,
+          "generated": 110,
+          "patches": 4,
+          "generationMs": 37.8515410120599
+        },
+        {
+          "count": 70,
+          "generated": 111,
+          "patches": 4,
+          "generationMs": 59.34520799200982
+        },
+        {
+          "count": 73,
+          "generated": 113,
+          "patches": 4,
+          "generationMs": 48.17920800996944
+        },
+        {
+          "count": 96,
+          "generated": 114,
+          "patches": 4,
+          "generationMs": 33.640457957517356
+        },
+        {
+          "count": 77,
+          "generated": 115,
+          "patches": 4,
+          "generationMs": 36.01320803863928
+        },
+        {
+          "count": 97,
+          "generated": 116,
+          "patches": 4,
+          "generationMs": 34.93291698396206
+        },
+        {
+          "count": 93,
+          "generated": 117,
+          "patches": 4,
+          "generationMs": 33.619375026319176
+        },
+        {
+          "count": 85,
+          "generated": 118,
+          "patches": 4,
+          "generationMs": 1335.6913749594241
+        },
+        {
+          "count": 83,
+          "generated": 120,
+          "patches": 4,
+          "generationMs": 53.59525000676513
+        },
+        {
+          "count": 46,
+          "generated": 61,
+          "patches": 4,
+          "generationMs": 97.856915963348
+        },
+        {
+          "count": 106,
+          "generated": 126,
+          "patches": 4,
+          "generationMs": 31.992665957659483
+        },
+        {
+          "count": 108,
+          "generated": 127,
+          "patches": 4,
+          "generationMs": 32.59758400963619
+        },
+        {
+          "count": 69,
+          "generated": 129,
+          "patches": 4,
+          "generationMs": 36.96300002047792
+        },
+        {
+          "count": 94,
+          "generated": 132,
+          "patches": 4,
+          "generationMs": 54.44074998376891
+        },
+        {
+          "count": 106,
+          "generated": 135,
+          "patches": 4,
+          "generationMs": 25.307708012405783
+        },
+        {
+          "count": 116,
+          "generated": 137,
+          "patches": 4,
+          "generationMs": 33.4990419796668
+        },
+        {
+          "count": 98,
+          "generated": 139,
+          "patches": 4,
+          "generationMs": 30.643290956504643
+        },
+        {
+          "count": 83,
+          "generated": 143,
+          "patches": 4,
+          "generationMs": 31.471792026422918
+        },
+        {
+          "count": 106,
+          "generated": 149,
+          "patches": 4,
+          "generationMs": 50.505709019489586
+        },
+        {
+          "count": 98,
+          "generated": 115,
+          "patches": 4,
+          "generationMs": 60.26358302915469
+        },
+        {
+          "count": 126,
+          "generated": 160,
+          "patches": 4,
+          "generationMs": 75.73379098903388
+        },
+        {
+          "count": 131,
+          "generated": 165,
+          "patches": 4,
+          "generationMs": 15.512499958276749
+        },
+        {
+          "count": 87,
+          "generated": 128,
+          "patches": 4,
+          "generationMs": 34.80287501588464
+        },
+        {
+          "count": 117,
+          "generated": 187,
+          "patches": 4,
+          "generationMs": 15.981916047167033
+        },
+        {
+          "count": 165,
+          "generated": 205,
+          "patches": 4,
+          "generationMs": 33.00600004149601
+        },
+        {
+          "count": 78,
+          "generated": 109,
+          "patches": 4,
+          "generationMs": 62.113249965477735
+        },
+        {
+          "count": 116,
+          "generated": 144,
+          "patches": 4,
+          "generationMs": 80.92320803552866
+        }
+      ],
+      "seconds": 4.2964844580274075,
+      "rssHighWaterBytes": 498155520,
+      "mpsAllocatedBytes": 51349504
+    },
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 5.856706416001543,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 27,
+      "budget": {
+        "required": 30720,
+        "initial_capacity": 2528,
+        "limit": 27,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 30720,
+      "remaining": 15095,
+      "quality": 0.252799928188324,
+      "depthPenalty": 0.17437640825907388,
+      "masks": [
+        {
+          "count": 343,
+          "generated": 1229,
+          "patches": 2,
+          "generationMs": 501.57312501687557
+        },
+        {
+          "count": 230,
+          "generated": 1266,
+          "patches": 2,
+          "generationMs": 170.73429096490145
+        },
+        {
+          "count": 92,
+          "generated": 1311,
+          "patches": 1,
+          "generationMs": 379.1734999977052
+        },
+        {
+          "count": 169,
+          "generated": 1367,
+          "patches": 2,
+          "generationMs": 95.2295419992879
+        },
+        {
+          "count": 268,
+          "generated": 1424,
+          "patches": 3,
+          "generationMs": 46.0504160146229
+        },
+        {
+          "count": 201,
+          "generated": 1481,
+          "patches": 2,
+          "generationMs": 207.97337498515844
+        },
+        {
+          "count": 244,
+          "generated": 1549,
+          "patches": 2,
+          "generationMs": 63.89266700716689
+        },
+        {
+          "count": 146,
+          "generated": 1216,
+          "patches": 1,
+          "generationMs": 224.28200003923848
+        },
+        {
+          "count": 515,
+          "generated": 1708,
+          "patches": 2,
+          "generationMs": 50.56916695320979
+        },
+        {
+          "count": 343,
+          "generated": 1782,
+          "patches": 2,
+          "generationMs": 63.331999990623444
+        },
+        {
+          "count": 132,
+          "generated": 1878,
+          "patches": 1,
+          "generationMs": 58.24129201937467
+        },
+        {
+          "count": 259,
+          "generated": 2003,
+          "patches": 1,
+          "generationMs": 80.54645895026624
+        },
+        {
+          "count": 149,
+          "generated": 2137,
+          "patches": 1,
+          "generationMs": 59.840666013769805
+        },
+        {
+          "count": 122,
+          "generated": 2303,
+          "patches": 1,
+          "generationMs": 35.434374993201345
+        },
+        {
+          "count": 241,
+          "generated": 2501,
+          "patches": 1,
+          "generationMs": 85.43929195730016
+        },
+        {
+          "count": 122,
+          "generated": 2727,
+          "patches": 1,
+          "generationMs": 83.67370796622708
+        },
+        {
+          "count": 129,
+          "generated": 2262,
+          "patches": 1,
+          "generationMs": 163.89541700482368
+        },
+        {
+          "count": 180,
+          "generated": 3377,
+          "patches": 1,
+          "generationMs": 165.3029999579303
+        },
+        {
+          "count": 212,
+          "generated": 3834,
+          "patches": 1,
+          "generationMs": 131.60037499619648
+        },
+        {
+          "count": 477,
+          "generated": 4438,
+          "patches": 1,
+          "generationMs": 38.15891599515453
+        },
+        {
+          "count": 254,
+          "generated": 5230,
+          "patches": 2,
+          "generationMs": 62.739500019233674
+        },
+        {
+          "count": 183,
+          "generated": 3236,
+          "patches": 1,
+          "generationMs": 141.78395899944007
+        },
+        {
+          "count": 963,
+          "generated": 8570,
+          "patches": 3,
+          "generationMs": 57.68070899648592
+        },
+        {
+          "count": 2199,
+          "generated": 12373,
+          "patches": 3,
+          "generationMs": 59.42995799705386
+        },
+        {
+          "count": 2532,
+          "generated": 22169,
+          "patches": 2,
+          "generationMs": 61.21533300029114
+        },
+        {
+          "count": 2474,
+          "generated": 20015,
+          "patches": 2,
+          "generationMs": 42.32095798943192
+        },
+        {
+          "count": 2446,
+          "generated": 17541,
+          "patches": 2,
+          "generationMs": 48.05470799328759
+        }
+      ],
+      "seconds": 6.047378542018123,
+      "rssHighWaterBytes": 498155520,
+      "mpsAllocatedBytes": 221356800
+    },
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 5.856706416001543,
+      "operation": "add",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 41,
+      "budget": {
+        "required": 6144,
+        "initial_capacity": 316,
+        "limit": 41,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 6144,
+      "remaining": 674,
+      "quality": 0.3067655563354492,
+      "depthPenalty": 0.11808268229166667,
+      "masks": [
+        {
+          "count": 127,
+          "generated": 158,
+          "patches": 4,
+          "generationMs": 34.32433295529336
+        },
+        {
+          "count": 82,
+          "generated": 159,
+          "patches": 4,
+          "generationMs": 38.019917032215744
+        },
+        {
+          "count": 109,
+          "generated": 161,
+          "patches": 4,
+          "generationMs": 43.38441597064957
+        },
+        {
+          "count": 103,
+          "generated": 162,
+          "patches": 4,
+          "generationMs": 74.8266670270823
+        },
+        {
+          "count": 78,
+          "generated": 164,
+          "patches": 4,
+          "generationMs": 38.19704201305285
+        },
+        {
+          "count": 92,
+          "generated": 167,
+          "patches": 4,
+          "generationMs": 38.03766600321978
+        },
+        {
+          "count": 129,
+          "generated": 169,
+          "patches": 4,
+          "generationMs": 48.238374991342425
+        },
+        {
+          "count": 91,
+          "generated": 170,
+          "patches": 4,
+          "generationMs": 89.32591701159254
+        },
+        {
+          "count": 150,
+          "generated": 173,
+          "patches": 4,
+          "generationMs": 47.01820795889944
+        },
+        {
+          "count": 85,
+          "generated": 173,
+          "patches": 4,
+          "generationMs": 40.05904099904001
+        },
+        {
+          "count": 81,
+          "generated": 132,
+          "patches": 4,
+          "generationMs": 97.69999998388812
+        },
+        {
+          "count": 125,
+          "generated": 180,
+          "patches": 4,
+          "generationMs": 36.71183402184397
+        },
+        {
+          "count": 132,
+          "generated": 182,
+          "patches": 4,
+          "generationMs": 24.59229197120294
+        },
+        {
+          "count": 132,
+          "generated": 184,
+          "patches": 4,
+          "generationMs": 85.06841701455414
+        },
+        {
+          "count": 124,
+          "generated": 140,
+          "patches": 4,
+          "generationMs": 112.42158297682181
+        },
+        {
+          "count": 134,
+          "generated": 188,
+          "patches": 4,
+          "generationMs": 41.52216698275879
+        },
+        {
+          "count": 79,
+          "generated": 142,
+          "patches": 4,
+          "generationMs": 77.13808299740776
+        },
+        {
+          "count": 78,
+          "generated": 98,
+          "patches": 4,
+          "generationMs": 89.14266596548259
+        },
+        {
+          "count": 43,
+          "generated": 70,
+          "patches": 4,
+          "generationMs": 104.12820801138878
+        },
+        {
+          "count": 107,
+          "generated": 157,
+          "patches": 4,
+          "generationMs": 104.10812502959743
+        },
+        {
+          "count": 137,
+          "generated": 214,
+          "patches": 4,
+          "generationMs": 85.03912499872968
+        },
+        {
+          "count": 97,
+          "generated": 219,
+          "patches": 4,
+          "generationMs": 74.1798750241287
+        },
+        {
+          "count": 85,
+          "generated": 113,
+          "patches": 4,
+          "generationMs": 82.53424998838454
+        },
+        {
+          "count": 47,
+          "generated": 82,
+          "patches": 4,
+          "generationMs": 95.95791704487056
+        },
+        {
+          "count": 114,
+          "generated": 185,
+          "patches": 4,
+          "generationMs": 110.70808296790347
+        },
+        {
+          "count": 146,
+          "generated": 256,
+          "patches": 4,
+          "generationMs": 33.19666703464463
+        },
+        {
+          "count": 65,
+          "generated": 93,
+          "patches": 4,
+          "generationMs": 91.58183401450515
+        },
+        {
+          "count": 53,
+          "generated": 98,
+          "patches": 4,
+          "generationMs": 98.08858303586021
+        },
+        {
+          "count": 66,
+          "generated": 106,
+          "patches": 4,
+          "generationMs": 112.05629201140255
+        },
+        {
+          "count": 108,
+          "generated": 163,
+          "patches": 4,
+          "generationMs": 84.97849997365847
+        },
+        {
+          "count": 216,
+          "generated": 350,
+          "patches": 4,
+          "generationMs": 34.274583973456174
+        },
+        {
+          "count": 219,
+          "generated": 367,
+          "patches": 4,
+          "generationMs": 38.54395798407495
+        },
+        {
+          "count": 142,
+          "generated": 194,
+          "patches": 4,
+          "generationMs": 91.49241703562438
+        },
+        {
+          "count": 132,
+          "generated": 214,
+          "patches": 4,
+          "generationMs": 88.8842080021277
+        },
+        {
+          "count": 274,
+          "generated": 488,
+          "patches": 4,
+          "generationMs": 82.85216602962464
+        },
+        {
+          "count": 340,
+          "generated": 541,
+          "patches": 4,
+          "generationMs": 102.848082955461
+        },
+        {
+          "count": 323,
+          "generated": 608,
+          "patches": 4,
+          "generationMs": 50.44741596793756
+        },
+        {
+          "count": 152,
+          "generated": 188,
+          "patches": 4,
+          "generationMs": 110.65512499772012
+        },
+        {
+          "count": 148,
+          "generated": 168,
+          "patches": 4,
+          "generationMs": 110.94220902305096
+        },
+        {
+          "count": 198,
+          "generated": 300,
+          "patches": 4,
+          "generationMs": 84.02404200751334
+        },
+        {
+          "count": 327,
+          "generated": 500,
+          "patches": 4,
+          "generationMs": 119.91866701282561
+        }
+      ],
+      "seconds": 5.483199374983087,
+      "rssHighWaterBytes": 498155520,
+      "mpsAllocatedBytes": 221537536
+    },
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 7.5664965840405785,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 12,
+      "budget": {
+        "required": 4438,
+        "initial_capacity": 960,
+        "limit": 12,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 4438,
+      "remaining": 5,
+      "quality": 0.13803106546401978,
+      "depthPenalty": 0.0,
+      "masks": [
+        {
+          "count": 368,
+          "generated": 444,
+          "patches": 4,
+          "generationMs": 600.815917016007
+        },
+        {
+          "count": 253,
+          "generated": 453,
+          "patches": 4,
+          "generationMs": 43.51758403936401
+        },
+        {
+          "count": 307,
+          "generated": 478,
+          "patches": 4,
+          "generationMs": 26.674875000026077
+        },
+        {
+          "count": 426,
+          "generated": 502,
+          "patches": 4,
+          "generationMs": 32.63166703982279
+        },
+        {
+          "count": 353,
+          "generated": 514,
+          "patches": 4,
+          "generationMs": 40.71625001961365
+        },
+        {
+          "count": 508,
+          "generated": 547,
+          "patches": 4,
+          "generationMs": 62.680583039764315
+        },
+        {
+          "count": 428,
+          "generated": 556,
+          "patches": 4,
+          "generationMs": 32.733375031966716
+        },
+        {
+          "count": 509,
+          "generated": 599,
+          "patches": 4,
+          "generationMs": 41.575832990929484
+        },
+        {
+          "count": 598,
+          "generated": 643,
+          "patches": 4,
+          "generationMs": 27.906291012186557
+        },
+        {
+          "count": 580,
+          "generated": 688,
+          "patches": 4,
+          "generationMs": 35.305958008393645
+        },
+        {
+          "count": 97,
+          "generated": 108,
+          "patches": 4,
+          "generationMs": 20.241082995198667
+        },
+        {
+          "count": 6,
+          "generated": 11,
+          "patches": 1,
+          "generationMs": 47.388667007908225
+        }
+      ],
+      "seconds": 2.653990458988119,
+      "rssHighWaterBytes": 501235712,
+      "mpsAllocatedBytes": 94902784
+    },
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 7.5664965840405785,
+      "operation": "add",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 20,
+      "budget": {
+        "required": 1422,
+        "initial_capacity": 160,
+        "limit": 20,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 1422,
+      "remaining": 2,
+      "quality": 0.11921094357967377,
+      "depthPenalty": 0.00012090903229002796,
+      "masks": [
+        {
+          "count": 49,
+          "generated": 79,
+          "patches": 4,
+          "generationMs": 35.71079199900851
+        },
+        {
+          "count": 47,
+          "generated": 81,
+          "patches": 4,
+          "generationMs": 35.39841598831117
+        },
+        {
+          "count": 58,
+          "generated": 83,
+          "patches": 4,
+          "generationMs": 36.14791703876108
+        },
+        {
+          "count": 63,
+          "generated": 85,
+          "patches": 4,
+          "generationMs": 36.3876250339672
+        },
+        {
+          "count": 74,
+          "generated": 87,
+          "patches": 4,
+          "generationMs": 33.90437498455867
+        },
+        {
+          "count": 79,
+          "generated": 87,
+          "patches": 4,
+          "generationMs": 34.05408305115998
+        },
+        {
+          "count": 79,
+          "generated": 88,
+          "patches": 4,
+          "generationMs": 63.25179198756814
+        },
+        {
+          "count": 60,
+          "generated": 89,
+          "patches": 4,
+          "generationMs": 73.35316704120487
+        },
+        {
+          "count": 82,
+          "generated": 92,
+          "patches": 4,
+          "generationMs": 60.870583984069526
+        },
+        {
+          "count": 87,
+          "generated": 93,
+          "patches": 4,
+          "generationMs": 103.9838750148192
+        },
+        {
+          "count": 71,
+          "generated": 93,
+          "patches": 4,
+          "generationMs": 40.23024998605251
+        },
+        {
+          "count": 86,
+          "generated": 97,
+          "patches": 4,
+          "generationMs": 49.424791999626905
+        },
+        {
+          "count": 72,
+          "generated": 98,
+          "patches": 4,
+          "generationMs": 34.041957987938076
+        },
+        {
+          "count": 83,
+          "generated": 103,
+          "patches": 4,
+          "generationMs": 43.26758295064792
+        },
+        {
+          "count": 101,
+          "generated": 108,
+          "patches": 4,
+          "generationMs": 48.96775004453957
+        },
+        {
+          "count": 94,
+          "generated": 111,
+          "patches": 4,
+          "generationMs": 38.01800002111122
+        },
+        {
+          "count": 87,
+          "generated": 119,
+          "patches": 4,
+          "generationMs": 42.35541698290035
+        },
+        {
+          "count": 54,
+          "generated": 75,
+          "patches": 4,
+          "generationMs": 70.13541698688641
+        },
+        {
+          "count": 84,
+          "generated": 96,
+          "patches": 4,
+          "generationMs": 20.30112501233816
+        },
+        {
+          "count": 10,
+          "generated": 12,
+          "patches": 1,
+          "generationMs": 17.816166044212878
+        }
+      ],
+      "seconds": 2.4627635839860886,
+      "rssHighWaterBytes": 501235712,
+      "mpsAllocatedBytes": 94915840
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 0.664571207948029,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 9,
+      "budget": {
+        "required": 3072,
+        "initial_capacity": 880,
+        "limit": 9,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 3072,
+      "remaining": 112,
+      "quality": 0.4737764596939087,
+      "depthPenalty": 0.05366374055544535,
+      "masks": [
+        {
+          "count": 523,
+          "generated": 658,
+          "patches": 4,
+          "generationMs": 38.244583003688604
+        },
+        {
+          "count": 186,
+          "generated": 309,
+          "patches": 4,
+          "generationMs": 30.558124999515712
+        },
+        {
+          "count": 230,
+          "generated": 366,
+          "patches": 4,
+          "generationMs": 32.39491704152897
+        },
+        {
+          "count": 235,
+          "generated": 492,
+          "patches": 3,
+          "generationMs": 38.18487498210743
+        },
+        {
+          "count": 234,
+          "generated": 737,
+          "patches": 3,
+          "generationMs": 50.58495799312368
+        },
+        {
+          "count": 456,
+          "generated": 1060,
+          "patches": 3,
+          "generationMs": 54.89974998636171
+        },
+        {
+          "count": 636,
+          "generated": 1171,
+          "patches": 3,
+          "generationMs": 30.507125018630177
+        },
+        {
+          "count": 285,
+          "generated": 572,
+          "patches": 4,
+          "generationMs": 19.239666988141835
+        },
+        {
+          "count": 175,
+          "generated": 287,
+          "patches": 4,
+          "generationMs": 32.57616702467203
+        }
+      ],
+      "seconds": 0.814938124967739,
+      "rssHighWaterBytes": 575193088,
+      "mpsAllocatedBytes": 54078464
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "L",
+      "shape": [
+        4,
+        48,
+        64
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 16,
+      "setupSeconds": 0.664571207948029,
+      "operation": "add",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 30,
+      "budget": {
+        "required": 3072,
+        "initial_capacity": 220,
+        "limit": 30,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 3072,
+      "remaining": 22,
+      "quality": 0.5220035314559937,
+      "depthPenalty": 0.15983072916666666,
+      "masks": [
+        {
+          "count": 153,
+          "generated": 165,
+          "patches": 4,
+          "generationMs": 33.40816596755758
+        },
+        {
+          "count": 53,
+          "generated": 79,
+          "patches": 4,
+          "generationMs": 33.64837501430884
+        },
+        {
+          "count": 72,
+          "generated": 86,
+          "patches": 4,
+          "generationMs": 31.788958003744483
+        },
+        {
+          "count": 103,
+          "generated": 103,
+          "patches": 4,
+          "generationMs": 16.505958046764135
+        },
+        {
+          "count": 84,
+          "generated": 132,
+          "patches": 4,
+          "generationMs": 20.02399996854365
+        },
+        {
+          "count": 96,
+          "generated": 145,
+          "patches": 4,
+          "generationMs": 13.047832995653152
+        },
+        {
+          "count": 74,
+          "generated": 112,
+          "patches": 4,
+          "generationMs": 17.674250004347414
+        },
+        {
+          "count": 93,
+          "generated": 119,
+          "patches": 4,
+          "generationMs": 19.498542009387165
+        },
+        {
+          "count": 133,
+          "generated": 153,
+          "patches": 4,
+          "generationMs": 86.0177080030553
+        },
+        {
+          "count": 56,
+          "generated": 62,
+          "patches": 4,
+          "generationMs": 20.9952499717474
+        },
+        {
+          "count": 94,
+          "generated": 135,
+          "patches": 4,
+          "generationMs": 19.543665985111147
+        },
+        {
+          "count": 81,
+          "generated": 109,
+          "patches": 4,
+          "generationMs": 22.91449997574091
+        },
+        {
+          "count": 89,
+          "generated": 111,
+          "patches": 4,
+          "generationMs": 30.542250024154782
+        },
+        {
+          "count": 71,
+          "generated": 113,
+          "patches": 4,
+          "generationMs": 22.519916004966944
+        },
+        {
+          "count": 73,
+          "generated": 85,
+          "patches": 4,
+          "generationMs": 47.28112503653392
+        },
+        {
+          "count": 78,
+          "generated": 120,
+          "patches": 4,
+          "generationMs": 52.891707979142666
+        },
+        {
+          "count": 94,
+          "generated": 150,
+          "patches": 4,
+          "generationMs": 57.31920897960663
+        },
+        {
+          "count": 68,
+          "generated": 109,
+          "patches": 4,
+          "generationMs": 51.251541008241475
+        },
+        {
+          "count": 132,
+          "generated": 152,
+          "patches": 4,
+          "generationMs": 24.18533305171877
+        },
+        {
+          "count": 188,
+          "generated": 233,
+          "patches": 4,
+          "generationMs": 26.021416997537017
+        },
+        {
+          "count": 130,
+          "generated": 196,
+          "patches": 4,
+          "generationMs": 38.406790990848094
+        },
+        {
+          "count": 34,
+          "generated": 41,
+          "patches": 4,
+          "generationMs": 93.27099996153265
+        },
+        {
+          "count": 158,
+          "generated": 216,
+          "patches": 4,
+          "generationMs": 88.27945799566805
+        },
+        {
+          "count": 25,
+          "generated": 27,
+          "patches": 3,
+          "generationMs": 74.75454203085974
+        },
+        {
+          "count": 111,
+          "generated": 172,
+          "patches": 4,
+          "generationMs": 51.226667012088
+        },
+        {
+          "count": 233,
+          "generated": 264,
+          "patches": 4,
+          "generationMs": 25.541000009980053
+        },
+        {
+          "count": 106,
+          "generated": 118,
+          "patches": 4,
+          "generationMs": 34.86520901788026
+        },
+        {
+          "count": 153,
+          "generated": 176,
+          "patches": 4,
+          "generationMs": 55.502458999399096
+        },
+        {
+          "count": 194,
+          "generated": 237,
+          "patches": 4,
+          "generationMs": 15.97916695754975
+        },
+        {
+          "count": 21,
+          "generated": 24,
+          "patches": 2,
+          "generationMs": 66.3511659950018
+        }
+      ],
+      "seconds": 2.264834959001746,
+      "rssHighWaterBytes": 604094464,
+      "mpsAllocatedBytes": 54127872
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 2.6840982920257375,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 27,
+      "budget": {
+        "required": 30720,
+        "initial_capacity": 2528,
+        "limit": 27,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 30720,
+      "remaining": 14750,
+      "quality": 0.2413494884967804,
+      "depthPenalty": 0.18065345287322998,
+      "masks": [
+        {
+          "count": 288,
+          "generated": 905,
+          "patches": 2,
+          "generationMs": 42.223500029649585
+        },
+        {
+          "count": 175,
+          "generated": 1010,
+          "patches": 2,
+          "generationMs": 54.6088750124909
+        },
+        {
+          "count": 142,
+          "generated": 901,
+          "patches": 2,
+          "generationMs": 41.759332991205156
+        },
+        {
+          "count": 231,
+          "generated": 1386,
+          "patches": 2,
+          "generationMs": 64.88729099510238
+        },
+        {
+          "count": 263,
+          "generated": 1401,
+          "patches": 3,
+          "generationMs": 45.8637080155313
+        },
+        {
+          "count": 103,
+          "generated": 1287,
+          "patches": 1,
+          "generationMs": 44.5146249840036
+        },
+        {
+          "count": 192,
+          "generated": 1702,
+          "patches": 2,
+          "generationMs": 46.945708978455514
+        },
+        {
+          "count": 309,
+          "generated": 2172,
+          "patches": 2,
+          "generationMs": 45.39566702442244
+        },
+        {
+          "count": 80,
+          "generated": 1293,
+          "patches": 1,
+          "generationMs": 33.548499981407076
+        },
+        {
+          "count": 248,
+          "generated": 1075,
+          "patches": 3,
+          "generationMs": 44.4903330062516
+        },
+        {
+          "count": 239,
+          "generated": 1726,
+          "patches": 2,
+          "generationMs": 42.377666977699846
+        },
+        {
+          "count": 194,
+          "generated": 1428,
+          "patches": 2,
+          "generationMs": 59.71941695315763
+        },
+        {
+          "count": 97,
+          "generated": 2237,
+          "patches": 1,
+          "generationMs": 62.078833987470716
+        },
+        {
+          "count": 180,
+          "generated": 2637,
+          "patches": 1,
+          "generationMs": 89.96716601541266
+        },
+        {
+          "count": 83,
+          "generated": 1545,
+          "patches": 1,
+          "generationMs": 24.84270802233368
+        },
+        {
+          "count": 139,
+          "generated": 1622,
+          "patches": 2,
+          "generationMs": 82.38870900822803
+        },
+        {
+          "count": 323,
+          "generated": 4334,
+          "patches": 1,
+          "generationMs": 55.59545801952481
+        },
+        {
+          "count": 69,
+          "generated": 2668,
+          "patches": 1,
+          "generationMs": 92.49391598859802
+        },
+        {
+          "count": 558,
+          "generated": 5070,
+          "patches": 2,
+          "generationMs": 39.4187499769032
+        },
+        {
+          "count": 562,
+          "generated": 5774,
+          "patches": 3,
+          "generationMs": 44.16324995690957
+        },
+        {
+          "count": 169,
+          "generated": 3151,
+          "patches": 1,
+          "generationMs": 47.191290999762714
+        },
+        {
+          "count": 520,
+          "generated": 7096,
+          "patches": 2,
+          "generationMs": 49.5842500240542
+        },
+        {
+          "count": 1348,
+          "generated": 10472,
+          "patches": 3,
+          "generationMs": 56.186625035479665
+        },
+        {
+          "count": 2275,
+          "generated": 13277,
+          "patches": 2,
+          "generationMs": 46.10012500779703
+        },
+        {
+          "count": 2446,
+          "generated": 17947,
+          "patches": 2,
+          "generationMs": 67.30837502982467
+        },
+        {
+          "count": 2391,
+          "generated": 19487,
+          "patches": 2,
+          "generationMs": 32.61333401314914
+        },
+        {
+          "count": 2346,
+          "generated": 17096,
+          "patches": 2,
+          "generationMs": 58.55675000930205
+        }
+      ],
+      "seconds": 3.0562198749976233,
+      "rssHighWaterBytes": 672710656,
+      "mpsAllocatedBytes": 214384384
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "XL",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "sunSamples": 12,
+      "contextBuildings": 16,
+      "setupSeconds": 2.6840982920257375,
+      "operation": "add",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 41,
+      "budget": {
+        "required": 6144,
+        "initial_capacity": 316,
+        "limit": 41,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 6144,
+      "remaining": 883,
+      "quality": 0.30992427468299866,
+      "depthPenalty": 0.11808268229166667,
+      "masks": [
+        {
+          "count": 99,
+          "generated": 116,
+          "patches": 4,
+          "generationMs": 33.4069580421783
+        },
+        {
+          "count": 59,
+          "generated": 127,
+          "patches": 4,
+          "generationMs": 59.21870900783688
+        },
+        {
+          "count": 68,
+          "generated": 111,
+          "patches": 4,
+          "generationMs": 32.18037495389581
+        },
+        {
+          "count": 123,
+          "generated": 167,
+          "patches": 4,
+          "generationMs": 67.32450000708923
+        },
+        {
+          "count": 95,
+          "generated": 163,
+          "patches": 4,
+          "generationMs": 32.2569590061903
+        },
+        {
+          "count": 80,
+          "generated": 146,
+          "patches": 4,
+          "generationMs": 42.58362500695512
+        },
+        {
+          "count": 110,
+          "generated": 187,
+          "patches": 4,
+          "generationMs": 38.15687500173226
+        },
+        {
+          "count": 156,
+          "generated": 230,
+          "patches": 4,
+          "generationMs": 51.66329100029543
+        },
+        {
+          "count": 106,
+          "generated": 131,
+          "patches": 4,
+          "generationMs": 41.12412501126528
+        },
+        {
+          "count": 75,
+          "generated": 104,
+          "patches": 4,
+          "generationMs": 54.14399999426678
+        },
+        {
+          "count": 110,
+          "generated": 162,
+          "patches": 4,
+          "generationMs": 53.60629200004041
+        },
+        {
+          "count": 83,
+          "generated": 127,
+          "patches": 4,
+          "generationMs": 42.48458397341892
+        },
+        {
+          "count": 163,
+          "generated": 190,
+          "patches": 4,
+          "generationMs": 52.00841696932912
+        },
+        {
+          "count": 107,
+          "generated": 175,
+          "patches": 4,
+          "generationMs": 36.55637498013675
+        },
+        {
+          "count": 107,
+          "generated": 190,
+          "patches": 4,
+          "generationMs": 53.17891598679125
+        },
+        {
+          "count": 103,
+          "generated": 185,
+          "patches": 4,
+          "generationMs": 36.7068339837715
+        },
+        {
+          "count": 31,
+          "generated": 40,
+          "patches": 4,
+          "generationMs": 171.0654590278864
+        },
+        {
+          "count": 124,
+          "generated": 163,
+          "patches": 4,
+          "generationMs": 102.3292500176467
+        },
+        {
+          "count": 64,
+          "generated": 136,
+          "patches": 4,
+          "generationMs": 144.84512497438118
+        },
+        {
+          "count": 65,
+          "generated": 94,
+          "patches": 4,
+          "generationMs": 101.11337498528883
+        },
+        {
+          "count": 138,
+          "generated": 171,
+          "patches": 4,
+          "generationMs": 93.81125000072643
+        },
+        {
+          "count": 230,
+          "generated": 352,
+          "patches": 4,
+          "generationMs": 43.014208029489964
+        },
+        {
+          "count": 94,
+          "generated": 253,
+          "patches": 4,
+          "generationMs": 78.56995897600427
+        },
+        {
+          "count": 154,
+          "generated": 232,
+          "patches": 4,
+          "generationMs": 34.64895801153034
+        },
+        {
+          "count": 146,
+          "generated": 220,
+          "patches": 4,
+          "generationMs": 93.96337496582419
+        },
+        {
+          "count": 103,
+          "generated": 136,
+          "patches": 4,
+          "generationMs": 92.94387500267476
+        },
+        {
+          "count": 92,
+          "generated": 123,
+          "patches": 4,
+          "generationMs": 106.63095797644928
+        },
+        {
+          "count": 102,
+          "generated": 154,
+          "patches": 4,
+          "generationMs": 45.44704197905958
+        },
+        {
+          "count": 108,
+          "generated": 190,
+          "patches": 4,
+          "generationMs": 116.79941596230492
+        },
+        {
+          "count": 238,
+          "generated": 446,
+          "patches": 4,
+          "generationMs": 60.01929199555889
+        },
+        {
+          "count": 134,
+          "generated": 259,
+          "patches": 4,
+          "generationMs": 87.39979099482298
+        },
+        {
+          "count": 212,
+          "generated": 374,
+          "patches": 4,
+          "generationMs": 42.26083296816796
+        },
+        {
+          "count": 149,
+          "generated": 249,
+          "patches": 4,
+          "generationMs": 130.43037499301136
+        },
+        {
+          "count": 129,
+          "generated": 213,
+          "patches": 4,
+          "generationMs": 31.124708999413997
+        },
+        {
+          "count": 200,
+          "generated": 297,
+          "patches": 4,
+          "generationMs": 53.14566602464765
+        },
+        {
+          "count": 334,
+          "generated": 660,
+          "patches": 4,
+          "generationMs": 61.34941702475771
+        },
+        {
+          "count": 109,
+          "generated": 175,
+          "patches": 4,
+          "generationMs": 118.33258299157023
+        },
+        {
+          "count": 291,
+          "generated": 500,
+          "patches": 4,
+          "generationMs": 131.75299996510148
+        },
+        {
+          "count": 130,
+          "generated": 257,
+          "patches": 4,
+          "generationMs": 165.68825003923848
+        },
+        {
+          "count": 120,
+          "generated": 264,
+          "patches": 4,
+          "generationMs": 112.2497080359608
+        },
+        {
+          "count": 120,
+          "generated": 231,
+          "patches": 4,
+          "generationMs": 100.20383296068758
+        }
+      ],
+      "seconds": 5.52564337500371,
+      "rssHighWaterBytes": 702824448,
+      "mpsAllocatedBytes": 214587648
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 7.71605308301514,
+      "operation": "subtract",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 12,
+      "budget": {
+        "required": 4438,
+        "initial_capacity": 960,
+        "limit": 12,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 4438,
+      "remaining": 5,
+      "quality": 0.1339593082666397,
+      "depthPenalty": 0.0,
+      "masks": [
+        {
+          "count": 295,
+          "generated": 328,
+          "patches": 4,
+          "generationMs": 33.282209013123065
+        },
+        {
+          "count": 369,
+          "generated": 452,
+          "patches": 4,
+          "generationMs": 22.791416035033762
+        },
+        {
+          "count": 601,
+          "generated": 698,
+          "patches": 4,
+          "generationMs": 33.051665988750756
+        },
+        {
+          "count": 522,
+          "generated": 596,
+          "patches": 4,
+          "generationMs": 49.10283401841298
+        },
+        {
+          "count": 456,
+          "generated": 568,
+          "patches": 4,
+          "generationMs": 69.38662502216175
+        },
+        {
+          "count": 439,
+          "generated": 524,
+          "patches": 4,
+          "generationMs": 58.831666014157236
+        },
+        {
+          "count": 300,
+          "generated": 355,
+          "patches": 4,
+          "generationMs": 38.71033398900181
+        },
+        {
+          "count": 817,
+          "generated": 817,
+          "patches": 4,
+          "generationMs": 32.575667020864785
+        },
+        {
+          "count": 263,
+          "generated": 302,
+          "patches": 4,
+          "generationMs": 41.747791052330285
+        },
+        {
+          "count": 291,
+          "generated": 376,
+          "patches": 4,
+          "generationMs": 35.814750008285046
+        },
+        {
+          "count": 75,
+          "generated": 85,
+          "patches": 4,
+          "generationMs": 32.719124981667846
+        },
+        {
+          "count": 5,
+          "generated": 7,
+          "patches": 1,
+          "generationMs": 34.29679200053215
+        }
+      ],
+      "seconds": 2.7827016249648295,
+      "rssHighWaterBytes": 702824448,
+      "mpsAllocatedBytes": 92868352
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "case": "Barcelona",
+      "shape": [
+        6,
+        79,
+        51
+      ],
+      "sunSamples": 8,
+      "contextBuildings": 29,
+      "setupSeconds": 7.71605308301514,
+      "operation": "add",
+      "success": false,
+      "termination": "step_budget_exhausted",
+      "steps": 20,
+      "budget": {
+        "required": 1422,
+        "initial_capacity": 160,
+        "limit": 20,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 1422,
+      "remaining": 4,
+      "quality": 0.11676253378391266,
+      "depthPenalty": 0.00012090903229002796,
+      "masks": [
+        {
+          "count": 42,
+          "generated": 58,
+          "patches": 4,
+          "generationMs": 60.28504099231213
+        },
+        {
+          "count": 64,
+          "generated": 80,
+          "patches": 4,
+          "generationMs": 62.71733297035098
+        },
+        {
+          "count": 78,
+          "generated": 123,
+          "patches": 4,
+          "generationMs": 44.57408294547349
+        },
+        {
+          "count": 96,
+          "generated": 109,
+          "patches": 4,
+          "generationMs": 42.57554200012237
+        },
+        {
+          "count": 67,
+          "generated": 105,
+          "patches": 4,
+          "generationMs": 42.309166979976
+        },
+        {
+          "count": 79,
+          "generated": 99,
+          "patches": 4,
+          "generationMs": 61.28337502013892
+        },
+        {
+          "count": 66,
+          "generated": 67,
+          "patches": 4,
+          "generationMs": 36.906874971464276
+        },
+        {
+          "count": 124,
+          "generated": 143,
+          "patches": 4,
+          "generationMs": 46.03358398890123
+        },
+        {
+          "count": 76,
+          "generated": 76,
+          "patches": 4,
+          "generationMs": 109.4350420171395
+        },
+        {
+          "count": 75,
+          "generated": 103,
+          "patches": 4,
+          "generationMs": 42.04154101898894
+        },
+        {
+          "count": 44,
+          "generated": 56,
+          "patches": 4,
+          "generationMs": 76.14275004016235
+        },
+        {
+          "count": 195,
+          "generated": 240,
+          "patches": 4,
+          "generationMs": 51.42404098296538
+        },
+        {
+          "count": 94,
+          "generated": 116,
+          "patches": 4,
+          "generationMs": 36.290249961894006
+        },
+        {
+          "count": 76,
+          "generated": 88,
+          "patches": 4,
+          "generationMs": 28.878542012535036
+        },
+        {
+          "count": 61,
+          "generated": 67,
+          "patches": 4,
+          "generationMs": 49.183459021151066
+        },
+        {
+          "count": 51,
+          "generated": 57,
+          "patches": 3,
+          "generationMs": 28.731417027302086
+        },
+        {
+          "count": 47,
+          "generated": 66,
+          "patches": 4,
+          "generationMs": 51.614750002045184
+        },
+        {
+          "count": 63,
+          "generated": 68,
+          "patches": 4,
+          "generationMs": 96.7401250381954
+        },
+        {
+          "count": 15,
+          "generated": 20,
+          "patches": 2,
+          "generationMs": 35.610291990451515
+        },
+        {
+          "count": 5,
+          "generated": 5,
+          "patches": 1,
+          "generationMs": 45.40712502785027
+        }
+      ],
+      "seconds": 2.447445790981874,
+      "rssHighWaterBytes": 702824448,
+      "mpsAllocatedBytes": 92894464
+    }
+  ],
+  "hashes": {
+    "tools/workload_device.py": "7aa17e2658c3dbb2adffff35fb9e2d7135737acc0bbbf9b2498e2a4bf1dcc5ef",
+    "voxelform/__init__.py": "1fa44619f275ddedca920f9137e5fc50dd8213229442b6c1a59f45d050016d0c",
+    "voxelform/actions.py": "13e1601b81eff027cf7efaea790a41c532df9809b5947bf480e09d31f7d66139",
+    "voxelform/context.py": "b85d8a1021b900da9d5066ce5f4da18c02559b4d52b29478b6ed0bb79c3a2991",
+    "voxelform/environment.py": "16fb84f2fe1951da4ce463510e6a9a63e5e5da3117fdacb62dca16acddfa0468",
+    "voxelform/fields.py": "afbb4d34f6a562fe23a1055518c8330abe1d20f107d3f74b45713938092cb1d4",
+    "voxelform/patch_policy.py": "b706da3b1dc26f39ecad3fc1cfecc2629e4e30b2fedc8e01832abc1d326624e1",
+    "voxelform/policy.py": "15dcbb163b0c449e8caa08ab153d57882e1e7989b31a84fae71400d8570822a9",
+    "voxelform/server.py": "baef732c61b3ce9bc8e97ca81151d85fb5d77cd1effc3e97dbb23b875535fe33",
+    "voxelform/session.py": "6e3efa1efc67af0cb4e641a0a04fed1bd3aec896792ef0e7524d78aa64573f5c",
+    "voxelform/shadows.py": "631d45a257bde673c7fb1429bd82239a9ab2b80441f6e88b6410b700e1da9dfc",
+    "voxelform/workload.py": "828ccc0fd1c51c28e48e319520f7b1f88af6843e64359a8cdf960185080a4a0b"
+  },
+  "training": [
+    {
+      "device": "mps",
+      "allocation": "quota",
+      "updates": 1,
+      "operation": "subtract",
+      "success": true,
+      "termination": "far_reached",
+      "steps": 2,
+      "budget": {
+        "required": 192,
+        "initial_capacity": 208,
+        "limit": 4,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 192,
+      "remaining": 0,
+      "quality": 0.6768484711647034,
+      "depthPenalty": 0.0,
+      "masks": [
+        {
+          "count": 96,
+          "generated": 96,
+          "patches": 2,
+          "generationMs": 140.7851250260137
+        },
+        {
+          "count": 96,
+          "generated": 96,
+          "patches": 2,
+          "generationMs": 19.996584043838084
+        }
+      ],
+      "seconds": 1.2053874589619227
+    },
+    {
+      "device": "mps",
+      "allocation": "learned",
+      "updates": 1,
+      "operation": "subtract",
+      "success": true,
+      "termination": "far_reached",
+      "steps": 3,
+      "budget": {
+        "required": 192,
+        "initial_capacity": 208,
+        "limit": 4,
+        "origin": 0,
+        "margin": 2
+      },
+      "required": 192,
+      "remaining": 0,
+      "quality": 0.6800633072853088,
+      "depthPenalty": 0.0,
+      "masks": [
+        {
+          "count": 101,
+          "generated": 101,
+          "patches": 2,
+          "generationMs": 19.7382090264
+        },
+        {
+          "count": 89,
+          "generated": 91,
+          "patches": 1,
+          "generationMs": 18.59420898836106
+        },
+        {
+          "count": 2,
+          "generated": 2,
+          "patches": 1,
+          "generationMs": 170.07012502290308
+        }
+      ],
+      "seconds": 1.1792000840068795
+    }
+  ]
+}

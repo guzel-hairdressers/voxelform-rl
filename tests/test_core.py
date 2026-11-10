@@ -94,17 +94,21 @@ class FieldsAndLearning(unittest.TestCase):
         self.assertEqual(int(usable_depth_proxy(occupied,air,boundary=dark_boundary).sum()),0)
         dark_boundary[:,0,:]=1
         self.assertGreater(int(usable_depth_proxy(occupied,air,boundary=dark_boundary).sum()),0)
-    def test_edit_undo_preserves_envelope_exactly(self):
+    def test_facade_removal_and_addition_preserve_envelope(self):
         e=Environment((4,12,16),sun_count=4);original=e.occupied.clone()
-        masks,_,valid=e.candidates();idx=int(valid[1:-1].nonzero()[0])+1
-        e.apply(idx,masks);self.assertFalse(torch.equal(original,e.occupied))
-        m,_,_=e.candidates();e.apply(len(m)-1,m);self.assertTrue(torch.equal(original,e.occupied))
+        learner=Learner();action=learner.choose(e,training=False,greedy=True);self.assertIsNotNone(action)
+        size=action.count;e.apply(action);self.assertEqual(int((original!=e.occupied).sum()),size);self.assertGreater(size,1)
+        e.configure_far(e.capacity/e.plot_area)
+        for _ in range(100):
+            if e.terminal:break
+            action=learner.choose(e,training=False,greedy=True);self.assertIsNotNone(action);e.apply(action)
+        self.assertTrue(torch.equal(original,e.occupied))
         self.assertFalse(bool((e.occupied&~e.allowed).any()))
     def test_actor_backprop_and_checkpoint_roundtrip(self):
         torch.manual_seed(9);e=Environment((4,12,16),sun_count=4);learner=Learner(seed=9)
         before=[p.detach().clone() for p in learner.model.actor.parameters()]
         for _ in range(4):
-            a,m=learner.choose(e);q=e.quality.detach().clone();done=e.apply(a,m);learner.record(e.quality-q-.002)
+            action=learner.choose(e);self.assertIsNotNone(action);q=e.quality.detach().clone();done=e.apply(action);learner.record(e.quality-q-.002)
             if done:break
         stats=learner.finish();self.assertGreater(stats['gradientNorm'],0.)
         self.assertTrue(any(not torch.equal(a,b) for a,b in zip(before,learner.model.actor.parameters())))

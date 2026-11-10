@@ -1,0 +1,3292 @@
+{
+  "rows": [
+    {
+      "seed": 123,
+      "trained": false,
+      "feedback": false,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.3673502604166665,
+      "steps": 33,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.16391995549201965,
+      "environment": {
+        "quality": 0.16391995549201965,
+        "retention": 0.3367350399494171,
+        "potentialUsableFraction": 0.01813151128590107,
+        "directSunProxy": 0.589553713798523,
+        "roofOpportunity": 0.6259765625,
+        "noisePrior": 0.37511205673217773,
+        "diffuseFacadeProxy": 0.037843793630599976,
+        "occupiedFloorArea": 20689.0,
+        "potentialUsableArea": 1114.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.936197916666667,
+          "wasFarSatisfied": false,
+          "removed": 392,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.910807291666667,
+          "wasFarSatisfied": false,
+          "removed": 156,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.822916666666667,
+          "wasFarSatisfied": false,
+          "removed": 540,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.784505208333333,
+          "wasFarSatisfied": false,
+          "removed": 236,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.689615885416667,
+          "wasFarSatisfied": false,
+          "removed": 583,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.625,
+          "wasFarSatisfied": false,
+          "removed": 397,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.573404947916667,
+          "wasFarSatisfied": false,
+          "removed": 317,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.611653645833333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 235,
+          "grewAboveInitial": 172
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.556966145833333,
+          "wasFarSatisfied": false,
+          "removed": 336,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.49072265625,
+          "wasFarSatisfied": false,
+          "removed": 407,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.445963541666667,
+          "wasFarSatisfied": false,
+          "removed": 275,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.399576822916667,
+          "wasFarSatisfied": false,
+          "removed": 285,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.399576822916667,
+          "wasFarSatisfied": false,
+          "removed": 92,
+          "added": 92,
+          "grewAboveInitial": 92
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.357584635416667,
+          "wasFarSatisfied": false,
+          "removed": 258,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.357584635416667,
+          "wasFarSatisfied": false,
+          "removed": 67,
+          "added": 67,
+          "grewAboveInitial": 51
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.31298828125,
+          "wasFarSatisfied": false,
+          "removed": 274,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.266764322916667,
+          "wasFarSatisfied": false,
+          "removed": 284,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.185546875,
+          "wasFarSatisfied": false,
+          "removed": 499,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.185546875,
+          "wasFarSatisfied": false,
+          "removed": 156,
+          "added": 156,
+          "grewAboveInitial": 84
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.185546875,
+          "wasFarSatisfied": false,
+          "removed": 84,
+          "added": 84,
+          "grewAboveInitial": 6
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.06591796875,
+          "wasFarSatisfied": false,
+          "removed": 735,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.992838541666667,
+          "wasFarSatisfied": false,
+          "removed": 449,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.894205729166667,
+          "wasFarSatisfied": false,
+          "removed": 606,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.822265625,
+          "wasFarSatisfied": false,
+          "removed": 442,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.683919270833333,
+          "wasFarSatisfied": false,
+          "removed": 850,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.621744791666667,
+          "wasFarSatisfied": false,
+          "removed": 382,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.621744791666667,
+          "wasFarSatisfied": false,
+          "removed": 33,
+          "added": 33,
+          "grewAboveInitial": 5
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.453125,
+          "wasFarSatisfied": false,
+          "removed": 1036,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.2744140625,
+          "wasFarSatisfied": false,
+          "removed": 1098,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.2744140625,
+          "wasFarSatisfied": false,
+          "removed": 22,
+          "added": 22,
+          "grewAboveInitial": 7
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.20166015625,
+          "wasFarSatisfied": false,
+          "removed": 447,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.82861328125,
+          "wasFarSatisfied": false,
+          "removed": 2292,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.3673502604166665,
+          "wasFarSatisfied": false,
+          "removed": 2834,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 2.3695512909907848,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7267335902281509,
+      "highestStorey": 8
+    },
+    {
+      "seed": 123,
+      "trained": false,
+      "feedback": true,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.18408203125,
+      "steps": 26,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.1339929848909378,
+      "environment": {
+        "quality": 0.1339929848909378,
+        "retention": 0.31840819120407104,
+        "potentialUsableFraction": 0.0061848959885537624,
+        "directSunProxy": 0.5503382086753845,
+        "roofOpportunity": 0.50537109375,
+        "noisePrior": 0.37552323937416077,
+        "diffuseFacadeProxy": 0.01784197986125946,
+        "occupiedFloorArea": 19563.0,
+        "potentialUsableArea": 380.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.938639322916667,
+          "wasFarSatisfied": false,
+          "removed": 377,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.904459635416667,
+          "wasFarSatisfied": false,
+          "removed": 210,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.8154296875,
+          "wasFarSatisfied": false,
+          "removed": 547,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.776041666666667,
+          "wasFarSatisfied": false,
+          "removed": 242,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.665201822916667,
+          "wasFarSatisfied": false,
+          "removed": 681,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.54296875,
+          "wasFarSatisfied": false,
+          "removed": 751,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.417643229166667,
+          "wasFarSatisfied": false,
+          "removed": 770,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.462239583333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 274,
+          "grewAboveInitial": 143
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.413899739583333,
+          "wasFarSatisfied": false,
+          "removed": 297,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.303873697916667,
+          "wasFarSatisfied": false,
+          "removed": 676,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.072916666666667,
+          "wasFarSatisfied": false,
+          "removed": 1419,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.701171875,
+          "wasFarSatisfied": false,
+          "removed": 2284,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.701171875,
+          "wasFarSatisfied": false,
+          "removed": 73,
+          "added": 73,
+          "grewAboveInitial": 64
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.701171875,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.297526041666667,
+          "wasFarSatisfied": false,
+          "removed": 2480,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.297526041666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.297526041666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.69921875,
+          "wasFarSatisfied": false,
+          "removed": 3676,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2392578125,
+          "wasFarSatisfied": false,
+          "removed": 2826,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.2392578125,
+          "wasFarSatisfied": false,
+          "removed": 44,
+          "added": 44,
+          "grewAboveInitial": 23
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.27685546875,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 231,
+          "grewAboveInitial": 225
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1611328125,
+          "wasFarSatisfied": false,
+          "removed": 711,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1611328125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1246744791666665,
+          "wasFarSatisfied": false,
+          "removed": 224,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1246744791666665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.10107421875,
+          "wasFarSatisfied": false,
+          "removed": 145,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.0999348958333335,
+          "wasFarSatisfied": false,
+          "removed": 7,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1546223958333335,
+          "wasFarSatisfied": true,
+          "removed": 0,
+          "added": 336,
+          "grewAboveInitial": 315
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1546223958333335,
+          "wasFarSatisfied": false,
+          "removed": 45,
+          "added": 45,
+          "grewAboveInitial": 34
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1546223958333335,
+          "wasFarSatisfied": false,
+          "removed": 77,
+          "added": 77,
+          "grewAboveInitial": 42
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1546223958333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1546223958333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.18408203125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 181,
+          "grewAboveInitial": 118
+        }
+      ],
+      "seconds": 2.9181232919800095,
+      "updates": 0,
+      "learning": {},
+      "reward": -1.010844674938709,
+      "highestStorey": 8
+    },
+    {
+      "seed": 456,
+      "trained": false,
+      "feedback": false,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.1848958333333335,
+      "steps": 32,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.1481284350156784,
+      "environment": {
+        "quality": 0.1481284350156784,
+        "retention": 0.31848958134651184,
+        "potentialUsableFraction": 0.03281249850988388,
+        "directSunProxy": 0.496086984872818,
+        "roofOpportunity": 0.5509440302848816,
+        "noisePrior": 0.378115713596344,
+        "diffuseFacadeProxy": 0.04081660136580467,
+        "occupiedFloorArea": 19568.0,
+        "potentialUsableArea": 2016.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.902669270833333,
+          "wasFarSatisfied": false,
+          "removed": 598,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.836588541666667,
+          "wasFarSatisfied": false,
+          "removed": 406,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.836588541666667,
+          "wasFarSatisfied": false,
+          "removed": 107,
+          "added": 107,
+          "grewAboveInitial": 107
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.748046875,
+          "wasFarSatisfied": false,
+          "removed": 544,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.658528645833333,
+          "wasFarSatisfied": false,
+          "removed": 550,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.623860677083333,
+          "wasFarSatisfied": false,
+          "removed": 213,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.623860677083333,
+          "wasFarSatisfied": false,
+          "removed": 104,
+          "added": 104,
+          "grewAboveInitial": 34
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.611979166666667,
+          "wasFarSatisfied": false,
+          "removed": 73,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.56982421875,
+          "wasFarSatisfied": false,
+          "removed": 259,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.56982421875,
+          "wasFarSatisfied": false,
+          "removed": 181,
+          "added": 181,
+          "grewAboveInitial": 156
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.56982421875,
+          "wasFarSatisfied": false,
+          "removed": 194,
+          "added": 194,
+          "grewAboveInitial": 194
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.548990885416667,
+          "wasFarSatisfied": false,
+          "removed": 128,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.499837239583333,
+          "wasFarSatisfied": false,
+          "removed": 302,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.451334635416667,
+          "wasFarSatisfied": false,
+          "removed": 298,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.404622395833333,
+          "wasFarSatisfied": false,
+          "removed": 287,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.452799479166667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 296,
+          "grewAboveInitial": 239
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.335286458333333,
+          "wasFarSatisfied": false,
+          "removed": 722,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.265950520833333,
+          "wasFarSatisfied": false,
+          "removed": 426,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.201334635416667,
+          "wasFarSatisfied": false,
+          "removed": 397,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.099772135416667,
+          "wasFarSatisfied": false,
+          "removed": 624,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.11474609375,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 92,
+          "grewAboveInitial": 26
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.11474609375,
+          "wasFarSatisfied": false,
+          "removed": 124,
+          "added": 124,
+          "grewAboveInitial": 49
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.068359375,
+          "wasFarSatisfied": false,
+          "removed": 285,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.931966145833333,
+          "wasFarSatisfied": false,
+          "removed": 838,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.798828125,
+          "wasFarSatisfied": false,
+          "removed": 818,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.5888671875,
+          "wasFarSatisfied": false,
+          "removed": 1290,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.44970703125,
+          "wasFarSatisfied": false,
+          "removed": 855,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.0751953125,
+          "wasFarSatisfied": false,
+          "removed": 2301,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1774088541666665,
+          "wasFarSatisfied": false,
+          "removed": 5516,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1774088541666665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1774088541666665,
+          "wasFarSatisfied": false,
+          "removed": 76,
+          "added": 76,
+          "grewAboveInitial": 7
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1319986979166665,
+          "wasFarSatisfied": false,
+          "removed": 279,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1848958333333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 325,
+          "grewAboveInitial": 233
+        }
+      ],
+      "seconds": 2.186708458000794,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7401475570313326,
+      "highestStorey": 8
+    },
+    {
+      "seed": 456,
+      "trained": false,
+      "feedback": true,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.1956380208333335,
+      "steps": 30,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.13365626335144043,
+      "environment": {
+        "quality": 0.13365626335144043,
+        "retention": 0.3195638060569763,
+        "potentialUsableFraction": 0.01040039025247097,
+        "directSunProxy": 0.5123979449272156,
+        "roofOpportunity": 0.5237630009651184,
+        "noisePrior": 0.35884013772010803,
+        "diffuseFacadeProxy": 0.03233744949102402,
+        "occupiedFloorArea": 19634.0,
+        "potentialUsableArea": 639.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.896158854166667,
+          "wasFarSatisfied": false,
+          "removed": 638,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.805338541666667,
+          "wasFarSatisfied": false,
+          "removed": 558,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.805338541666667,
+          "wasFarSatisfied": false,
+          "removed": 281,
+          "added": 281,
+          "grewAboveInitial": 231
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.783854166666667,
+          "wasFarSatisfied": false,
+          "removed": 132,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.7177734375,
+          "wasFarSatisfied": false,
+          "removed": 406,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.681966145833333,
+          "wasFarSatisfied": false,
+          "removed": 220,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.568359375,
+          "wasFarSatisfied": false,
+          "removed": 698,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.475748697916667,
+          "wasFarSatisfied": false,
+          "removed": 569,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.210123697916667,
+          "wasFarSatisfied": false,
+          "removed": 1632,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.947428385416667,
+          "wasFarSatisfied": false,
+          "removed": 1614,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.647623697916667,
+          "wasFarSatisfied": false,
+          "removed": 1842,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 4.68994140625,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 260,
+          "grewAboveInitial": 240
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.52099609375,
+          "wasFarSatisfied": false,
+          "removed": 1038,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.42822265625,
+          "wasFarSatisfied": false,
+          "removed": 570,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.1591796875,
+          "wasFarSatisfied": false,
+          "removed": 1653,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.7351888020833335,
+          "wasFarSatisfied": false,
+          "removed": 2605,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.7351888020833335,
+          "wasFarSatisfied": false,
+          "removed": 27,
+          "added": 27,
+          "grewAboveInitial": 14
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.6149088541666665,
+          "wasFarSatisfied": false,
+          "removed": 739,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.4606119791666665,
+          "wasFarSatisfied": false,
+          "removed": 948,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.4853515625,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 152,
+          "grewAboveInitial": 74
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.5078125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 138,
+          "grewAboveInitial": 111
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.5078125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.5078125,
+          "wasFarSatisfied": false,
+          "removed": 86,
+          "added": 86,
+          "grewAboveInitial": 54
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.310546875,
+          "wasFarSatisfied": false,
+          "removed": 1212,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.3400065104166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 181,
+          "grewAboveInitial": 97
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.3400065104166665,
+          "wasFarSatisfied": false,
+          "removed": 39,
+          "added": 39,
+          "grewAboveInitial": 19
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.22998046875,
+          "wasFarSatisfied": false,
+          "removed": 676,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.2791341145833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 302,
+          "grewAboveInitial": 171
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.2791341145833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1857096354166665,
+          "wasFarSatisfied": false,
+          "removed": 574,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1394856770833335,
+          "wasFarSatisfied": false,
+          "removed": 284,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1394856770833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1956380208333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 345,
+          "grewAboveInitial": 197
+        }
+      ],
+      "seconds": 2.7663850829703733,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.8824522691800825,
+      "highestStorey": 8
+    },
+    {
+      "seed": 789,
+      "trained": false,
+      "feedback": false,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.1013997395833335,
+      "steps": 32,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.15281715989112854,
+      "environment": {
+        "quality": 0.15281715989112854,
+        "retention": 0.3101399838924408,
+        "potentialUsableFraction": 0.01691080816090107,
+        "directSunProxy": 0.5449725985527039,
+        "roofOpportunity": 0.6136067509651184,
+        "noisePrior": 0.3843535780906677,
+        "diffuseFacadeProxy": 0.03948652744293213,
+        "occupiedFloorArea": 19055.0,
+        "potentialUsableArea": 1039.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.88232421875,
+          "wasFarSatisfied": false,
+          "removed": 723,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.825358072916667,
+          "wasFarSatisfied": false,
+          "removed": 350,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.748209635416667,
+          "wasFarSatisfied": false,
+          "removed": 474,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.67529296875,
+          "wasFarSatisfied": false,
+          "removed": 448,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.614420572916667,
+          "wasFarSatisfied": false,
+          "removed": 374,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.557291666666667,
+          "wasFarSatisfied": false,
+          "removed": 351,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.478352864583333,
+          "wasFarSatisfied": false,
+          "removed": 485,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.4296875,
+          "wasFarSatisfied": false,
+          "removed": 299,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.4296875,
+          "wasFarSatisfied": false,
+          "removed": 125,
+          "added": 125,
+          "grewAboveInitial": 120
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.390950520833333,
+          "wasFarSatisfied": false,
+          "removed": 238,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.31787109375,
+          "wasFarSatisfied": false,
+          "removed": 449,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.250325520833333,
+          "wasFarSatisfied": false,
+          "removed": 415,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.20849609375,
+          "wasFarSatisfied": false,
+          "removed": 257,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.144368489583333,
+          "wasFarSatisfied": false,
+          "removed": 394,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.073404947916667,
+          "wasFarSatisfied": false,
+          "removed": 436,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 5.073404947916667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.001953125,
+          "wasFarSatisfied": false,
+          "removed": 439,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.9248046875,
+          "wasFarSatisfied": false,
+          "removed": 474,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.8173828125,
+          "wasFarSatisfied": false,
+          "removed": 660,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.739420572916667,
+          "wasFarSatisfied": false,
+          "removed": 479,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.647623697916667,
+          "wasFarSatisfied": false,
+          "removed": 564,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.509928385416667,
+          "wasFarSatisfied": false,
+          "removed": 846,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.373372395833333,
+          "wasFarSatisfied": false,
+          "removed": 839,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.211751302083333,
+          "wasFarSatisfied": false,
+          "removed": 993,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.211751302083333,
+          "wasFarSatisfied": false,
+          "removed": 83,
+          "added": 83,
+          "grewAboveInitial": 57
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.9661458333333335,
+          "wasFarSatisfied": false,
+          "removed": 1509,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.701171875,
+          "wasFarSatisfied": false,
+          "removed": 1628,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.6512044270833335,
+          "wasFarSatisfied": false,
+          "removed": 307,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1494140625,
+          "wasFarSatisfied": false,
+          "removed": 3083,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1266276041666665,
+          "wasFarSatisfied": false,
+          "removed": 140,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1080729166666665,
+          "wasFarSatisfied": false,
+          "removed": 114,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.111328125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 20,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1013997395833335,
+          "wasFarSatisfied": false,
+          "removed": 61,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 1.9479699999792501,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7061331057495325,
+      "highestStorey": 7
+    },
+    {
+      "seed": 789,
+      "trained": false,
+      "feedback": true,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.1140950520833335,
+      "steps": 29,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.16550107300281525,
+      "environment": {
+        "quality": 0.16550107300281525,
+        "retention": 0.31140950322151184,
+        "potentialUsableFraction": 0.04628906399011612,
+        "directSunProxy": 0.5456203818321228,
+        "roofOpportunity": 0.54736328125,
+        "noisePrior": 0.3849567472934723,
+        "diffuseFacadeProxy": 0.06630220264196396,
+        "occupiedFloorArea": 19133.0,
+        "potentialUsableArea": 2844.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.846516927083333,
+          "wasFarSatisfied": false,
+          "removed": 943,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.776041666666667,
+          "wasFarSatisfied": false,
+          "removed": 433,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.685872395833333,
+          "wasFarSatisfied": false,
+          "removed": 554,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.587890625,
+          "wasFarSatisfied": false,
+          "removed": 602,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.489908854166667,
+          "wasFarSatisfied": false,
+          "removed": 602,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.373372395833333,
+          "wasFarSatisfied": false,
+          "removed": 716,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.226399739583333,
+          "wasFarSatisfied": false,
+          "removed": 903,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.09814453125,
+          "wasFarSatisfied": false,
+          "removed": 788,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.09814453125,
+          "wasFarSatisfied": false,
+          "removed": 144,
+          "added": 144,
+          "grewAboveInitial": 86
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.979654947916667,
+          "wasFarSatisfied": false,
+          "removed": 728,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.778483072916667,
+          "wasFarSatisfied": false,
+          "removed": 1236,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.474772135416667,
+          "wasFarSatisfied": false,
+          "removed": 1866,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.23779296875,
+          "wasFarSatisfied": false,
+          "removed": 1456,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.002115885416667,
+          "wasFarSatisfied": false,
+          "removed": 1448,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.810546875,
+          "wasFarSatisfied": false,
+          "removed": 1177,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.58740234375,
+          "wasFarSatisfied": false,
+          "removed": 1371,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.58740234375,
+          "wasFarSatisfied": false,
+          "removed": 89,
+          "added": 89,
+          "grewAboveInitial": 62
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.58740234375,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2698567708333335,
+          "wasFarSatisfied": false,
+          "removed": 1951,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1783854166666665,
+          "wasFarSatisfied": false,
+          "removed": 562,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.2161458333333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 232,
+          "grewAboveInitial": 189
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.2161458333333335,
+          "wasFarSatisfied": false,
+          "removed": 26,
+          "added": 26,
+          "grewAboveInitial": 8
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1648763020833335,
+          "wasFarSatisfied": false,
+          "removed": 315,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1778971354166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 80,
+          "grewAboveInitial": 38
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1778971354166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1778971354166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1360677083333335,
+          "wasFarSatisfied": false,
+          "removed": 257,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.14892578125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 79,
+          "grewAboveInitial": 45
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1251627604166665,
+          "wasFarSatisfied": false,
+          "removed": 146,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1251627604166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1038411458333335,
+          "wasFarSatisfied": false,
+          "removed": 131,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1007486979166665,
+          "wasFarSatisfied": false,
+          "removed": 19,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1140950520833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 82,
+          "grewAboveInitial": 11
+        }
+      ],
+      "seconds": 2.562346749997232,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7308366550969266,
+      "highestStorey": 8
+    },
+    {
+      "seed": 123,
+      "trained": true,
+      "feedback": false,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.2472330729166665,
+      "steps": 32,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.1585492491722107,
+      "environment": {
+        "quality": 0.1585492491722107,
+        "retention": 0.3247233033180237,
+        "potentialUsableFraction": 0.010188802145421505,
+        "directSunProxy": 0.6095331907272339,
+        "roofOpportunity": 0.6119791865348816,
+        "noisePrior": 0.3967047929763794,
+        "diffuseFacadeProxy": 0.02862638048827648,
+        "occupiedFloorArea": 19951.0,
+        "potentialUsableArea": 626.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.936197916666667,
+          "wasFarSatisfied": false,
+          "removed": 392,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.910807291666667,
+          "wasFarSatisfied": false,
+          "removed": 156,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.8232421875,
+          "wasFarSatisfied": false,
+          "removed": 538,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.784830729166667,
+          "wasFarSatisfied": false,
+          "removed": 236,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.690104166666667,
+          "wasFarSatisfied": false,
+          "removed": 582,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.6259765625,
+          "wasFarSatisfied": false,
+          "removed": 394,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.574544270833333,
+          "wasFarSatisfied": false,
+          "removed": 316,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.61279296875,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 235,
+          "grewAboveInitial": 171
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.557942708333333,
+          "wasFarSatisfied": false,
+          "removed": 337,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.491536458333333,
+          "wasFarSatisfied": false,
+          "removed": 408,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.446940104166667,
+          "wasFarSatisfied": false,
+          "removed": 274,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.400390625,
+          "wasFarSatisfied": false,
+          "removed": 286,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.400390625,
+          "wasFarSatisfied": false,
+          "removed": 83,
+          "added": 83,
+          "grewAboveInitial": 19
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.352701822916667,
+          "wasFarSatisfied": false,
+          "removed": 293,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.30322265625,
+          "wasFarSatisfied": false,
+          "removed": 304,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.188313802083333,
+          "wasFarSatisfied": false,
+          "removed": 706,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.165364583333333,
+          "wasFarSatisfied": false,
+          "removed": 141,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.11865234375,
+          "wasFarSatisfied": false,
+          "removed": 287,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.100260416666667,
+          "wasFarSatisfied": false,
+          "removed": 113,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.041015625,
+          "wasFarSatisfied": false,
+          "removed": 364,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.013346354166667,
+          "wasFarSatisfied": false,
+          "removed": 170,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.951171875,
+          "wasFarSatisfied": false,
+          "removed": 382,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.8974609375,
+          "wasFarSatisfied": false,
+          "removed": 330,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.836100260416667,
+          "wasFarSatisfied": false,
+          "removed": 377,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.695638020833333,
+          "wasFarSatisfied": false,
+          "removed": 863,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.45458984375,
+          "wasFarSatisfied": false,
+          "removed": 1481,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.297037760416667,
+          "wasFarSatisfied": false,
+          "removed": 968,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.297037760416667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.9734700520833335,
+          "wasFarSatisfied": false,
+          "removed": 1988,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.6145833333333335,
+          "wasFarSatisfied": false,
+          "removed": 2205,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.3902994791666665,
+          "wasFarSatisfied": false,
+          "removed": 1378,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2970377604166665,
+          "wasFarSatisfied": false,
+          "removed": 573,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2472330729166665,
+          "wasFarSatisfied": false,
+          "removed": 306,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 1.7349207499646582,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7501630585953182,
+      "highestStorey": 7
+    },
+    {
+      "seed": 123,
+      "trained": true,
+      "feedback": true,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.12548828125,
+      "steps": 33,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.1350173056125641,
+      "environment": {
+        "quality": 0.1350173056125641,
+        "retention": 0.31254881620407104,
+        "potentialUsableFraction": 0.008610025979578495,
+        "directSunProxy": 0.5380979776382446,
+        "roofOpportunity": 0.5226237177848816,
+        "noisePrior": 0.38227733969688416,
+        "diffuseFacadeProxy": 0.0261806882917881,
+        "occupiedFloorArea": 19203.0,
+        "potentialUsableArea": 529.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.93896484375,
+          "wasFarSatisfied": false,
+          "removed": 375,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.90478515625,
+          "wasFarSatisfied": false,
+          "removed": 210,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.815755208333333,
+          "wasFarSatisfied": false,
+          "removed": 547,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.776529947916667,
+          "wasFarSatisfied": false,
+          "removed": 241,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.665852864583333,
+          "wasFarSatisfied": false,
+          "removed": 680,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.5439453125,
+          "wasFarSatisfied": false,
+          "removed": 749,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.418619791666667,
+          "wasFarSatisfied": false,
+          "removed": 770,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.46337890625,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 275,
+          "grewAboveInitial": 219
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.46337890625,
+          "wasFarSatisfied": false,
+          "removed": 129,
+          "added": 129,
+          "grewAboveInitial": 129
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.5107421875,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 291,
+          "grewAboveInitial": 166
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 5.5107421875,
+          "wasFarSatisfied": false,
+          "removed": 89,
+          "added": 89,
+          "grewAboveInitial": 63
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.338053385416667,
+          "wasFarSatisfied": false,
+          "removed": 1061,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.240397135416667,
+          "wasFarSatisfied": false,
+          "removed": 600,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.025553385416667,
+          "wasFarSatisfied": false,
+          "removed": 1320,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.556966145833333,
+          "wasFarSatisfied": false,
+          "removed": 2879,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.190104166666667,
+          "wasFarSatisfied": false,
+          "removed": 2254,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.9607747395833335,
+          "wasFarSatisfied": false,
+          "removed": 1409,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.97802734375,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 106,
+          "grewAboveInitial": 48
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.4412434895833335,
+          "wasFarSatisfied": false,
+          "removed": 3298,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.3468424479166665,
+          "wasFarSatisfied": false,
+          "removed": 580,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.3468424479166665,
+          "wasFarSatisfied": false,
+          "removed": 37,
+          "added": 37,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.3621419270833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 94,
+          "grewAboveInitial": 66
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2731119791666665,
+          "wasFarSatisfied": false,
+          "removed": 547,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1941731770833335,
+          "wasFarSatisfied": false,
+          "removed": 485,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1494140625,
+          "wasFarSatisfied": false,
+          "removed": 275,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.16455078125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 93,
+          "grewAboveInitial": 44
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1385091145833335,
+          "wasFarSatisfied": false,
+          "removed": 160,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1385091145833335,
+          "wasFarSatisfied": false,
+          "removed": 25,
+          "added": 25,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1599934895833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 132,
+          "grewAboveInitial": 68
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1902669270833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 186,
+          "grewAboveInitial": 131
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1902669270833335,
+          "wasFarSatisfied": false,
+          "removed": 37,
+          "added": 37,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1512044270833335,
+          "wasFarSatisfied": false,
+          "removed": 240,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.12548828125,
+          "wasFarSatisfied": false,
+          "removed": 158,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 2.7130722499568947,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7837990932146672,
+      "highestStorey": 8
+    },
+    {
+      "seed": 456,
+      "trained": true,
+      "feedback": false,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.26904296875,
+      "steps": 33,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.16359786689281464,
+      "environment": {
+        "quality": 0.16359786689281464,
+        "retention": 0.326904296875,
+        "potentialUsableFraction": 0.03933919221162796,
+        "directSunProxy": 0.5114669799804688,
+        "roofOpportunity": 0.61572265625,
+        "noisePrior": 0.37362927198410034,
+        "diffuseFacadeProxy": 0.04727525636553764,
+        "occupiedFloorArea": 20085.0,
+        "potentialUsableArea": 2417.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.902669270833333,
+          "wasFarSatisfied": false,
+          "removed": 598,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.836588541666667,
+          "wasFarSatisfied": false,
+          "removed": 406,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.734700520833333,
+          "wasFarSatisfied": false,
+          "removed": 626,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.654622395833333,
+          "wasFarSatisfied": false,
+          "removed": 492,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.584798177083333,
+          "wasFarSatisfied": false,
+          "removed": 429,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.511555989583333,
+          "wasFarSatisfied": false,
+          "removed": 450,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.466959635416667,
+          "wasFarSatisfied": false,
+          "removed": 274,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.410319010416667,
+          "wasFarSatisfied": false,
+          "removed": 348,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.382486979166667,
+          "wasFarSatisfied": false,
+          "removed": 171,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.34375,
+          "wasFarSatisfied": false,
+          "removed": 238,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.279622395833333,
+          "wasFarSatisfied": false,
+          "removed": 394,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.232747395833333,
+          "wasFarSatisfied": false,
+          "removed": 288,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.1962890625,
+          "wasFarSatisfied": false,
+          "removed": 224,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.144205729166667,
+          "wasFarSatisfied": false,
+          "removed": 320,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.130859375,
+          "wasFarSatisfied": false,
+          "removed": 82,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.164388020833333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 206,
+          "grewAboveInitial": 182
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.083170572916667,
+          "wasFarSatisfied": false,
+          "removed": 499,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.999348958333333,
+          "wasFarSatisfied": false,
+          "removed": 515,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.90625,
+          "wasFarSatisfied": false,
+          "removed": 572,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.90625,
+          "wasFarSatisfied": false,
+          "removed": 45,
+          "added": 45,
+          "grewAboveInitial": 14
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.810872395833333,
+          "wasFarSatisfied": false,
+          "removed": 586,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.751627604166667,
+          "wasFarSatisfied": false,
+          "removed": 364,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.690104166666667,
+          "wasFarSatisfied": false,
+          "removed": 378,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.612141927083333,
+          "wasFarSatisfied": false,
+          "removed": 479,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.502115885416667,
+          "wasFarSatisfied": false,
+          "removed": 676,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.402506510416667,
+          "wasFarSatisfied": false,
+          "removed": 612,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.252766927083333,
+          "wasFarSatisfied": false,
+          "removed": 920,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 4.287272135416667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 212,
+          "grewAboveInitial": 163
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.4368489583333335,
+          "wasFarSatisfied": false,
+          "removed": 5225,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.4705403645833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 207,
+          "grewAboveInitial": 206
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.5040690104166665,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 206,
+          "grewAboveInitial": 80
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.5040690104166665,
+          "wasFarSatisfied": false,
+          "removed": 23,
+          "added": 23,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.26904296875,
+          "wasFarSatisfied": false,
+          "removed": 1444,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 2.0182452499866486,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.6527651014251331,
+      "highestStorey": 8
+    },
+    {
+      "seed": 456,
+      "trained": true,
+      "feedback": true,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 3.1531575520833335,
+      "steps": 30,
+      "attempts": 33,
+      "budget": 33,
+      "quality": 0.1493394523859024,
+      "environment": {
+        "quality": 0.1493394523859024,
+        "retention": 0.31531575322151184,
+        "potentialUsableFraction": 0.02695312537252903,
+        "directSunProxy": 0.5134952664375305,
+        "roofOpportunity": 0.56494140625,
+        "noisePrior": 0.37187325954437256,
+        "diffuseFacadeProxy": 0.04420216381549835,
+        "occupiedFloorArea": 19373.0,
+        "potentialUsableArea": 1656.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.89599609375,
+          "wasFarSatisfied": false,
+          "removed": 639,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.805013020833333,
+          "wasFarSatisfied": false,
+          "removed": 559,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.673502604166667,
+          "wasFarSatisfied": false,
+          "removed": 808,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.55126953125,
+          "wasFarSatisfied": false,
+          "removed": 751,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.473958333333333,
+          "wasFarSatisfied": false,
+          "removed": 475,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.406412760416667,
+          "wasFarSatisfied": false,
+          "removed": 415,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.353841145833333,
+          "wasFarSatisfied": false,
+          "removed": 323,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.2646484375,
+          "wasFarSatisfied": false,
+          "removed": 548,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.200358072916667,
+          "wasFarSatisfied": false,
+          "removed": 395,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 5.055826822916667,
+          "wasFarSatisfied": false,
+          "removed": 888,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.73876953125,
+          "wasFarSatisfied": false,
+          "removed": 1948,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.418294270833333,
+          "wasFarSatisfied": false,
+          "removed": 1969,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 4.2412109375,
+          "wasFarSatisfied": false,
+          "removed": 1088,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.9529622395833335,
+          "wasFarSatisfied": false,
+          "removed": 1771,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.6139322916666665,
+          "wasFarSatisfied": false,
+          "removed": 2083,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.4580078125,
+          "wasFarSatisfied": false,
+          "removed": 958,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.4580078125,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.4580078125,
+          "wasFarSatisfied": false,
+          "removed": 103,
+          "added": 103,
+          "grewAboveInitial": 49
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2361653645833335,
+          "wasFarSatisfied": false,
+          "removed": 1363,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.2361653645833335,
+          "wasFarSatisfied": false,
+          "removed": 42,
+          "added": 42,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.2361653645833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.17919921875,
+          "wasFarSatisfied": false,
+          "removed": 350,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.17919921875,
+          "wasFarSatisfied": false,
+          "removed": 25,
+          "added": 25,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1878255208333335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 53,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.14208984375,
+          "wasFarSatisfied": false,
+          "removed": 281,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1100260416666665,
+          "wasFarSatisfied": false,
+          "removed": 197,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1100260416666665,
+          "wasFarSatisfied": false,
+          "removed": 89,
+          "added": 89,
+          "grewAboveInitial": 57
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.1004231770833335,
+          "wasFarSatisfied": false,
+          "removed": 59,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1365559895833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 222,
+          "grewAboveInitial": 163
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 3.1365559895833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1365559895833335,
+          "wasFarSatisfied": false,
+          "removed": 22,
+          "added": 22,
+          "grewAboveInitial": 1
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 3.1531575520833335,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 102,
+          "grewAboveInitial": 80
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 3.1531575520833335,
+          "wasFarSatisfied": false,
+          "removed": 21,
+          "added": 21,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 2.993954124976881,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.7898515408261609,
+      "highestStorey": 8
+    }
+  ],
+  "device": "mps",
+  "setupSeconds": 2.1346615829970688,
+  "note": "Identical initialized networks and sampled seeds; no training. Live GPU training may run concurrently.",
+  "hashes": {
+    "tools/unified_coupled.py": "2b4dc4912426e8f5827f055bd56812a1f7029092ae0ec0c3a80f89bab0083d9b",
+    "voxelform/unified.py": "1d45411e65d6d990ce1fa1f4e4b4a310ece21c2303337df7536d3cfdc4c5dd2d",
+    "tools/unified_training.py": "89400575ccadaae45b4a2fd668abf0c54b95a3b9efe7937f89fa71bd40d6792f"
+  }
+}

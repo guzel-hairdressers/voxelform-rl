@@ -1,0 +1,13 @@
+{
+  "shape": [
+    6,
+    56,
+    58
+  ],
+  "occupied": 7278,
+  "segments": 507,
+  "medianMs": 3.499625000000009,
+  "p95Ms": 8.345542000000009,
+  "samples": 20,
+  "geometryBytes": 36504
+}

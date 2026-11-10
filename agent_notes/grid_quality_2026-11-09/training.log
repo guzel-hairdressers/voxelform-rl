@@ -1,0 +1,11 @@
+prepared train-wide 1.49
+prepared train-irregular 0.73
+prepared train-Barcelona 47.18
+prepared heldout-irregular 3.0
+prepared heldout-XL 6.06
+prepared heldout-Barcelona 30.64
+current 123 seconds 180.26 actions 951 heldout 2 /3
+quality-facade 123 seconds 180.39 actions 604 heldout 3 /3
+quality-facade 456 seconds 180.99 actions 829 heldout 3 /3
+current 456 seconds 180.42 actions 655 heldout 3 /3
+/Users/ruslan_faz/Desktop/Work/Thesis/VoxelForm-RL/results/m4-training-quality-grid-study-2026-11-09.json

@@ -1,0 +1,53 @@
+{
+  "rows": [
+    {
+      "device": "cpu",
+      "steps": [
+        {
+          "count": 72,
+          "far": 3.0,
+          "quality": 0.36632031202316284
+        },
+        {
+          "count": 72,
+          "far": 3.0,
+          "quality": 0.34473395347595215
+        }
+      ],
+      "seconds": 0.31603745900793,
+      "learning": {
+        "updates": 1,
+        "directMaskUpdates": 1,
+        "importedUpdates": 0,
+        "loss": 3.6668715476989746,
+        "actorLoss": 3.668116331100464,
+        "gradientNorm": 0.07285453379154205
+      }
+    },
+    {
+      "device": "mps",
+      "steps": [
+        {
+          "count": 96,
+          "far": 3.0,
+          "quality": 0.3627367615699768
+        },
+        {
+          "count": 72,
+          "far": 3.0,
+          "quality": 0.336066871881485
+        }
+      ],
+      "seconds": 8.856383415986784,
+      "learning": {
+        "updates": 1,
+        "directMaskUpdates": 1,
+        "importedUpdates": 0,
+        "loss": 3.37143874168396,
+        "actorLoss": 3.372695207595825,
+        "gradientNorm": 0.06378047168254852
+      }
+    }
+  ],
+  "sourceHash": "02a29a831fadc134197d76427e6d7eaca43e7807a07e02f1146491aa0ea1a321"
+}

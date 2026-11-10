@@ -1,0 +1,251 @@
+{
+  "changedVoxels": 39,
+  "structure": {
+    "components": 4,
+    "largestShare": 0.38461538461538464,
+    "singletonShare": 0.0,
+    "meanPatchSize": 9.75
+  },
+  "trace": {
+    "step": 1,
+    "operation": "subtract",
+    "changedVoxels": 39,
+    "facadeSnapshot": 0,
+    "maskSource": "neural_combined",
+    "generatedVoxels": 46,
+    "projectionRounds": 0,
+    "bounds": [
+      [
+        3,
+        1,
+        0
+      ],
+      [
+        22,
+        69,
+        2
+      ]
+    ],
+    "mask": [
+      [
+        12,
+        1,
+        0
+      ],
+      [
+        11,
+        2,
+        0
+      ],
+      [
+        13,
+        2,
+        0
+      ],
+      [
+        10,
+        3,
+        0
+      ],
+      [
+        8,
+        4,
+        0
+      ],
+      [
+        9,
+        4,
+        0
+      ],
+      [
+        7,
+        5,
+        0
+      ],
+      [
+        19,
+        8,
+        0
+      ],
+      [
+        20,
+        9,
+        0
+      ],
+      [
+        21,
+        10,
+        0
+      ],
+      [
+        3,
+        13,
+        0
+      ],
+      [
+        4,
+        14,
+        0
+      ],
+      [
+        5,
+        15,
+        0
+      ],
+      [
+        6,
+        16,
+        0
+      ],
+      [
+        22,
+        67,
+        0
+      ],
+      [
+        21,
+        68,
+        0
+      ],
+      [
+        19,
+        69,
+        0
+      ],
+      [
+        20,
+        69,
+        0
+      ],
+      [
+        12,
+        1,
+        1
+      ],
+      [
+        11,
+        2,
+        1
+      ],
+      [
+        10,
+        3,
+        1
+      ],
+      [
+        8,
+        4,
+        1
+      ],
+      [
+        9,
+        4,
+        1
+      ],
+      [
+        7,
+        5,
+        1
+      ],
+      [
+        20,
+        9,
+        1
+      ],
+      [
+        21,
+        10,
+        1
+      ],
+      [
+        4,
+        14,
+        1
+      ],
+      [
+        5,
+        15,
+        1
+      ],
+      [
+        6,
+        16,
+        1
+      ],
+      [
+        21,
+        68,
+        1
+      ],
+      [
+        19,
+        69,
+        1
+      ],
+      [
+        20,
+        69,
+        1
+      ],
+      [
+        8,
+        4,
+        2
+      ],
+      [
+        9,
+        4,
+        2
+      ],
+      [
+        4,
+        14,
+        2
+      ],
+      [
+        5,
+        15,
+        2
+      ],
+      [
+        21,
+        68,
+        2
+      ],
+      [
+        19,
+        69,
+        2
+      ],
+      [
+        20,
+        69,
+        2
+      ]
+    ],
+    "facadeOnly": true,
+    "surfaceLayers": 1,
+    "rawStructure": {
+      "components": 7,
+      "largestShare": 0.32608695652173914,
+      "singletonShare": 0.043478260869565216,
+      "meanPatchSize": 6.571428571428571
+    },
+    "appliedStructure": {
+      "components": 4,
+      "largestShare": 0.38461538461538464,
+      "singletonShare": 0.0,
+      "meanPatchSize": 9.75
+    },
+    "farBefore": 6.059979317476732,
+    "farAfter": 6.033092037228542
+  },
+  "device": "mps",
+  "depthDevice": "mps",
+  "profile": {
+    "samplingSeconds": 0.04909762501483783,
+    "transferSeconds": 0.0003902500029653311,
+    "geometrySeconds": 0.0010259579867124557
+  },
+  "actionSeconds": 0.23216387501452118
+}

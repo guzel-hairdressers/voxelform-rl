@@ -1,0 +1,38 @@
+{
+  "runtime": "v26.5.0",
+  "rows": [
+    {
+      "name": "current-preview",
+      "shape": [
+        6,
+        56,
+        58
+      ],
+      "occupied": 7278,
+      "mergedSegments": 495,
+      "bufferBytes": 11880,
+      "medianMs": 3.99758300000002,
+      "p95Ms": 5.319290999999964,
+      "samples": 30
+    },
+    {
+      "name": "XL-courtyard",
+      "shape": [
+        8,
+        64,
+        96
+      ],
+      "occupied": 32730,
+      "mergedSegments": 30,
+      "bufferBytes": 720,
+      "medianMs": 9.357624999999985,
+      "p95Ms": 11.377749999999992,
+      "samples": 30
+    }
+  ],
+  "sourceHashes": {
+    "public/voxel-contours.js": "f4eb20ddcf7438bcdfcbd8d98842e5527d476174dc92977a6d195e1aa8f377e7",
+    "tests/voxel-contours.test.mjs": "8c38025521c5ade723554f71b112db5f60256a729976c85ed49dbdaeb9f3423a",
+    "results/checkpoints/contour-benchmark-input.json": "138fe85988aac86ae2444ace11385bda88eb2f84399755858ed903d768f5c8fb"
+  }
+}

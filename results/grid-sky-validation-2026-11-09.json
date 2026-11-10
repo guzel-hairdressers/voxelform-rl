@@ -1,0 +1,101 @@
+{
+  "rows": [
+    {
+      "site": "m_bcn_0093",
+      "alignment": "world",
+      "success": true,
+      "far": 3.099620820406756,
+      "diffusionFacade": 0.03247959166765213,
+      "diffuseReference": 0.22642120718955994,
+      "meanFace": 0.22697792947292328,
+      "faceStdError": 0.01220611110329628,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_bcn_0093",
+      "alignment": "longest_edge",
+      "success": true,
+      "far": 3.099620820406756,
+      "diffusionFacade": 0.04282144084572792,
+      "diffuseReference": 0.21575766801834106,
+      "meanFace": 0.21608246862888336,
+      "faceStdError": 0.013119990937411785,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "world",
+      "success": false,
+      "far": 3.1026553923750186,
+      "diffusionFacade": 0.020594527944922447,
+      "diffuseReference": 0.0963207259774208,
+      "meanFace": 0.09678634256124496,
+      "faceStdError": 0.009204263798892498,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "longest_edge",
+      "success": true,
+      "far": 3.0996884735202492,
+      "diffusionFacade": 0.023634983226656914,
+      "diffuseReference": 0.08630973100662231,
+      "meanFace": 0.08619265258312225,
+      "faceStdError": 0.008949988521635532,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "world",
+      "success": true,
+      "far": 3.0994067428736796,
+      "diffusionFacade": 0.010308371856808662,
+      "diffuseReference": 0.03784669190645218,
+      "meanFace": 0.03773067891597748,
+      "faceStdError": 0.003717065555974841,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "longest_edge",
+      "success": true,
+      "far": 3.0994067428736796,
+      "diffusionFacade": 0.01947600767016411,
+      "diffuseReference": 0.04188569635152817,
+      "meanFace": 0.041790299117565155,
+      "faceStdError": 0.003781910752877593,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "world",
+      "success": true,
+      "far": 3.099683998850905,
+      "diffusionFacade": 0.04516364261507988,
+      "diffuseReference": 0.36148497462272644,
+      "meanFace": 0.36065956950187683,
+      "faceStdError": 0.0173539686948061,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "longest_edge",
+      "success": true,
+      "far": 3.099683998850905,
+      "diffusionFacade": 0.07227224856615067,
+      "diffuseReference": 0.3758143186569214,
+      "meanFace": 0.3752511739730835,
+      "faceStdError": 0.01774190366268158,
+      "sampledFaces": 256,
+      "hemisphereDirections": 64
+    }
+  ],
+  "sourceHash": "5cd2ec6d1b2ad9c1a5c35414daa10c0d9de1d2235113c18b235acaf16c575e03"
+}

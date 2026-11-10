@@ -1,0 +1,284 @@
+{
+  "rows": [
+    {
+      "site": "m_bcn_0093",
+      "alignment": "world",
+      "angleDegrees": 0.0,
+      "fullSquares": 1309,
+      "allowedSquares": 1465,
+      "parcelArea": 1450.5,
+      "gridCells": 4029,
+      "footprintComponents": 1,
+      "setupSeconds": 0.0370159589801915,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0093",
+      "alignment": "principal_major",
+      "angleDegrees": 88.66337048288135,
+      "fullSquares": 1287,
+      "allowedSquares": 1439,
+      "parcelArea": 1450.5,
+      "gridCells": 4108,
+      "footprintComponents": 1,
+      "setupSeconds": 0.034894042008090764,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0093",
+      "alignment": "principal_minor",
+      "angleDegrees": -1.3366295171186475,
+      "fullSquares": 1298,
+      "allowedSquares": 1454,
+      "parcelArea": 1450.5,
+      "gridCells": 4108,
+      "footprintComponents": 1,
+      "setupSeconds": 0.034727875026874244,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0093",
+      "alignment": "longest_edge",
+      "angleDegrees": -43.933585915932134,
+      "fullSquares": 1315,
+      "allowedSquares": 1470,
+      "parcelArea": 1450.5,
+      "gridCells": 3248,
+      "footprintComponents": 1,
+      "setupSeconds": 0.03579483297653496,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0093",
+      "alignment": "auto_fit",
+      "angleDegrees": 44.999999999974314,
+      "fullSquares": 1373,
+      "allowedSquares": 1373,
+      "parcelArea": 1450.5,
+      "gridCells": 3248,
+      "footprintComponents": 1,
+      "setupSeconds": 2.6302321249968372,
+      "fit": {
+        "fullSquares": 1373,
+        "placementsTested": 604,
+        "phase": [
+          0.75,
+          0.5
+        ],
+        "criterion": "full_square_count",
+        "cellSize": 1.0
+      }
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "world",
+      "angleDegrees": 0.0,
+      "fullSquares": 1202,
+      "allowedSquares": 1350,
+      "parcelArea": 1348.2,
+      "gridCells": 4312,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05555220798123628,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "principal_major",
+      "angleDegrees": -65.96343212596477,
+      "fullSquares": 1213,
+      "allowedSquares": 1348,
+      "parcelArea": 1348.2,
+      "gridCells": 3318,
+      "footprintComponents": 1,
+      "setupSeconds": 0.054047917015850544,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "principal_minor",
+      "angleDegrees": 24.036567874035224,
+      "fullSquares": 1214,
+      "allowedSquares": 1349,
+      "parcelArea": 1348.2,
+      "gridCells": 3318,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05764391698176041,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "longest_edge",
+      "angleDegrees": -47.88150361963384,
+      "fullSquares": 1273,
+      "allowedSquares": 1350,
+      "parcelArea": 1348.2,
+      "gridCells": 2736,
+      "footprintComponents": 1,
+      "setupSeconds": 0.0767315830453299,
+      "fit": null
+    },
+    {
+      "site": "m_bcn_0094",
+      "alignment": "auto_fit",
+      "angleDegrees": 42.11849638038315,
+      "fullSquares": 1281,
+      "allowedSquares": 1281,
+      "parcelArea": 1348.2,
+      "gridCells": 2736,
+      "footprintComponents": 1,
+      "setupSeconds": 2.725984124990646,
+      "fit": {
+        "fullSquares": 1281,
+        "placementsTested": 576,
+        "phase": [
+          0.0,
+          0.75
+        ],
+        "criterion": "full_square_count",
+        "cellSize": 1.0
+      }
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "world",
+      "angleDegrees": 0.0,
+      "fullSquares": 1282,
+      "allowedSquares": 1384,
+      "parcelArea": 1382.2,
+      "gridCells": 2856,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05474304099334404,
+      "fit": null
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "principal_major",
+      "angleDegrees": -29.448031270086673,
+      "fullSquares": 1290,
+      "allowedSquares": 1366,
+      "parcelArea": 1382.2,
+      "gridCells": 1598,
+      "footprintComponents": 1,
+      "setupSeconds": 0.0628183750086464,
+      "fit": null
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "principal_minor",
+      "angleDegrees": 60.55196872991333,
+      "fullSquares": 1290,
+      "allowedSquares": 1366,
+      "parcelArea": 1382.2,
+      "gridCells": 1598,
+      "footprintComponents": 1,
+      "setupSeconds": 0.077513457974419,
+      "fit": null
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "longest_edge",
+      "angleDegrees": -29.251548097008218,
+      "fullSquares": 1290,
+      "allowedSquares": 1364,
+      "parcelArea": 1382.2,
+      "gridCells": 1598,
+      "footprintComponents": 1,
+      "setupSeconds": 0.0774175840197131,
+      "fit": null
+    },
+    {
+      "site": "m_nyc_0003",
+      "alignment": "auto_fit",
+      "angleDegrees": 60.50000000002467,
+      "fullSquares": 1341,
+      "allowedSquares": 1341,
+      "parcelArea": 1382.2,
+      "gridCells": 1598,
+      "footprintComponents": 1,
+      "setupSeconds": 1.6174252919736318,
+      "fit": {
+        "fullSquares": 1341,
+        "placementsTested": 556,
+        "phase": [
+          0.75,
+          0.75
+        ],
+        "criterion": "full_square_count",
+        "cellSize": 1.0
+      }
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "world",
+      "angleDegrees": 0.0,
+      "fullSquares": 1275,
+      "allowedSquares": 1388,
+      "parcelArea": 1392.4,
+      "gridCells": 3286,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05721499997889623,
+      "fit": null
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "principal_major",
+      "angleDegrees": 56.34296742457831,
+      "fullSquares": 1276,
+      "allowedSquares": 1392,
+      "parcelArea": 1392.4,
+      "gridCells": 2706,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05971254198811948,
+      "fit": null
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "principal_minor",
+      "angleDegrees": -33.65703257542169,
+      "fullSquares": 1276,
+      "allowedSquares": 1397,
+      "parcelArea": 1392.4,
+      "gridCells": 2706,
+      "footprintComponents": 1,
+      "setupSeconds": 0.05706941697280854,
+      "fit": null
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "longest_edge",
+      "angleDegrees": -17.228089403496575,
+      "fullSquares": 1308,
+      "allowedSquares": 1387,
+      "parcelArea": 1392.4,
+      "gridCells": 2400,
+      "footprintComponents": 1,
+      "setupSeconds": 0.0612652919953689,
+      "fit": null
+    },
+    {
+      "site": "m_prs_0315",
+      "alignment": "auto_fit",
+      "angleDegrees": 73.27191059650875,
+      "fullSquares": 1323,
+      "allowedSquares": 1323,
+      "parcelArea": 1392.4,
+      "gridCells": 2400,
+      "footprintComponents": 1,
+      "setupSeconds": 3.5590495000360534,
+      "fit": {
+        "fullSquares": 1323,
+        "placementsTested": 604,
+        "phase": [
+          0.75,
+          0.25
+        ],
+        "criterion": "full_square_count",
+        "cellSize": 1.0
+      }
+    }
+  ],
+  "hashes": {
+    "tools/grid_fit_study.py": "7e7ce201fd2d051f860160838cf7630dce33a238dd8a79f16b88c2b568604650",
+    "voxelform/context.py": "1c791b569216df4b93644ae7078be89103157775549e0dd6711f64733aa12af3"
+  }
+}

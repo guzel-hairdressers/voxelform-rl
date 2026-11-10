@@ -1,0 +1,56 @@
+{
+  "inferenceSmokeBeforeSharedEngineRestart": {
+    "catalogCount": 390,
+    "siteId": "m_bcn_0093",
+    "shape": [
+      6,
+      79,
+      51
+    ],
+    "buildings": 29,
+    "roads": 1,
+    "noiseAvailable": false,
+    "policyUnchanged": true,
+    "optimizerUpdates": 10,
+    "inferenceStopped": true,
+    "completedEpisodes": 1,
+    "volumeEdits": 0,
+    "invalidSitePreservesState": true
+  },
+  "sharedEngine": {
+    "source": "../Module-Lab/frontend/public/scripts/urban_viewer.js",
+    "sha256": "f32ce4f3b38fb91e1859c3d28b866b36625cd898843c1cb5cffdebb5cd43510c",
+    "identicalToSiblingFile": true
+  },
+  "finalPreview": {
+    "url": "http://127.0.0.1:8011",
+    "siteId": "m_bcn_0093",
+    "shape": [
+      6,
+      79,
+      51
+    ],
+    "buildings": 29,
+    "running": false,
+    "updates": 10,
+    "restoredPolicyUnchanged": true,
+    "episodeCounterAfterRestart": 0
+  },
+  "tests": {
+    "python": 21,
+    "viewerAdapter": 4
+  },
+  "browser": {
+    "widths": [
+      1710,
+      390
+    ],
+    "narrowScrollWidth": 390,
+    "noPlanPane": true,
+    "nativeTopSnap": true,
+    "perspectiveToggle": true,
+    "opaqueDefault": true,
+    "optionalTransparency": true,
+    "viewportOverrideCleared": true
+  }
+}

@@ -18,7 +18,7 @@ def device_name(requested='auto'):
 
 def sync(device):
     if str(device).startswith('cuda'):torch.cuda.synchronize()
-    elif str(device)=='mps':torch.mps.synchronize()
+    elif str(device).startswith('mps'):torch.mps.synchronize()
 
 
 def sun_path(count=12,azimuth=(90.,270.),peak=55.,grid_yaw=0.):
@@ -64,6 +64,51 @@ class DirectShadows:
     def query(self,points):return torch.stack([~ray_boxes(points,s,self.boxes) for s in self.suns])
     @property
     def bytes(self):return self.boxes.numel()*4+self.suns.numel()*4
+
+
+class MeshShadows:
+    """Two-sided ray/triangle tests on the original cached building meshes.
+
+    Used for imported scenes instead of replacing irregular neighbours by boxes.
+    External receiver visibility is still cached by ReceiverCache. Synthetic
+    box benchmarks retain their existing boundary/depth-map implementations.
+    """
+    def __init__(self, buildings, suns, device='cpu'):
+        triangles = []
+        for building in buildings:
+            v = np.asarray(building['vertices'], dtype=np.float32)
+            triangles.extend(v[np.asarray(building['faces'], dtype=np.int64)])
+        self.triangles = torch.as_tensor(np.asarray(triangles, dtype=np.float32).reshape(-1, 3, 3), device=device)
+        self.suns = torch.as_tensor(suns, dtype=torch.float32, device=device)
+
+    def query(self, points):
+        if not len(self.triangles):
+            return torch.ones((len(self.suns), len(points)), dtype=torch.bool, device=points.device)
+        a = self.triangles[:, 0]
+        e1 = self.triangles[:, 1]-a
+        e2 = self.triangles[:, 2]-a
+        result = []
+        chunk = max(16, min(1024, 200000//len(a)))
+        for sun in self.suns:
+            h = torch.linalg.cross(sun.expand_as(e2), e2)
+            det = (e1*h).sum(-1)
+            valid = det.abs() > 1e-8
+            inverse = torch.where(valid, 1/torch.where(valid, det, torch.ones_like(det)), 0.)
+            values = []
+            for start in range(0, len(points), chunk):
+                delta = points[start:start+chunk, None]-a
+                u = (delta*h).sum(-1)*inverse
+                q = torch.linalg.cross(delta, e1.expand_as(delta))
+                v = (q*sun).sum(-1)*inverse
+                t = (q*e2).sum(-1)*inverse
+                hit = valid & (u >= -1e-6) & (v >= -1e-6) & (u+v <= 1+1e-6) & (t > 1e-4)
+                values.append(~hit.any(-1))
+            result.append(torch.cat(values) if values else torch.empty(0, dtype=torch.bool, device=points.device))
+        return torch.stack(result)
+
+    @property
+    def bytes(self):
+        return (self.triangles.numel()+self.suns.numel())*4
 
 
 def internal_indices(boxes,bounds):

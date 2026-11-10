@@ -1,0 +1,50 @@
+{
+  "baseline": {
+    "initial": {
+      "success": 35,
+      "trials": 36,
+      "meanSuccessfulSteps": 99.68571428571428
+    },
+    "trained": {
+      "success": 35,
+      "trials": 36,
+      "meanSuccessfulSteps": 89.25714285714285
+    }
+  },
+  "uncapped": {
+    "initial": {
+      "success": 35,
+      "trials": 36,
+      "meanSuccessfulSteps": 94.48571428571428
+    },
+    "trained": {
+      "success": 35,
+      "trials": 36,
+      "meanSuccessfulSteps": 84.08571428571429
+    }
+  },
+  "quota": {
+    "initial": {
+      "success": 14,
+      "trials": 36,
+      "meanSuccessfulSteps": 7.071428571428571
+    },
+    "trained": {
+      "success": 16,
+      "trials": 36,
+      "meanSuccessfulSteps": 7.875
+    }
+  },
+  "learned": {
+    "initial": {
+      "success": 13,
+      "trials": 36,
+      "meanSuccessfulSteps": 8.307692307692308
+    },
+    "trained": {
+      "success": 17,
+      "trials": 36,
+      "meanSuccessfulSteps": 9.882352941176471
+    }
+  }
+}

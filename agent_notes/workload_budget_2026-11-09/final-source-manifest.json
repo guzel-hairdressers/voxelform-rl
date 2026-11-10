@@ -1,0 +1,20 @@
+{
+  "voxelform/__init__.py": "1fa44619f275ddedca920f9137e5fc50dd8213229442b6c1a59f45d050016d0c",
+  "voxelform/actions.py": "13e1601b81eff027cf7efaea790a41c532df9809b5947bf480e09d31f7d66139",
+  "voxelform/context.py": "b85d8a1021b900da9d5066ce5f4da18c02559b4d52b29478b6ed0bb79c3a2991",
+  "voxelform/environment.py": "aff62b67a7449e08424532fdd491cec67dde3460bc3d03f10eae69605a9ce245",
+  "voxelform/fields.py": "afbb4d34f6a562fe23a1055518c8330abe1d20f107d3f74b45713938092cb1d4",
+  "voxelform/patch_policy.py": "908530541fa9601a4ff0c8746ddf53b87d4b7fe21b514a1965129e913416a916",
+  "voxelform/policy.py": "15dcbb163b0c449e8caa08ab153d57882e1e7989b31a84fae71400d8570822a9",
+  "voxelform/server.py": "baef732c61b3ce9bc8e97ca81151d85fb5d77cd1effc3e97dbb23b875535fe33",
+  "voxelform/session.py": "f9361bc408fee1b2b3fb0ae8b2fe6e18c6f382053d3f8265263a0ee53384c675",
+  "voxelform/shadows.py": "631d45a257bde673c7fb1429bd82239a9ab2b80441f6e88b6410b700e1da9dfc",
+  "voxelform/workload.py": "e763f88764512470737a0b97000ed9194a62365f2d68998dbd85013e04ec0e5a",
+  "tests/test_workload.py": "08e43321178536001ed3c52cdc301a4949cb8038e8892f13a908c4ea01c2549e",
+  "tools/report_workload.py": "b5e7a3bd8c1c464e8ae94dc41381d9795382beb4b5c25f87b0ea49b1ff09347c",
+  "tools/workload_budget.py": "c6ead1841a1f56082b3a02822b74ae1db55ba340cbf321ef1869286afe0da67e",
+  "tools/workload_device.py": "7aa17e2658c3dbb2adffff35fb9e2d7135737acc0bbbf9b2498e2a4bf1dcc5ef",
+  "tools/workload_feedback.py": "eb7ab3c1a63ad57fbacc9f92e04da09a0aad75b42a72bb8a76c46f194345f432",
+  "public/app.js": "fe60118a15db530f109cd8a388beb024bdafe81a4a921e0452822501769e7337",
+  "public/index.html": "422b53802cc656225777a5ec4afcaa1e023ad5b63c16cf625d100d89dc42c522"
+}

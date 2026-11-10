@@ -1,0 +1,22 @@
+{
+  "voxelform/__init__.py": "1fa44619f275ddedca920f9137e5fc50dd8213229442b6c1a59f45d050016d0c",
+  "voxelform/actions.py": "13e1601b81eff027cf7efaea790a41c532df9809b5947bf480e09d31f7d66139",
+  "voxelform/context.py": "b85d8a1021b900da9d5066ce5f4da18c02559b4d52b29478b6ed0bb79c3a2991",
+  "voxelform/environment.py": "ac9df9ff6d82692c2f5f34df9d6cdb1b056b3246be00c8d48dd38d860cf31c24",
+  "voxelform/fields.py": "afbb4d34f6a562fe23a1055518c8330abe1d20f107d3f74b45713938092cb1d4",
+  "voxelform/patch_policy.py": "0cd48da33668098c8ca3a4ff0fceadbc0d7d4d259d1e7bef1109d6f835d30879",
+  "voxelform/policy.py": "15dcbb163b0c449e8caa08ab153d57882e1e7989b31a84fae71400d8570822a9",
+  "voxelform/server.py": "ea933a097939a672a8cae7d8a9ff63eff26d99f34b1ffde438a6ed1a60c07648",
+  "voxelform/session.py": "9918b92d016d61696f9b628a7cc141eeff680602bb7f9ec88a5fad0dc54a0ab5",
+  "voxelform/shadows.py": "631d45a257bde673c7fb1429bd82239a9ab2b80441f6e88b6410b700e1da9dfc",
+  "tools/coherent_gpu.py": "03d16242fbdf0d1ea96a2f5b1fec7ef906f51ed5b16cc1a319e98673e111bdcf",
+  "tools/coherent_guarded.py": "690b4efa1a37b68f472f70deaf48c206d80179a7664b23231b5665fb5dd562bb",
+  "tools/coherent_masks.py": "fa3d6cf9bac07e60667bcd45e09669e47122e901747afd491f356efb1ac817ce",
+  "tools/coherent_sampled.py": "30c0e0995a0db7acde59e9176eb2da38b8804668d9bbe34304d545d9f0a67a22",
+  "tools/coherent_wide.py": "821f89219d60a33893c466566c9f23bc6022517eff6fd2ac411ee4a53546e000",
+  "tools/report_coherent_masks.py": "0c4433150a11f5f6b311db436fd77a773ac9104b25bfc1a6f62bf114221088ee",
+  "tests/test_patch_policy.py": "fdb43ba0ede436666673f5b03825c27bb707d9a9a7932c332c88c113332c5917",
+  "tests/test_facade_depth.py": "86b565e47548692cbea88af4bd5dac80e535f729489d5ce1f606e92a928c45ed",
+  "public/app.js": "32ea049d7f82bea48004f3bde23f35371520426c9682d75d5b3f582659354fe9",
+  "public/index.html": "74ec76acd98de22373d0a744b04f28859226f8510a346baeac1d5cf7d3b85a79"
+}
