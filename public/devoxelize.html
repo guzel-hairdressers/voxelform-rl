@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Architectural Devoxelization Lab — 4-Mode Benchmark (0–3)</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    html[data-standalone="1"] {
+      --background: #0d1117;
+      --content: #11161d;
+      --card: #161b22;
+      --card-border: #2a323d;
+      --border: #30363d;
+      --foreground: #e6edf3;
+      --muted-foreground: #8b949e;
+      --primary: #38bdf8;
+      --primary-foreground: #082f49;
+      --accent: #a78bfa;
+      --success: #34d399;
+      --warning: #fbbf24;
+      --error: #f87171;
+      background: #0d1117;
+      color: #e6edf3;
+    }
+    canvas { touch-action: none; }
+  </style>
+</head>
+<body class="bg-transparent text-[var(--foreground)] antialiased m-0 p-0">
+  <div class="max-w-7xl mx-auto p-3 space-y-3">
+
+    <!-- Header & Global Controls -->
+    <div class="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-[var(--card-border)]">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-sm font-semibold tracking-tight text-[var(--foreground)]">
+            Architectural Devoxelization Lab (Modes 0–3)
+          </h1>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-medium border border-[var(--card-border)] bg-[var(--card)] text-[var(--primary)]">
+            Same Base Massing (2,760 Voxels · 8,280 m³ · 8 Storeys)
+          </span>
+          <span class="px-2 py-0.5 rounded-full text-[11px] font-medium border border-[var(--card-border)] bg-[var(--card)] text-[var(--success)]">
+            Default: 1. Correlated Support-Plane Loft
+          </span>
+        </div>
+        <p class="text-xs text-[var(--muted-foreground)] mt-0.5">
+          Z-up comparison across modes 0–3: Correlated 2.5D Loft (default), Coplanar 2.5D Extruded Floor Slabs, 3D Plane Arrangement (VSA), and Raw Voxels (Devox Off).
+        </p>
+      </div>
+
+      <!-- Mode Switcher + Devox Quick Toggle -->
+      <div class="flex flex-wrap items-center gap-1.5 bg-[var(--card)] border border-[var(--card-border)] rounded-lg p-1 text-xs">
+        <button id="btnModeGrid" class="px-2.5 py-1 rounded font-medium transition cursor-pointer">
+          4-Mode Grid (2×2)
+        </button>
+        <button id="btnModeDefault" class="px-2.5 py-1 rounded font-medium transition cursor-pointer">
+          Devox On (#1 Default)
+        </button>
+        <button id="btnModeRaw" class="px-2.5 py-1 rounded font-medium transition cursor-pointer">
+          0. Devox Off (Raw Voxels)
+        </button>
+      </div>
+    </div>
+
+    <!-- Toolbar: Camera Presets + Visual Toggles -->
+    <div class="flex flex-wrap items-center justify-between gap-2 text-xs bg-[var(--card)] border border-[var(--card-border)] rounded-lg px-3 py-2">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-[var(--muted-foreground)] font-medium mr-1">Camera:</span>
+        <button data-preset="se" class="cam-preset px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer">SW Chamfer + SE Notch</button>
+        <button data-preset="ne" class="cam-preset px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer">NE Solar Slope / Back</button>
+        <button data-preset="iso" class="cam-preset px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer">Isometric South</button>
+        <button data-preset="top" class="cam-preset px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer">Plan (XY)</button>
+        <button id="btnZoomOut" class="px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer" title="Zoom Out">-</button>
+        <button id="btnZoomIn" class="px-2 py-1 rounded border border-[var(--card-border)] hover:border-[var(--primary)] transition cursor-pointer" title="Zoom In">+</button>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+          <input id="chkCreases" type="checkbox" checked class="accent-[var(--primary)]" />
+          <span>Crease Edges (&gt;3.5°)</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+          <input id="chkWire" type="checkbox" class="accent-[var(--primary)]" />
+          <span>Triangle Wireframe</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+          <input id="chkGhost" type="checkbox" class="accent-[var(--primary)]" />
+          <span>Ghost Voxel Hull</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer select-none">
+          <input id="chkOrbit" type="checkbox" />
+          <span>Auto-Orbit</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- VIEW A: Synchronized 2x2 Grid -->
+    <div id="gridView" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+    <!-- VIEW B: Single Deep-Dive Inspector + 2D Floor Slice Comparator -->
+    <div id="singleView" class="hidden space-y-3">
+      <div id="methodTabs" class="flex flex-wrap gap-1.5 text-xs"></div>
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+        <div class="lg:col-span-7 bg-[var(--card)] border border-[var(--card-border)] rounded-lg overflow-hidden flex flex-col">
+          <div class="flex items-center justify-between px-3 py-2 border-b border-[var(--card-border)] text-xs">
+            <div>
+              <span id="singleTitle" class="font-semibold text-[var(--foreground)]"></span>
+              <span id="singleBadge" class="ml-2 px-1.5 py-0.5 rounded text-[11px] border border-[var(--card-border)] text-[var(--muted-foreground)]"></span>
+            </div>
+            <span class="text-[var(--muted-foreground)]">Drag to orbit · Scroll to zoom</span>
+          </div>
+          <div class="relative w-full" style="height: 390px;">
+            <canvas id="singleCanvas" class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+          </div>
+          <div id="singleMetricsBar" class="grid grid-cols-3 sm:grid-cols-6 gap-2 px-3 py-2 border-t border-[var(--card-border)] text-xs"></div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-3">
+          <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-lg p-3 space-y-2 text-xs">
+            <div id="singleSubtitle" class="text-[var(--muted-foreground)]"></div>
+            <div id="singleVerdict" class="font-medium px-2.5 py-1.5 rounded border border-[var(--card-border)]"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div>
+                <div class="font-semibold text-[var(--success)] mb-1">Strengths</div>
+                <ul id="singlePros" class="space-y-1 text-[var(--muted-foreground)] list-disc pl-4"></ul>
+              </div>
+              <div>
+                <div class="font-semibold text-[var(--error)] mb-1">Trade-offs / Failures</div>
+                <ul id="singleCons" class="space-y-1 text-[var(--muted-foreground)] list-disc pl-4"></ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-[var(--card)] border border-[var(--card-border)] rounded-lg p-3 space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <span class="font-semibold text-[var(--foreground)]">2D Floor Plan Slice Comparator</span>
+              <span id="sliceElevLabel" class="font-mono text-[var(--primary)]"></span>
+            </div>
+            <div id="floorButtons" class="grid grid-cols-8 gap-1"></div>
+            <div class="relative w-full border border-[var(--card-border)] rounded" style="height: 205px;">
+              <canvas id="sliceCanvas" class="w-full h-full block"></canvas>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-[var(--muted-foreground)]">
+              <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-0.5 inline-block bg-slate-400"></span> Raw Grid</span>
+                <span class="inline-flex items-center gap-1"><span class="w-2.5 h-0.5 inline-block bg-emerald-400"></span> Correlated / VSA Support-Plane (<b id="corrVCount"></b>)</span>
+              </div>
+              <span>Support-plane snapped slabs share walls</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    (function ensureTheme() {
+      const fg = getComputedStyle(document.documentElement).getPropertyValue('--foreground').trim();
+      if (!fg) document.documentElement.setAttribute('data-standalone', '1');
+    })();
+
+    const PAYLOAD = {"meta":{"grid_shape":[8,28,32],"voxel_count":2760,"base_volume_m3":8280.0,"center":[13.5,15.5,12.0],"occ_rows":[[0,0,536870656,536870784,536870848,536870880,536870896,536870904,268435452,268435452,134217724,67108860,33554428,16777212,16777212,8388604,4194300,2097148,2096640,1048064,523776,261632,130560,130560,65024,32256,0,0],[0,0,536870656,536870784,536870848,536870880,536870896,268435448,134217724,134217724,67108860,33554428,16777212,16777212,8388604,4194300,2097148,1048572,1048064,523776,261632,130560,130560,65024,32256,15872,0,0],[0,0,536870656,536870784,536870848,536870880,268435440,134217720,134217724,67108860,33554428,16777212,16777212,8388604,4194300,2097148,1048572,1048572,523776,261632,130560,65024,65024,32256,15872,7680,0,0],[0,0,67108608,67108736,67108800,67108832,67108848,67108856,67108860,33554428,16777212,8388604,8388604,4194300,2097148,1048572,1048572,524284,261632,130560,65024,65024,32256,0,0,0,0,0],[0,0,67108608,67108736,67108800,67108832,67108848,67108856,33554428,16777212,8388604,8388604,4194300,2097148,1048572,524284,524284,262140,130560,65024,65024,32256,15872,0,0,0,0,0],[0,0,67108608,67108736,67108800,67108832,67108848,33554424,16777212,8388604,8388604,4194300,2097148,1048572,524284,524284,262140,131068,65024,32256,32256,15872,7680,0,0,0,0,0],[0,0,8388096,8388352,8388480,8388544,4194272,2097120,1048544,1048544,524256,262112,131040,65504,65504,32736,16352,8160,8160,0,0,0,0,0,0,0,0,0],[0,0,8388096,8388352,8388480,8388544,4194272,2097120,1048544,1048544,524256,262112,131040,65504,65504,32736,16352,8160,8160,0,0,0,0,0,0,0,0,0]]},"models":[{"key":"m3_correlated_loft","title":"1. Correlated Support-Plane Loft","subtitle":"Synchronized canonical support normals + tier-regressed sloped trapezoids","category":"Topology-Fixed 2.5D","verdict":"Fixes naive loft completely: 1-to-1 vertex correspondence, planar slopes & flat setbacks.","pros":["Synchronized vertex count (8 per tier, 6 on crown) eliminates all twisting.","Planar regression within tiers turns NE stairs into a 100% flat sloped facade.","Detects >2m jumps at z=9m and z=18m and caps them with crisp flat terraces."],"cons":["Requires discovering/defining canonical facade orientations across floors.","Extruded/lofted floor model cannot represent non-horizontal roof ridges (3D domes)."],"non_flat":false,"stats":{"volume_m3":8271.1,"iou_pct":99.9,"vertices":44,"triangles":84,"crease_edges":66,"planar_facets":24,"watertight":true},"vertices":[[-5.0,-13.5,-12.0],[4.5,-13.5,-12.0],[4.5,-6.5,-12.0],[12.5,-6.5,-12.0],[12.5,-0.353,-12.0],[-5.261,13.5,-12.0],[-11.5,13.5,-12.0],[-11.5,-7.0,-12.0],[-7.0,-10.5,12.0],[5.5,-10.5,12.0],[5.5,-3.35,12.0],[-8.41,7.5,12.0],[-11.5,7.5,12.0],[-11.5,-6.0,12.0],[-11.5,13.5,-3.0],[-11.5,10.5,-3.0],[-4.838,10.5,-3.0],[-8.684,13.5,-3.0],[12.5,-3.023,-3.0],[9.5,-0.683,-3.0],[9.5,-6.5,-3.0],[12.5,-6.5,-3.0],[-4.744,10.5,-3.0],[9.5,-0.61,-3.0],[-11.5,-7.0,6.0],[-5.0,-13.5,6.0],[4.5,-13.5,6.0],[4.5,-10.5,6.0],[-7.0,-10.5,6.0],[-11.5,-6.0,6.0],[-11.5,10.5,6.0],[-11.5,7.5,6.0],[-8.41,7.5,6.0],[5.5,-3.35,6.0],[5.5,-6.5,6.0],[9.5,-6.5,6.0],[9.5,-3.13,6.0],[-7.974,10.5,6.0],[5.5,-10.5,6.0],[4.5,-6.5,6.0],[-5.0,-13.5,-3.0],[4.5,-13.5,-3.0],[4.5,-6.5,-3.0],[-11.5,-7.0,-3.0]],"faces":[[7,1,0],[2,4,3],[4,6,5],[6,1,7],[2,6,4],[6,2,1],[13,8,9],[9,10,11],[11,12,13],[13,9,11],[17,14,15],[15,16,17],[21,18,19],[19,20,21],[23,16,22],[16,23,19],[29,24,25],[25,26,27],[28,29,25],[25,27,28],[37,30,31],[33,34,35],[35,36,37],[37,31,32],[33,35,37],[37,32,33],[27,34,38],[34,27,39],[0,1,40],[1,41,40],[1,2,41],[2,42,41],[2,20,42],[2,3,20],[3,21,20],[3,4,21],[4,18,21],[4,19,18],[4,16,19],[4,5,16],[5,17,16],[5,6,17],[6,14,17],[6,15,14],[6,7,15],[7,43,15],[7,0,43],[0,40,43],[40,41,25],[41,26,25],[41,27,26],[41,42,27],[42,39,27],[42,34,39],[42,20,34],[20,35,34],[20,19,35],[19,23,35],[23,36,35],[23,22,36],[22,37,36],[22,16,37],[16,15,37],[15,30,37],[15,31,30],[15,29,31],[15,43,29],[43,24,29],[43,40,24],[40,25,24],[28,27,8],[27,38,8],[38,9,8],[38,34,9],[34,33,9],[33,10,9],[33,32,10],[32,11,10],[32,31,11],[31,12,11],[31,29,12],[29,13,12],[29,28,13],[28,8,13]],"crease_edges":[[0,1],[0,7],[3,4],[2,3],[5,6],[4,5],[6,7],[1,2],[8,13],[8,9],[9,10],[10,11],[11,12],[12,13],[14,17],[14,15],[15,16],[16,17],[18,21],[18,19],[19,20],[20,21],[16,22],[22,23],[19,23],[16,19],[24,29],[24,25],[25,26],[26,27],[28,29],[27,28],[30,37],[30,31],[33,34],[34,35],[35,36],[36,37],[31,32],[32,33],[34,38],[27,38],[27,39],[34,39],[0,40],[1,41],[2,42],[3,21],[4,18],[5,17],[6,14],[7,43],[25,40],[26,41],[39,42],[20,35],[23,36],[22,37],[15,30],[24,43],[8,28],[9,38],[10,33],[11,32],[12,31],[13,29]]},{"key":"m2_extruded_slabs","title":"2. 2.5D Extruded Floor Slabs","subtitle":"Support-plane regularized per-floor contours + conformal vertical extrusion","category":"Discrete Ziggurat","verdict":"Coplanar shared walls across all floors with crisp 3m ziggurat steps (zero diaphragms).","pros":["Shared walls (West, South, SW chamfer, SE notch) align strictly across every floor.","Conformal exterior shell eliminates internal diaphragms & Painter bleed-through."],"cons":["Turns continuous NE solar slopes into discrete 3m vertical floor steps.","Each receding floor creates a horizontal shadow ledge along diagonal slopes."],"non_flat":false,"stats":{"volume_m3":8271.8,"iou_pct":99.9,"vertices":82,"triangles":160,"crease_edges":110,"planar_facets":30,"watertight":true},"vertices":[[-5.0,-13.5,-12.0],[4.5,-13.5,-12.0],[4.5,-6.5,-12.0],[12.5,-6.5,-12.0],[12.5,-0.795,-12.0],[-5.827,13.5,-12.0],[-11.5,13.5,-12.0],[-11.5,-7.0,-12.0],[-7.0,-10.5,12.0],[5.5,-10.5,12.0],[5.5,-3.35,12.0],[-8.41,7.5,12.0],[-11.5,7.5,12.0],[-11.5,-6.0,12.0],[-5.827,13.5,-9.0],[-6.981,13.5,-9.0],[12.5,-1.695,-9.0],[12.5,-0.795,-9.0],[-6.981,13.5,-6.0],[-8.109,13.5,-6.0],[12.5,-2.575,-6.0],[12.5,-1.695,-6.0],[-11.5,13.5,-3.0],[-11.5,10.5,-3.0],[-5.269,10.5,-3.0],[9.5,-1.02,-3.0],[9.5,-6.5,-3.0],[12.5,-6.5,-3.0],[12.5,-2.575,-3.0],[-8.109,13.5,-3.0],[-5.269,10.5,0.0],[-6.385,10.5,0.0],[9.5,-1.89,0.0],[9.5,-1.02,0.0],[-6.385,10.5,3.0],[-7.423,10.5,3.0],[9.5,-2.7,3.0],[9.5,-1.89,3.0],[-11.5,-7.0,6.0],[-5.0,-13.5,6.0],[4.5,-13.5,6.0],[4.5,-10.5,6.0],[-7.0,-10.5,6.0],[-11.5,-6.0,6.0],[-11.5,10.5,6.0],[-11.5,7.5,6.0],[-8.41,7.5,6.0],[5.5,-3.35,6.0],[5.5,-6.5,6.0],[9.5,-6.5,6.0],[9.5,-2.7,6.0],[-7.423,10.5,6.0],[5.5,-10.5,6.0],[4.5,-6.5,6.0],[-5.0,-13.5,-9.0],[4.5,-13.5,-9.0],[4.5,-6.5,-9.0],[12.5,-6.5,-9.0],[-11.5,13.5,-9.0],[-11.5,-7.0,-9.0],[-5.0,-13.5,-6.0],[4.5,-13.5,-6.0],[4.5,-6.5,-6.0],[12.5,-6.5,-6.0],[-11.5,13.5,-6.0],[-11.5,-7.0,-6.0],[-5.0,-13.5,-3.0],[4.5,-13.5,-3.0],[4.5,-6.5,-3.0],[-11.5,-7.0,-3.0],[-5.0,-13.5,0.0],[4.5,-13.5,0.0],[4.5,-6.5,0.0],[9.5,-6.5,0.0],[-11.5,10.5,0.0],[-11.5,-7.0,0.0],[-5.0,-13.5,3.0],[4.5,-13.5,3.0],[4.5,-6.5,3.0],[9.5,-6.5,3.0],[-11.5,10.5,3.0],[-11.5,-7.0,3.0]],"faces":[[7,1,0],[2,4,3],[4,6,5],[6,1,7],[2,6,4],[6,2,1],[13,8,9],[9,10,11],[11,12,13],[13,9,11],[17,14,15],[15,16,17],[21,18,19],[19,20,21],[29,22,23],[25,26,27],[29,23,24],[25,27,28],[28,29,24],[24,25,28],[33,30,31],[31,32,33],[37,34,35],[35,36,37],[43,38,39],[39,40,41],[42,43,39],[39,41,42],[51,44,45],[47,48,49],[49,50,51],[51,45,46],[47,49,51],[51,46,47],[41,48,52],[48,41,53],[0,1,54],[1,55,54],[1,2,55],[2,56,55],[2,3,56],[3,57,56],[3,16,57],[3,4,16],[4,17,16],[4,5,17],[5,14,17],[5,15,14],[5,6,15],[6,58,15],[6,7,58],[7,59,58],[7,0,59],[0,54,59],[54,55,60],[55,61,60],[55,56,61],[56,62,61],[56,57,62],[57,63,62],[57,20,63],[57,16,20],[16,21,20],[16,15,21],[15,18,21],[15,19,18],[15,58,19],[58,64,19],[58,59,64],[59,65,64],[59,54,65],[54,60,65],[60,61,66],[61,67,66],[61,62,67],[62,68,67],[62,26,68],[62,63,26],[63,27,26],[63,20,27],[20,28,27],[20,19,28],[19,29,28],[19,64,29],[64,22,29],[64,23,22],[64,65,23],[65,69,23],[65,60,69],[60,66,69],[66,67,70],[67,71,70],[67,68,71],[68,72,71],[68,26,72],[26,73,72],[26,32,73],[26,25,32],[25,33,32],[25,24,33],[24,30,33],[24,31,30],[24,23,31],[23,74,31],[23,69,74],[69,75,74],[69,66,75],[66,70,75],[70,71,76],[71,77,76],[71,72,77],[72,78,77],[72,73,78],[73,79,78],[73,36,79],[73,32,36],[32,37,36],[32,31,37],[31,34,37],[31,35,34],[31,74,35],[74,80,35],[74,75,80],[75,81,80],[75,70,81],[70,76,81],[76,77,39],[77,40,39],[77,41,40],[77,78,41],[78,53,41],[78,48,53],[78,79,48],[79,49,48],[79,36,49],[36,50,49],[36,35,50],[35,51,50],[35,80,51],[80,44,51],[80,45,44],[80,43,45],[80,81,43],[81,38,43],[81,76,38],[76,39,38],[42,41,8],[41,52,8],[52,9,8],[52,48,9],[48,47,9],[47,10,9],[47,46,10],[46,11,10],[46,45,11],[45,12,11],[45,43,12],[43,13,12],[43,42,13],[42,8,13]],"crease_edges":[[0,1],[0,7],[3,4],[2,3],[5,6],[4,5],[6,7],[1,2],[8,13],[8,9],[9,10],[10,11],[11,12],[12,13],[14,17],[14,15],[15,16],[16,17],[18,21],[18,19],[19,20],[20,21],[22,29],[22,23],[25,26],[26,27],[23,24],[27,28],[28,29],[24,25],[30,33],[30,31],[31,32],[32,33],[34,37],[34,35],[35,36],[36,37],[38,43],[38,39],[39,40],[40,41],[42,43],[41,42],[44,51],[44,45],[47,48],[48,49],[49,50],[50,51],[45,46],[46,47],[48,52],[41,52],[41,53],[48,53],[0,54],[1,55],[2,56],[3,57],[4,17],[5,14],[6,58],[7,59],[54,60],[55,61],[56,62],[57,63],[16,21],[15,18],[58,64],[59,65],[60,66],[61,67],[62,68],[27,63],[20,28],[19,29],[22,64],[65,69],[66,70],[67,71],[68,72],[26,73],[25,33],[24,30],[23,74],[69,75],[70,76],[71,77],[72,78],[73,79],[32,37],[31,34],[74,80],[75,81],[39,76],[40,77],[53,78],[49,79],[36,50],[35,51],[44,80],[38,81],[8,42],[9,52],[10,47],[11,46],[12,45],[13,43]]},{"key":"m5_cybertruck_vsa","title":"3. 3D Plane Arrangement (VSA)","subtitle":"Global 3D Variational Shape Approximation + Half-Space Slicing (\"Cybertruck\")","category":"Sheet-Metal Polyhedral CAD","verdict":"Ideal \"Cybertruck\" CAD shell: single global 3D planes, zero staircases, concave notch & terraces preserved.","pros":["Fits global 3D planes across the whole volume (one continuous NE slope z=0..18m).","Clean single watertight 2-manifold (~22 planar facets, zero internal seam walls).","Preserves non-convex SE courtyard notch and setback terraces (unlike Convex Hull)."],"cons":["Assumes piecewise-planar architectural vocabulary (best for angular/modernist forms).","Requires global plane clustering + half-space arrangement solver."],"non_flat":false,"stats":{"volume_m3":8271.0,"iou_pct":100.0,"vertices":43,"triangles":82,"crease_edges":62,"planar_facets":22,"watertight":true},"vertices":[[-5.0,-13.5,-12.0],[4.5,-13.5,-12.0],[4.5,-6.5,-12.0],[12.5,-6.5,-12.0],[12.5,-0.402,-12.0],[-5.323,13.5,-12.0],[-11.5,13.5,-12.0],[-11.5,-7.0,-12.0],[-7.0,-10.5,12.0],[5.5,-10.5,12.0],[5.5,-3.35,12.0],[-8.41,7.5,12.0],[-11.5,7.5,12.0],[-11.5,-6.0,12.0],[-11.5,13.5,-3.0],[-11.5,10.5,-3.0],[-4.745,10.5,-3.0],[9.207,-0.383,-3.0],[-8.592,13.5,-3.0],[12.5,-2.951,-3.0],[9.5,-0.611,-3.0],[9.5,-6.5,-3.0],[12.5,-6.5,-3.0],[-11.5,-7.0,6.0],[-5.0,-13.5,6.0],[4.5,-13.5,6.0],[4.5,-10.5,6.0],[-7.0,-10.5,6.0],[-11.5,-6.0,6.0],[-11.5,10.5,6.0],[-11.5,7.5,6.0],[-8.41,7.5,6.0],[5.5,-3.35,6.0],[5.5,-6.5,6.0],[9.5,-6.5,6.0],[9.5,-3.161,6.0],[-8.014,10.5,6.0],[5.5,-10.5,6.0],[4.5,-6.5,6.0],[-5.0,-13.5,-3.0],[4.5,-13.5,-3.0],[4.5,-6.5,-3.0],[-11.5,-7.0,-3.0]],"faces":[[7,1,0],[2,4,3],[4,6,5],[6,1,7],[2,6,4],[6,2,1],[13,8,9],[9,10,11],[11,12,13],[13,9,11],[18,14,15],[18,15,16],[22,19,20],[20,21,22],[28,23,24],[24,25,26],[27,28,24],[24,26,27],[36,29,30],[32,33,34],[34,35,36],[36,30,31],[32,34,36],[36,31,32],[26,33,37],[33,26,38],[0,1,39],[1,40,39],[1,2,40],[2,41,40],[2,21,41],[2,3,21],[3,22,21],[3,4,22],[4,19,22],[4,20,19],[4,17,20],[4,16,17],[4,5,16],[5,18,16],[5,6,18],[6,14,18],[6,15,14],[6,7,15],[7,42,15],[7,0,42],[0,39,42],[39,40,24],[40,25,24],[40,26,25],[40,41,26],[41,38,26],[41,33,38],[41,21,33],[21,34,33],[21,20,34],[20,35,34],[20,17,35],[17,16,35],[16,36,35],[16,15,36],[15,29,36],[15,30,29],[15,28,30],[15,42,28],[42,23,28],[42,39,23],[39,24,23],[27,26,8],[26,37,8],[37,9,8],[37,33,9],[33,32,9],[32,10,9],[32,31,10],[31,11,10],[31,30,11],[30,12,11],[30,28,12],[28,13,12],[28,27,13],[27,8,13]],"crease_edges":[[0,1],[0,7],[3,4],[2,3],[5,6],[4,5],[6,7],[1,2],[8,13],[8,9],[9,10],[10,11],[11,12],[12,13],[14,18],[14,15],[15,16],[16,18],[19,22],[19,20],[20,21],[21,22],[23,28],[23,24],[24,25],[25,26],[27,28],[26,27],[29,36],[29,30],[32,33],[33,34],[34,35],[35,36],[30,31],[31,32],[33,37],[26,37],[26,38],[33,38],[0,39],[1,40],[2,41],[3,22],[4,19],[5,18],[6,14],[7,42],[24,39],[25,40],[38,41],[21,34],[20,35],[16,36],[15,29],[23,42],[8,27],[9,37],[10,32],[11,31],[12,30],[13,28]]},{"key":"m0_voxels","title":"0. Raw Voxel Grid (Devox Off)","subtitle":"1m x 1m x 3m discrete occupancy baseline (2,192 voxels)","category":"Baseline Input","verdict":"Exact input massing; severe staircase aliasing along diagonals & slopes.","pros":["100% faithful to RL discrete voxel occupancy (IoU 100.0%).","Clean horizontal floor plates and vertical courtyard notch."],"cons":["45 deg SW chamfer and oblique NE facade become jagged 1m staircases.","Sloped NE solar envelope steps back in discrete 1m grid ledges.","Over 4,000 triangles and hundreds of redundant step edges."],"non_flat":false,"stats":{"volume_m3":8280.0,"iou_pct":100.0,"vertices":1606,"triangles":3208,"crease_edges":956,"planar_facets":280,"watertight":true}}],"floor_slices":[{"z_index":0,"elevation_m":"0m - 3m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[24.0,9.0],[25.0,9.0],[26.0,9.0],[26.0,10.0],[26.0,11.0],[26.0,12.0],[26.0,13.0],[26.0,14.0],[26.0,15.0],[25.0,15.0],[25.0,16.0],[24.0,16.0],[24.0,17.0],[23.0,17.0],[22.0,17.0],[22.0,18.0],[21.0,18.0],[21.0,19.0],[20.0,19.0],[20.0,20.0],[19.0,20.0],[19.0,21.0],[18.0,21.0],[17.0,21.0],[17.0,22.0],[16.0,22.0],[16.0,23.0],[15.0,23.0],[15.0,24.0],[14.0,24.0],[13.0,24.0],[13.0,25.0],[12.0,25.0],[12.0,26.0],[11.0,26.0],[11.0,27.0],[10.0,27.0],[10.0,28.0],[9.0,28.0],[8.0,28.0],[8.0,29.0],[7.0,29.0],[6.0,29.0],[5.0,29.0],[4.0,29.0],[3.0,29.0],[2.0,29.0],[2.0,28.0],[2.0,27.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[2.0,8.0],[8.0,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,15.0],[22.0,17.0],[19.0,21.0],[17.0,21.0],[15.0,24.0],[13.0,24.0],[10.0,28.0],[2.0,29.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,14.7],[7.67,29.0],[2.0,29.0],[2.0,8.5]]},{"z_index":1,"elevation_m":"3m - 6m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[24.0,9.0],[25.0,9.0],[26.0,9.0],[26.0,10.0],[26.0,11.0],[26.0,12.0],[26.0,13.0],[26.0,14.0],[25.0,14.0],[25.0,15.0],[24.0,15.0],[24.0,16.0],[23.0,16.0],[23.0,17.0],[22.0,17.0],[21.0,17.0],[21.0,18.0],[20.0,18.0],[20.0,19.0],[19.0,19.0],[19.0,20.0],[18.0,20.0],[17.0,20.0],[17.0,21.0],[16.0,21.0],[16.0,22.0],[15.0,22.0],[15.0,23.0],[14.0,23.0],[14.0,24.0],[13.0,24.0],[12.0,24.0],[12.0,25.0],[11.0,25.0],[11.0,26.0],[10.0,26.0],[10.0,27.0],[9.0,27.0],[8.0,27.0],[8.0,28.0],[7.0,28.0],[7.0,29.0],[6.0,29.0],[5.0,29.0],[4.0,29.0],[3.0,29.0],[2.0,29.0],[2.0,28.0],[2.0,27.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[2.0,8.0],[8.0,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,14.0],[7.0,29.0],[2.0,29.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,13.8],[6.52,29.0],[2.0,29.0],[2.0,8.5]]},{"z_index":2,"elevation_m":"6m - 9m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[24.0,9.0],[25.0,9.0],[26.0,9.0],[26.0,10.0],[26.0,11.0],[26.0,12.0],[26.0,13.0],[25.0,13.0],[25.0,14.0],[24.0,14.0],[24.0,15.0],[23.0,15.0],[23.0,16.0],[22.0,16.0],[21.0,16.0],[21.0,17.0],[20.0,17.0],[20.0,18.0],[19.0,18.0],[19.0,19.0],[18.0,19.0],[18.0,20.0],[17.0,20.0],[16.0,20.0],[16.0,21.0],[15.0,21.0],[15.0,22.0],[14.0,22.0],[14.0,23.0],[13.0,23.0],[13.0,24.0],[12.0,24.0],[11.0,24.0],[11.0,25.0],[10.0,25.0],[10.0,26.0],[9.0,26.0],[9.0,27.0],[8.0,27.0],[7.0,27.0],[7.0,28.0],[6.0,28.0],[6.0,29.0],[5.0,29.0],[4.0,29.0],[3.0,29.0],[2.0,29.0],[2.0,28.0],[2.0,27.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[2.0,8.0],[8.0,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,13.0],[9.0,27.0],[7.0,27.0],[6.0,29.0],[2.0,29.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[26.0,9.0],[26.0,12.93],[5.39,29.0],[2.0,29.0],[2.0,8.5]]},{"z_index":3,"elevation_m":"9m - 12m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[23.0,10.0],[23.0,11.0],[23.0,12.0],[23.0,13.0],[23.0,14.0],[23.0,15.0],[22.0,15.0],[22.0,16.0],[21.0,16.0],[20.0,16.0],[20.0,17.0],[19.0,17.0],[19.0,18.0],[18.0,18.0],[18.0,19.0],[17.0,19.0],[17.0,20.0],[16.0,20.0],[15.0,20.0],[15.0,21.0],[14.0,21.0],[14.0,22.0],[13.0,22.0],[13.0,23.0],[12.0,23.0],[11.0,23.0],[11.0,24.0],[10.0,24.0],[10.0,25.0],[9.0,25.0],[9.0,26.0],[8.0,26.0],[7.0,26.0],[6.0,26.0],[5.0,26.0],[4.0,26.0],[3.0,26.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[8.0,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,15.0],[20.0,16.0],[13.0,23.0],[11.0,23.0],[9.0,26.0],[2.0,26.0],[2.0,9.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,14.48],[8.23,26.0],[2.0,26.0],[2.0,8.5]]},{"z_index":4,"elevation_m":"12m - 15m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[23.0,10.0],[23.0,11.0],[23.0,12.0],[23.0,13.0],[23.0,14.0],[22.0,14.0],[22.0,15.0],[21.0,15.0],[21.0,16.0],[20.0,16.0],[19.0,16.0],[19.0,17.0],[18.0,17.0],[18.0,18.0],[17.0,18.0],[17.0,19.0],[16.0,19.0],[15.0,19.0],[15.0,20.0],[14.0,20.0],[14.0,21.0],[13.0,21.0],[13.0,22.0],[12.0,22.0],[12.0,23.0],[11.0,23.0],[10.0,23.0],[10.0,24.0],[9.0,24.0],[9.0,25.0],[8.0,25.0],[8.0,26.0],[7.0,26.0],[6.0,26.0],[5.0,26.0],[4.0,26.0],[3.0,26.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[2.0,8.0],[8.0,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,14.0],[17.0,19.0],[15.0,19.0],[8.0,26.0],[2.0,26.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,13.61],[7.12,26.0],[2.0,26.0],[2.0,8.5]]},{"z_index":5,"elevation_m":"15m - 18m","raw_coords":[[2.0,8.0],[3.0,8.0],[3.0,7.0],[4.0,7.0],[4.0,6.0],[5.0,6.0],[5.0,5.0],[6.0,5.0],[6.0,4.0],[7.0,4.0],[7.0,3.0],[8.0,3.0],[8.0,2.0],[9.0,2.0],[10.0,2.0],[11.0,2.0],[12.0,2.0],[13.0,2.0],[14.0,2.0],[15.0,2.0],[16.0,2.0],[17.0,2.0],[18.0,2.0],[18.0,3.0],[18.0,4.0],[18.0,5.0],[18.0,6.0],[18.0,7.0],[18.0,8.0],[18.0,9.0],[19.0,9.0],[20.0,9.0],[21.0,9.0],[22.0,9.0],[23.0,9.0],[23.0,10.0],[23.0,11.0],[23.0,12.0],[23.0,13.0],[22.0,13.0],[22.0,14.0],[21.0,14.0],[21.0,15.0],[20.0,15.0],[19.0,15.0],[19.0,16.0],[18.0,16.0],[18.0,17.0],[17.0,17.0],[17.0,18.0],[16.0,18.0],[16.0,19.0],[15.0,19.0],[14.0,19.0],[14.0,20.0],[13.0,20.0],[13.0,21.0],[12.0,21.0],[12.0,22.0],[11.0,22.0],[11.0,23.0],[10.0,23.0],[9.0,23.0],[9.0,24.0],[8.0,24.0],[8.0,25.0],[7.0,25.0],[7.0,26.0],[6.0,26.0],[5.0,26.0],[4.0,26.0],[3.0,26.0],[2.0,26.0],[2.0,25.0],[2.0,24.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0],[2.0,9.0]],"rdp_coords":[[2.0,8.0],[8.0,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,13.0],[19.0,15.0],[16.0,19.0],[14.0,19.0],[11.0,23.0],[9.0,23.0],[7.0,26.0],[2.0,26.0]],"corr_coords":[[8.5,2.0],[18.0,2.0],[18.0,9.0],[23.0,9.0],[23.0,12.8],[6.08,26.0],[2.0,26.0],[2.0,8.5]]},{"z_index":6,"elevation_m":"18m - 21m","raw_coords":[[2.0,9.0],[3.0,9.0],[3.0,8.0],[4.0,8.0],[4.0,7.0],[5.0,7.0],[5.0,6.0],[6.0,6.0],[6.0,5.0],[7.0,5.0],[8.0,5.0],[9.0,5.0],[10.0,5.0],[11.0,5.0],[12.0,5.0],[13.0,5.0],[14.0,5.0],[15.0,5.0],[16.0,5.0],[17.0,5.0],[18.0,5.0],[19.0,5.0],[19.0,6.0],[19.0,7.0],[19.0,8.0],[19.0,9.0],[19.0,10.0],[19.0,11.0],[19.0,12.0],[19.0,13.0],[18.0,13.0],[17.0,13.0],[17.0,14.0],[16.0,14.0],[16.0,15.0],[15.0,15.0],[15.0,16.0],[14.0,16.0],[13.0,16.0],[13.0,17.0],[12.0,17.0],[12.0,18.0],[11.0,18.0],[11.0,19.0],[10.0,19.0],[10.0,20.0],[9.0,20.0],[8.0,20.0],[8.0,21.0],[7.0,21.0],[7.0,22.0],[6.0,22.0],[6.0,23.0],[5.0,23.0],[4.0,23.0],[3.0,23.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0]],"rdp_coords":[[6.0,5.0],[19.0,5.0],[19.0,13.0],[13.0,16.0],[6.0,23.0],[2.0,23.0],[2.0,10.0]],"corr_coords":[[6.5,5.0],[19.0,5.0],[19.0,12.15],[5.09,23.0],[2.0,23.0],[2.0,9.5]]},{"z_index":7,"elevation_m":"21m - 24m","raw_coords":[[2.0,9.0],[3.0,9.0],[3.0,8.0],[4.0,8.0],[4.0,7.0],[5.0,7.0],[5.0,6.0],[6.0,6.0],[6.0,5.0],[7.0,5.0],[8.0,5.0],[9.0,5.0],[10.0,5.0],[11.0,5.0],[12.0,5.0],[13.0,5.0],[14.0,5.0],[15.0,5.0],[16.0,5.0],[17.0,5.0],[18.0,5.0],[19.0,5.0],[19.0,6.0],[19.0,7.0],[19.0,8.0],[19.0,9.0],[19.0,10.0],[19.0,11.0],[19.0,12.0],[19.0,13.0],[18.0,13.0],[17.0,13.0],[17.0,14.0],[16.0,14.0],[16.0,15.0],[15.0,15.0],[15.0,16.0],[14.0,16.0],[13.0,16.0],[13.0,17.0],[12.0,17.0],[12.0,18.0],[11.0,18.0],[11.0,19.0],[10.0,19.0],[10.0,20.0],[9.0,20.0],[8.0,20.0],[8.0,21.0],[7.0,21.0],[7.0,22.0],[6.0,22.0],[6.0,23.0],[5.0,23.0],[4.0,23.0],[3.0,23.0],[2.0,23.0],[2.0,22.0],[2.0,21.0],[2.0,20.0],[2.0,19.0],[2.0,18.0],[2.0,17.0],[2.0,16.0],[2.0,15.0],[2.0,14.0],[2.0,13.0],[2.0,12.0],[2.0,11.0],[2.0,10.0]],"rdp_coords":[[6.0,5.0],[19.0,5.0],[19.0,13.0],[13.0,16.0],[6.0,23.0],[2.0,23.0],[2.0,10.0]],"corr_coords":[[6.5,5.0],[19.0,5.0],[19.0,12.15],[5.09,23.0],[2.0,23.0],[2.0,9.5]]}]};
+
+    const rawIndex = PAYLOAD.models.findIndex(m => m.key === 'm0_voxels');
+
+    // Reconstruct exact m0_voxels geometry from bitpacked occ_rows (identical to Python)
+    (function hydrateMeshes() {
+      const [NZ, NX, NY] = PAYLOAD.meta.grid_shape;
+      const [cx, cy, cz] = PAYLOAD.meta.center;
+      const rows = PAYLOAD.meta.occ_rows;
+      const isOcc = (z, x, y) => {
+        if (z < 0 || z >= NZ || x < 0 || x >= NX || y < 0 || y >= NY) return false;
+        return ((rows[z][x] >>> y) & 1) === 1;
+      };
+
+      const vmap = new Map();
+      const verts = [];
+      const faces = [];
+      const vid = (x, y, z) => {
+        const key = (x << 16) | (y << 8) | z;
+        let idx = vmap.get(key);
+        if (idx === undefined) {
+          idx = verts.length;
+          vmap.set(key, idx);
+          verts.push([x - cx, y - cy, z - cz]);
+        }
+        return idx;
+      };
+      const addQuad = (p0, p1, p2, p3) => {
+        const i0 = vid(p0[0], p0[1], p0[2]);
+        const i1 = vid(p1[0], p1[1], p1[2]);
+        const i2 = vid(p2[0], p2[1], p2[2]);
+        const i3 = vid(p3[0], p3[1], p3[2]);
+        faces.push([i0, i1, i2], [i0, i2, i3]);
+      };
+
+      for (let z = 0; z < NZ; z++) {
+        const z0 = z * 3, z1 = (z + 1) * 3;
+        for (let x = 0; x < NX; x++) {
+          for (let y = 0; y < NY; y++) {
+            if (!isOcc(z, x, y)) continue;
+            if (!isOcc(z - 1, x, y)) addQuad([x, y, z0], [x, y + 1, z0], [x + 1, y + 1, z0], [x + 1, y, z0]);
+            if (!isOcc(z + 1, x, y)) addQuad([x, y, z1], [x + 1, y, z1], [x + 1, y + 1, z1], [x, y + 1, z1]);
+            if (!isOcc(z, x - 1, y)) addQuad([x, y, z0], [x, y, z1], [x, y + 1, z1], [x, y + 1, z0]);
+            if (!isOcc(z, x + 1, y)) addQuad([x + 1, y, z0], [x + 1, y + 1, z0], [x + 1, y + 1, z1], [x + 1, y, z1]);
+            if (!isOcc(z, x, y - 1)) addQuad([x, y, z0], [x + 1, y, z0], [x + 1, y, z1], [x, y, z1]);
+            if (!isOcc(z, x, y + 1)) addQuad([x, y + 1, z0], [x, y + 1, z1], [x + 1, y + 1, z1], [x + 1, y + 1, z0]);
+          }
+        }
+      }
+
+      const rawModel = PAYLOAD.models.find(m => m.key === 'm0_voxels');
+      if (rawModel) {
+        rawModel.vertices = verts;
+        rawModel.faces = faces;
+      }
+
+      for (const m of PAYLOAD.models) {
+        const mv = m.vertices, mf = m.faces;
+        const normals = new Array(mf.length);
+        const edgeMap = new Map();
+        const cosCrease = Math.cos((3.5 * Math.PI) / 180);
+
+        for (let fi = 0; fi < mf.length; fi++) {
+          const [a, b, c] = mf[fi];
+          const p0 = mv[a], p1 = mv[b], p2 = mv[c];
+          const ux = p1[0] - p0[0], uy = p1[1] - p0[1], uz = p1[2] - p0[2];
+          const vx = p2[0] - p0[0], vy = p2[1] - p0[1], vz = p2[2] - p0[2];
+          let nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;
+          const l = Math.hypot(nx, ny, nz) || 1;
+          normals[fi] = [nx / l, ny / l, nz / l];
+
+          const pairs = [[a, b], [b, c], [c, a]];
+          for (const [u0, v0] of pairs) {
+            const u = Math.min(u0, v0), v = Math.max(u0, v0);
+            const ek = u * 65536 + v;
+            let lst = edgeMap.get(ek);
+            if (!lst) { lst = []; edgeMap.set(ek, lst); }
+            lst.push(fi);
+          }
+        }
+        m.face_normals = normals;
+
+        const creaseWithFaces = [];
+        const wireWithFaces = [];
+        for (const [ek, flist] of edgeMap.entries()) {
+          const u = Math.floor(ek / 65536), v = ek % 65536;
+          wireWithFaces.push([u, v, flist]);
+          if (flist.length !== 2) {
+            creaseWithFaces.push([u, v, flist]);
+          } else {
+            const n0 = normals[flist[0]], n1 = normals[flist[1]];
+            const dot = n0[0] * n1[0] + n0[1] * n1[1] + n0[2] * n1[2];
+            if (dot < cosCrease) creaseWithFaces.push([u, v, flist]);
+          }
+        }
+        m.crease_data = creaseWithFaces;
+        m.wire_data = wireWithFaces;
+      }
+    })();
+
+    const state = {
+      mode: 'grid',
+      activeIdx: 0,
+      floorIdx: 1,
+      theta: -0.62,
+      phi: 0.46,
+      zoom: 1.0,
+      showCreases: true,
+      showWire: false,
+      showGhost: false,
+      autoOrbit: false,
+    };
+
+    const MODEL_ACCENTS = {
+      m3_correlated_loft:{ hue: [52,  211, 153], badge: 'text-emerald-400', crease: '#022c22' },
+      m2_extruded_slabs: { hue: [251, 191, 36],  badge: 'text-amber-400',   crease: '#451a03' },
+      m5_cybertruck_vsa: { hue: [56,  189, 248], badge: 'text-sky-400',     crease: '#082f49' },
+      m0_voxels:         { hue: [148, 163, 184], badge: 'text-slate-400',   crease: '#1e293b' },
+    };
+
+    function getThemePalette() {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const isLight = document.documentElement.classList.contains('light');
+      const fg = rootStyle.getPropertyValue('--foreground').trim() || '#e6edf3';
+      const muted = rootStyle.getPropertyValue('--muted-foreground').trim() || '#8b949e';
+      const border = rootStyle.getPropertyValue('--card-border').trim() || '#2a323d';
+      return {
+        isLight,
+        fg,
+        muted,
+        border,
+        canvasBg: isLight ? '#f8fafc' : '#0b1017',
+        gridLine: isLight ? 'rgba(15, 23, 42, 0.08)' : 'rgba(148, 163, 184, 0.11)',
+        axisLabel: isLight ? 'rgba(15, 23, 42, 0.55)' : 'rgba(148, 163, 184, 0.65)',
+        ghostStroke: isLight ? 'rgba(15, 23, 42, 0.22)' : 'rgba(226, 232, 240, 0.24)',
+        creaseLight: isLight ? 'rgba(15, 23, 42, 0.85)' : 'rgba(226, 242, 255, 0.86)',
+        wireStroke: isLight ? 'rgba(15, 23, 42, 0.30)' : 'rgba(226, 232, 240, 0.30)',
+      };
+    }
+
+    function projectPoint(x, y, z, cosT, sinT, cosP, sinP, dist, scale, cx, cy) {
+      const x1 = x * cosT - y * sinT;
+      const y1 = x * sinT + y * cosT;
+      const camX = x1;
+      const camY = z * cosP + y1 * sinP;
+      const camZ = z * sinP - y1 * cosP;
+      const fov = dist / Math.max(dist - camZ, 8);
+      return [cx + camX * scale * fov, cy - camY * scale * fov, camZ, camX, camY];
+    }
+
+    function renderMesh3D(canvas, model, opts) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
+      const W = Math.round(rect.width * dpr);
+      const H = Math.round(rect.height * dpr);
+      if (canvas.width !== W || canvas.height !== H) {
+        canvas.width = W;
+        canvas.height = H;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cw = rect.width, ch = rect.height;
+      const pal = getThemePalette();
+      ctx.fillStyle = pal.canvasBg;
+      ctx.fillRect(0, 0, cw, ch);
+
+      const cosT = Math.cos(state.theta), sinT = Math.sin(state.theta);
+      const cosP = Math.cos(state.phi), sinP = Math.sin(state.phi);
+      const dist = 92;
+      const scale = Math.min(cw, ch) * 0.0255 * state.zoom;
+      const cx = cw * 0.5, cy = ch * 0.53;
+
+      ctx.strokeStyle = pal.gridLine;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let g = -14; g <= 14; g += 4) {
+        const a = projectPoint(g, -14, -12, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        const b = projectPoint(g, 14, -12, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+        const c = projectPoint(-14, g, -12, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        const d = projectPoint(14, g, -12, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        ctx.moveTo(c[0], c[1]); ctx.lineTo(d[0], d[1]);
+      }
+      ctx.stroke();
+
+      ctx.font = '10px ui-monospace, SFMono-Regular, Menlo, monospace';
+      ctx.fillStyle = pal.axisLabel;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const cardinals = [
+        ['N (+Y)', 0, 15.8, -12],
+        ['S (-Y)', 0, -15.8, -12],
+        ['E (+X)', 15.8, 0, -12],
+        ['W (-X)', -15.8, 0, -12],
+      ];
+      for (const [lbl, gx, gy, gz] of cardinals) {
+        const p = projectPoint(gx, gy, gz, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        ctx.fillText(lbl, p[0], p[1]);
+      }
+
+      const mv = model.vertices;
+      const proj = new Array(mv.length);
+      for (let i = 0; i < mv.length; i++) {
+        const [x, y, z] = mv[i];
+        proj[i] = projectPoint(x, y, z, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+      }
+
+      const lx = -0.52, ly = -0.48, lz = 0.71;
+      const accent = MODEL_ACCENTS[model.key] || MODEL_ACCENTS.m3_correlated_loft;
+      const [br, bg, bb] = accent.hue;
+
+      const mf = model.faces, mn = model.face_normals;
+      const frontFlags = new Uint8Array(mf.length);
+      const drawQueue = [];
+
+      for (let fi = 0; fi < mf.length; fi++) {
+        const [a, b, c] = mf[fi];
+        const [nx, ny, nz] = mn[fi];
+        const nx1 = nx * cosT - ny * sinT;
+        const ny1 = nx * sinT + ny * cosT;
+        const nCamX = nx1;
+        const nCamY = nz * cosP + ny1 * sinP;
+        const nCamZ = nz * sinP - ny1 * cosP;
+
+        const pa = proj[a], pb = proj[b], pc = proj[c];
+        const fCamX = (pa[3] + pb[3] + pc[3]) / 3;
+        const fCamY = (pa[4] + pb[4] + pc[4]) / 3;
+        const fCamZ = (pa[2] + pb[2] + pc[2]) / 3;
+
+        const vx = -fCamX, vy = -fCamY, vz = dist - fCamZ;
+        if (nCamX * vx + nCamY * vy + nCamZ * vz <= -0.02) continue;
+
+        frontFlags[fi] = 1;
+        const sun = Math.max(0, nx * lx + ny * ly + nz * lz);
+        const sky = 0.28 + 0.16 * (nz * 0.5 + 0.5);
+        const rim = Math.max(0, nCamZ) * 0.14;
+        const shade = Math.min(1.08, sky + 0.56 * sun + rim);
+
+        const r = Math.min(255, Math.round((pal.isLight ? 45 : 22) + br * shade * (pal.isLight ? 0.85 : 0.92)));
+        const g = Math.min(255, Math.round((pal.isLight ? 52 : 28) + bg * shade * (pal.isLight ? 0.85 : 0.92)));
+        const bl = Math.min(255, Math.round((pal.isLight ? 60 : 36) + bb * shade * (pal.isLight ? 0.85 : 0.92)));
+
+        drawQueue.push({ kind: 0, depth: fCamZ, a, b, c, color: `rgb(${r},${g},${bl})` });
+      }
+
+      const edgeSource = state.showWire ? model.wire_data : (state.showCreases ? model.crease_data : null);
+      if (edgeSource) {
+        const edgeBias = 0.28;
+        for (let ei = 0; ei < edgeSource.length; ei++) {
+          const [u, v, flist] = edgeSource[ei];
+          let visible = false;
+          for (let k = 0; k < flist.length; k++) {
+            if (frontFlags[flist[k]]) { visible = true; break; }
+          }
+          if (!visible) continue;
+          const depth = 0.5 * (proj[u][2] + proj[v][2]) + edgeBias;
+          drawQueue.push({ kind: 1, depth, u, v });
+        }
+      }
+
+      drawQueue.sort((p, q) => p.depth - q.depth);
+
+      for (let i = 0; i < drawQueue.length; i++) {
+        const item = drawQueue[i];
+        if (item.kind === 0) {
+          const p0 = proj[item.a], p1 = proj[item.b], p2 = proj[item.c];
+          ctx.beginPath();
+          ctx.moveTo(p0[0], p0[1]);
+          ctx.lineTo(p1[0], p1[1]);
+          ctx.lineTo(p2[0], p2[1]);
+          ctx.closePath();
+          ctx.fillStyle = item.color;
+          ctx.fill();
+          ctx.strokeStyle = item.color;
+          ctx.lineWidth = 0.65;
+          ctx.stroke();
+        } else {
+          const p0 = proj[item.u], p1 = proj[item.v];
+          ctx.beginPath();
+          ctx.moveTo(p0[0], p0[1]);
+          ctx.lineTo(p1[0], p1[1]);
+          ctx.strokeStyle = state.showWire ? pal.wireStroke : pal.creaseLight;
+          ctx.lineWidth = state.showWire ? 0.75 : (opts.compact ? 1.05 : 1.35);
+          ctx.stroke();
+        }
+      }
+
+      if (state.showGhost && model.key !== 'm0_voxels' && rawIndex >= 0) {
+        const m0 = PAYLOAD.models[rawIndex];
+        const gv = m0.vertices;
+        const gProj = new Array(gv.length);
+        for (let i = 0; i < gv.length; i++) {
+          const [x, y, z] = gv[i];
+          gProj[i] = projectPoint(x, y, z, cosT, sinT, cosP, sinP, dist, scale, cx, cy);
+        }
+        ctx.strokeStyle = pal.ghostStroke;
+        ctx.lineWidth = 0.6;
+        ctx.beginPath();
+        for (let ei = 0; ei < m0.crease_data.length; ei++) {
+          const [u, v] = m0.crease_data[ei];
+          ctx.moveTo(gProj[u][0], gProj[u][1]);
+          ctx.lineTo(gProj[v][0], gProj[v][1]);
+        }
+        ctx.stroke();
+      }
+    }
+
+    function renderSlice2D() {
+      const canvas = document.getElementById('sliceCanvas');
+      if (!canvas) return;
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width < 10 || rect.height < 10) return;
+      const W = Math.round(rect.width * dpr);
+      const H = Math.round(rect.height * dpr);
+      if (canvas.width !== W || canvas.height !== H) {
+        canvas.width = W;
+        canvas.height = H;
+      }
+      const ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      const cw = rect.width, ch = rect.height;
+      const pal = getThemePalette();
+      ctx.fillStyle = pal.canvasBg;
+      ctx.fillRect(0, 0, cw, ch);
+
+      const slice = PAYLOAD.floor_slices[state.floorIdx];
+      document.getElementById('sliceElevLabel').textContent = `Floor z=${slice.z_index} (${slice.elevation_m})`;
+      document.getElementById('corrVCount').textContent = `${slice.corr_coords.length}v`;
+
+      const pad = 16;
+      const sc = Math.min((cw - 2 * pad) / 28, (ch - 2 * pad) / 30);
+      const ox = cw * 0.5 - 14 * sc;
+      const oy = ch * 0.5 + 15.5 * sc;
+      const toXY = ([x, y]) => [ox + x * sc, oy - y * sc];
+
+      ctx.strokeStyle = pal.gridLine;
+      ctx.lineWidth = 0.7;
+      ctx.beginPath();
+      for (let x = 2; x <= 26; x += 2) {
+        const a = toXY([x, 2]), b = toXY([x, 29]);
+        ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+      }
+      for (let y = 2; y <= 29; y += 2) {
+        const a = toXY([2, y]), b = toXY([26, y]);
+        ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]);
+      }
+      ctx.stroke();
+
+      function drawPoly(coords, stroke, fill, lineWidth, dashed, dotColor) {
+        if (!coords || !coords.length) return;
+        ctx.save();
+        ctx.beginPath();
+        const p0 = toXY(coords[0]);
+        ctx.moveTo(p0[0], p0[1]);
+        for (let i = 1; i < coords.length; i++) {
+          const p = toXY(coords[i]);
+          ctx.lineTo(p[0], p[1]);
+        }
+        ctx.closePath();
+        if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+        if (dashed) ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = lineWidth;
+        ctx.stroke();
+        ctx.restore();
+
+        if (dotColor) {
+          ctx.fillStyle = dotColor;
+          for (let i = 0; i < coords.length; i++) {
+            const [px, py] = toXY(coords[i]);
+            ctx.beginPath();
+            ctx.arc(px, py, 2.8, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+
+      drawPoly(slice.raw_coords, 'rgba(148,163,184,0.65)', 'rgba(148,163,184,0.08)', 1.1, false, null);
+      drawPoly(slice.corr_coords, '#34d399', 'rgba(52,211,153,0.08)', 1.8, false, '#34d399');
+    }
+
+    const gridCanvases = [];
+
+    function buildUI() {
+      const gridEl = document.getElementById('gridView');
+      const tabsEl = document.getElementById('methodTabs');
+      const floorEl = document.getElementById('floorButtons');
+
+      PAYLOAD.models.forEach((m, idx) => {
+        const acc = MODEL_ACCENTS[m.key] || MODEL_ACCENTS.m3_correlated_loft;
+        const card = document.createElement('div');
+        card.className = 'bg-[var(--card)] border border-[var(--card-border)] rounded-lg overflow-hidden flex flex-col';
+        card.innerHTML = `
+          <div class="flex items-center justify-between px-3 py-1.5 border-b border-[var(--card-border)] text-xs">
+            <span class="font-semibold ${acc.badge} truncate">${m.title}</span>
+            <button data-inspect="${idx}" class="px-2 py-0.5 rounded border border-[var(--card-border)] hover:border-[var(--primary)] text-[11px] text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition cursor-pointer shrink-0">
+              Inspect
+            </button>
+          </div>
+          <div class="relative w-full" style="height: 250px;">
+            <canvas class="w-full h-full block cursor-grab active:cursor-grabbing"></canvas>
+          </div>
+          <div class="px-3 py-1.5 border-t border-[var(--card-border)] space-y-1">
+            <div class="flex items-center justify-between text-[11px] font-mono tabular-nums text-[var(--muted-foreground)]">
+              <span>Vol <b class="text-[var(--foreground)]">${m.stats.volume_m3}</b>m³</span>
+              <span>IoU <b class="text-[var(--foreground)]">${m.stats.iou_pct}%</b></span>
+              <span>Facets <b class="text-[var(--foreground)]">${m.stats.planar_facets}</b></span>
+              <span>Tris <b class="text-[var(--foreground)]">${m.stats.triangles}</b></span>
+            </div>
+            <p class="text-[11px] text-[var(--muted-foreground)] leading-snug line-clamp-2">${m.verdict}</p>
+          </div>
+        `;
+        gridEl.appendChild(card);
+        const cv = card.querySelector('canvas');
+        attachOrbitHandlers(cv);
+        gridCanvases.push({ canvas: cv, model: m });
+
+        const tabBtn = document.createElement('button');
+        tabBtn.className = 'px-2.5 py-1 rounded border border-[var(--card-border)] transition cursor-pointer';
+        tabBtn.textContent = m.title;
+        tabBtn.dataset.tabIdx = idx;
+        tabBtn.addEventListener('click', () => { state.activeIdx = idx; syncView(); });
+        tabsEl.appendChild(tabBtn);
+      });
+
+      gridEl.querySelectorAll('[data-inspect]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.activeIdx = Number(btn.dataset.inspect);
+          state.mode = 'single';
+          syncView();
+        });
+      });
+
+      PAYLOAD.floor_slices.forEach((fs, idx) => {
+        const fb = document.createElement('button');
+        fb.className = 'py-1 rounded border border-[var(--card-border)] font-mono text-[11px] transition cursor-pointer';
+        fb.textContent = `z${idx}`;
+        fb.dataset.fidx = idx;
+        fb.addEventListener('click', () => { state.floorIdx = idx; updateFloorButtons(); renderSlice2D(); });
+        floorEl.appendChild(fb);
+      });
+
+      attachOrbitHandlers(document.getElementById('singleCanvas'));
+      document.getElementById('btnModeGrid').addEventListener('click', () => { state.mode = 'grid'; syncView(); });
+      document.getElementById('btnModeDefault').addEventListener('click', () => { state.activeIdx = 0; state.mode = 'single'; syncView(); });
+      document.getElementById('btnModeRaw').addEventListener('click', () => { state.activeIdx = rawIndex >= 0 ? rawIndex : 0; state.mode = 'single'; syncView(); });
+
+      document.querySelectorAll('.cam-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const p = btn.dataset.preset;
+          state.autoOrbit = false;
+          document.getElementById('chkOrbit').checked = false;
+          if (p === 'se')  { state.theta = -0.62; state.phi = 0.46; state.zoom = 1.0; }
+          if (p === 'ne')  { state.theta = -2.32; state.phi = 0.44; state.zoom = 1.0; }
+          if (p === 'iso') { state.theta = 0.58;  state.phi = 0.52; state.zoom = 1.0; }
+          if (p === 'top') { state.theta = 0.0;   state.phi = 1.48; state.zoom = 0.95; }
+          drawAll();
+        });
+      });
+
+      document.getElementById('btnZoomIn').addEventListener('click', () => { state.zoom = Math.min(2.4, state.zoom * 1.15); drawAll(); });
+      document.getElementById('btnZoomOut').addEventListener('click', () => { state.zoom = Math.max(0.55, state.zoom / 1.15); drawAll(); });
+      document.getElementById('chkCreases').addEventListener('change', (e) => { state.showCreases = e.target.checked; drawAll(); });
+      document.getElementById('chkWire').addEventListener('change', (e) => { state.showWire = e.target.checked; drawAll(); });
+      document.getElementById('chkGhost').addEventListener('change', (e) => { state.showGhost = e.target.checked; drawAll(); });
+      document.getElementById('chkOrbit').addEventListener('change', (e) => { state.autoOrbit = e.target.checked; });
+
+      syncView();
+    }
+
+    function attachOrbitHandlers(canvas) {
+      let dragging = false, lx = 0, ly = 0;
+      canvas.addEventListener('pointerdown', (e) => {
+        dragging = true; lx = e.clientX; ly = e.clientY;
+        state.autoOrbit = false;
+        document.getElementById('chkOrbit').checked = false;
+        canvas.setPointerCapture(e.pointerId);
+      });
+      canvas.addEventListener('pointermove', (e) => {
+        if (!dragging) return;
+        const dx = e.clientX - lx, dy = e.clientY - ly;
+        lx = e.clientX; ly = e.clientY;
+        state.theta -= dx * 0.01;
+        state.phi = Math.max(-0.18, Math.min(1.52, state.phi + dy * 0.008));
+        drawAll();
+      });
+      canvas.addEventListener('pointerup', (e) => { dragging = false; canvas.releasePointerCapture(e.pointerId); });
+      canvas.addEventListener('pointercancel', () => { dragging = false; });
+      canvas.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        state.zoom = Math.max(0.55, Math.min(2.4, state.zoom * (e.deltaY < 0 ? 1.08 : 0.92)));
+        drawAll();
+      }, { passive: false });
+    }
+
+    function updateFloorButtons() {
+      document.querySelectorAll('#floorButtons button').forEach(b => {
+        const active = Number(b.dataset.fidx) === state.floorIdx;
+        b.style.background = active ? 'var(--primary)' : 'transparent';
+        b.style.color = active ? 'var(--primary-foreground)' : 'var(--muted-foreground)';
+        b.style.fontWeight = active ? '600' : '400';
+      });
+    }
+
+    function syncView() {
+      const isGrid = state.mode === 'grid';
+      document.getElementById('gridView').classList.toggle('hidden', !isGrid);
+      document.getElementById('singleView').classList.toggle('hidden', isGrid);
+
+      const gBtn = document.getElementById('btnModeGrid');
+      const dBtn = document.getElementById('btnModeDefault');
+      const rBtn = document.getElementById('btnModeRaw');
+      gBtn.style.background = isGrid ? 'var(--primary)' : 'transparent';
+      gBtn.style.color = isGrid ? 'var(--primary-foreground)' : 'var(--muted-foreground)';
+      dBtn.style.background = (!isGrid && state.activeIdx === 0) ? 'var(--primary)' : 'transparent';
+      dBtn.style.color = (!isGrid && state.activeIdx === 0) ? 'var(--primary-foreground)' : 'var(--muted-foreground)';
+      rBtn.style.background = (!isGrid && state.activeIdx === rawIndex) ? 'var(--primary)' : 'transparent';
+      rBtn.style.color = (!isGrid && state.activeIdx === rawIndex) ? 'var(--primary-foreground)' : 'var(--muted-foreground)';
+
+      if (!isGrid) {
+        const m = PAYLOAD.models[state.activeIdx];
+        document.querySelectorAll('#methodTabs button').forEach(b => {
+          const active = Number(b.dataset.tabIdx) === state.activeIdx;
+          b.style.background = active ? 'var(--primary)' : 'var(--card)';
+          b.style.color = active ? 'var(--primary-foreground)' : 'var(--foreground)';
+        });
+        document.getElementById('singleTitle').textContent = m.title;
+        document.getElementById('singleBadge').textContent = m.category;
+        document.getElementById('singleSubtitle').textContent = m.subtitle;
+        document.getElementById('singleVerdict').textContent = m.verdict;
+
+        document.getElementById('singlePros').innerHTML = m.pros.map(p => `<li>${p}</li>`).join('');
+        document.getElementById('singleCons').innerHTML = m.cons.map(c => `<li>${c}</li>`).join('');
+
+        const s = m.stats;
+        const cells = [
+          ['Volume', `${s.volume_m3} m³`],
+          ['Voxel IoU', `${s.iou_pct}%`],
+          ['Planar Facets', s.planar_facets],
+          ['Crease Edges', s.crease_edges],
+          ['Triangles', s.triangles],
+          ['Watertight', s.watertight ? 'Yes' : 'No'],
+        ];
+        document.getElementById('singleMetricsBar').innerHTML = cells.map(([k, v]) => `
+          <div>
+            <div class="text-[11px] text-[var(--muted-foreground)]">${k}</div>
+            <div class="font-mono font-semibold text-[var(--foreground)]">${v}</div>
+          </div>
+        `).join('');
+
+        updateFloorButtons();
+        renderSlice2D();
+      }
+      drawAll();
+    }
+
+    function drawAll() {
+      if (state.mode === 'grid') {
+        for (const item of gridCanvases) {
+          renderMesh3D(item.canvas, item.model, { compact: true });
+        }
+      } else {
+        renderMesh3D(document.getElementById('singleCanvas'), PAYLOAD.models[state.activeIdx], { compact: false });
+        renderSlice2D();
+      }
+    }
+
+    function tick() {
+      if (state.autoOrbit) {
+        state.theta += 0.006;
+        drawAll();
+      }
+      requestAnimationFrame(tick);
+    }
+
+    window.addEventListener('resize', drawAll);
+    window.addEventListener('themechange', drawAll);
+    buildUI();
+    requestAnimationFrame(tick);
+  </script>
+</body>
+</html>
