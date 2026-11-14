@@ -15,6 +15,7 @@ def unified_episode(p,e,target,seed,training,deadline=None,initial_storeys=6):
     torch.manual_seed(seed);p.clear()
     if e.target_far!=target:e.configure_far(target)
     solid=e.allowed.clone();solid[initial_storeys:]=False;e.restore_occupancy(solid)
+    e.copy_labels=np.zeros(e.shape,dtype=np.int64)
     e.unified_limit=max(8,e.workload.limit+8);e.unified_actions=0;e.termination=None
     initial=max(1,abs(e.count-e.goal_count));trace=[];updates=0;stats={};interrupted=False
     start=time.perf_counter();reward_sum=0.

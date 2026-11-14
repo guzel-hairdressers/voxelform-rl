@@ -38,6 +38,42 @@
 - Do not claim a massing proposal establishes detailed rooms, circulation,
   structure, daylight compliance or acoustic compliance.
 
+## Active growing preview (2026-11-14)
+- `main.py` serves `unified_server.app` on port 8011. The `devox` branch was
+  integrated, preserving its commit. `voxelform.server` is the historical app.
+- Default `UnifiedLearner` in the active session uses net guidance and
+  `floor_copy=True`. Whole-floor growth and carving/exchange are available from
+  step zero; do not add a carve-first schedule or a floor-perfection threshold.
+- Growth copies a complete highest floor of a grounded mass. In an exchange,
+  source cuts also affect the new copy. `env.copy_labels` couples copied cells
+  to source cells for subsequent edits. Projection only prunes partial linked
+  selections; it must not invent additional cuts. Reset copy labels with volume.
+- Enforce direct vertical support for this decoder. No upper occupied cell may
+  sit above an empty cell. This disallows cantilevers deliberately and does not
+  certify livability. Legacy `floor_copy=False` preserves roof-patch experiments.
+- FAR acceptance enables Finish; exchanges may continue within the band.
+  Count every attempt, including rejected draws, against the initial workload
+  limit + 8 (minimum 8). Budget exhaustion outside FAR is failure. Terminal
+  rollouts bootstrap zero. Net guidance regulates area, not an edit phase.
+- Ten input channels expose occupancy, air light, noise, allowed area, height,
+  same-floor depth, removal eligibility, copy eligibility, external direct sun
+  and diffuse facade access. Direct sun and diffuse access remain separate.
+- Starts fresh/paused with six initial storeys and ten-storey ceiling. The user
+  explicitly waived preserving previous in-memory weights. Manual policy
+  export/import supports whole-floor/net-guided states; do not auto-load an old
+  failed roof-patch checkpoint. No active autosave/resume is claimed.
+- Devoxelization is display only, off by default, finished inference only.
+  Algorithms live in `voxelform/devoxelize.py`; overlay in `public/devox-viewer.js`.
+  Keep shared-engine shading and zoom-scaled lines. Cache by occupancy content,
+  verify revisions before/after reconstruction, and never run it during training.
+  Complex meshes may retain boundary/nonmanifold edges: expose diagnostics and
+  never claim arbitrary watertight export. `/devoxelize` is a fixed synthetic lab.
+- Four untrained matched-seed real-site runs reached FAR, eliminated unsupported
+  upper cells and used fewer edits; this is feasibility evidence only. See the
+  Nov 14 notes/results. Do not infer learned daylight placement or compliance.
+- Older sections below describe the legacy FAR-only policy and prior research;
+  the active contract above takes precedence where they differ.
+
 ## Representation and actions
 - A voxel is computational resolution, not a construction module.
 - Initially model occupied/empty volume; defer corridor and room-use labels.
@@ -115,8 +151,7 @@
   field influences edit eligibility even though the CNN still has five inputs.
 
 ## Training research and updated massing objective
-- `voxelform/unified.py` / `tools/unified_training.py` implement the separate
-  unified action protocol. Do not overwrite the user's active live policy.
+- `voxelform/unified.py` / `tools/unified_training.py` implement the unified action protocol, promoted to the active app on Nov 14.
   Recommended experimental variant is `--net-guided`: FAR controls net area,
   while paired removal/roof growth is legal from the first action. Pure net
   growth above the band and pure removal below it are masked; mixed edits remain
@@ -139,8 +174,7 @@
   actor adds diffuse facade access explicitly; `.environment_patch.v2` is an
   experimental checkpoint format, separate from the live five-channel actor.
 - Updated user objective: permit redistributing floor area after FAR is reached,
-  potentially into several taller grounded buildings. Current production rules
-  do not yet permit this. Test paired equal-area neural subtraction/addition masks,
+  potentially into several taller grounded buildings. The active growing preview permits this subject to its whole-floor/support rules. Test paired equal-area neural subtraction/addition masks,
   an explicit height ceiling separate from initial mass, and optional top-storey
   duplication/roof extrusion. Retain facade snapshots and meaningful topology
   guards, but do not preserve the old single-component/stop-at-FAR assumptions

@@ -15,7 +15,7 @@
 <main class="workspace">
   <aside class="sidebar">
     <div class="panel-heading"><h2>Study settings</h2><span class="count-tag">01</span></div>
-    <p class="caption">The model generates coherent add/subtract masks. Facade and optional deep-interior cuts are checked before each edit. Workload budgets can limit episode length.</p>
+    <p class="caption">The model carves masks and can copy a whole top floor from the first edit. Copied floors preserve courtyards; cuts cannot strand upper floors. Facade and optional deep-interior cuts are checked before each edit. FAR is an acceptance range, with further exchanges allowed before finishing.</p>
     <label for="source">Context source</label><select id="source"><option value="cached_osm">Fetched urban sites</option><option value="synthetic">Synthetic method fixture</option></select>
     <div id="urbanSettings">
       <label for="city">City</label><select id="city"><option value="">All cities</option></select>
@@ -36,11 +36,11 @@
       <p class="caption" id="farDefinition">Gross occupied floor area / parcel area. Editable study targets.</p>
     </details>
     <details class="far-settings" open><summary>Edit patches</summary>
-      <label for="maskMode">Mask generation</label><select id="maskMode"><option value="independent">Independent voxels · control</option><option value="smooth">Smoothed probabilities · control</option><option value="correlated">Correlated patches</option><option value="combined" selected>Smoothed correlated patches</option></select>
+      <label for="maskMode">Mask generation</label><select id="maskMode"><option value="correlated">Correlated patches</option><option value="combined" selected>Smoothed correlated patches</option></select>
       <label class="checkbox"><input id="deepInterior" type="checkbox"> Allow deep-interior cuts</label>
       <label for="maxVoids">Maximum interior openings per floor</label><input id="maxVoids" type="number" min="0" max="8" step="1" value="1">
       <label for="maxEditVoxels">Maximum cells per edit</label><input id="maxEditVoxels" type="number" min="0" max="4096" step="1" value="256">
-      <label for="editAllocation">Edit amount &amp; episode length</label><select id="editAllocation"><option value="feedback">Remaining workload · adaptive amount</option><option value="probability">Probability area · original control</option><option value="quota">Remaining workload · fixed amount · experiment</option><option value="learned">Remaining workload · learned amount · experiment</option></select>
+      <label for="editAllocation">Edit amount &amp; episode length</label><select id="editAllocation"><option value="feedback">Remaining workload · adaptive amount</option></select>
       <button id="applyMasks" class="wide">Apply edit settings</button>
       <p class="caption" id="patchRules">Depth is measured on the same floor. Interior openings must connect to outside air. Workload budgets use the required change and initial facade capacity, with a finishing reserve. Set maximum cells to 0 for no fixed cap. Small final FAR adjustments can use smaller patches.</p>
     </details>

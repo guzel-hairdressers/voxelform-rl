@@ -1,32 +1,16 @@
 # VoxelForm RL
 
-An independent, trainable voxel **building-massing experiment**. Each action
-applies a coherent multi-voxel mask using frozen **facade and optional deep-interior
-eligibility**, changing all selected cells together. Newly exposed facade cells
-become eligible only on the next step. Episodes continue through a sequence of
-masks until the configured floor-area-ratio (FAR) condition is met or the
-workload-based step budget is exhausted (a failure).
-
-The current workspace uses Module Lab's compact white interface with a single
-3D viewport running Module Lab's actual `urban_viewer.js` graphic engine. The
-engine, Three.js dependencies, lighting, camera controls and gizmo are served
-directly from the sibling checkout without copying or modifying them. VoxelForm
-only adapts its voxel mass into an instanced overlay in that engine. It defaults
-to an orthographic axonometric view. Switch to Perspective,
-click an axis in the orientation gizmo to snap to one of six orthogonal views,
-or use **Fit view** / double-click to reframe. Surroundings are flat-shaded and
-opaque by default; **Display → Transparent surroundings** makes them translucent.
-The solid voxel mass uses flat Lambert shading with the shared engine’s existing
-directional light and shadow map, so differently oriented faces and recesses read
-distinctly. Evaluation colours use a restrained face-orientation cue.
-There is no floor-plan pane.
+A trainable voxel building-massing experiment on cached real plots and surrounding
+buildings. The **active app is the growing preview**, incorporating the `devox`
+branch. It starts with six occupied storeys inside a ten-storey height ceiling.
+These are massing cells, not designed rooms.
 
 ## Run locally
 
-Keep the Module Lab checkout beside this repository as `../Module-Lab`, with its
-cached urban scenes and `frontend/public/scripts/urban_viewer.js` available.
-Alternatively set `VOXELFORM_CONTEXT_ROOT` to that checkout. These shared assets
-and datasets are read-only runtime dependencies and are not included here.
+Keep Module Lab beside this repository as `../Module-Lab`, with its cached urban
+scenes and `frontend/public/scripts/urban_viewer.js` available. Alternatively set
+`VOXELFORM_CONTEXT_ROOT` to that checkout. Shared assets and datasets are read-only
+runtime dependencies and are not included here.
 
 ```sh
 python3 -m venv .venv
@@ -34,81 +18,103 @@ python3 -m venv .venv
 .venv/bin/python main.py
 ```
 
-Open **http://127.0.0.1:8010**. It leaves Module Lab on port 8000 alone.
-The currently running development preview is **http://127.0.0.1:8011**; port 8010's
-older in-memory session was preserved while verifying this update. To choose a port:
+Open **http://127.0.0.1:8011**. `python unified_server.py` runs the same app. Set
+`VOXELFORM_PORT` for another port, and `VOXELFORM_DEVICE=mps` / `cpu` / `cuda` to
+select hardware explicitly. Auto prefers an available GPU. Module Lab on port
+8000 is independent. During development the sibling `.venv/bin/python` can be used.
+Shapely 2.1+ is required for constrained cap triangulation.
 
-```sh
-VOXELFORM_PORT=8011 .venv/bin/python main.py
-```
+## Try the growing version
 
-Device selection prefers available CUDA/MPS and otherwise uses CPU. The current preview uses MPS with native planar depth. To explicitly choose a device:
+- **Generate one** runs an inference episode and pauses. **Train** changes to
+  **Pause training** and repeats complete episodes; pausing keeps current weights.
+- **One mask** applies one action. Its adjacent selector defaults to the learned
+  operation. **Copy top floor · probe**, **Copy floor + carve**, and **Carve · probe**
+  let you inspect geometry directly. Probes bypass FAR direction guidance and
+  are inference only; Train / Generate one use the learned operation selector.
+- **Reset volume** restores the initial six-storey mass without resetting weights.
+  Grid/site changes also reset volume; Auto grid alignment is the default.
+- **Policy → Save policy / Load policy** exports/imports the new growing policy.
+  Startup begins fresh and paused; no older roof-patch checkpoint is silently
+  loaded. Older decoder formats remain available in the historical experiments.
 
-```sh
-VOXELFORM_DEVICE=mps .venv/bin/python main.py
-# or VOXELFORM_DEVICE=cuda on a supported NVIDIA machine
-```
+The model selects remove, grow, exchange or finish from one actor pass. Additions
+now copy one existing building's **entire highest floor**, preserving its holes.
+In an exchange the source floor is carved before its final footprint is copied.
+Copied cells remain linked to their source for later cuts: selected cuts must
+include the linked vertical stack. Unsafe partial selections are pruned, never
+expanded by projection. Every retained upper cell requires an occupied cell
+immediately below. This restricts cantilevers deliberately; it does not certify
+structure, circulation, minimum room widths or residential livability.
 
-During initial development this project's code can also run with the existing
-`/Users/ruslan_faz/Desktop/Work/Thesis/Module-Lab/.venv/bin/python`; the Python backend
-does not import Module Lab's generator or policy code. Actual CPU and MPS forward/backward execution were measured on this machine;
-CUDA was unavailable.
+There is **no carve-first phase** and no hardcoded "perfect floor" gate. A learned
+correlated field selects cuts and which grounded mass receives a floor copy.
+With one building there is only one plate to copy, so that action has no spatial
+choice until the geometry offers more masses. No sampled candidate-mask bank is
+used. The actor remains a ten-channel floorwise CNN with global operation/value
+heads and Gaussian latent A2C training; this change does not introduce 3D feature
+exchange inside the CNN. The copy/cohort decoder supplies vertical coherence.
 
-**Train** changes to **Pause training** while running; the same button pauses
-and resumes without resetting the building or learned weights. **Generate one**
-runs one inference episode and pauses on FAR success or failure. **One mask** applies one complete
-inference facade mask. Training repeats complete episodes, starting each new
-one from the full permitted envelope. **Reset volume** explicitly restores that
-envelope; it is separate from ordinary voxel editing.
+Net FAR guidance permits paired carving/copying above and below the target from
+the first action. Pure growth is constrained when it would worsen FAR. The default
+acceptance is **3.0 ±0.1**; density presets remain editable. FAR acceptance enables
+Finish rather than forcing immediate termination. The frozen deadline is the
+initial workload budget plus eight redistribution attempts (minimum eight).
+Rejected draws consume attempts and may retry on the next action. At the deadline,
+FAR outside the band is failure with a remaining-error penalty. Training audits
+environmental fields every eight accepted masks and at completion. A 32-action
+optimizer rollout is not an episode.
 
-The server now uses **smoothed correlated patches**: one CNN pass supplies dense
-logit fields, pooled into a coarse Gaussian latent distribution. The model samples
-a coherent field, interpolates/smooths it, applies facade/depth weights, and
-thresholds it into one mask. Train and Generate one both sample this distribution.
-The A2C score uses the actual Gaussian latent log probability. No candidate patch
-library or patch-ranking policy is involved. Independent/smoothed-Bernoulli controls
-remain selectable under **Edit patches**.
+Current mask settings support correlated/smoothed-correlated fields, optional deep
+eligibility, opening limits and a whole-action cell cap (0 means unlimited). A full
+copied floor must fit the cap; it is never chopped into roof posts to satisfy it.
+The original independent-mask/amount controls remain in the historical trainer.
 
-Depth is horizontal distance to a facade on the **same floor**, computed natively
-on the selected GPU. Roofs and other floors do not shorten it. Deep-interior cuts
-are optional: facade weights are 1; interior weights ramp from 0 at 8 m to 1 at
-16 m. Roof-open courtyards can later expand through the side facade. The preview
-limits new openings to one per floor and at least 4 m²; ordinary edit patches
-retain at least four cells, with at most four patches. The adaptive edit amount has no fixed voxel cap;
-the original 256-cell probability-area control remains available.
-The final FAR residual can be smaller. Controls expose opening/edit limits.
+## Display and devoxelization
 
-**Edit patches → Edit amount & episode length** now includes a workload-based
-adaptive allocator. Let M be the required voxel change and N the initial facade
-capacity. It freezes P=ceil(M/(0.5×N)) productive steps plus 2+ceil(0.2×P) reserve
-steps. An optional explicit voxel cap also limits estimated capacity. Interior
-depth eligibility does not inflate N. The model generates the spatial field;
-a feedback controller adjusts its selected area for observed pruning losses.
-The deadline never moves. The final 16 cells may use smaller edit patches while
-retaining topology, opening-area and maximum-region constraints. Unreached FAR
-at the deadline is penalized, never reported as success. Fixed-quota and learned
-amount variants remain experiments. Set maximum cells per edit to **0** to remove
-the fixed cap. Existing saved sessions preserve their original settings.
+The white 3D workspace uses Module Lab's actual graphic engine, cameras, lights and
+shadows. Default axonometric, Perspective, orthogonal gizmo snaps and Fit view are
+available. Context is flat-shaded and opaque by default; transparency is optional.
+Pale blue shading retains HSL lightness 70–95%; rich blue surface outlines use 50%
+lightness, 3 px at the reference building scale and become thinner when zoomed out.
+There is no floor-plan pane.
 
-See [workload-budget experiments](agent_notes/workload_budget_2026-11-09/README.md)
-for controls, failed deadline hypotheses, learned-amount tests and CPU/MPS checks.
+**Display → Devoxelize after single generation** is off by default. When enabled it
+reconstructs only a completed, paused inference building, never during training:
 
-Save/load uses `voxelform.patch.v1`. Legacy V1–V5 policies retain compatible weights
-as initialization and reset incompatible optimizer/sampling counters. Historical
-updates are displayed separately. Automatic checkpoints save weights, optimizer,
-geometry and settings as a coupled generation and restore the latest pair paused.
-They live under ignored `results/checkpoints/autosave/`; original checkpoints are
-preserved. No convergence or design-quality improvement is claimed.
+0. Raw voxels.
+1. Correlated support-plane loft.
+2. Extruded floor slabs.
+3. VSA plane arrangement.
 
-See [the coherent-mask implementation and experiments](agent_notes/coherent_masks_2026-11-09/README.md)
-for sampler comparisons, exact 2D GPU depth tests, failure cases, CPU/MPS timing,
-checkpoint preservation and the verified native-engine preview.
+These are display experiments from `devox`; voxel occupancy, FAR, sun/depth inputs
+and rewards are unchanged. Complex/topology-changing floors can use the same slab
+fallback in several modes. T-junctions are conformed before rendering; returned
+mesh diagnostics expose remaining boundary/nonmanifold edges. Arbitrary complex
+outputs are **not guaranteed watertight**, and reconstructed volume can differ from
+voxel volume. Geometry-content caching and revision checks prevent stale meshes.
+The comparison lab at **/devoxelize** shows the other agent's fixed synthetic
+benchmark, not the current live building. Its 2D slice panel is a mesh diagnostic.
 
-See [the M4 training study](agent_notes/m4_training_2026-11-09/README.md) for a bounded
-headless trainer, exact cache preparation, reward/curriculum pilots and a separate
-diffuse facade-light input. Reaching FAR still ends the production episode;
-[paired redistribution and top-storey growth](agent_notes/m4_training_2026-11-09/REDISTRIBUTION.md)
-are the next action-space study, not an implemented live capability.
+## Growing-preview checks (2026-11-14)
+
+Four matched-seed, untrained runs on two real sites (New York and Barcelona) all
+reached FAR in both arms. Whole-floor/link growth used 10–14 accepted edits versus
+14–21 for roof patches, and left zero upper cells without direct support versus
+428–480. The final retest took a median 0.80 s on MPS for copies versus
+1.25 s for patches, excluding setup (7.3 / 11.4 s), UI and polling. Individual
+runs varied (0.57–1.61 s / 1.05–2.63 s); this is not an isolated speed benchmark.
+Five-second native MPS probes performed two and four optimizer updates
+with nonzero gradients. A separate fixture regression tests the exact source/copy
+area cost: the old high-density run stalled at 4.370; the corrected run reaches
+the 4.4–4.6 band in two actions. This establishes feasibility/trainability, not convergence,
+quality improvement or generalization. Seeds, traces, failures, timing and hashes:
+[raw comparison](results/floor-growth-preview-balanced-2026-11-14.json) and
+[implementation/testing notes](agent_notes/growing_preview_2026-11-14/README.md).
+
+The following sections retain the original FAR-only implementation and research
+history. `voxelform.server` / `Session` / `PatchLearner` are the **legacy** app;
+`main.py` now uses `unified_server.UnifiedSession` / `UnifiedLearner`.
 
 ## FAR targets and episode completion
 
@@ -268,8 +274,8 @@ tests single conditioned output, explicit facade inputs, local 3D features and
 multiscale context, individually and in combinations. Twelve configurations,
 three seeds, matched action budgets, controls and actual CPU/MPS measurements are
 retained. Local 3D is promising on synthetic proxies; no configuration establishes
-a general learned-quality advantage. Those experiments used the V5 baseline. The current server retains its floorwise
-CNN but uses the correlated latent sampler and safeguards described above.
+a general learned-quality advantage. Those experiments used the V5 baseline. The legacy server retains its floorwise
+CNN; the active growing decoder is described at the top of this file.
 
 ## Current limits
 
@@ -286,8 +292,8 @@ structural engineering, repair/validation of arbitrary imported disconnected mas
 accurate sky radiance, acoustic
 screening and policy-quality/generalization evaluations remain outstanding.
 Actions use a frozen current facade/depth eligibility field; their sequence can form
-varied surfaces and roof-open courtyards. Additions are adjacent facade growth inside the envelope, subject
-to the same FAR and whole-mask topology conditions. Diffusion training is deferred until validated data exists.
+varied surfaces and roof-open courtyards. Legacy additions are adjacent facade growth inside the envelope. Active additions
+copy whole top floors with the support/link rules described above. Diffusion training is deferred until validated data exists.
 
 Nonzero actor gradients and changed weights establish trainability only.
 No convergence, design improvement or real-site generalization is claimed.
@@ -299,7 +305,7 @@ the UI/context changes and verification, and
 Three.js. The shared engine uses Module Lab's Three.js distribution; the original
 prototype's vendored package and license remain in `public/vendor/`.
 
-See [facade-band and paired-edit experiments](agent_notes/redistribution_2026-11-09/README.md) for configurable 1–3-layer editing and the isolated constant-FAR redistribution prototype. Two layers were the most reliable in this small test; the live action protocol is unchanged.
+See [facade-band and paired-edit experiments](agent_notes/redistribution_2026-11-09/README.md) for configurable 1–3-layer editing and the isolated constant-FAR redistribution prototype. Two layers were the most reliable in this small test; that report predates promotion of the growing preview.
 
 FAR targets now accept ±0.1 by default in the live session and M4 trainer (3.0 accepts 2.9–3.1). Coarse edit counts and budgets use the nearest accepted boundary; no extra completion reward/penalty depends on reaching the centre. Exact-target mode remains available for controlled historical experiments via `far_tolerance=0`. Experimental exchanges may change total volume if the result stays inside the accepted band.
 

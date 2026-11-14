@@ -1,0 +1,823 @@
+{
+  "note": "CPU fixture regression. Before is the same decoder with the new source/copy balancing projection disabled. Fixed seed; feasibility, not learned quality.",
+  "shape": [
+    8,
+    12,
+    16
+  ],
+  "initialStoreys": 4,
+  "seed": 123,
+  "rows": [
+    {
+      "arm": "before",
+      "targetFar": 1.5,
+      "success": true,
+      "interrupted": false,
+      "termination": "far_reached",
+      "far": 1.5625,
+      "steps": 6,
+      "attempts": 7,
+      "budget": 15,
+      "quality": 0.15541639924049377,
+      "environment": {
+        "quality": 0.15541639924049377,
+        "retention": 0.1953125,
+        "potentialUsableFraction": 0.1920572966337204,
+        "directSunProxy": 0.25647127628326416,
+        "roofOpportunity": 0.1927083283662796,
+        "noisePrior": 0.6039190292358398,
+        "diffuseFacadeProxy": 0.1800355613231659,
+        "occupiedFloorArea": 300.0,
+        "potentialUsableArea": 295.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2604166666666665,
+          "wasFarSatisfied": false,
+          "removed": 142,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 2.7083333333333335,
+          "wasFarSatisfied": false,
+          "removed": 106,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 2.2708333333333335,
+          "wasFarSatisfied": false,
+          "removed": 84,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.9114583333333333,
+          "wasFarSatisfied": false,
+          "removed": 69,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.5989583333333333,
+          "wasFarSatisfied": false,
+          "removed": 60,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.5625,
+          "wasFarSatisfied": true,
+          "removed": 7,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "finish",
+          "accepted": false,
+          "far": 1.5625,
+          "wasFarSatisfied": true,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.03942933399230242,
+      "updates": 0,
+      "learning": {},
+      "reward": -1.3337414898872375,
+      "highestStorey": 4
+    },
+    {
+      "arm": "balanced",
+      "targetFar": 1.5,
+      "success": true,
+      "interrupted": false,
+      "termination": "far_reached",
+      "far": 1.5625,
+      "steps": 6,
+      "attempts": 7,
+      "budget": 15,
+      "quality": 0.15541639924049377,
+      "environment": {
+        "quality": 0.15541639924049377,
+        "retention": 0.1953125,
+        "potentialUsableFraction": 0.1920572966337204,
+        "directSunProxy": 0.25647127628326416,
+        "roofOpportunity": 0.1927083283662796,
+        "noisePrior": 0.6039190292358398,
+        "diffuseFacadeProxy": 0.1800355613231659,
+        "occupiedFloorArea": 300.0,
+        "potentialUsableArea": 295.0
+      },
+      "trace": [
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 3.2604166666666665,
+          "wasFarSatisfied": false,
+          "removed": 142,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 2.7083333333333335,
+          "wasFarSatisfied": false,
+          "removed": 106,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 2.2708333333333335,
+          "wasFarSatisfied": false,
+          "removed": 84,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.9114583333333333,
+          "wasFarSatisfied": false,
+          "removed": 69,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.5989583333333333,
+          "wasFarSatisfied": false,
+          "removed": 60,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "remove",
+          "accepted": true,
+          "far": 1.5625,
+          "wasFarSatisfied": true,
+          "removed": 7,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "finish",
+          "accepted": false,
+          "far": 1.5625,
+          "wasFarSatisfied": true,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.031694541103206575,
+      "updates": 0,
+      "learning": {},
+      "reward": -1.3337414898872375,
+      "highestStorey": 4
+    },
+    {
+      "arm": "before",
+      "targetFar": 4.5,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 4.369791666666667,
+      "steps": 3,
+      "attempts": 13,
+      "budget": 13,
+      "quality": 0.47870829701423645,
+      "environment": {
+        "quality": 0.47870829701423645,
+        "retention": 0.5462239384651184,
+        "potentialUsableFraction": 0.5462239384651184,
+        "directSunProxy": 0.4064478278160095,
+        "roofOpportunity": 0.5625,
+        "noisePrior": 0.5538637638092041,
+        "diffuseFacadeProxy": 0.2805648148059845,
+        "occupiedFloorArea": 839.0,
+        "potentialUsableArea": 839.0
+      },
+      "trace": [
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.223958333333333,
+          "wasFarSatisfied": false,
+          "removed": 115,
+          "added": 158,
+          "grewAboveInitial": 158
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.260416666666667,
+          "wasFarSatisfied": false,
+          "removed": 124,
+          "added": 131,
+          "grewAboveInitial": 131
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 95,
+          "added": 116,
+          "grewAboveInitial": 116
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 4.369791666666667,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.11734916595742106,
+      "updates": 0,
+      "learning": {},
+      "reward": -0.170135147871671,
+      "highestStorey": 7
+    },
+    {
+      "arm": "balanced",
+      "targetFar": 4.5,
+      "success": true,
+      "interrupted": false,
+      "termination": "far_reached",
+      "far": 4.401041666666667,
+      "steps": 1,
+      "attempts": 2,
+      "budget": 13,
+      "quality": 0.4890984892845154,
+      "environment": {
+        "quality": 0.4890984892845154,
+        "retention": 0.5501301884651184,
+        "potentialUsableFraction": 0.5501301884651184,
+        "directSunProxy": 0.3841319978237152,
+        "roofOpportunity": 0.6770833134651184,
+        "noisePrior": 0.5798304080963135,
+        "diffuseFacadeProxy": 0.4489278197288513,
+        "occupiedFloorArea": 845.0,
+        "potentialUsableArea": 845.0
+      },
+      "trace": [
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 4.401041666666667,
+          "wasFarSatisfied": false,
+          "removed": 78,
+          "added": 155,
+          "grewAboveInitial": 155
+        },
+        {
+          "action": "finish",
+          "accepted": false,
+          "far": 4.401041666666667,
+          "wasFarSatisfied": true,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.015536417020484805,
+      "updates": 0,
+      "learning": {},
+      "reward": 0.33789972956363973,
+      "highestStorey": 5
+    },
+    {
+      "arm": "before",
+      "targetFar": 7.5,
+      "success": false,
+      "interrupted": false,
+      "termination": "step_budget_exhausted",
+      "far": 7.005208333333333,
+      "steps": 4,
+      "attempts": 36,
+      "budget": 36,
+      "quality": 0.7612954378128052,
+      "environment": {
+        "quality": 0.7612954378128052,
+        "retention": 0.8756510615348816,
+        "potentialUsableFraction": 0.8756510615348816,
+        "directSunProxy": 0.475308358669281,
+        "roofOpportunity": 0.8697916865348816,
+        "noisePrior": 0.5198849439620972,
+        "diffuseFacadeProxy": 0.5042315125465393,
+        "occupiedFloorArea": 1345.0,
+        "potentialUsableArea": 1345.0
+      },
+      "trace": [
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 6.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": false,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 166,
+          "added": 167,
+          "grewAboveInitial": 167
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        },
+        {
+          "action": null,
+          "accepted": false,
+          "far": 7.005208333333333,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.11147570901084691,
+      "updates": 0,
+      "learning": {},
+      "reward": 0.5570724540377868,
+      "highestStorey": 8
+    },
+    {
+      "arm": "balanced",
+      "targetFar": 7.5,
+      "success": true,
+      "interrupted": false,
+      "termination": "far_reached",
+      "far": 7.401041666666667,
+      "steps": 4,
+      "attempts": 5,
+      "budget": 36,
+      "quality": 0.8086720705032349,
+      "environment": {
+        "quality": 0.8086720705032349,
+        "retention": 0.9251301884651184,
+        "potentialUsableFraction": 0.9251301884651184,
+        "directSunProxy": 0.5201506018638611,
+        "roofOpportunity": 0.9114583134651184,
+        "noisePrior": 0.5240142345428467,
+        "diffuseFacadeProxy": 0.5443201661109924,
+        "occupiedFloorArea": 1421.0,
+        "potentialUsableArea": 1421.0
+      },
+      "trace": [
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 5.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 6.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "grow",
+          "accepted": true,
+          "far": 7.0,
+          "wasFarSatisfied": false,
+          "removed": 0,
+          "added": 192,
+          "grewAboveInitial": 192
+        },
+        {
+          "action": "exchange",
+          "accepted": true,
+          "far": 7.401041666666667,
+          "wasFarSatisfied": false,
+          "removed": 97,
+          "added": 174,
+          "grewAboveInitial": 174
+        },
+        {
+          "action": "finish",
+          "accepted": false,
+          "far": 7.401041666666667,
+          "wasFarSatisfied": true,
+          "removed": 0,
+          "added": 0,
+          "grewAboveInitial": 0
+        }
+      ],
+      "seconds": 0.024234874988906085,
+      "updates": 0,
+      "learning": {},
+      "reward": 1.9354257553153569,
+      "highestStorey": 8
+    }
+  ],
+  "sourceHash": "8541cc02e0bf36fd1d593a2acf01936a2e6682206124ae97a2e5ac423af265e5"
+}
