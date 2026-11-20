@@ -222,6 +222,12 @@ class CorePlanAPI(unittest.TestCase):
         plans=result.json()['plans'];self.assertEqual(len(plans),5)
         t4=next(p for p in plans if p['tier']=='T4')
         self.assertEqual((t4['liftCount'],t4['width'],t4['length']),(4,7,9))
+        t5 = next(p for p in plans if p['tier'] == 'T5')
+        height_fields = {'tier', 'minHeight', 'maxHeight'}
+        self.assertEqual(
+            {k: v for k, v in t4.items() if k not in height_fields},
+            {k: v for k, v in t5.items() if k not in height_fields},
+        )
         self.assertEqual(plans[0]['liftCount'],0)
         self.assertEqual((plans[1]['width'],plans[1]['length']),(5,5))
         for p in plans:

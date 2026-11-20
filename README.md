@@ -71,7 +71,7 @@ and openings. Height-dependent lift counts are explicit research priors.
 | 6–10 | 1 | 1 | 5 × 5 m |
 | 11–18 | 1 | 2 | 7 × 5 m |
 | 19–30 | 2 interlocking scissor routes | 4 | 7 × 9 m |
-| 31–60 | 2 | 4 | 14 × 5 m |
+| 31–60 | 2 interlocking scissor routes | 4 | 7 × 9 m |
 
 [Metric dimensions, drawings and assumptions](docs/CORE_LAYOUTS.md) ·
 [6–10-floor SVG](docs/core-plans/T2.svg). No architectural compliance or lift traffic

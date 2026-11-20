@@ -88,7 +88,9 @@ success; an unacceptable FAR result is not an improvement solely because it
 removed more volume. Raw reward scores from different core distances/objective
 weights are not directly comparable. The fixed post-episode referee is reported
 as `meanReferenceQuality` to support such ablations; it is still an uncalibrated
-research proxy.
+research proxy. The referee uses its own reserved core mask to exclude core
+faces from the direct sun and diffuse sky averages. See the
+[core access and daylight objective](CORE_LAYOUTS.md#core-access-and-daylight-in-the-objective).
 
 Uncertainty is aggregated over independent **model seeds**, not by pretending
 many stochastic episodes of one trained model are independent training runs.

@@ -59,7 +59,8 @@
       <label for="maxCoreDist">Max distance to closest core (voxels)</label><input id="maxCoreDist" type="number" min="2" max="80" step="1" value="12" inputmode="numeric">
       <button id="applyCores" class="wide">Apply core rules</button>
       <a href="/core-plans" target="_blank" style="display:inline-block;margin-top:6px;font-size:10px;color:#1645ff">View dimensioned core plans ↗</a>
-      <p class="caption" id="coreNote">Compact metric layouts: stairs only at 1–5F (3×5 m grid), stair + one lift at 6–10F (5×5 m). 19–30F uses two scissor routes with intermediate landings and four lifts (7×9 m grid). Core reservations render crimson; grid-distance limits are research proxies.</p>
+      <p class="caption" id="coreNote">Compact metric layouts: stairs only at 1–5F (3×5 m grid), stair + one lift at 6–10F (5×5 m). 19–60F uses two scissor routes with intermediate landings and four lifts (7×9 m grid).</p>
+      <p class="caption">Core score combines travel coverage with the average penalty for exceeding the distance limit. Core voxels are exempt from direct sun and diffuse sky scoring.</p>
     </details>
     <div class="panel-heading secondary"><h2>Display</h2></div>
     <label for="field">Evaluation layer</label><select id="field"><option value="solid">Occupied mass</option><option value="usable">Potential usable area</option><option value="coreDistance">Core &amp; travel distance</option><option value="light">Diffuse sky access</option><option value="depthBadness">Facade depth · 8–16 m</option><option value="noise">Relative noise prior</option></select>

@@ -1,4 +1,4 @@
-# Compact core geometry, version `compact-core.v4`
+# Compact core geometry, version `compact-core.v5`
 
 This is a parameterized service-space prior for an ML environment. It replaces
 large opaque rectangles with inspectable metric component plans. The experiment
@@ -12,7 +12,7 @@ still reserves the conservative enclosing rectangle on its one-metre grid.
 | 6–10 | 1 | 1 | 4.90 × 4.94 m | 24.21 m² | 5 × 5 = 25 m² | 48 m² |
 | 11–18 | 1 | 2 | 7.00 × 4.94 m | 34.58 m² | 7 × 5 = 35 m² | 72 m² |
 | 19–30 | 2 scissor routes | 4 | 6.55 × 8.40 m | 55.02 m² | 7 × 9 = 63 m² | 108 m² |
-| 31–60 | 2 | 4 | 14.00 × 4.94 m | 69.16 m² | 14 × 5 = 70 m² | 160 m² |
+| 31–60 | 2 scissor routes | 4 | 6.55 × 8.40 m | 55.02 m² | 7 × 9 = 63 m² | 160 m² |
 
 [1–5 floor plan](core-plans/T1.svg) · [6–10](core-plans/T2.svg) ·
 [11–18](core-plans/T3.svg) · [19–30](core-plans/T4.svg) · [31–60](core-plans/T5.svg).
@@ -25,10 +25,10 @@ walls plus two flights and a 0.10 m gap give 2.80 m enclosure width. The two
 landings, run and end walls give 4.94 m length. Thus a six-metre stair length
 was not an unavoidable consequence of the selected geometry.
 
-### 19–30 floors: scissor replacement
+### Scissor core for 19–60 floors
 
-T4 now uses **two interlocking routes in one enclosure**, not two dogleg
-stairwells. Each route has two straight half-flights of nine risers, a separate
+T4 (19–30 floors) and T5 (31–60 floors) share one geometry with **two
+interlocking routes in one enclosure**. Each route has two straight half-flights of nine risers, a separate
 +1.50 m intermediate landing and an entrance at one end. The 1.20 m lanes are
 separated by 0.15 m; full-width storey landings turn routes into the other lane,
 so each route swaps ends on successive storeys. A longitudinal lobby reaches both
@@ -50,12 +50,29 @@ The interlocking concept is illustrated in the Toronto Society of Architects'
 The added mid-landings and dimensions here are this project's assumptions. The
 two schematic routes do not establish independent protected exits; separation,
 smoke/door design and egress requirements are not certified by the ML template.
-Only T4 changes; T5 retains its two conventional stairwells. Four lifts are a
-packing choice for this research template, not a consequence of choosing scissor
-stairs. The 2.08 m spare strip in v3 was 2 cm short of another 2.10 m shaft;
+The shared research template has four lifts in one bank. The 2.08 m spare strip in v3 was 2 cm short of another 2.10 m shaft;
 v4 extends the metric envelope by that 2 cm, preserving the 7×9 grid footprint.
 The 3D placer, core-distance field, actor input channels and API all consume
 this same library. Placed-core metadata includes its layout version and lift count.
+
+## Core access and daylight in the objective
+
+Coverage is one minus the share of all occupied cells beyond the configured
+travel limit (12 m by default). Distance badness averages a penalty across all
+occupied cells. Cells within the limit, including core cells, contribute zero.
+Beyond the limit the penalty starts near 0.15 and rises to 1 over the next
+`max(4 m, half the limit)`. Unreachable cells contribute 1.
+
+The displayed core score is `coverage × (1 − 0.5 × mean distance badness)`.
+The layout objective adds 0.20 times that score and separately deducts 0.45
+times the uncovered fraction and 0.35 times the mean distance badness.
+
+Direct sun and diffuse sky average exposure across eligible faces outside the
+reserved core voxels. Core geometry still participates in shadow casting and
+sky diffusion. The spatial auxiliary also exempts current cores and the cells
+directly above them from its daylight incentive. The separate roof opportunity
+term measures exposed roof surfaces. Earlier episode scores use their original
+objective definitions.
 
 Each lift reservation is 2.10 × 2.20 m outside the walls; clear shaft 1.80 ×
 1.90 m, drawn car 1.10 × 1.40 m and 0.80 m door. A shared lobby connects the

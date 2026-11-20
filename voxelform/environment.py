@@ -271,6 +271,22 @@ class Environment:
         return dict(seconds=time.perf_counter()-stamp,newReceivers=new,knownReceivers=int(self.static_receivers.known.sum().cpu()),
             cacheBytes=self.static_receivers.known.numel()+self.static_receivers.values.numel())
 
+    def daylight_proxies(self, core_mask, lateral=None):
+        """Score occupied faces outside the reserved cores using audited fields."""
+        if lateral is None:
+            lateral = torch.as_tensor(self.frontier.remove_faces[[1, 0, 3, 2]], device=self.device)
+        _, _, normals, cells, faces = self.receiver_data
+        areas = torch.where(faces < 4, 3., 1.)
+        weights = (self.suns @ normals.T).clamp_min(0) * areas[None]
+        if core_mask is None:
+            diffuse_faces = lateral
+        else:
+            weights = weights * (~core_mask.flatten()[cells])[None]
+            diffuse_faces = lateral & ~core_mask[None]
+        direct = (self.visible * weights).sum() / weights.sum().clamp_min(1)
+        diffuse = (self.facade_light_faces * diffuse_faces).sum() / diffuse_faces.sum().clamp_min(1)
+        return direct, diffuse
+
     def evaluate(self):
         stamp=time.perf_counter()
         if self.fast_diffuse and self.edits>0 and getattr(self,'last_audit_edit',-1)!=self.edits and getattr(self,'light',None) is not None and self.light.shape==self.occupied.shape:
@@ -297,19 +313,19 @@ class Environment:
             own=self.dynamic.query(p,normals=n)
         front=(self.suns@n.T)>1e-6
         self.visible=outside&own&front;self.receiver_data=(ids,p,n,cells,faces)
-        side=faces<4;roof=faces==4;areas=torch.where(side,3.,1.)
-        weights=(self.suns@n.T).clamp_min(0)*areas[None]
-        sunlight=(self.visible.float()*weights).sum()/weights.sum().clamp_min(1)
+        self.update_cores()
+        core_mask = self.core_mask if self.cores_enabled else None
+        sunlight, diffuse = self.daylight_proxies(core_mask, lateral)
+        side=faces<4;roof=faces==4
         roof_sun=self.visible[:,roof].float().mean(0) if bool(roof.any()) else torch.zeros(0,device=self.device)
         roof_opportunity=(roof_sun>.4).float().sum()/(self.nx*self.ny)
         retention=self.occupied.sum()/self.total_area;usable=self.usable.sum()/self.total_area
         exposure=self.noise.flatten()[cells[side]].mean() if bool(side.any()) else torch.zeros((),device=self.device)
         quality=.70*usable+.18*sunlight+.12*roof_opportunity-.08*exposure
         quality=quality-self.depth_weight*self.depth_badness.sum()/self.capacity
-        self.update_cores()
         self.quality=quality;self.values=dict(quality=quality,retention=retention,potentialUsableFraction=usable,
             directSunProxy=sunlight,roofOpportunity=roof_opportunity,noisePrior=exposure,
-            diffuseFacadeProxy=self.facade_light_faces.sum()/lateral.sum().clamp_min(1),
+            diffuseFacadeProxy=diffuse,
             occupiedFloorArea=self.occupied.sum(),potentialUsableArea=self.usable.sum())
         sync(self.device)
         self.last_audit_edit=self.edits;self.last_new_receivers=new;self.last_receiver_count=len(ids);self.last_eval_seconds=time.perf_counter()-stamp
@@ -387,7 +403,7 @@ class Environment:
         if cores_enabled is not None:self.cores_enabled=bool(cores_enabled)
         if min_core_spacing is not None:self.min_core_spacing=max(0,int(min_core_spacing))
         if max_core_dist is not None:self.max_core_dist=max(1,int(max_core_dist))
-        self.update_cores()
+        self.evaluate()
 
     def update_cores(self):
         if not self.cores_enabled:

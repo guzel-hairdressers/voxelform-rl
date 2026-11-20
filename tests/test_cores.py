@@ -1,5 +1,6 @@
 import functools
 import unittest
+from types import SimpleNamespace
 
 import torch
 
@@ -14,14 +15,14 @@ from voxelform.cores import (
 )
 from voxelform.environment import Environment
 from voxelform.patch_policy import PatchConfig, PatchFacades
-from voxelform.unified import UnifiedLearner
+from voxelform.unified import UnifiedLearner, compute_spatial_desirability
 
 
 class CoreTests(unittest.TestCase):
     def test_height_schedule_and_compact_grid_reservations(self):
         areas = [t.area for t in CORE_TEMPLATES]
         self.assertEqual(areas, sorted(areas))
-        self.assertEqual(areas, [15, 25, 35, 63, 70])
+        self.assertEqual(areas, [15, 25, 35, 63, 63])
         self.assertEqual(template_for_height(3).tier, "T1")
         self.assertEqual(template_for_height(8).tier, "T2")
         self.assertEqual(template_for_height(15).tier, "T3")
@@ -45,32 +46,87 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(CORE_TEMPLATES[0].metric_plan['liftCount'],0)
         self.assertLess(CORE_TEMPLATES[1].area,36)
 
-    def test_24_storey_core_uses_active_scissor_reservation(self):
-        occ=torch.zeros((24,16,16),dtype=torch.bool)
-        occ[:,1:15,1:15]=True
-        result=solve_cores(occ,min_core_spacing=10,max_core_dist=12)
-        self.assertEqual(len(result.cores),1)
-        core=result.cores[0]
-        self.assertEqual((core.tier,core.floors,core.footprint_area),('T4',24,63))
-        self.assertEqual(sorted((core.size_x,core.size_y)),[7,9])
-        self.assertEqual(int(result.core_mask.sum()),24*63)
-        self.assertEqual(template_for_height(24).metric_plan['stairLayout'],'scissor')
-        self.assertEqual(core.to_dict()['liftCount'],4)
-        self.assertEqual(core.to_dict()['layoutVersion'],'compact-core.v4')
+    def test_scissor_layout_used_across_both_height_bands(self):
+        for floors, tier in ((19, 'T4'), (30, 'T4'), (31, 'T5'), (60, 'T5')):
+            with self.subTest(floors=floors):
+                occupied = torch.zeros((floors, 16, 16), dtype=torch.bool)
+                occupied[:, 1:15, 1:15] = True
+                result = solve_cores(occupied, min_core_spacing=10, max_core_dist=12)
+                self.assertEqual(len(result.cores), 1)
+                core = result.cores[0]
+                self.assertEqual((core.tier, core.floors, core.footprint_area), (tier, floors, 63))
+                self.assertEqual(sorted((core.size_x, core.size_y)), [7, 9])
+                self.assertEqual(int(result.core_mask.sum()), floors * 63)
+                metadata = core.to_dict()
+                self.assertEqual(metadata['stairLayout'], 'scissor')
+                self.assertEqual(metadata['liftCount'], 4)
+                self.assertEqual(metadata['layoutVersion'], 'compact-core.v5')
 
     def test_active_environment_and_actor_use_four_lift_scissor_core(self):
         cfg=PatchConfig(eligibility='depth',facade_layers=2)
-        env=Environment((24,16,16),sun_count=2,device='cpu',cores_enabled=True,
+        env=Environment((40,16,16),sun_count=2,device='cpu',cores_enabled=True,
             frontier_factory=functools.partial(PatchFacades,config=cfg,depth_device='cpu'))
         env.organic_3d_growth=True
         learner=UnifiedLearner('cpu',123,cfg,organic_3d=True,net_guided=True)
         self.assertTrue(env.cores)
-        self.assertTrue(all(c.tier=='T4' and c.to_dict()['liftCount']==4 for c in env.cores))
+        self.assertTrue(all(c.tier=='T5' and c.to_dict()['liftCount']==4 for c in env.cores))
         obs=learner.observation(env)
         self.assertEqual(obs.shape[1],14)
         torch.testing.assert_close(obs[:,12],env.core_mask[:obs.shape[0]].float())
         torch.testing.assert_close(obs[:,13],env.core_dist_badness[:obs.shape[0]])
-        self.assertEqual(env.metrics()['coreVoxels'],len(env.cores)*24*63)
+        self.assertEqual(env.metrics()['coreVoxels'],len(env.cores)*40*63)
+
+    def test_daylight_metrics_exclude_core_faces_from_both_sides_of_average(self):
+        shape = (1, 1, 2)
+        lateral = torch.zeros((4, *shape), dtype=torch.bool)
+        lateral[0] = True
+        facade_light = torch.zeros((4, *shape))
+        facade_light[0, 0, 0] = torch.tensor([.2, .8])
+        audit = SimpleNamespace(
+            suns=torch.tensor([[1., 0., 0.]]),
+            visible=torch.tensor([[False, True]]),
+            receiver_data=(None, None, torch.tensor([[1., 0., 0.]] * 2),
+                           torch.tensor([0, 1]), torch.tensor([0, 0])),
+            facade_light_faces=facade_light,
+        )
+        core = torch.tensor([[[True, False]]])
+        torch.testing.assert_close(
+            torch.stack(Environment.daylight_proxies(audit, None, lateral)),
+            torch.tensor([.5, .5]),
+        )
+        torch.testing.assert_close(
+            torch.stack(Environment.daylight_proxies(audit, core, lateral)),
+            torch.tensor([1., .8]),
+        )
+        torch.testing.assert_close(
+            torch.stack(Environment.daylight_proxies(audit, ~core, lateral)),
+            torch.tensor([0., .2]),
+        )
+        torch.testing.assert_close(
+            torch.stack(Environment.daylight_proxies(audit, torch.ones_like(core), lateral)),
+            torch.zeros(2),
+        )
+
+    def test_spatial_aux_ignores_daylight_in_cores_and_their_upward_extension(self):
+        shape = (2, 7, 7)
+        occupied = torch.zeros(shape, dtype=torch.bool)
+        occupied[0] = True
+        core_mask = torch.zeros_like(occupied)
+        core_mask[0, 0, 1] = True
+        env = SimpleNamespace(
+            occupied=occupied, core_mask=core_mask, cores_enabled=True, max_core_dist=12,
+            core_distance=torch.zeros(shape), core_dist_badness=torch.zeros(shape),
+            external_potential=torch.zeros(shape), facade_light=torch.zeros(shape),
+            light=torch.zeros(shape), usable=occupied, depth_badness=torch.zeros(shape),
+        )
+        args = (occupied, ~occupied, torch.zeros(shape), (0, 1), (1, 1, 1), (1, 1, 1))
+        before = compute_spatial_desirability(env, *args)
+        env.external_potential[:, 0, 1] = 1.
+        env.facade_light[0, 0, 1] = 1.
+        env.light[1, 0, 1] = 1.
+        torch.testing.assert_close(compute_spatial_desirability(env, *args), before)
+        env.external_potential[:, 0, 0] = 1.
+        self.assertFalse(torch.equal(compute_spatial_desirability(env, *args), before))
 
     def test_tall_tower_cannot_cheat_with_low_rise_core(self):
         # 12F tower only 5x6 fits T2 (6-10F) but NOT T3 (7x5 for 11-18F), so T1/T2 must NOT place inside it

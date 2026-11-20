@@ -4,11 +4,11 @@ One source defines components, raster reservations, API data and SVG drawings.
 Height bands and lift counts are experimental priors, not traffic/egress design.
 """
 from __future__ import annotations
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from html import escape
 import math
 
-CORE_LAYOUT_VERSION = 'compact-core.v4'
+CORE_LAYOUT_VERSION = 'compact-core.v5'
 
 @dataclass(frozen=True)
 class CorePlanParameters:
@@ -48,8 +48,15 @@ class HeightBand:
     lifts: int
     stair_layout: str = 'dogleg'
 
-DEFAULT_HEIGHT_BANDS=(HeightBand('T1',1,5,1,0),HeightBand('T2',6,10,1,1),
-    HeightBand('T3',11,18,1,2),HeightBand('T4',19,30,2,4,'scissor'),HeightBand('T5',31,60,2,4))
+SCISSOR_HEIGHT_BAND = HeightBand('T4', 19, 30, 2, 4, 'scissor')
+
+DEFAULT_HEIGHT_BANDS = (
+    HeightBand('T1', 1, 5, 1, 0),
+    HeightBand('T2', 6, 10, 1, 1),
+    HeightBand('T3', 11, 18, 1, 2),
+    SCISSOR_HEIGHT_BAND,
+    replace(SCISSOR_HEIGHT_BAND, tier='T5', minimum=31, maximum=60),
+)
 
 def make_plan(band: HeightBand, p: CorePlanParameters | None = None) -> dict:
     p=p or CorePlanParameters()

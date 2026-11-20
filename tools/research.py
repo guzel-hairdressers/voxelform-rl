@@ -124,6 +124,8 @@ def episode(policy,env,config,training):
         referee.cores_enabled=True;referee.max_core_dist=12
         referee.core_mask=res.core_mask;referee.core_distance=res.core_distance
         referee.core_dist_badness=res.core_dist_badness;referee.core_metrics=res.metrics
+        direct, diffuse = env.daylight_proxies(res.core_mask)
+        referee.values = dict(env.values, directSunProxy=direct, diffuseFacadeProxy=diffuse)
         score,diagnostics=organic_objective(referee)
         reference=dict(quality=score,diagnostics=diagnostics,minCoreSpacing=10,maxCoreDist=12)
     sync(env.device)

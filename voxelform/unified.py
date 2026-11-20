@@ -699,15 +699,23 @@ def compute_spatial_desirability(e,w_rem,w_add,ln6_f,consumed,kernel,stride,z_sl
         usable=(e.usable[:z_slice] if z_slice is not None else e.usable).float()
         depth_bad=e.depth_badness[:z_slice] if z_slice is not None else e.depth_badness
         light=e.light[:z_slice] if z_slice is not None else e.light
-        occ_f=occ.float()
-        occ_den=F.avg_pool2d(occ_f[:,None],7,stride=1,padding=3)[:,0].clamp_min(1e-4)
-        ep_room=F.avg_pool2d((ep*occ_f)[:,None],7,stride=1,padding=3)[:,0]/occ_den
+        core_m = None
+        daylight_cells = occ
+        if getattr(e, 'cores_enabled', False) and hasattr(e, 'core_mask'):
+            core_mask = (e.core_mask[:z_slice] if z_slice is not None else e.core_mask) & occ
+            core_m = core_mask.float()
+            daylight_cells = occ & ~core_mask
+            fl = fl.masked_fill(core_mask, 0.)
+        daylight_weight = daylight_cells.float()
+        occ_den=F.avg_pool2d(daylight_weight[:,None],7,stride=1,padding=3)[:,0].clamp_min(1e-4)
+        ep_room=F.avg_pool2d((ep*daylight_weight)[:,None],7,stride=1,padding=3)[:,0]/occ_den
         for _ in range(2):
             fl=torch.where(fl>0,fl,F.max_pool2d(fl[:,None],3,stride=1,padding=1)[:,0])
-        fl_room=F.avg_pool2d((fl*occ_f)[:,None],7,stride=1,padding=3)[:,0]/occ_den
+            if core_m is not None:
+                fl = fl.masked_fill(core_mask, 0.)
+        fl_room=F.avg_pool2d((fl*daylight_weight)[:,None],7,stride=1,padding=3)[:,0]/occ_den
         usable_good=usable*(1.-ln6_f)
-        if getattr(e,'cores_enabled',False) and hasattr(e,'core_mask'):
-            core_m=(e.core_mask[:z_slice] if z_slice is not None else e.core_mask).float()
+        if core_m is not None:
             core_d=e.core_distance[:z_slice] if z_slice is not None else e.core_distance
             core_bad=e.core_dist_badness[:z_slice] if z_slice is not None else e.core_dist_badness
             over_core=(core_d>float(getattr(e,'max_core_dist',12))).float()
@@ -717,8 +725,7 @@ def compute_spatial_desirability(e,w_rem,w_add,ln6_f,consumed,kernel,stride,z_sl
             q_occ=(
                 .65*usable_good
                 +1.10*core_m
-                +1.30*(.5*ep+.5*ep_room)
-                +.55*fl_room
+                +(1.-core_m)*(1.30*(.5*ep+.5*ep_room)+.55*fl_room)
                 -.30*depth_bad
                 -.80*ln6_f
                 -.75*over_core
@@ -732,7 +739,7 @@ def compute_spatial_desirability(e,w_rem,w_add,ln6_f,consumed,kernel,stride,z_sl
             grounded_below=torch.ones_like(grounded)
             if grounded.shape[0]>1:
                 grounded_below[1:]=grounded[:-1]
-            q_add=.75*ep+.25*light+.45*core_above+.40*grounded_below
+            q_add=(1.-core_above)*(.75*ep+.25*light)+.45*core_above+.40*grounded_below
         else:
             q_occ=.55*usable_good+1.40*(.5*ep+.5*ep_room)+.55*fl_room-.30*depth_bad-.80*ln6_f
             q_add=.75*ep+.25*light
