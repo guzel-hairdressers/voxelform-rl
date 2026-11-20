@@ -468,7 +468,7 @@ class UnifiedSession:
             available = {record['site_id'] for record in self.library.catalog()}
             missing = [site for site in self.training_sites if site not in available]
             if len(self.training_sites) < 2 or missing:
-                raise ValueError('Training rotation needs both configured training sites in the local cache')
+                raise ValueError('Training rotation needs at least two sites and a complete local cache for the configured pool')
             if self.site_id not in self.training_sites:
                 self.learn_rollout()
                 self.switch_training_site(self.training_sites[0])

@@ -1,6 +1,17 @@
 {
   "seeds": [123, 456, 789],
-  "train_sites": ["m_bcn_0093", "m_tokyo_0135"],
+  "train_sites": [
+    "m_bcn_0093",
+    "xs_tokyo_0133",
+    "s_sgp_0345",
+    "l_bcn_0074",
+    "xl_tokyo_0185",
+    "xs_sgp_0346",
+    "s_bcn_0112",
+    "m_tokyo_0135",
+    "l_sgp_0369",
+    "xl_sgp_0386"
+  ],
   "validation_sites": ["m_hk_0199"],
   "test_sites": ["m_nyc_0003", "m_prs_0315"],
   "evaluation_seeds": [9001, 9002, 9003, 9004, 9005],

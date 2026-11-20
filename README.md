@@ -59,11 +59,12 @@ for continuing a compatible checkpoint at an episode boundary.
 ## Evaluate across sites
 
 The [real-site reference config](configs/research-real.json) fixes budgets and
-model seeds, trains on Barcelona and Tokyo, validates on Hong Kong, and tests
-on New York and Paris. The [auxiliary-loss config](configs/research-real-aux.json)
-uses the same split and budget. Real-site runs require the matching local cache
-and use Apple MPS by default. Set `VOXELFORM_CONTEXT_ROOT` to the Module Lab
-checkout, then run:
+model seeds. It trains on ten plots across Barcelona, Tokyo and Singapore, with
+two plots in each size tier (XS, S, M, L and XL). It validates on Hong Kong
+and tests on New York and Paris. The
+[auxiliary-loss config](configs/research-real-aux.json) shares the split and
+budget. Real-site runs require the matching local cache and use Apple MPS by
+default. Set `VOXELFORM_CONTEXT_ROOT` to the Module Lab checkout, then run:
 
 ```sh
 uv run --frozen vf-research train \
@@ -89,9 +90,9 @@ uv run --frozen python main.py
 Open [localhost:8011](http://127.0.0.1:8011) to inspect the current massing,
 environment fields, and training curves. The default demo is the Barcelona
 Eixample site (`m_bcn_0093`). **Rotate training sites** shares one
-policy and optimizer across the configured training sites in three-episode
-blocks. **Saved layouts** previews the five highest-scoring distinct layouts
-that reached the target FAR for the site and comparable settings. Episode
+policy and optimizer across those ten training sites in three-episode blocks
+(30 episodes per full rotation). **Saved layouts** previews the five highest-scoring
+distinct layouts that reached the target FAR for the site and comparable settings. Episode
 statistics and those voxel masks persist locally in `runs/layouts/`.
 
 <details>

@@ -66,10 +66,13 @@ substantial uncertainty.
   duplicate/overlapping seeds and overlapping train/validation/test site IDs.
 - `research-smoke.json` is a self-contained CPU pipeline check with two model
   seeds and synthetic held-out shapes. It is not a quality benchmark.
-- `research-real.json` trains on Barcelona/Tokyo, validates on Hong Kong, and
-  tests on New York/Paris. These city-separated defaults avoid using adjacent
-  Barcelona sites as evidence of broad generalization. Context-circle overlap
-  is additionally rejected when coordinates/radii are available.
+- `research-real.json` trains on ten Barcelona, Tokyo and Singapore plots (two
+  each for XS, S, M, L and XL), validates on Hong Kong, and tests on New York
+  and Paris. The runner rejects overlapping context circles across splits
+  when coordinates and radii are available. The headless runner visits each
+  training site once per ten episodes. The interactive rotation
+  spends three consecutive episodes on each site with the same policy and
+  optimizer. Historical results may use the original two-site pilot pool.
 - Test scenes are not used for training or checkpoint selection. Final fixed-
   budget checkpoints are evaluated; no best-test checkpoint is selected.
 - Untrained policies and trained policies use common evaluation seeds. The

@@ -288,9 +288,16 @@ function render(){
   trainingModeLoaded = true;
  }
  trainingMode.disabled = Boolean(data.running);
- trainingMode.querySelector('option[value=rotation]').disabled = (rotation?.sites.length ?? 0) < 2;
- trainingMode.title = rotation?.sites.length
-  ? `${rotation.block} episodes per site: ${rotation.sites.join(', ')}`
+ const rotationSites = rotation?.sites ?? [];
+ const rotateOption = trainingMode.querySelector('option[value=rotation]');
+ rotateOption.disabled = rotationSites.length < 2;
+ const trainingRecords = catalog.filter(site => rotationSites.includes(site.siteId));
+ const tierCount = new Set(trainingRecords.map(site => site.tier)).size;
+ rotateOption.textContent = rotationSites.length
+  ? `Rotate ${rotationSites.length} training sites`
+  : 'Rotate training sites';
+ trainingMode.title = rotationSites.length
+  ? `${rotation.block} episodes per site · ${tierCount} plot tiers`
   : 'No training sites configured';
  if (rotation?.error) error(`Training rotation paused: ${rotation.error}`);
  const m=data.metrics,l=data.learning,c=data.context,siteKey=c?`${c.site_id}:${c.gridAlignment||'world'}:${data.shape[0]}`:`synthetic:${data.seed}:${data.shape[0]}`,changedSite=siteKey!==lastSite;
@@ -322,7 +329,9 @@ function render(){
  $('contextStatus').textContent=c?`${c.site_id} · ${c.tier} · ${c.buildings.length} neighbours`:`Synthetic plot · seed ${data.seed}`;
  const termination=data.termination==='far_reached'?' · FAR reached':data.termination==='no_admissible_edits'?' · No facade cells':data.termination==='mask_generation_failed'?' · Generated mask rejected':data.termination==='step_budget_exhausted'?' · Step budget exhausted · FAR not reached':'';
  const epStatusText=`${data.episodes} completed episode${data.episodes===1?'':'s'} · ${m.edits} ${m.edits===1?'mask':'masks'}${data.attempts!=null?` · ${data.attempts} attempts`:''}${m.stepBudget!=null?` / ${m.stepBudget} budget`:''} · ${m.voxelsEdited??0} voxels changed · ${l.directMaskUpdates??0} mask-head updates${l.importedUpdates?` · ${l.importedUpdates} imported updates`:""}${termination}${data.lastRejection&&!data.episodeComplete?' · Last draw rejected; try again':''}`;
- const rotationText = rotation?.enabled ? ` · Site rotation ${rotation.completed}/${rotation.block}` : '';
+ const rotationText = rotation?.enabled
+  ? ` · Site ${rotationSites.indexOf(data.siteId) + 1}/${rotationSites.length} · ${rotation.completed}/${rotation.block} episodes`
+  : '';
  $('episodeStatus').textContent=epStatusText+rotationText;$('episodeStatus').title=epStatusText+rotationText;
  const chartCount = chartRows().length;
  $('progressCount').textContent=`${chartCount} site episode${chartCount===1?'':'s'} charted`;
