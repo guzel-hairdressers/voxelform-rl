@@ -1,148 +1,120 @@
 # VoxelForm-RL
 
-**Machine-learning research on structured, constrained 3D actions under a limited
-compute budget.** A voxel editing environment supplies dynamic spatial eligibility,
-correlated multi-cell actions, geometric constraints and multiple proxy objectives.
-Urban massing is the test domain; the research concerns RL representation, credit
-assignment, constraint decoding, evaluation and efficiency. The 3D workspace is a
-debugging frontend, not the scientific result.
+**Reinforcement learning for constrained 3D editing.** VoxelForm-RL is a PyTorch
+research project that uses building massing as a testbed for high-dimensional
+spatial actions. A policy starts from a voxelized envelope and learns to carve,
+grow, and redistribute volume within a limited number of edits. Each episode
+targets a floor-area ratio (FAR) band and evaluates tradeoffs among usable area,
+daylight proxies, and access to vertical cores.
 
-The active actor is a factored 2D+1D network with 14 observation channels, coarse
-Gaussian mask latents, a categorical operation head and a scalar critic. Training
-uses actor-critic with GAE. An optional physics-shaped auxiliary objective is
-explicitly ablated; hardcoded geometry rules are not presented as learned skills.
+The research question is whether a policy can learn coherent, useful 3D edits
+under these constraints and transfer what it learns to unseen sites.
 
-## Reproducible setup
+![VoxelForm-RL workspace showing a generated voxel mass and its evaluation metrics in Paris](docs/media/voxel-workspace.jpg)
 
-Python 3.11–3.13; the lockfile is tested with Python 3.12. Linux uses the CPU Torch
-index; macOS can use MPS. Install [uv](https://docs.astral.sh/uv/) and run:
+*Live workspace on the Paris demonstration site. The blue mass is the generated
+layout. Surrounding geometry is derived from [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).*
+
+## Learning setup
+
+| Component | Implementation |
+|---|---|
+| **State** | A binary occupancy grid, a permitted envelope, FAR and edit-budget context, and 14 spatial channels. The channels encode occupancy, spatial edit eligibility, environmental signals, and core access. |
+| **Policy** | A factored 2D+1D actor–critic samples a categorical operation and coarse Gaussian spatial fields. Correlated masks let one action alter a coherent region across multiple floors. |
+| **Transition** | The decoder smooths and ranks the fields, allocates edit volume, and checks constraints before committing the mask. The environment supplies geometry guards and a deterministic core placement heuristic. |
+| **Training** | Actor–critic with generalized advantage estimation (GAE). The reference configuration uses the environment reward. A matched ablation adds a heuristic spatial auxiliary signal. |
+| **Evaluation** | FAR success and component metrics are reported separately. The evaluator records both successful and failed episodes and uses a shared reference score for settings ablations. |
+
+The environment evaluates direct sunlight with both context and self-shadowing,
+diffuse sky as a separate proxy, and same-floor distance to a core. Core voxels
+occupy gross floor area and are excluded from usable area and facade daylight
+scoring. See the [experiment protocol](docs/EXPERIMENT_PROTOCOL.md) for the
+action representation, objective and evaluation procedure.
+
+## Run a reproducible experiment
+
+Start with the self-contained CPU smoke run. It trains two model seeds on
+synthetic geometry and evaluates held-out shapes. The run needs only this
+repository, Python 3.12 and [uv](https://docs.astral.sh/uv/).
 
 ```sh
-uv sync --frozen --extra dev
-uv run --frozen vf-research train --config configs/research-smoke.json --output runs/my-smoke
+uv sync --frozen --extra dev --python 3.12
+uv run --frozen vf-research train \
+  --config configs/research-smoke.json --output runs/my-smoke
 ```
 
-This runs without Module Lab, its renderer, external urban data or a browser.
-Choose a new output directory each time; evidence is never silently overwritten.
-`pyproject.toml` provides an installable ML package/CLI; `uv.lock` pins its resolved
-runtime/development dependencies. `requirements.txt` remains a legacy minimum set,
-not the reproducibility lock.
-
-## Train and evaluate
+Use a new output directory for each run. The runner saves the resolved config,
+source and scene fingerprints, runtime metadata, learning traces, per-episode
+evaluation results, and model, optimizer and RNG checkpoints.
 
 ```sh
-# Three model seeds, fixed training budget, disjoint cities; requires cached data.
-VOXELFORM_CONTEXT_ROOT=/path/to/Module-Lab uv run --frozen vf-research train \
+uv run --frozen vf-research evaluate \
+  --checkpoint runs/my-smoke/seed-123/latest.pt \
+  --split test --output runs/my-test.json
+```
+
+See the [resume procedure](docs/EXPERIMENT_PROTOCOL.md#artifacts-and-resume-contract)
+for continuing a compatible checkpoint at an episode boundary.
+
+## Evaluate across sites
+
+The [real-site reference config](configs/research-real.json) fixes budgets and
+model seeds, trains on Barcelona and Tokyo, validates on Hong Kong, and tests
+on New York and Paris. The [auxiliary-loss config](configs/research-real-aux.json)
+uses the same split and budget. Real-site runs require the matching local cache
+and use Apple MPS by default. Set `VOXELFORM_CONTEXT_ROOT` to the Module Lab
+checkout, then run:
+
+```sh
+uv run --frozen vf-research train \
   --config configs/research-real.json --output runs/real-reference
-
-# Matching auxiliary-loss ablation: same budgets, seeds, splits and evaluation.
-VOXELFORM_CONTEXT_ROOT=/path/to/Module-Lab uv run --frozen vf-research train \
-  --config configs/research-real-aux.json --output runs/real-aux
-
-# Exact episode-boundary resume into a new directory; config must match.
-uv run --frozen vf-research train --config configs/research-smoke.json \
-  --resume runs/my-smoke/seed-123/latest.pt --output runs/resumed
-
-uv run --frozen vf-research evaluate --checkpoint runs/my-smoke/seed-123/latest.pt \
-  --split test --output runs/test-recheck.json
 ```
 
-Each run saves a validated config, Git/dirty-source hashes, the actual source
-archive, dependency/backend versions, scene fingerprints, model/evaluation seeds,
-JSONL learning traces, raw held-out episodes and atomic model/optimizer/RNG
-checkpoints. Failures remain in summary denominators. A common core-aware referee
-makes reward-setting ablations interpretable; uncertainty is computed across model
-seeds. Test scenes never select checkpoints. See the
-[complete experiment protocol](docs/EXPERIMENT_PROTOCOL.md).
+The protocol evaluates fixed-budget checkpoints against untrained controls
+using common evaluation seeds. Summaries report variability across independent
+model seeds. The synthetic smoke run verifies the pipeline. Historical pilots
+use earlier task definitions and are preserved with their settings in the
+[results index](results/README.md). A matched-budget comparison of single-site
+and multi-site training on held-out sites remains an open experiment.
 
-The smoke run verifies the pipeline. It is not evidence of convergence or a
-publishable quality gain. Historical 80-episode scores used different core/reward
-semantics; they remain historical observations, not validation of the new version.
+## Inspect a live run
 
-## Compact core geometry
-
-Core geometry is parameterized and shared by the environment, JSON and dimensioned
-SVGs. Plans show two stair flights and two landings, shaft/car separation, lobby
-and openings. Height-dependent lift counts are explicit research priors.
-
-| Floors | Stairs | Lifts | Grid reservation |
-|---|---:|---:|---|
-| 1–5 | 1 | 0 | 3 × 5 m |
-| 6–10 | 1 | 1 | 5 × 5 m |
-| 11–18 | 1 | 2 | 7 × 5 m |
-| 19–30 | 2 interlocking scissor routes | 4 | 7 × 9 m |
-| 31–60 | 2 interlocking scissor routes | 4 | 7 × 9 m |
-
-[Metric dimensions, drawings and assumptions](docs/CORE_LAYOUTS.md) ·
-[6–10-floor SVG](docs/core-plans/T2.svg). No architectural compliance or lift traffic
-capacity is inferred from these templates. They are inspectable task parameters.
-
-## Inspect the live model
-
-From the editable checkout, keep Module Lab beside this repository or set
-`VOXELFORM_CONTEXT_ROOT`. Its cached geometry and renderer are read-only dependencies.
+The live workspace uses the Module Lab renderer and cached geometry. With Module
+Lab beside this checkout, or `VOXELFORM_CONTEXT_ROOT` set, run:
 
 ```sh
 uv run --frozen python main.py
-# http://127.0.0.1:8011  — training/debugging dashboard
-# http://127.0.0.1:8011/core-plans — canonical metric component plans
 ```
 
-Default demo: **m_bcn_0093 (Barcelona/Eixample)**, the L-shaped plot beside the tall
-neighbour used for the shadow/redistribution example. `VOXELFORM_SITE_ID` overrides
-it explicitly. Initial height/headroom can follow contextual heights or be set in
-the UI. The active organic decoder permits 3D carving/growth; the old linked-floor
-copying remains a compatibility/control implementation.
+Open [localhost:8011](http://127.0.0.1:8011) to inspect the current massing,
+environment fields, and training curves. The default demo is the Barcelona
+Eixample site (`m_bcn_0093`). **Rotate training sites** shares one
+policy and optimizer across the configured training sites in three-episode
+blocks. **Saved layouts** previews the five highest-scoring distinct layouts
+that reached the target FAR for the site and comparable settings. Episode
+statistics and those voxel masks persist locally in `runs/layouts/`.
 
-Direct sunlight and diffuse sky access are separate uncalibrated proxies. Rendered
-shadows are not the physical evaluation. Devoxelization is display-only and never
-changes occupied floor area or training reward. No main-workspace floor-plan pane
-is added; `/core-plans` is a component-geometry diagnostic.
+<details>
+<summary>Training diagnostics screenshot</summary>
 
-## Site exploration and saved layouts
+![Training dashboard with the direct-sun curve highlighted and FAR and timing plotted alongside](docs/media/training-diagnostics.jpg)
 
-Choose **Rotate training sites** beside Train. The live run uses the training
-list in `configs/research-real.json` and rotates after three completed episodes
-on each site. The policy and optimizer carry across the switch. Each new episode
-starts with a fresh massing, with stochastic masks exploring that site's design
-space. Use separate held-out sites for evaluating generalization.
+The dashboard records exploratory live runs. The headless runner produces the
+controlled evaluation artifacts.
 
-The **Saved layouts** picker previews the five highest-scoring distinct,
-FAR-valid layouts for the selected site and comparable setup. FAR target, grid
-and core rules define separate leaderboards. Previewing one shows its massing in
-the viewer while the live run continues. Hover or focus a chart legend to
-emphasize that metric, or click to pin it.
+</details>
 
-Layout masks and episode statistics persist locally in `runs/layouts/`. Every
-completed episode contributes metrics, including FAR misses. The dashboard
-charts up to 5,000 recent episodes for the selected setup and fetches new points
-incrementally.
+## Documentation and checks
 
-## Checks
+- [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md) and [model card](docs/MODEL_CARD.md)
+- [Data and simulator card](docs/DATA_CARD.md) and [core geometry](docs/CORE_LAYOUTS.md)
+- [Results and historical evidence](results/README.md), [contributing](CONTRIBUTING.md), and [citation](CITATION.cff)
 
 ```sh
-uv run --frozen --extra dev python -m unittest discover -s tests -v
+uv run --frozen --extra dev python -m unittest discover -s tests
 node --test tests/*.test.mjs
-uv run --frozen --extra dev ruff check voxelform/core_plans.py voxelform/experiment.py \
-  voxelform/objectives.py tools/research.py tools/render_core_plans.py \
-  tests/test_core_plans.py tests/test_experiment.py
 ```
 
-GitHub Actions runs the locked CPU suite, JS geometry checks, static checks and a
-self-contained smoke experiment. MPS execution is additionally tested locally when
-available; CI does not claim to test unavailable GPU hardware.
-
-## Research documentation
-
-- [Experiment protocol and remaining work](docs/EXPERIMENT_PROTOCOL.md)
-- [Data/simulator card](docs/DATA_CARD.md) and [model card](docs/MODEL_CARD.md)
-- [Core layouts](docs/CORE_LAYOUTS.md)
-- [Latest changes and verification](docs/REVIEW_2026-11-20.md)
-- [Historical raw results](results/) and [implementation notes](agent_notes/README.md)
-- [Preserved older workspace README](docs/LEGACY_WORKSPACE.md)
-- [Contribution rules](CONTRIBUTING.md), [citation metadata](CITATION.cff)
-
-The project's own redistribution license needs an explicit owner decision; no
-license is inferred from dependencies. Existing Three.js license/OSM attribution
-are retained. Dataset hashes are recorded; matching external urban cache content
-must be obtained separately to reproduce real-site runs.
+[GitHub Actions](.github/workflows/research.yml) runs the locked CPU tests,
+viewer geometry tests, static checks, and the synthetic smoke experiment.
+The simulator's environmental metrics are approximate research proxies.
