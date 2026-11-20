@@ -1,0 +1,829 @@
+{
+  "date": "2026-11-19",
+  "device": "mps",
+  "regimes": {
+    "xs_tokyo_28F": {
+      "siteId": "xs_tokyo_0193",
+      "initialStoreys": 12,
+      "ceilingStoreys": 28,
+      "checkpoints": [
+        10,
+        20
+      ],
+      "fine_1x1x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.2964,
+          "meanSteps": 6.4,
+          "meanFar": 3.0047,
+          "meanOrganicObjective": 0.0083,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0094,
+          "meanDiffuseFacadeProxy": 0.007,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 12.4
+        },
+        "10": {
+          "cumTrainSeconds": 3.377,
+          "trainSecondsPerEp": 0.3377,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.3985,
+          "meanSteps": 12.0,
+          "meanFar": 2.9914,
+          "meanOrganicObjective": 0.0153,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0229,
+          "meanDiffuseFacadeProxy": 0.0059,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.0
+        },
+        "20": {
+          "cumTrainSeconds": 6.524,
+          "trainSecondsPerEp": 0.3262,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.4446,
+          "meanSteps": 12.8,
+          "meanFar": 2.9953,
+          "meanOrganicObjective": 0.0206,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0307,
+          "meanDiffuseFacadeProxy": 0.0055,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.2
+        }
+      },
+      "c2f_2x2x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.2343,
+          "meanSteps": 6.2,
+          "meanFar": 2.9834,
+          "meanOrganicObjective": 0.0088,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0083,
+          "meanDiffuseFacadeProxy": 0.0096,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 12.6,
+          "meanStageSteps": [
+            3.6,
+            2.6
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 3.126,
+          "trainSecondsPerEp": 0.3126,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.2206,
+          "meanSteps": 7.4,
+          "meanFar": 2.9727,
+          "meanOrganicObjective": 0.0102,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0097,
+          "meanDiffuseFacadeProxy": 0.0107,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.2,
+          "meanStageSteps": [
+            4.0,
+            3.4
+          ]
+        },
+        "20": {
+          "cumTrainSeconds": 6.164,
+          "trainSecondsPerEp": 0.3082,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.2385,
+          "meanSteps": 7.0,
+          "meanFar": 3.0579,
+          "meanOrganicObjective": 0.0178,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0226,
+          "meanDiffuseFacadeProxy": 0.011,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.0,
+          "meanStageSteps": [
+            3.0,
+            4.0
+          ]
+        }
+      },
+      "m3_4x4x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.3159,
+          "meanSteps": 9.6,
+          "meanFar": 2.9674,
+          "meanOrganicObjective": 0.0101,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0102,
+          "meanDiffuseFacadeProxy": 0.01,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.8,
+          "meanStageSteps": [
+            2.2,
+            0.6,
+            6.8
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 2.76,
+          "trainSecondsPerEp": 0.276,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.2538,
+          "meanSteps": 7.6,
+          "meanFar": 3.0379,
+          "meanOrganicObjective": 0.0123,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0082,
+          "meanDiffuseFacadeProxy": 0.0164,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.4,
+          "meanStageSteps": [
+            2.2,
+            0.2,
+            5.2
+          ]
+        },
+        "20": {
+          "cumTrainSeconds": 5.288,
+          "trainSecondsPerEp": 0.2644,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.1821,
+          "meanSteps": 5.4,
+          "meanFar": 2.9887,
+          "meanOrganicObjective": 0.0138,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.0084,
+          "meanDiffuseFacadeProxy": 0.0201,
+          "meanLongNarrowFraction": 0.0,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.8,
+          "meanStageSteps": [
+            2.0,
+            0.0,
+            3.4
+          ]
+        }
+      }
+    },
+    "m_bcn_20F": {
+      "siteId": "m_bcn_0093",
+      "initialStoreys": 9,
+      "ceilingStoreys": 20,
+      "checkpoints": [
+        10,
+        20,
+        35
+      ],
+      "fine_1x1x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.7803,
+          "meanSteps": 16.6,
+          "meanFar": 2.9634,
+          "meanOrganicObjective": 0.2132,
+          "meanUsableGoodArea": 641.8,
+          "meanDirectSunProxy": 0.4087,
+          "meanDiffuseFacadeProxy": 0.0335,
+          "meanLongNarrowFraction": 0.2568,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 10.4
+        },
+        "10": {
+          "cumTrainSeconds": 7.601,
+          "trainSecondsPerEp": 0.7601,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.6906,
+          "meanSteps": 14.0,
+          "meanFar": 3.037,
+          "meanOrganicObjective": 0.3119,
+          "meanUsableGoodArea": 658.4,
+          "meanDirectSunProxy": 0.4961,
+          "meanDiffuseFacadeProxy": 0.0326,
+          "meanLongNarrowFraction": 0.1688,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.8
+        },
+        "20": {
+          "cumTrainSeconds": 15.588,
+          "trainSecondsPerEp": 0.7794,
+          "count": 5,
+          "farSuccessRate": 0.8,
+          "meanSeconds": 0.8321,
+          "meanSteps": 14.2,
+          "meanFar": 3.0577,
+          "meanOrganicObjective": 0.5312,
+          "meanUsableGoodArea": 1236.2,
+          "meanDirectSunProxy": 0.6055,
+          "meanDiffuseFacadeProxy": 0.0494,
+          "meanLongNarrowFraction": 0.0621,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 9.8
+        },
+        "35": {
+          "cumTrainSeconds": 25.714,
+          "trainSecondsPerEp": 0.7347,
+          "count": 5,
+          "farSuccessRate": 0.6,
+          "meanSeconds": 1.0397,
+          "meanSteps": 10.4,
+          "meanFar": 3.0632,
+          "meanOrganicObjective": 0.6617,
+          "meanUsableGoodArea": 1679.4,
+          "meanDirectSunProxy": 0.6581,
+          "meanDiffuseFacadeProxy": 0.0841,
+          "meanLongNarrowFraction": 0.0345,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 9.8
+        }
+      },
+      "c2f_2x2x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.6628,
+          "meanSteps": 15.8,
+          "meanFar": 2.9875,
+          "meanOrganicObjective": 0.2222,
+          "meanUsableGoodArea": 601.8,
+          "meanDirectSunProxy": 0.3901,
+          "meanDiffuseFacadeProxy": 0.0335,
+          "meanLongNarrowFraction": 0.2137,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.0,
+          "meanStageSteps": [
+            9.8,
+            6.0
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 6.721,
+          "trainSecondsPerEp": 0.6721,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.4835,
+          "meanSteps": 11.2,
+          "meanFar": 3.0133,
+          "meanOrganicObjective": 0.4552,
+          "meanUsableGoodArea": 931.6,
+          "meanDirectSunProxy": 0.5961,
+          "meanDiffuseFacadeProxy": 0.0406,
+          "meanLongNarrowFraction": 0.0907,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.8,
+          "meanStageSteps": [
+            7.0,
+            4.2
+          ]
+        },
+        "20": {
+          "cumTrainSeconds": 13.286,
+          "trainSecondsPerEp": 0.6643,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.6453,
+          "meanSteps": 9.6,
+          "meanFar": 3.0416,
+          "meanOrganicObjective": 0.4991,
+          "meanUsableGoodArea": 984.2,
+          "meanDirectSunProxy": 0.6334,
+          "meanDiffuseFacadeProxy": 0.0403,
+          "meanLongNarrowFraction": 0.0676,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.8,
+          "meanStageSteps": [
+            6.0,
+            3.6
+          ]
+        },
+        "35": {
+          "cumTrainSeconds": 23.328,
+          "trainSecondsPerEp": 0.6665,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.5587,
+          "meanSteps": 9.8,
+          "meanFar": 3.0453,
+          "meanOrganicObjective": 0.6154,
+          "meanUsableGoodArea": 1428.6,
+          "meanDirectSunProxy": 0.668,
+          "meanDiffuseFacadeProxy": 0.0714,
+          "meanLongNarrowFraction": 0.0453,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 12.6,
+          "meanStageSteps": [
+            7.0,
+            2.8
+          ]
+        }
+      },
+      "m3_4x4x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.5869,
+          "meanSteps": 10.8,
+          "meanFar": 2.9434,
+          "meanOrganicObjective": 0.2043,
+          "meanUsableGoodArea": 680.0,
+          "meanDirectSunProxy": 0.4127,
+          "meanDiffuseFacadeProxy": 0.0379,
+          "meanLongNarrowFraction": 0.2957,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 10.4,
+          "meanStageSteps": [
+            3.0,
+            1.4,
+            6.4
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 5.29,
+          "trainSecondsPerEp": 0.529,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.394,
+          "meanSteps": 8.2,
+          "meanFar": 3.0097,
+          "meanOrganicObjective": 0.3753,
+          "meanUsableGoodArea": 1098.0,
+          "meanDirectSunProxy": 0.479,
+          "meanDiffuseFacadeProxy": 0.0401,
+          "meanLongNarrowFraction": 0.162,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.0,
+          "meanStageSteps": [
+            3.0,
+            0.8,
+            4.4
+          ]
+        },
+        "20": {
+          "cumTrainSeconds": 9.954,
+          "trainSecondsPerEp": 0.4977,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.4619,
+          "meanSteps": 8.8,
+          "meanFar": 2.9431,
+          "meanOrganicObjective": 0.496,
+          "meanUsableGoodArea": 1007.2,
+          "meanDirectSunProxy": 0.6112,
+          "meanDiffuseFacadeProxy": 0.0419,
+          "meanLongNarrowFraction": 0.0614,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 12.2,
+          "meanStageSteps": [
+            3.0,
+            0.4,
+            5.4
+          ]
+        },
+        "35": {
+          "cumTrainSeconds": 15.955,
+          "trainSecondsPerEp": 0.4559,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.3537,
+          "meanSteps": 5.8,
+          "meanFar": 3.0159,
+          "meanOrganicObjective": 0.505,
+          "meanUsableGoodArea": 932.0,
+          "meanDirectSunProxy": 0.6192,
+          "meanDiffuseFacadeProxy": 0.0423,
+          "meanLongNarrowFraction": 0.0299,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.0,
+          "meanStageSteps": [
+            3.0,
+            1.2,
+            1.6
+          ]
+        }
+      },
+      "m3_4x4x2": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.5152,
+          "meanSteps": 7.8,
+          "meanFar": 2.9333,
+          "meanOrganicObjective": 0.188,
+          "meanUsableGoodArea": 619.2,
+          "meanDirectSunProxy": 0.399,
+          "meanDiffuseFacadeProxy": 0.0379,
+          "meanLongNarrowFraction": 0.2925,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 9.6,
+          "meanStageSteps": [
+            2.0,
+            0.0,
+            5.8
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 4.53,
+          "trainSecondsPerEp": 0.453,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.4231,
+          "meanSteps": 7.0,
+          "meanFar": 2.9371,
+          "meanOrganicObjective": 0.2858,
+          "meanUsableGoodArea": 834.6,
+          "meanDirectSunProxy": 0.4338,
+          "meanDiffuseFacadeProxy": 0.0363,
+          "meanLongNarrowFraction": 0.2058,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 10.2,
+          "meanStageSteps": [
+            2.0,
+            0.2,
+            4.8
+          ]
+        },
+        "20": {
+          "cumTrainSeconds": 9.444,
+          "trainSecondsPerEp": 0.4722,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.4851,
+          "meanSteps": 9.4,
+          "meanFar": 2.9673,
+          "meanOrganicObjective": 0.4142,
+          "meanUsableGoodArea": 1211.0,
+          "meanDirectSunProxy": 0.5058,
+          "meanDiffuseFacadeProxy": 0.0476,
+          "meanLongNarrowFraction": 0.1585,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 11.6,
+          "meanStageSteps": [
+            2.0,
+            0.2,
+            7.2
+          ]
+        },
+        "35": {
+          "cumTrainSeconds": 15.534,
+          "trainSecondsPerEp": 0.4438,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 0.3103,
+          "meanSteps": 4.6,
+          "meanFar": 2.9189,
+          "meanOrganicObjective": 0.4664,
+          "meanUsableGoodArea": 1287.8,
+          "meanDirectSunProxy": 0.5459,
+          "meanDiffuseFacadeProxy": 0.052,
+          "meanLongNarrowFraction": 0.1475,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 9.8,
+          "meanStageSteps": [
+            2.0,
+            0.0,
+            2.6
+          ]
+        }
+      }
+    },
+    "xl_sgp_40F": {
+      "siteId": "xl_sgp_0386",
+      "initialStoreys": 12,
+      "ceilingStoreys": 40,
+      "checkpoints": [
+        10,
+        25
+      ],
+      "fine_1x1x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 0.6,
+          "meanSeconds": 5.8456,
+          "meanSteps": 32.2,
+          "meanFar": 5.4518,
+          "meanOrganicObjective": 0.3379,
+          "meanUsableGoodArea": 1425.0,
+          "meanDirectSunProxy": 0.592,
+          "meanDiffuseFacadeProxy": 0.0204,
+          "meanLongNarrowFraction": 0.0829,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 13.2
+        },
+        "10": {
+          "cumTrainSeconds": 54.615,
+          "trainSecondsPerEp": 5.4615,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 2.6541,
+          "meanSteps": 28.6,
+          "meanFar": 3.006,
+          "meanOrganicObjective": 0.3623,
+          "meanUsableGoodArea": 0.0,
+          "meanDirectSunProxy": 0.6268,
+          "meanDiffuseFacadeProxy": 0.0076,
+          "meanLongNarrowFraction": 0.0305,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.6
+        },
+        "25": {
+          "cumTrainSeconds": 176.624,
+          "trainSecondsPerEp": 7.0649,
+          "count": 5,
+          "farSuccessRate": 0.4,
+          "meanSeconds": 9.7891,
+          "meanSteps": 29.0,
+          "meanFar": 6.9108,
+          "meanOrganicObjective": 0.3691,
+          "meanUsableGoodArea": 2542.2,
+          "meanDirectSunProxy": 0.6053,
+          "meanDiffuseFacadeProxy": 0.0289,
+          "meanLongNarrowFraction": 0.0655,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.0
+        }
+      },
+      "c2f_2x2x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 2.38,
+          "meanSteps": 24.0,
+          "meanFar": 2.969,
+          "meanOrganicObjective": 0.2647,
+          "meanUsableGoodArea": 735.6,
+          "meanDirectSunProxy": 0.483,
+          "meanDiffuseFacadeProxy": 0.0126,
+          "meanLongNarrowFraction": 0.134,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.6,
+          "meanStageSteps": [
+            17.6,
+            6.4
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 31.543,
+          "trainSecondsPerEp": 3.1543,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 2.7644,
+          "meanSteps": 21.0,
+          "meanFar": 3.0605,
+          "meanOrganicObjective": 0.6266,
+          "meanUsableGoodArea": 7848.0,
+          "meanDirectSunProxy": 0.6248,
+          "meanDiffuseFacadeProxy": 0.0575,
+          "meanLongNarrowFraction": 0.1039,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.6,
+          "meanStageSteps": [
+            15.0,
+            6.0
+          ]
+        },
+        "25": {
+          "cumTrainSeconds": 111.515,
+          "trainSecondsPerEp": 4.4606,
+          "count": 5,
+          "farSuccessRate": 0.4,
+          "meanSeconds": 5.8807,
+          "meanSteps": 30.4,
+          "meanFar": 3.1033,
+          "meanOrganicObjective": 0.7072,
+          "meanUsableGoodArea": 7838.4,
+          "meanDirectSunProxy": 0.7514,
+          "meanDiffuseFacadeProxy": 0.067,
+          "meanLongNarrowFraction": 0.0682,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 16.0,
+          "meanStageSteps": [
+            21.4,
+            9.0
+          ]
+        }
+      },
+      "m3_4x4x1": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 3.1408,
+          "meanSteps": 19.0,
+          "meanFar": 2.9608,
+          "meanOrganicObjective": 0.2197,
+          "meanUsableGoodArea": 124.4,
+          "meanDirectSunProxy": 0.484,
+          "meanDiffuseFacadeProxy": 0.0062,
+          "meanLongNarrowFraction": 0.1555,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.6,
+          "meanStageSteps": [
+            9.8,
+            2.6,
+            6.6
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 25.988,
+          "trainSecondsPerEp": 2.5988,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 1.3996,
+          "meanSteps": 11.0,
+          "meanFar": 2.9334,
+          "meanOrganicObjective": 0.3174,
+          "meanUsableGoodArea": 89.6,
+          "meanDirectSunProxy": 0.5754,
+          "meanDiffuseFacadeProxy": 0.0096,
+          "meanLongNarrowFraction": 0.0601,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.8,
+          "meanStageSteps": [
+            6.4,
+            1.2,
+            3.4
+          ]
+        },
+        "25": {
+          "cumTrainSeconds": 52.402,
+          "trainSecondsPerEp": 2.0961,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 1.0651,
+          "meanSteps": 8.6,
+          "meanFar": 3.0492,
+          "meanOrganicObjective": 0.394,
+          "meanUsableGoodArea": 1386.6,
+          "meanDirectSunProxy": 0.6284,
+          "meanDiffuseFacadeProxy": 0.0283,
+          "meanLongNarrowFraction": 0.0861,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.8,
+          "meanStageSteps": [
+            6.0,
+            1.0,
+            1.6
+          ]
+        }
+      },
+      "m3_4x4x2": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 3.0001,
+          "meanSteps": 19.2,
+          "meanFar": 3.0018,
+          "meanOrganicObjective": 0.2537,
+          "meanUsableGoodArea": 189.8,
+          "meanDirectSunProxy": 0.5225,
+          "meanDiffuseFacadeProxy": 0.0078,
+          "meanLongNarrowFraction": 0.1399,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.2,
+          "meanStageSteps": [
+            10.4,
+            3.0,
+            5.8
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 34.606,
+          "trainSecondsPerEp": 3.4606,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 1.4014,
+          "meanSteps": 10.6,
+          "meanFar": 2.941,
+          "meanOrganicObjective": 0.3676,
+          "meanUsableGoodArea": 7.8,
+          "meanDirectSunProxy": 0.6575,
+          "meanDiffuseFacadeProxy": 0.0103,
+          "meanLongNarrowFraction": 0.0379,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.4,
+          "meanStageSteps": [
+            6.0,
+            1.0,
+            3.6
+          ]
+        },
+        "25": {
+          "cumTrainSeconds": 62.307,
+          "trainSecondsPerEp": 2.4923,
+          "count": 5,
+          "farSuccessRate": 0.8,
+          "meanSeconds": 2.1884,
+          "meanSteps": 12.6,
+          "meanFar": 3.0945,
+          "meanOrganicObjective": 0.4306,
+          "meanUsableGoodArea": 2943.2,
+          "meanDirectSunProxy": 0.5864,
+          "meanDiffuseFacadeProxy": 0.036,
+          "meanLongNarrowFraction": 0.0767,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 18.2,
+          "meanStageSteps": [
+            6.0,
+            1.2,
+            5.4
+          ]
+        }
+      },
+      "m4_8x8x3": {
+        "0": {
+          "cumTrainSeconds": 0.0,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 2.2917,
+          "meanSteps": 14.2,
+          "meanFar": 2.9675,
+          "meanOrganicObjective": 0.272,
+          "meanUsableGoodArea": 472.4,
+          "meanDirectSunProxy": 0.5074,
+          "meanDiffuseFacadeProxy": 0.0109,
+          "meanLongNarrowFraction": 0.111,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.6,
+          "meanStageSteps": [
+            5.6,
+            1.2,
+            1.8,
+            5.6
+          ]
+        },
+        "10": {
+          "cumTrainSeconds": 39.327,
+          "trainSecondsPerEp": 3.9327,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 1.63,
+          "meanSteps": 9.6,
+          "meanFar": 2.9572,
+          "meanOrganicObjective": 0.4194,
+          "meanUsableGoodArea": 1039.2,
+          "meanDirectSunProxy": 0.6585,
+          "meanDiffuseFacadeProxy": 0.0252,
+          "meanLongNarrowFraction": 0.0287,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 14.8,
+          "meanStageSteps": [
+            4.0,
+            1.2,
+            1.2,
+            3.2
+          ]
+        },
+        "25": {
+          "cumTrainSeconds": 69.318,
+          "trainSecondsPerEp": 2.7727,
+          "count": 5,
+          "farSuccessRate": 1.0,
+          "meanSeconds": 1.0475,
+          "meanSteps": 7.2,
+          "meanFar": 3.072,
+          "meanOrganicObjective": 0.6226,
+          "meanUsableGoodArea": 4685.0,
+          "meanDirectSunProxy": 0.7605,
+          "meanDiffuseFacadeProxy": 0.0568,
+          "meanLongNarrowFraction": 0.0273,
+          "maxSlimVoxels": 0,
+          "meanTopFloor": 15.6,
+          "meanStageSteps": [
+            4.0,
+            1.0,
+            1.0,
+            1.2
+          ]
+        }
+      }
+    }
+  }
+}

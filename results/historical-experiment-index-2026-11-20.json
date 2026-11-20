@@ -1,0 +1,39 @@
+{
+  "files": [
+    {
+      "path": "cores-eixample-ab-80ep-2026-11-20.json",
+      "sha256": "ac063fea784724eac5114f8d04f030fc0c7f2aaa923e69f379f3961341a6c12b"
+    },
+    {
+      "path": "cores-prototype-2026-11-20.json",
+      "sha256": "64bedca5f25875f36c36c248ecd91a85006d9ac4fd2d5cc35bf34d5899ffc228"
+    },
+    {
+      "path": "organic-3d-rl-demo-2026-11-18.json",
+      "sha256": "4cd4422de47395363d584c2213514cca7da4c4f518e9d61d44e0414921360447"
+    },
+    {
+      "path": "coarse-to-fine-ablation-2026-11-19.json",
+      "sha256": "0d2c0f868847ff9953e3959188391ca3aaae591a3e29a9b25760c83a867a60e1"
+    },
+    {
+      "path": "multiscale-ablation-2026-11-19.json",
+      "sha256": "2706fdb7eba07176cdbfa85a62a8c3ce1b2b4fae8924f18114defef73d8b99e9"
+    },
+    {
+      "path": "scalable-height-speedup-2026-11-19.json",
+      "sha256": "70b0ecfb171c981497ab919fef84b38da0f020d4035e4227b5c36bfdee5a2910"
+    },
+    {
+      "path": "floor-growth-preview-v2-tower-growth-2026-11-14.json",
+      "sha256": "e3ce8794bc874e91e074be86981204fbddd10a1fc303611ef8b8cfd2bb4db1dd"
+    }
+  ],
+  "limitations": [
+    "Old core library, loss, decoder or evaluator semantics differ from the current protocol.",
+    "Some checkpoints referenced in private scratch directories are not distributed.",
+    "An 80-episode curve or best score is not evidence of convergence.",
+    "Claimed parallel throughput and universal multi-objective methods were proposals, not measured implementations."
+  ],
+  "status": "historical_observations_not_reproductions_of_corrected_protocol"
+}

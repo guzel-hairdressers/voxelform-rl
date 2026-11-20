@@ -1,0 +1,431 @@
+{
+  "config": "configs/research-smoke.json",
+  "exactCPUResumeTrace": true,
+  "exactCPUResumeWeights": true,
+  "kind": "pipeline_correctness_not_quality_study",
+  "mpsFallback": false,
+  "mpsSummary": {
+    "aggregate": {
+      "test": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0,
+            "stdAcrossModelSeeds": null
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.23963859677314758,
+            "stdAcrossModelSeeds": null
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.2781238257884979,
+            "stdAcrossModelSeeds": null
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.9382531785424209,
+            "stdAcrossModelSeeds": null
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.9382531785424209,
+            "stdAcrossModelSeeds": null
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 564.5,
+            "stdAcrossModelSeeds": null
+          }
+        },
+        "modelSeeds": 1
+      },
+      "validation": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0,
+            "stdAcrossModelSeeds": null
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.2621420621871948,
+            "stdAcrossModelSeeds": null
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.35352520644664764,
+            "stdAcrossModelSeeds": null
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0163490484588975,
+            "stdAcrossModelSeeds": null
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0163490484588975,
+            "stdAcrossModelSeeds": null
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 694.5,
+            "stdAcrossModelSeeds": null
+          }
+        },
+        "modelSeeds": 1
+      }
+    },
+    "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+    "seeds": [
+      {
+        "completedEpisodes": 3,
+        "modelSeed": 123,
+        "test": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.23963859677314758,
+          "meanDirectSun": 0.2781238257884979,
+          "meanQuality": 0.9382531785424209,
+          "meanReferenceQuality": 0.9382531785424209,
+          "meanSeconds": 0.03868752050038893,
+          "meanUsableGoodArea": 564.5
+        },
+        "trainingSeconds": 2.5208605829975568,
+        "untrainedTest": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.24009959399700165,
+          "meanDirectSun": 0.27763423323631287,
+          "meanQuality": 0.9402721048863749,
+          "meanReferenceQuality": 0.9402721048863749,
+          "meanSeconds": 0.04871999999159016,
+          "meanUsableGoodArea": 565.5
+        },
+        "updates": 3,
+        "validation": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.2621420621871948,
+          "meanDirectSun": 0.35352520644664764,
+          "meanQuality": 1.0163490484588975,
+          "meanReferenceQuality": 1.0163490484588975,
+          "meanSeconds": 0.057459187497443054,
+          "meanUsableGoodArea": 694.5
+        }
+      }
+    ]
+  },
+  "note": "CPU 2 episodes per model seed / MPS 3 episodes are pipeline checks. No learned-quality advantage is established. Full artifacts remain under ignored runs/.",
+  "reevaluation": {
+    "count": 2,
+    "farSuccessRate": 1.0,
+    "meanDiffuseSky": 0.18486693501472473,
+    "meanDirectSun": 0.29060037434101105,
+    "meanQuality": 0.6245969774800545,
+    "meanReferenceQuality": 0.6245969774800545,
+    "meanSeconds": 0.0418625210004393,
+    "meanUsableGoodArea": 435.5
+  },
+  "runtime": {
+    "coreLayoutVersion": "compact-core.v2",
+    "createdAt": "2026-11-20T16:52:52.992838+00:00",
+    "cuda": false,
+    "deterministic": false,
+    "gitCommit": "b913a15cce3d058500cb0fe9133784cb7414758c",
+    "gitDirty": true,
+    "machine": "arm64",
+    "mps": true,
+    "packages": {
+      "fastapi": "0.165.0",
+      "numpy": "2.5.5",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "torch": "2.15.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "protocol": "voxelform.research.v1",
+    "python": "3.12.11",
+    "source": {
+      "configs/research-real-aux.json": "c3ad4c692f2930ece7742a7906681fe79ac6bef09a1e0c3e013fd38887826891",
+      "configs/research-real.json": "00c5f6456cdb039b0fe1954fdb6ca9673b8a5253993fd3dc319c7046070cc29b",
+      "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+      "pyproject.toml": "6468094a97eea471b8ff5554ef1d4cfb4b1c57e9c6956d7dc2f00c12e650e823",
+      "tools/architecture_hypotheses.py": "81a61f2fee0fe48058eb219cd20339649a20f5b61da2394e6261f7cbb696dcc5",
+      "tools/architecture_sensitivity.py": "2c05deb3d296e017b753df146e03de24f26a2b2c7984d7b776978afaf069ddc8",
+      "tools/benchmark.py": "1f1ea70b6274e0015907de14b9387ae375abf2305fa4dc7dd7a110b92cdd2e63",
+      "tools/benchmark_facade_masks.py": "cd4099735bdd7f55a20f76bc0e99e6998a337bfd117c8adb89e3e359dc65674f",
+      "tools/build_devoxelize_lab.py": "c9417dd76c40485eae06492ef01b9575e09c978c662344273e01966f459527b8",
+      "tools/check_floor_growth.py": "b7e2b92e1339bebdf5dfae11f8599be06391f26167dc03cd4bdb9b67780782e4",
+      "tools/coherent_gpu.py": "03d16242fbdf0d1ea96a2f5b1fec7ef906f51ed5b16cc1a319e98673e111bdcf",
+      "tools/coherent_guarded.py": "690b4efa1a37b68f472f70deaf48c206d80179a7664b23231b5665fb5dd562bb",
+      "tools/coherent_masks.py": "fa3d6cf9bac07e60667bcd45e09669e47122e901747afd491f356efb1ac817ce",
+      "tools/coherent_sampled.py": "30c0e0995a0db7acde59e9176eb2da38b8804668d9bbe34304d545d9f0a67a22",
+      "tools/coherent_wide.py": "821f89219d60a33893c466566c9f23bc6022517eff6fd2ac411ee4a53546e000",
+      "tools/evaluate_m4.py": "634601bd4ed729e54ff38f98ac8ea25d4060cc48a6958807e8510eaaa3c3d0b5",
+      "tools/grid_fit_study.py": "7e7ce201fd2d051f860160838cf7630dce33a238dd8a79f16b88c2b568604650",
+      "tools/grid_quality.py": "07fa16b9b87d8c66777441eaa7f2637e35d6043ecda0cfa7788ad5f9fbbf55fb",
+      "tools/packed_condition_latency.py": "71c8c4544ac6926eba45881257c7fc6cd33a396ee2467e3cbf7571ab0c63120b",
+      "tools/paired_head_latency.py": "077687ba75f92262b70a6bcf63cef8239af4cf91d93e212909d65780eafba149",
+      "tools/plot_architecture_hypotheses.py": "ed204212d5f6be6e3b8bd91f340eb31dbfdb219ba4efccd0df9d1f38ddb48137",
+      "tools/plot_grid_fit.py": "df69d9a57ca7787fe7e93cf018975bc4a563adb79b8472f6277835fac5aa1bfd",
+      "tools/render_core_plans.py": "8fe09a0f72326f50118a63f41a5db5966a717be80254fa6aa80b8164b29d695d",
+      "tools/replicate_architecture_controls.py": "d4ce45cba4cbf929df03ea83e4f462547d35896a97e4dc5a58a3f72cd48f7996",
+      "tools/report_coherent_masks.py": "0c4433150a11f5f6b311db436fd77a773ac9104b25bfc1a6f62bf114221088ee",
+      "tools/report_workload.py": "b5e7a3bd8c1c464e8ae94dc41381d9795382beb4b5c25f87b0ea49b1ff09347c",
+      "tools/research.py": "65f1e930863fdffe08e1b176db626e5633175549ffba625ad8207c2ad9a83e16",
+      "tools/summarize_architecture_hypotheses.py": "a09588d1908f28a4b9f249d9b6c5e1787b5e588c6d9081f2f1343b3f87638d43",
+      "tools/test_redistribution.py": "a54391bf5d25fbe73e570738be192b20b4c886f628ea29a547e0352f5d981b6b",
+      "tools/train_m4.py": "f337dca625bf4ea8b4f55f55e07bc9175268e084b844df90d781fbfc874da26e",
+      "tools/training_profile.py": "afc697e94d366122fdcc9ee988697dfbe18d583489cdb0bbb5b3f012acccc5af",
+      "tools/unified_coupled.py": "2b4dc4912426e8f5827f055bd56812a1f7029092ae0ec0c3a80f89bab0083d9b",
+      "tools/unified_feedback.py": "fb45b63094654363ec852f05809f30ce551a88f143c080426d72e6b0327b8cbf",
+      "tools/unified_net.py": "d092fe1fc7d9eebe61642e976201d2a2b7525cfaf1faf4987f88f9ad09de72e6",
+      "tools/unified_projection.py": "fa09c5dfdf54b2d321a053194978bca21cf73597f9670385a360ccb84ec3efb2",
+      "tools/unified_training.py": "2a1ce44021210d153be47000e6f0442858a00878abb51a4e072d3aa3d069be29",
+      "tools/validate_fields.py": "2c27a6da7cc535061eede6b7701b76d49288aa159f5e382dacc99a7a949c1711",
+      "tools/validate_grid_sky.py": "5cd2ec6d1b2ad9c1a5c35414daa10c0d9de1d2235113c18b235acaf16c575e03",
+      "tools/workload_budget.py": "c6ead1841a1f56082b3a02822b74ae1db55ba340cbf321ef1869286afe0da67e",
+      "tools/workload_device.py": "7aa17e2658c3dbb2adffff35fb9e2d7135737acc0bbbf9b2498e2a4bf1dcc5ef",
+      "tools/workload_feedback.py": "eb7ab3c1a63ad57fbacc9f92e04da09a0aad75b42a72bb8a76c46f194345f432",
+      "unified_server.py": "b3206d5a0dbd16b5993936f13e0a8d8a4762553756efec4cddaf993cb8925744",
+      "uv.lock": "bde5b76b4208f6a5057e067fcbd76fb194a419f3ee4c080fecaf1ab45bed1a59",
+      "voxelform/__init__.py": "6295ff2dec72839fd42726d4dada256043cd952d49fc34fab4ff77d9e7c872da",
+      "voxelform/actions.py": "da64c1ee579dfb35c5a0bc69d557f0be58af1ebe7c4d3d1a2c8eb68fd0da832e",
+      "voxelform/coarse_to_fine.py": "36504aba03584666e386df7e70987bcbc5e1c5dfad939ece664cb992c102cfd0",
+      "voxelform/context.py": "2dfbfdb83c9fb628cfc1772d417e2278116f853626ea1c248671b02b140696d5",
+      "voxelform/core_plans.py": "df03e6fa2160dcfd2b63a08e340950f45a529b3eb4c70e1d8195c78a3271e429",
+      "voxelform/cores.py": "bf53fbf795a4f7240d97e3a4672873403370c564ac826f86dfdcafc95d32ba69",
+      "voxelform/devoxelize.py": "a2405717efc36515eda96d524370713e83e5996a7d8a64cbd617bb889be6437e",
+      "voxelform/environment.py": "cc3657f31779daa86b7ffd538e312149c23e043aa646a2bd9e83777679d4d4b2",
+      "voxelform/experiment.py": "30c6fa4ae103dac8f41cf7345f5f618850b608b9598621dc961498ab13244945",
+      "voxelform/fields.py": "5b919e0b4611e35c037bb71f66f022f3d06de4a9a9f78281bbdb993f029aa1dd",
+      "voxelform/objectives.py": "fc1c7ec1f76fbc59a7f57fc5a380b29fbff345646f7c8292bce60c301ae93899",
+      "voxelform/patch_policy.py": "792ee76862c8cf0cc8a938199be5d61e0d60ef645b8c73c919f23d2eea271b1f",
+      "voxelform/policy.py": "8a2811a4d355889f4043de8bb7af6a6ef928a19163cb8adb5f08fcbfd33a92dc",
+      "voxelform/redistribution.py": "1e7120701f462c3b977cf3682b99dab79519bf3d1b731fabc3cdc8751e2d5107",
+      "voxelform/server.py": "9fb3ac9d99baab0215e6e62f01ecf727cb11121090cc65ca3c42aacbd13b7fd4",
+      "voxelform/session.py": "14d824002c975f20cf362872702cdb791cf13d9ebb77ff3e15727153eace8b69",
+      "voxelform/shadows.py": "fcce13c6c1ee98a7c44fc623f17f9952b15d622217ed2587a5380c2237abdae3",
+      "voxelform/training.py": "831560ccc9904ae898b0cef3bf835cf3969b0000a72a6f8ce0afa136d36aa33d",
+      "voxelform/unified.py": "999faa37ea6e0f470a5cfbd353dedb1d471494ed1cfe6e154cc7d4323d24c61d",
+      "voxelform/workload.py": "84eca16c3ebd76e2f5cbbd74c684e5953a3bbdacbea99199238f8228d10dfd99"
+    }
+  },
+  "sourceSHA256": {
+    "configs/research-real-aux.json": "c3ad4c692f2930ece7742a7906681fe79ac6bef09a1e0c3e013fd38887826891",
+    "configs/research-real.json": "00c5f6456cdb039b0fe1954fdb6ca9673b8a5253993fd3dc319c7046070cc29b",
+    "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+    "pyproject.toml": "6468094a97eea471b8ff5554ef1d4cfb4b1c57e9c6956d7dc2f00c12e650e823",
+    "tools/architecture_hypotheses.py": "81a61f2fee0fe48058eb219cd20339649a20f5b61da2394e6261f7cbb696dcc5",
+    "tools/architecture_sensitivity.py": "2c05deb3d296e017b753df146e03de24f26a2b2c7984d7b776978afaf069ddc8",
+    "tools/benchmark.py": "1f1ea70b6274e0015907de14b9387ae375abf2305fa4dc7dd7a110b92cdd2e63",
+    "tools/benchmark_facade_masks.py": "cd4099735bdd7f55a20f76bc0e99e6998a337bfd117c8adb89e3e359dc65674f",
+    "tools/build_devoxelize_lab.py": "c9417dd76c40485eae06492ef01b9575e09c978c662344273e01966f459527b8",
+    "tools/check_floor_growth.py": "b7e2b92e1339bebdf5dfae11f8599be06391f26167dc03cd4bdb9b67780782e4",
+    "tools/coherent_gpu.py": "03d16242fbdf0d1ea96a2f5b1fec7ef906f51ed5b16cc1a319e98673e111bdcf",
+    "tools/coherent_guarded.py": "690b4efa1a37b68f472f70deaf48c206d80179a7664b23231b5665fb5dd562bb",
+    "tools/coherent_masks.py": "fa3d6cf9bac07e60667bcd45e09669e47122e901747afd491f356efb1ac817ce",
+    "tools/coherent_sampled.py": "30c0e0995a0db7acde59e9176eb2da38b8804668d9bbe34304d545d9f0a67a22",
+    "tools/coherent_wide.py": "821f89219d60a33893c466566c9f23bc6022517eff6fd2ac411ee4a53546e000",
+    "tools/evaluate_m4.py": "634601bd4ed729e54ff38f98ac8ea25d4060cc48a6958807e8510eaaa3c3d0b5",
+    "tools/grid_fit_study.py": "7e7ce201fd2d051f860160838cf7630dce33a238dd8a79f16b88c2b568604650",
+    "tools/grid_quality.py": "07fa16b9b87d8c66777441eaa7f2637e35d6043ecda0cfa7788ad5f9fbbf55fb",
+    "tools/packed_condition_latency.py": "71c8c4544ac6926eba45881257c7fc6cd33a396ee2467e3cbf7571ab0c63120b",
+    "tools/paired_head_latency.py": "077687ba75f92262b70a6bcf63cef8239af4cf91d93e212909d65780eafba149",
+    "tools/plot_architecture_hypotheses.py": "ed204212d5f6be6e3b8bd91f340eb31dbfdb219ba4efccd0df9d1f38ddb48137",
+    "tools/plot_grid_fit.py": "df69d9a57ca7787fe7e93cf018975bc4a563adb79b8472f6277835fac5aa1bfd",
+    "tools/render_core_plans.py": "8fe09a0f72326f50118a63f41a5db5966a717be80254fa6aa80b8164b29d695d",
+    "tools/replicate_architecture_controls.py": "d4ce45cba4cbf929df03ea83e4f462547d35896a97e4dc5a58a3f72cd48f7996",
+    "tools/report_coherent_masks.py": "0c4433150a11f5f6b311db436fd77a773ac9104b25bfc1a6f62bf114221088ee",
+    "tools/report_workload.py": "b5e7a3bd8c1c464e8ae94dc41381d9795382beb4b5c25f87b0ea49b1ff09347c",
+    "tools/research.py": "65f1e930863fdffe08e1b176db626e5633175549ffba625ad8207c2ad9a83e16",
+    "tools/summarize_architecture_hypotheses.py": "a09588d1908f28a4b9f249d9b6c5e1787b5e588c6d9081f2f1343b3f87638d43",
+    "tools/test_redistribution.py": "a54391bf5d25fbe73e570738be192b20b4c886f628ea29a547e0352f5d981b6b",
+    "tools/train_m4.py": "f337dca625bf4ea8b4f55f55e07bc9175268e084b844df90d781fbfc874da26e",
+    "tools/training_profile.py": "afc697e94d366122fdcc9ee988697dfbe18d583489cdb0bbb5b3f012acccc5af",
+    "tools/unified_coupled.py": "2b4dc4912426e8f5827f055bd56812a1f7029092ae0ec0c3a80f89bab0083d9b",
+    "tools/unified_feedback.py": "fb45b63094654363ec852f05809f30ce551a88f143c080426d72e6b0327b8cbf",
+    "tools/unified_net.py": "d092fe1fc7d9eebe61642e976201d2a2b7525cfaf1faf4987f88f9ad09de72e6",
+    "tools/unified_projection.py": "fa09c5dfdf54b2d321a053194978bca21cf73597f9670385a360ccb84ec3efb2",
+    "tools/unified_training.py": "2a1ce44021210d153be47000e6f0442858a00878abb51a4e072d3aa3d069be29",
+    "tools/validate_fields.py": "2c27a6da7cc535061eede6b7701b76d49288aa159f5e382dacc99a7a949c1711",
+    "tools/validate_grid_sky.py": "5cd2ec6d1b2ad9c1a5c35414daa10c0d9de1d2235113c18b235acaf16c575e03",
+    "tools/workload_budget.py": "c6ead1841a1f56082b3a02822b74ae1db55ba340cbf321ef1869286afe0da67e",
+    "tools/workload_device.py": "7aa17e2658c3dbb2adffff35fb9e2d7135737acc0bbbf9b2498e2a4bf1dcc5ef",
+    "tools/workload_feedback.py": "eb7ab3c1a63ad57fbacc9f92e04da09a0aad75b42a72bb8a76c46f194345f432",
+    "unified_server.py": "b3206d5a0dbd16b5993936f13e0a8d8a4762553756efec4cddaf993cb8925744",
+    "uv.lock": "bde5b76b4208f6a5057e067fcbd76fb194a419f3ee4c080fecaf1ab45bed1a59",
+    "voxelform/__init__.py": "6295ff2dec72839fd42726d4dada256043cd952d49fc34fab4ff77d9e7c872da",
+    "voxelform/actions.py": "da64c1ee579dfb35c5a0bc69d557f0be58af1ebe7c4d3d1a2c8eb68fd0da832e",
+    "voxelform/coarse_to_fine.py": "36504aba03584666e386df7e70987bcbc5e1c5dfad939ece664cb992c102cfd0",
+    "voxelform/context.py": "2dfbfdb83c9fb628cfc1772d417e2278116f853626ea1c248671b02b140696d5",
+    "voxelform/core_plans.py": "df03e6fa2160dcfd2b63a08e340950f45a529b3eb4c70e1d8195c78a3271e429",
+    "voxelform/cores.py": "bf53fbf795a4f7240d97e3a4672873403370c564ac826f86dfdcafc95d32ba69",
+    "voxelform/devoxelize.py": "a2405717efc36515eda96d524370713e83e5996a7d8a64cbd617bb889be6437e",
+    "voxelform/environment.py": "cc3657f31779daa86b7ffd538e312149c23e043aa646a2bd9e83777679d4d4b2",
+    "voxelform/experiment.py": "30c6fa4ae103dac8f41cf7345f5f618850b608b9598621dc961498ab13244945",
+    "voxelform/fields.py": "5b919e0b4611e35c037bb71f66f022f3d06de4a9a9f78281bbdb993f029aa1dd",
+    "voxelform/objectives.py": "fc1c7ec1f76fbc59a7f57fc5a380b29fbff345646f7c8292bce60c301ae93899",
+    "voxelform/patch_policy.py": "792ee76862c8cf0cc8a938199be5d61e0d60ef645b8c73c919f23d2eea271b1f",
+    "voxelform/policy.py": "8a2811a4d355889f4043de8bb7af6a6ef928a19163cb8adb5f08fcbfd33a92dc",
+    "voxelform/redistribution.py": "1e7120701f462c3b977cf3682b99dab79519bf3d1b731fabc3cdc8751e2d5107",
+    "voxelform/server.py": "9fb3ac9d99baab0215e6e62f01ecf727cb11121090cc65ca3c42aacbd13b7fd4",
+    "voxelform/session.py": "14d824002c975f20cf362872702cdb791cf13d9ebb77ff3e15727153eace8b69",
+    "voxelform/shadows.py": "fcce13c6c1ee98a7c44fc623f17f9952b15d622217ed2587a5380c2237abdae3",
+    "voxelform/training.py": "831560ccc9904ae898b0cef3bf835cf3969b0000a72a6f8ce0afa136d36aa33d",
+    "voxelform/unified.py": "999faa37ea6e0f470a5cfbd353dedb1d471494ed1cfe6e154cc7d4323d24c61d",
+    "voxelform/workload.py": "84eca16c3ebd76e2f5cbbd74c684e5953a3bbdacbea99199238f8228d10dfd99"
+  },
+  "summary": {
+    "aggregate": {
+      "test": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0,
+            "stdAcrossModelSeeds": 0.0
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.17698901519179344,
+            "stdAcrossModelSeeds": 0.011141061056877281
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.29284118860960007,
+            "stdAcrossModelSeeds": 0.003168989929397739
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.5930470928296604,
+            "stdAcrossModelSeeds": 0.04461827476389407
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.5930470928296604,
+            "stdAcrossModelSeeds": 0.04461827476389407
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 423.5,
+            "stdAcrossModelSeeds": 16.97056274847718
+          }
+        },
+        "modelSeeds": 2
+      },
+      "validation": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 1.0,
+            "stdAcrossModelSeeds": 0.0
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.22496910765767097,
+            "stdAcrossModelSeeds": 0.000719641633255324
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.36487339437007904,
+            "stdAcrossModelSeeds": 0.007650221987182164
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.7927697277961832,
+            "stdAcrossModelSeeds": 0.025164656937806926
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 0.7927697277961832,
+            "stdAcrossModelSeeds": 0.025164656937806926
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": null,
+            "mean": 586.5,
+            "stdAcrossModelSeeds": 0.0
+          }
+        },
+        "modelSeeds": 2
+      }
+    },
+    "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+    "seeds": [
+      {
+        "completedEpisodes": 2,
+        "modelSeed": 123,
+        "test": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.18486693501472473,
+          "meanDirectSun": 0.29060037434101105,
+          "meanQuality": 0.6245969774800545,
+          "meanReferenceQuality": 0.6245969774800545,
+          "meanSeconds": 0.0489557920009247,
+          "meanUsableGoodArea": 435.5
+        },
+        "trainingSeconds": 0.1939220420026686,
+        "untrainedTest": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.1866781935095787,
+          "meanDirectSun": 0.299332931637764,
+          "meanQuality": 0.5441819415157771,
+          "meanReferenceQuality": 0.5441819415157771,
+          "meanSeconds": 0.034120979500585236,
+          "meanUsableGoodArea": 388.5
+        },
+        "updates": 2,
+        "validation": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.22547797113656998,
+          "meanDirectSun": 0.370282918214798,
+          "meanQuality": 0.8105638273631396,
+          "meanReferenceQuality": 0.8105638273631396,
+          "meanSeconds": 0.021847770993190352,
+          "meanUsableGoodArea": 586.5
+        }
+      },
+      {
+        "completedEpisodes": 2,
+        "modelSeed": 456,
+        "test": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.16911109536886215,
+          "meanDirectSun": 0.2950820028781891,
+          "meanQuality": 0.5614972081792663,
+          "meanReferenceQuality": 0.5614972081792663,
+          "meanSeconds": 0.03904456250165822,
+          "meanUsableGoodArea": 411.49999999999994
+        },
+        "trainingSeconds": 0.185662207994028,
+        "untrainedTest": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.17604469507932663,
+          "meanDirectSun": 0.28632456064224243,
+          "meanQuality": 0.8026290253452089,
+          "meanReferenceQuality": 0.8026290253452089,
+          "meanSeconds": 0.03874891699524596,
+          "meanUsableGoodArea": 488.5
+        },
+        "updates": 2,
+        "validation": {
+          "count": 2,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.22446024417877197,
+          "meanDirectSun": 0.3594638705253601,
+          "meanQuality": 0.7749756282292268,
+          "meanReferenceQuality": 0.7749756282292268,
+          "meanSeconds": 0.022940457994991448,
+          "meanUsableGoodArea": 586.5
+        }
+      }
+    ]
+  }
+}

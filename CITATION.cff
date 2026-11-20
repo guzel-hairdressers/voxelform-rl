@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this research software, cite the repository version and the experiment protocol."
+title: "VoxelForm-RL: Structured Reinforcement Learning for Constrained 3D Voxel Editing"
+type: software
+version: 0.2.0
+date-released: 2026-11-20
+url: "https://github.com/guzel-hairdressers/voxelform-rl"
+repository-code: "https://github.com/guzel-hairdressers/voxelform-rl"
+authors:
+  - name: "VoxelForm-RL contributors"

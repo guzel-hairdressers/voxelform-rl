@@ -1,0 +1,29 @@
+name: Research checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  cpu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: uv sync --frozen --extra dev --python 3.12
+      - name: Import and scientific regression tests
+        run: uv run --frozen --extra dev python -m unittest discover -s tests -v
+      - name: Viewer geometry tests
+        run: node --test tests/*.test.mjs
+      - name: New research code static checks
+        run: uv run --frozen --extra dev ruff check voxelform/core_plans.py voxelform/experiment.py voxelform/objectives.py tools/research.py tools/render_core_plans.py tests/test_core_plans.py tests/test_experiment.py
+      - name: Headless pipeline smoke test (no Module Lab data or UI)
+        run: uv run --frozen --extra dev vf-research train --config configs/research-smoke.json --output runs/ci-smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: cpu-smoke-evidence
+          path: runs/ci-smoke/

@@ -80,23 +80,40 @@ class MeshShadows:
             triangles.extend(v[np.asarray(building['faces'], dtype=np.int64)])
         self.triangles = torch.as_tensor(np.asarray(triangles, dtype=np.float32).reshape(-1, 3, 3), device=device)
         self.suns = torch.as_tensor(suns, dtype=torch.float32, device=device)
+        self.tri_max_z = self.triangles[:, :, 2].amax(dim=1) if len(self.triangles) else torch.empty(0, dtype=torch.float32, device=device)
+        self.max_z = float(self.tri_max_z.max().cpu()) if len(self.triangles) else 0.0
+        self._all_suns_up = bool((self.suns[:, 2].min() > 0).cpu()) if len(self.suns) else True
 
     def query(self, points):
-        if not len(self.triangles):
+        if not len(self.triangles) or not len(points):
             return torch.ones((len(self.suns), len(points)), dtype=torch.bool, device=points.device)
-        a = self.triangles[:, 0]
-        e1 = self.triangles[:, 1]-a
-        e2 = self.triangles[:, 2]-a
+        below = None
+        pts = points
+        tris = self.triangles
+        if self._all_suns_up:
+            below = points[:, 2] < self.max_z - 1e-4
+            if not bool(below.any()):
+                return torch.ones((len(self.suns), len(points)), dtype=torch.bool, device=points.device)
+            pts = points[below] if not bool(below.all()) else points
+            z_lo = float(pts[:, 2].min().cpu())
+            tri_mask = self.tri_max_z > z_lo - 1e-4
+            if not bool(tri_mask.all()):
+                tris = self.triangles[tri_mask]
+            if not len(tris):
+                return torch.ones((len(self.suns), len(points)), dtype=torch.bool, device=points.device)
+        a = tris[:, 0]
+        e1 = tris[:, 1]-a
+        e2 = tris[:, 2]-a
         result = []
-        chunk = max(16, min(1024, 200000//len(a)))
+        chunk = max(256, min(4096, 1_500_000//max(1, len(a))))
         for sun in self.suns:
             h = torch.linalg.cross(sun.expand_as(e2), e2)
             det = (e1*h).sum(-1)
             valid = det.abs() > 1e-8
             inverse = torch.where(valid, 1/torch.where(valid, det, torch.ones_like(det)), 0.)
             values = []
-            for start in range(0, len(points), chunk):
-                delta = points[start:start+chunk, None]-a
+            for start in range(0, len(pts), chunk):
+                delta = pts[start:start+chunk, None]-a
                 u = (delta*h).sum(-1)*inverse
                 q = torch.linalg.cross(delta, e1.expand_as(delta))
                 v = (q*sun).sum(-1)*inverse
@@ -104,7 +121,12 @@ class MeshShadows:
                 hit = valid & (u >= -1e-6) & (v >= -1e-6) & (u+v <= 1+1e-6) & (t > 1e-4)
                 values.append(~hit.any(-1))
             result.append(torch.cat(values) if values else torch.empty(0, dtype=torch.bool, device=points.device))
-        return torch.stack(result)
+        res = torch.stack(result)
+        if below is not None and len(pts) != len(points):
+            out = torch.ones((len(self.suns), len(points)), dtype=torch.bool, device=points.device)
+            out[:, below] = res
+            return out
+        return res
 
     @property
     def bytes(self):
@@ -246,20 +268,104 @@ class SelfShadowMaps:
             m['image']=torch.where(flat[m['ids']],m['entry'],float('-inf')).amax(dim=1).reshape(m['parameters'][-2].tolist())
 
     def query(self,points,normals=None):
-        result=[];p=points-self.anchor
-        for s,m in zip(self.suns,self.maps):
-            u,v,low,pitch,sizes,_=m['parameters'];a=((p@u-low[0])/pitch).floor().long().clamp(0,int(sizes[0])-1);b=((p@v-low[1])/pitch).floor().long().clamp(0,int(sizes[1])-1)
-            receiver_depth=p@s
+        basis=getattr(self,'_basis',None)
+        if basis is None or basis[0].device!=points.device:
+            U=torch.stack([m['parameters'][0] for m in self.maps],dim=1).to(points.device)
+            V=torch.stack([m['parameters'][1] for m in self.maps],dim=1).to(points.device)
+            S=self.suns.T.to(points.device)
+            basis=(U,V,S);self._basis=basis
+        U,V,S=basis
+        p=points-self.anchor
+        pu=p@U;pv=p@V;ps=p@S
+        if normals is not None:
+            nu=normals@U;nv=normals@V;ns=normals@S
+        result=[]
+        for k,m in enumerate(self.maps):
+            _,_,low,pitch,sizes,_=m['parameters']
+            puk=pu[:,k];pvk=pv[:,k];psk=ps[:,k]
+            a=((puk-low[0])/pitch).floor().long().clamp(0,int(sizes[0])-1)
+            b=((pvk-low[1])/pitch).floor().long().clamp(0,int(sizes[1])-1)
+            receiver_depth=psk
             if normals is not None:
                 # Receiver-plane correction avoids flat faces shadowing
                 # themselves solely because the nearest texel ray is offset.
-                du=low[0]+(a+.5)*pitch-p@u;dv=low[1]+(b+.5)*pitch-p@v
-                denominator=(normals@s)
-                receiver_depth=receiver_depth-((normals@u)*du+(normals@v)*dv)/torch.where(denominator.abs()>1e-6,denominator,torch.ones_like(denominator))
+                du=low[0]+(a+.5)*pitch-puk;dv=low[1]+(b+.5)*pitch-pvk
+                denominator=ns[:,k]
+                receiver_depth=receiver_depth-(nu[:,k]*du+nv[:,k]*dv)/torch.where(denominator.abs()>1e-6,denominator,torch.ones_like(denominator))
             result.append(receiver_depth>=m['image'][a,b]-1e-3)
         return torch.stack(result)
     @property
     def bytes(self):return sum(m['ids'].numel()*8+m['entry'].numel()*4 for m in self.maps)
+
+
+class FastVoxelShadows:
+    """Zero-memory vectorized active-Z GPU self-shadow ray-marcher.
+
+    Replaces dense SelfShadowMaps DDA tables so RAM and initialization stay O(1)
+    regardless of ceiling storeys, while active-filtering externally occluded
+    rays and high-roof faces keeps query latency small on MPS/CPU.
+    """
+    def __init__(self,shape,suns,spacing=(1.,1.,3.),step_len=0.85,device='cpu'):
+        self.shape=tuple(int(v) for v in shape)
+        self.spacing=tuple(float(v) for v in spacing)
+        self.step_len=float(step_len)
+        self.suns=torch.tensor(suns,dtype=torch.float32,device=device)
+        self._all_suns_up=bool((self.suns[:,2].min()>0).cpu()) if len(self.suns) else True
+        self._occupied=None
+
+    def update(self,occupied):
+        self._occupied=occupied
+
+    def query(self,points,normals=None,active_mask=None,faces=None):
+        S=len(self.suns);R=len(points);dev=points.device
+        front=(self.suns@normals.T)>1e-6 if normals is not None else torch.ones((S,R),dtype=torch.bool,device=dev)
+        occ=self._occupied
+        if occ is None or R==0 or S==0:
+            return front
+        z_occ=occ.any(dim=(1,2)).nonzero(as_tuple=False)
+        z_max=int(z_occ[-1].item())+1 if len(z_occ) else 1
+        need=front&active_mask if active_mask is not None else front.clone()
+        if faces is not None and self._all_suns_up:
+            need[:,(faces==4)&(points[:,2]>=z_max*self.spacing[2]-1e-3)]=False
+        vis=front.clone()
+        sr=need.nonzero(as_tuple=False)
+        if len(sr)==0:
+            return vis
+        si=sr[:,0];ri=sr[:,1]
+        d=self.suns[si]
+        o=points[ri]+(0.02*normals[ri] if normals is not None else 0.02*d)
+        ny,nx=self.shape[1],self.shape[2];sx,sy,sz=self.spacing
+        hi=points.new_tensor((float(nx)*sx,float(ny)*sy,float(z_max)*sz))
+        par=d.abs()<1e-7
+        inv_d=torch.where(par,torch.ones_like(d),1.0/torch.where(par,torch.ones_like(d),d))
+        t0=(0.0-o)*inv_d;t1=(hi-o)*inv_d
+        t_hi=torch.where(par,torch.full_like(d,1e9),torch.maximum(t0,t1)).amin(dim=1)
+        inv_h=points.new_tensor((1.0/sx,1.0/sy,1.0/sz))
+        occ_flat=occ[:z_max].reshape(-1);dummy_idx=occ_flat.numel()
+        occ_pad=torch.cat((occ_flat,torch.zeros(1,dtype=torch.bool,device=dev)))
+        stride_z=ny*nx
+        hit=torch.zeros(len(si),dtype=torch.bool,device=dev)
+        short=t_hi<=16.0;cap_all=float(nx*sx+ny*sy+z_max*sz)
+        for mask_b,cap_t in ((short,16.0),(~short,cap_all)):
+            b_idx=mask_b.nonzero(as_tuple=False).flatten()
+            if len(b_idx)==0:continue
+            ob=o[b_idx];db=d[b_idx];thb=t_hi[b_idx]
+            max_tb=float(thb.max().clamp(0.0,cap_t).cpu())
+            K=max(1,int(math.ceil(max_tb/self.step_len)))
+            tg=(torch.arange(1,K+1,device=dev,dtype=torch.float32)-0.5)*self.step_len
+            chunk=max(512,1_500_000//K)
+            for st in range(0,len(b_idx),chunk):
+                ed=min(len(b_idx),st+chunk)
+                pts=(ob[st:ed,None,:]+tg[None,:,None]*db[st:ed,None,:])*inv_h
+                ix=pts[...,0].floor().long();iy=pts[...,1].floor().long();iz=pts[...,2].floor().long()
+                valid=(tg[None,:]<thb[st:ed,None])&(ix>=0)&(ix<nx)&(iy>=0)&(iy<ny)&(iz>=0)&(iz<z_max)
+                idx=torch.where(valid,iz*stride_z+iy*nx+ix,dummy_idx)
+                hit[b_idx[st:ed]]=occ_pad[idx].any(dim=1)
+        vis[si,ri]=~hit
+        return vis
+
+    @property
+    def bytes(self):return 0
 
 
 class ReceiverCache:

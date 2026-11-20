@@ -53,7 +53,7 @@ class Session:
             self.pending_seed=snapshot['seed'];self.plan=snapshot.get('plan','rectangle')
         catalog=self.library.catalog()
         if not catalog:raise ValueError('No cached urban scenes found. Set VOXELFORM_CONTEXT_ROOT to Module-Lab.')
-        initial_id=snapshot.get('siteId') if snapshot else os.getenv('VOXELFORM_SITE_ID','m_nyc_0003')
+        initial_id=snapshot.get('siteId') if snapshot else os.getenv('VOXELFORM_SITE_ID','m_bcn_0093')
         if snapshot and initial_id is None:
             context=None
         else:

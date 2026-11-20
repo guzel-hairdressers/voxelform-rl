@@ -1,0 +1,19 @@
+{
+  "seeds": [123, 456],
+  "train_sites": ["synthetic:rectangle"],
+  "validation_sites": ["synthetic:courtyard"],
+  "test_sites": ["synthetic:branch"],
+  "evaluation_seeds": [9001, 9002],
+  "episodes": 2,
+  "initial_storeys": 4,
+  "ceiling_storeys": 8,
+  "synthetic_width": 16,
+  "synthetic_length": 20,
+  "target_far": 3.0,
+  "far_tolerance": 0.1,
+  "device": "cpu",
+  "cores_enabled": true,
+  "spatial_aux_weight": 0.0,
+  "checkpoint_interval": 1,
+  "strict_determinism": true
+}

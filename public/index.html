@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoxelForm RL · Urban workspace</title><link rel="stylesheet" href="/assets/style.css"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoxelForm RL · Urban workspace</title><link rel="stylesheet" href="/assets/style.css?v=dashboard-4"></head>
 <body>
 <header class="lab-header">
   <a class="brand" href="/">VoxelForm <span>RL</span><small>Building massing / Research preview</small></a>
@@ -8,7 +8,7 @@
   <nav class="action-bar" aria-label="Run controls">
     <button id="train" class="primary" aria-pressed="false">▶ Train</button>
     <button id="infer">Generate one</button><button id="step">One mask</button>
-    <details class="checkpoint"><summary>Policy</summary><div class="menu"><a href="/api/policy">Save policy</a><label>Load policy<input id="load" type="file" accept=".pt" hidden></label></div></details>
+    <details class="checkpoint"><summary>Policy</summary><div class="menu"><a href="/api/policy">Save policy</a><label>Load policy<input id="load" type="file" accept=".pt" hidden></label><button id="resetWeights" type="button">Reset weights</button></div></details>
   </nav>
 </header>
 <div class="outcome-strip"><div class="measurement-source"><span class="eyebrow">Massing study</span><strong id="sourceLabel">Fetched urban context</strong><span class="badge">Experimental proxies</span></div><div id="metrics" class="metrics"></div></div>
@@ -35,6 +35,14 @@
       <button id="applyFar" class="wide">Apply FAR target</button>
       <p class="caption" id="farDefinition">Gross occupied floor area / parcel area. Editable study targets.</p>
     </details>
+    <details class="far-settings">
+      <summary>Height envelope</summary>
+      <label for="initialStoreys">Initial storeys</label><input id="initialStoreys" type="number" min="1" max="60" step="1" value="6" inputmode="numeric">
+      <label for="ceilingStoreys">Max storeys (cap)</label><input id="ceilingStoreys" type="number" min="2" max="60" step="1" value="10" inputmode="numeric">
+      <button id="applyEnvelope" class="wide">Apply height envelope</button>
+      <button id="autoEnvelope" class="wide">Auto from context</button>
+      <p class="caption" id="envelopeNote">Derived from surrounding context heights (3 m/floor). Rebuilds voxel cache for new ceilings; keeps learned policy weights.</p>
+    </details>
     <details class="far-settings" open><summary>Edit patches</summary>
       <label for="maskMode">Mask generation</label><select id="maskMode"><option value="correlated">Correlated patches</option><option value="combined" selected>Smoothed correlated patches</option></select>
       <label class="checkbox"><input id="deepInterior" type="checkbox"> Allow deep-interior cuts</label>
@@ -44,8 +52,17 @@
       <button id="applyMasks" class="wide">Apply edit settings</button>
       <p class="caption" id="patchRules">Depth is measured on the same floor. Interior openings must connect to outside air. Workload budgets use the required change and initial facade capacity, with a finishing reserve. Set maximum cells to 0 for no fixed cap. Small final FAR adjustments can use smaller patches.</p>
     </details>
+    <details class="far-settings" open>
+      <summary>Vertical cores</summary>
+      <label class="checkbox"><input id="coresEnabled" type="checkbox" checked> Enable height-graded vertical cores</label>
+      <label for="minCoreSpacing">Min core spacing (voxels, edge-to-edge)</label><input id="minCoreSpacing" type="number" min="0" max="60" step="1" value="10" inputmode="numeric">
+      <label for="maxCoreDist">Max distance to closest core (voxels)</label><input id="maxCoreDist" type="number" min="2" max="80" step="1" value="12" inputmode="numeric">
+      <button id="applyCores" class="wide">Apply core rules</button>
+      <a href="/core-plans" target="_blank" style="display:inline-block;margin-top:6px;font-size:10px;color:#1645ff">View dimensioned core plans ↗</a>
+      <p class="caption" id="coreNote">Compact metric layouts: stairs only at 1–5F (3×5 m grid), stair + one lift at 6–10F (5×5 m). Core reservations render crimson; grid-distance limits are research proxies.</p>
+    </details>
     <div class="panel-heading secondary"><h2>Display</h2></div>
-    <label for="field">Evaluation layer</label><select id="field"><option value="solid">Occupied mass</option><option value="usable">Potential usable area</option><option value="light">Diffuse sky access</option><option value="depthBadness">Facade depth · 8–16 m</option><option value="noise">Relative noise prior</option></select>
+    <label for="field">Evaluation layer</label><select id="field"><option value="solid">Occupied mass</option><option value="usable">Potential usable area</option><option value="coreDistance">Core &amp; travel distance</option><option value="light">Diffuse sky access</option><option value="depthBadness">Facade depth · 8–16 m</option><option value="noise">Relative noise prior</option></select>
     <label class="checkbox"><input id="showContext" type="checkbox" checked> Surrounding buildings & streets</label>
     <label class="checkbox"><input id="transparentContext" type="checkbox"> Transparent surroundings</label>
     <div id="layerLegend" class="layer-legend"><i></i><span>Occupied volume</span></div>
@@ -69,10 +86,52 @@
       </div>
     </div>
     <div class="workspace-status"><span id="episodeStatus">Waiting for environment</span><span id="contextStatus">Cached OSM context</span></div>
-    <details id="progress" class="progress"><summary><span>Completed episodes</span><span id="progressCount">0 episodes</span></summary><div class="chart-caption">Target FAR <i class="retained-key"></i> Achieved FAR <i class="usable-key"></i><span>Recorded results, not a generalization assessment</span></div><canvas id="history" aria-label="Recorded episode metrics"></canvas></details>
+    <details id="progress" class="progress" open>
+      <summary>
+        <span>Training &amp; Massing Dashboard</span>
+        <span class="dash-summary-right">
+          <label class="dash-toggle" onclick="event.stopPropagation()"><input id="fastTrainView" type="checkbox" checked> Episode-sync 3D during training</label>
+          <span id="progressCount">0 episodes</span>
+        </span>
+      </summary>
+      <div id="dashKpis" class="dash-kpis"></div>
+      <div class="dash-charts">
+        <div class="dash-chart-card">
+          <div class="chart-caption">
+            <strong>Quality &amp; sunlight learning curves</strong>
+            <span class="dash-legend">
+              <span><i class="score-key"></i> Layout score</span>
+              <span><i class="avg-key"></i> 5-ep avg</span>
+              <span><i class="sun-key"></i> Direct sun</span>
+              <span><i class="good-key"></i> Usable good %</span>
+              <span><i class="core-key"></i> Core score</span>
+              <span><i class="narrow-key"></i> Narrow &lt;6m %</span>
+            </span>
+          </div>
+          <canvas id="qualityChart" aria-label="Quality and sunlight learning curves"></canvas>
+        </div>
+        <div class="dash-chart-card">
+          <div class="chart-caption">
+            <strong>FAR convergence &amp; speed</strong>
+            <span class="dash-legend">
+              <span><i class="retained-key"></i> Target FAR</span>
+              <span><i class="usable-key"></i> Achieved FAR</span>
+              <span><i class="time-key"></i> s/ep</span>
+            </span>
+          </div>
+          <canvas id="history" aria-label="Recorded episode metrics"></canvas>
+        </div>
+      </div>
+      <div class="dash-table-wrap">
+        <table class="dash-table" aria-label="Recent episodes">
+          <thead><tr><th>Ep</th><th>Mode</th><th>FAR</th><th>Score</th><th>Good m²</th><th>Sun</th><th>Sky</th><th>Cores</th><th>&lt;6m</th><th>Slim</th><th>Edits</th><th>Time</th></tr></thead>
+          <tbody id="episodeTable"></tbody>
+        </table>
+      </div>
+    </details>
     <p id="notice" role="status" hidden></p><pre id="error" role="alert" hidden></pre>
   </section>
 </main>
 <footer><span>VoxelForm RL · Research preview</span><span>Geometry from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · Module Lab cache</span><span id="connection">Connecting</span></footer>
-<script type="module" src="/assets/app.js?v=outlines-hsl-4"></script>
+<script type="module" src="/assets/app.js?v=dashboard-9"></script>
 </body></html>

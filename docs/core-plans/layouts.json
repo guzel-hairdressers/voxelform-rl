@@ -1,0 +1,846 @@
+[
+  {
+    "version": "compact-core.v2",
+    "tier": "T1",
+    "minHeight": 1,
+    "maxHeight": 5,
+    "stairCount": 1,
+    "liftCount": 0,
+    "metricWidth": 2.8,
+    "metricLength": 4.94,
+    "metricArea": 13.832,
+    "width": 3,
+    "length": 5,
+    "floorHeight": 3.0,
+    "riserCount": 18,
+    "riserHeight": 0.16666666666666666,
+    "tread": 0.28,
+    "clearFlightWidth": 1.2,
+    "landingDepth": 1.2,
+    "wallThickness": 0.15,
+    "shaftClearWidth": 1.8,
+    "shaftClearDepth": 1.9000000000000001,
+    "carWidth": 1.1,
+    "carDepth": 1.4,
+    "zones": [
+      {
+        "type": "stair",
+        "x": 0.0,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 1"
+      }
+    ],
+    "components": [
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 0
+      },
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 0
+      },
+      {
+        "type": "flight",
+        "x": 0.15,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 1.45,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      }
+    ],
+    "doors": [
+      {
+        "type": "entrance",
+        "x": 0.95,
+        "y": 0.0,
+        "width": 0.9,
+        "orientation": "horizontal"
+      }
+    ],
+    "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
+  },
+  {
+    "version": "compact-core.v2",
+    "tier": "T2",
+    "minHeight": 6,
+    "maxHeight": 10,
+    "stairCount": 1,
+    "liftCount": 1,
+    "metricWidth": 4.9,
+    "metricLength": 4.94,
+    "metricArea": 24.206,
+    "width": 5,
+    "length": 5,
+    "floorHeight": 3.0,
+    "riserCount": 18,
+    "riserHeight": 0.16666666666666666,
+    "tread": 0.28,
+    "clearFlightWidth": 1.2,
+    "landingDepth": 1.2,
+    "wallThickness": 0.15,
+    "shaftClearWidth": 1.8,
+    "shaftClearDepth": 1.9000000000000001,
+    "carWidth": 1.1,
+    "carDepth": 1.4,
+    "zones": [
+      {
+        "type": "stair",
+        "x": 0.0,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 1"
+      },
+      {
+        "type": "lobby",
+        "x": 2.8,
+        "y": 0,
+        "w": 2.1,
+        "h": 2.74,
+        "label": "Shared lobby"
+      },
+      {
+        "type": "lift",
+        "x": 2.8,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 1"
+      }
+    ],
+    "components": [
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 0
+      },
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 0
+      },
+      {
+        "type": "flight",
+        "x": 0.15,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 1.45,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "car",
+        "x": 3.3,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 1"
+      }
+    ],
+    "doors": [
+      {
+        "type": "stair_door",
+        "x": 2.8,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "entrance",
+        "x": 3.4,
+        "y": 0.0,
+        "width": 0.9,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 3.45,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      }
+    ],
+    "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
+  },
+  {
+    "version": "compact-core.v2",
+    "tier": "T3",
+    "minHeight": 11,
+    "maxHeight": 18,
+    "stairCount": 1,
+    "liftCount": 2,
+    "metricWidth": 7.0,
+    "metricLength": 4.94,
+    "metricArea": 34.58,
+    "width": 7,
+    "length": 5,
+    "floorHeight": 3.0,
+    "riserCount": 18,
+    "riserHeight": 0.16666666666666666,
+    "tread": 0.28,
+    "clearFlightWidth": 1.2,
+    "landingDepth": 1.2,
+    "wallThickness": 0.15,
+    "shaftClearWidth": 1.8,
+    "shaftClearDepth": 1.9000000000000001,
+    "carWidth": 1.1,
+    "carDepth": 1.4,
+    "zones": [
+      {
+        "type": "stair",
+        "x": 0.0,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 1"
+      },
+      {
+        "type": "lobby",
+        "x": 2.8,
+        "y": 0,
+        "w": 4.2,
+        "h": 2.74,
+        "label": "Shared lobby"
+      },
+      {
+        "type": "lift",
+        "x": 2.8,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 1"
+      },
+      {
+        "type": "lift",
+        "x": 4.9,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 2"
+      }
+    ],
+    "components": [
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 0
+      },
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 0
+      },
+      {
+        "type": "flight",
+        "x": 0.15,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 1.45,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "car",
+        "x": 3.3,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 1"
+      },
+      {
+        "type": "car",
+        "x": 5.4,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 2"
+      }
+    ],
+    "doors": [
+      {
+        "type": "stair_door",
+        "x": 2.8,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "entrance",
+        "x": 4.45,
+        "y": 0.0,
+        "width": 0.9,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 3.45,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 5.55,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      }
+    ],
+    "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
+  },
+  {
+    "version": "compact-core.v2",
+    "tier": "T4",
+    "minHeight": 19,
+    "maxHeight": 30,
+    "stairCount": 2,
+    "liftCount": 3,
+    "metricWidth": 11.9,
+    "metricLength": 4.94,
+    "metricArea": 58.786,
+    "width": 12,
+    "length": 5,
+    "floorHeight": 3.0,
+    "riserCount": 18,
+    "riserHeight": 0.16666666666666666,
+    "tread": 0.28,
+    "clearFlightWidth": 1.2,
+    "landingDepth": 1.2,
+    "wallThickness": 0.15,
+    "shaftClearWidth": 1.8,
+    "shaftClearDepth": 1.9000000000000001,
+    "carWidth": 1.1,
+    "carDepth": 1.4,
+    "zones": [
+      {
+        "type": "stair",
+        "x": 0.0,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 1"
+      },
+      {
+        "type": "stair",
+        "x": 9.1,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 2"
+      },
+      {
+        "type": "lobby",
+        "x": 2.8,
+        "y": 0,
+        "w": 6.3,
+        "h": 2.74,
+        "label": "Shared lobby"
+      },
+      {
+        "type": "lift",
+        "x": 2.8,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 1"
+      },
+      {
+        "type": "lift",
+        "x": 4.9,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 2"
+      },
+      {
+        "type": "lift",
+        "x": 7.0,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 3"
+      }
+    ],
+    "components": [
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 0
+      },
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 0
+      },
+      {
+        "type": "flight",
+        "x": 0.15,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 1.45,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "landing",
+        "x": 9.25,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 1
+      },
+      {
+        "type": "landing",
+        "x": 9.25,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 1
+      },
+      {
+        "type": "flight",
+        "x": 9.25,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 1,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 10.55,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 1,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "car",
+        "x": 3.3,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 1"
+      },
+      {
+        "type": "car",
+        "x": 5.4,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 2"
+      },
+      {
+        "type": "car",
+        "x": 7.5,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 3"
+      }
+    ],
+    "doors": [
+      {
+        "type": "stair_door",
+        "x": 2.8,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "stair_door",
+        "x": 9.1,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "entrance",
+        "x": 5.5,
+        "y": 0.0,
+        "width": 0.9,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 3.45,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 5.55,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 7.65,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      }
+    ],
+    "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
+  },
+  {
+    "version": "compact-core.v2",
+    "tier": "T5",
+    "minHeight": 31,
+    "maxHeight": 60,
+    "stairCount": 2,
+    "liftCount": 4,
+    "metricWidth": 14.0,
+    "metricLength": 4.94,
+    "metricArea": 69.16,
+    "width": 14,
+    "length": 5,
+    "floorHeight": 3.0,
+    "riserCount": 18,
+    "riserHeight": 0.16666666666666666,
+    "tread": 0.28,
+    "clearFlightWidth": 1.2,
+    "landingDepth": 1.2,
+    "wallThickness": 0.15,
+    "shaftClearWidth": 1.8,
+    "shaftClearDepth": 1.9000000000000001,
+    "carWidth": 1.1,
+    "carDepth": 1.4,
+    "zones": [
+      {
+        "type": "stair",
+        "x": 0.0,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 1"
+      },
+      {
+        "type": "stair",
+        "x": 11.2,
+        "y": 0,
+        "w": 2.8,
+        "h": 4.94,
+        "label": "Stair 2"
+      },
+      {
+        "type": "lobby",
+        "x": 2.8,
+        "y": 0,
+        "w": 8.4,
+        "h": 2.74,
+        "label": "Shared lobby"
+      },
+      {
+        "type": "lift",
+        "x": 2.8,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 1"
+      },
+      {
+        "type": "lift",
+        "x": 4.9,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 2"
+      },
+      {
+        "type": "lift",
+        "x": 7.0,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 3"
+      },
+      {
+        "type": "lift",
+        "x": 9.1,
+        "y": 2.74,
+        "w": 2.1,
+        "h": 2.2,
+        "label": "Lift 4"
+      }
+    ],
+    "components": [
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 0
+      },
+      {
+        "type": "landing",
+        "x": 0.15,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 0
+      },
+      {
+        "type": "flight",
+        "x": 0.15,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 1.45,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 0,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "landing",
+        "x": 11.35,
+        "y": 0.15,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Floor landing",
+        "stair": 1
+      },
+      {
+        "type": "landing",
+        "x": 11.35,
+        "y": 3.59,
+        "w": 2.5,
+        "h": 1.2,
+        "label": "Half landing",
+        "stair": 1
+      },
+      {
+        "type": "flight",
+        "x": 11.35,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 1",
+        "stair": 1,
+        "risers": 9,
+        "treads": 8,
+        "direction": 1
+      },
+      {
+        "type": "flight",
+        "x": 12.65,
+        "y": 1.35,
+        "w": 1.2,
+        "h": 2.24,
+        "label": "Flight 2",
+        "stair": 1,
+        "risers": 9,
+        "treads": 8,
+        "direction": -1
+      },
+      {
+        "type": "car",
+        "x": 3.3,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 1"
+      },
+      {
+        "type": "car",
+        "x": 5.4,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 2"
+      },
+      {
+        "type": "car",
+        "x": 7.5,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 3"
+      },
+      {
+        "type": "car",
+        "x": 9.6,
+        "y": 3.19,
+        "w": 1.1,
+        "h": 1.4,
+        "label": "Car 4"
+      }
+    ],
+    "doors": [
+      {
+        "type": "stair_door",
+        "x": 2.8,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "stair_door",
+        "x": 11.2,
+        "y": 0.3,
+        "width": 0.9,
+        "orientation": "vertical"
+      },
+      {
+        "type": "entrance",
+        "x": 6.55,
+        "y": 0.0,
+        "width": 0.9,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 3.45,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 5.55,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 7.65,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      },
+      {
+        "type": "lift_door",
+        "x": 9.75,
+        "y": 2.74,
+        "width": 0.8,
+        "orientation": "horizontal"
+      }
+    ],
+    "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
+  }
+]

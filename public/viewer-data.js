@@ -15,7 +15,7 @@ export function sceneData(state){
   const offset=c.offset||[0,0,0],angle=c.gridAngle||0,buildings=c.buildings.map(m=>originalMesh(m,offset,angle));
   return {buildings,site:originalMesh(c.site,offset,angle),sitePerimeter:c.perimeter.map(p=>gridToWorld(p[0],p[1],offset,angle)),
    roads:c.roads.map(m=>originalMesh(m,offset,angle)),greenSpaces:c.greenSpaces.map(m=>originalMesh(m,offset,angle)),
-   siteArea:c.siteArea,areaTier:c.tier,cityName:c.city,radius:c.radius||100,maxHeight:Math.max(nz*3,...buildings.map(b=>b.height||0)),coords:{lat:c.lat,lon:c.lon}};
+   siteArea:c.siteArea,areaTier:c.tier,cityName:c.city,radius:c.radius||100,maxHeight:Math.max(nz*3,...buildings.map(b=>b.height||0)),coords:{lat:c.lat,lon:c.lon},metrics:c.metrics};
  }
  const site={vertices:[],faces:[]};
  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)if(state.allowed[y*nx+x]){

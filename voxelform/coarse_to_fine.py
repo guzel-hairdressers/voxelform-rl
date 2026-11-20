@@ -1,0 +1,1206 @@
+"""Additive two-stage coarse-to-fine prototype (2x2x1 or 2x2x2 -> 1x1x3 m fine)."""
+import math
+import time
+import numpy as np
+from scipy import ndimage as ndi
+import torch
+from torch import nn
+from torch.distributions import Categorical, Normal
+from torch.nn import functional as F
+
+from .actions import STRUCTURE, exterior_air, neighbors_horizontal
+from .fields import depth_badness, diffuse_access, facade_depth_tensor, facade_sky_access, usable_depth_proxy
+from .patch_policy import PatchConfig, PatchFacades, gaussian_field
+from .redistribution import Exchange
+from .shadows import sync
+from .unified import (
+    OPERATIONS,
+    Organic3DNetwork,
+    clean_floor_numpy,
+    clean_floor_tensor,
+    commit as commit_fine,
+    compute_spatial_desirability,
+    growth_mask,
+    long_narrow_mask,
+    min_room_width,
+)
+from .workload import WorkloadBudget
+
+
+def _pool_boundary_2d(arr, kz, kx_y):
+    """Pool a 2D boundary slice over kz x kx_y tiles cleanly via edge replication."""
+    h, w = arr.shape[-2], arr.shape[-1]
+    ph = (kz - h % kz) % kz
+    pw = (kx_y - w % kx_y) % kx_y
+    x = arr[None, None].float()
+    if ph or pw:
+        x = F.pad(x, (0, pw, 0, ph), mode='replicate')
+    return F.avg_pool2d(x, (kz, kx_y), stride=(kz, kx_y))[0, 0]
+
+
+class CoarseEnv:
+    """Lightweight coarse-grid wrapper over a fine `Environment` for macro/meso stages."""
+
+    def __init__(self, fine_env, block=(2, 2, 2), handoff_tol=None):
+        bz, by, bx = (int(v) for v in block)
+        if by != bx or by not in (2, 4, 8) or bz not in (1, 2, 3):
+            raise ValueError('CoarseEnv supports block=(1|2|3, 2|4|8, 2|4|8) with equal XY')
+        self.env = fine_env
+        self.block = (bz, by, bx)
+        self.bz = bz
+        self.bxy = by
+        self.device = fine_env.device
+        default_tol = (0.45 if bz == 1 else 0.60) if by == 2 else ((0.90 if bz == 1 else 1.15) if by == 4 else 1.50)
+        self.handoff_tol = float(default_tol if handoff_tol is None else handoff_tol)
+
+        Z, Y, X = fine_env.shape
+        Zc, Yc, Xc = math.ceil(Z / bz), math.ceil(Y / by), math.ceil(X / by)
+        self.shape = (Zc, Yc, Xc)
+        self.nz, self.ny, self.nx = self.shape
+        self.plot_area = float(fine_env.plot_area)
+        self.target_far = float(fine_env.target_far)
+        self.target_count_fine = int(fine_env.target_count)
+        self.far_tolerance = float(fine_env.far_tolerance)
+
+        # Pad fine grids cleanly to exact multiples of (bz, bxy, bxy)
+        pz = Zc * bz - Z
+        py = Yc * by - Y
+        px = Xc * by - X
+        pad3 = (0, px, 0, py, 0, pz)
+
+        if not hasattr(fine_env, 'external_potential'):
+            fine_env.precompute_external()
+            normals = fine_env.suns.new_tensor(((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)))
+            w = (fine_env.suns @ normals.T).clamp_min(0) * fine_env.suns.new_tensor((3., 3., 3., 3., 1., 1.))[None]
+            fine_env.external_potential = (
+                fine_env.static_receivers.values.reshape(len(fine_env.suns), 6, *fine_env.shape).float()
+                * w[:, :, None, None, None]
+            ).sum((0, 1)) / w.sum().clamp_min(1)
+
+        al_p = F.pad(fine_env.allowed.float(), pad3, value=0.0)
+        ep_p = F.pad(fine_env.external_potential, pad3, value=0.0)
+        ns_p = F.pad(fine_env.noise, pad3, value=0.0)
+        al_blk = al_p.view(Zc, bz, Yc, by, Xc, by).sum(dim=(1, 3, 5))
+        self.cell_vol = al_blk.to(torch.int32)
+        self.cell_vol_np = self.cell_vol.detach().cpu().numpy()
+        self.allowed = self.cell_vol > 0
+        self.allowed_np = self.allowed.detach().cpu().numpy()
+        self.capacity_coarse = int(self.allowed.sum().detach().cpu())
+        self.capacity = int(fine_env.capacity)
+
+        den = al_blk.clamp_min(1.0)
+        self.external_potential = (ep_p * al_p).view(Zc, bz, Yc, by, Xc, by).sum(dim=(1, 3, 5)) / den
+        self.noise = (ns_p * al_p).view(Zc, bz, Yc, by, Xc, by).sum(dim=(1, 3, 5)) / den
+
+        zc_m = ((torch.arange(Zc, device=self.device, dtype=torch.float32) + 0.5) * 3.0 * bz)
+        self.rel_z = torch.tanh(zc_m / 36.0)[:, None, None].expand(self.shape).contiguous()
+
+        # Pool external sky openness onto coarse boundaries (ground face 0 stays 0)
+        sb = fine_env.sky_boundary
+        sky_c = torch.zeros((Zc + 2, Yc + 2, Xc + 2), device=self.device, dtype=torch.float32)
+        sky_c[-1, 1:-1, 1:-1] = _pool_boundary_2d(sb[-1, 1:-1, 1:-1], by, by)
+        sky_c[1:-1, 0, 1:-1] = _pool_boundary_2d(sb[1:-1, 0, 1:-1], bz, by)
+        sky_c[1:-1, -1, 1:-1] = _pool_boundary_2d(sb[1:-1, -1, 1:-1], bz, by)
+        sky_c[1:-1, 1:-1, 0] = _pool_boundary_2d(sb[1:-1, 1:-1, 0], bz, by)
+        sky_c[1:-1, 1:-1, -1] = _pool_boundary_2d(sb[1:-1, 1:-1, -1], bz, by)
+        self.sky_boundary = sky_c
+
+        self.config = PatchConfig(
+            mode='combined',
+            allocation='feedback',
+            eligibility='depth',
+            facade_layers=2 if by == 2 else 1,
+            minimum_patch=2 if by == 2 else 1,
+            maximum_patches=4,
+            maximum_voids=1,
+            minimum_void_area=2 if by == 2 else 1,
+            stride=(max(1, 2 // bz), max(1, 4 // by), max(1, 4 // by)),
+            sigma=(max(1.0, 2.0 / bz), max(0.5, 2.0 / by), max(0.5, 2.0 / by)),
+            batched=True,
+            vertical_interior=False,
+            budget_reserve_fraction=0.2,
+        )
+        self.avg_vol = float(self.capacity) / max(1, self.capacity_coarse)
+        self.target_coarse = max(1, int(round(self.target_count_fine / max(1e-6, self.avg_vol))))
+        self._init_cache = None
+
+    @property
+    def far(self):
+        return self.count_fine / self.plot_area
+
+    @property
+    def far_error(self):
+        return abs(self.count_fine - self.goal_count_fine) / self.plot_area
+
+    @property
+    def acceptable_fine_counts(self):
+        low = max(1, math.floor((self.target_far - self.handoff_tol) * self.plot_area + 0.5))
+        high = min(self.capacity, math.floor((self.target_far + self.handoff_tol) * self.plot_area + 0.5))
+        return (low, min(self.capacity, max(low, high)))
+
+    @property
+    def acceptable_counts(self):
+        # Workload/choose helper operates cleanly in coarse cell counts; exact fine
+        # volume bounds live in acceptable_fine_counts.
+        low = max(1, int(math.floor((self.target_far - self.handoff_tol) * self.plot_area / max(1e-6, self.avg_vol))))
+        high = min(self.capacity_coarse, int(math.ceil((self.target_far + self.handoff_tol) * self.plot_area / max(1e-6, self.avg_vol))))
+        return (low, max(low, high))
+
+    @property
+    def goal_count(self):
+        low, high = self.acceptable_counts
+        return min(high, max(low, self.count))
+
+    @property
+    def goal_count_fine(self):
+        low, high = self.acceptable_fine_counts
+        return min(high, max(low, self.count_fine))
+
+    @property
+    def near_far(self):
+        low, high = self.acceptable_fine_counts
+        return low <= self.count_fine <= high
+
+    @property
+    def far_satisfied(self):
+        return self.near_far
+
+    @property
+    def terminal(self):
+        return self.termination is not None
+
+    def _update_depth(self):
+        dt = getattr(self.frontier, 'depth_tensor', None)
+        if dt is not None:
+            self.depth = dt * float(self.bxy)
+        else:
+            self.depth = torch.as_tensor(self.frontier.depth_numpy * float(self.bxy), device=self.device)
+        self.depth_badness = depth_badness(self.depth)
+
+    def evaluate_fast(self):
+        occ_z = self.occupied.any(dim=(1, 2)).nonzero(as_tuple=False)
+        z_top = int(occ_z[-1].item()) + 1 if len(occ_z) else 1
+        z_hi = min(self.nz, z_top + 2)
+        sp = (float(self.bxy), float(self.bxy), 3.0 * self.bz)
+        init_f = self.light if (getattr(self, 'light', None) is not None and self.light.shape == self.shape) else None
+        if z_hi < self.nz:
+            bnd = self.sky_boundary[:z_hi + 2].clone()
+            bnd[-1, 1:-1, 1:-1] = init_f[z_hi] if init_f is not None else self.sky_boundary[-1, 1:-1, 1:-1]
+            sub = diffuse_access(self.occupied[:z_hi], bnd, iterations=14, spacing=sp, init=None if init_f is None else init_f[:z_hi])
+            if init_f is not None:
+                lnew = init_f.clone()
+                lnew[:z_hi] = sub
+                self.light = lnew
+            else:
+                self.light = torch.zeros(self.shape, device=self.device, dtype=torch.float32)
+                self.light[:z_hi] = sub
+                self.light[z_hi:] = self.sky_boundary[1 + z_hi:-1, 1:-1, 1:-1]
+        else:
+            self.light = diffuse_access(self.occupied, self.sky_boundary, iterations=14, spacing=sp, init=init_f)
+        lateral = torch.as_tensor(self.frontier.remove_faces[[1, 0, 3, 2]], device=self.device)
+        _, self.facade_light = facade_sky_access(self.occupied, self.light, self.sky_boundary, lateral)
+        self.usable = usable_depth_proxy(self.occupied, self.light, depth=max(2, 8 // self.bxy), boundary=self.sky_boundary)
+
+    def restore_occupancy(self, occ_arr):
+        occ = torch.as_tensor(occ_arr, dtype=torch.bool, device=self.device).reshape(self.shape) & self.allowed
+        self.occupied = occ
+        self.count = int(occ.sum().detach().cpu())
+        self.count_fine = int((occ * self.cell_vol).sum().detach().cpu())
+        self.start_count = self.count
+        self.start_count_fine = self.count_fine
+        self.edits = 0
+        self.unified_actions = 0
+        self.termination = None
+        self.organic_3d_growth = True
+        self.light = None
+        self.frontier = PatchFacades(occ.detach().cpu().numpy(), self.allowed_np, self.env.seed, config=self.config, depth_device=self.device)
+        self._update_depth()
+        self.evaluate_fast()
+        self.workload = WorkloadBudget.create(self, self.config)
+        self.unified_limit = max(6, self.workload.limit + 4)
+        self._ln_cache = None
+
+    def reset(self, initial_storeys):
+        init_c = min(self.nz, max(1, int(round(initial_storeys / self.bz))))
+        if self._init_cache is not None and self._init_cache[0] == init_c:
+            c = self._init_cache[1]
+            self.occupied = c['occupied'].clone()
+            self.count = c['count']
+            self.count_fine = c['count_fine']
+            self.start_count = c['start_count']
+            self.start_count_fine = c['start_count_fine']
+            self.edits = 0
+            self.unified_actions = 0
+            self.termination = None
+            f = self.frontier
+            fc = c['frontier']
+            f.occupied = fc['occupied'].copy()
+            f.exterior_air = fc['exterior_air'].copy()
+            f.remove_faces = fc['remove_faces'].copy()
+            f.add_faces = fc['add_faces'].copy()
+            f.remove_skin = fc['remove_skin'].copy()
+            f.add_skin = fc['add_skin'].copy()
+            f.components = fc['components']
+            f.count = fc['count']
+            f.depth_tensor = fc['depth_tensor'].clone()
+            f.old_voids = [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fc['old_voids']] if fc['old_voids'] is not None else None
+            f.facade_band = fc['facade_band'].copy()
+            f._remove_eligible = fc['_remove_eligible'].copy()
+            f._prev_occ = f.occupied.copy()
+            f._prev_air = f.exterior_air.copy()
+            f._weight_tensors = {}
+            f.version += 1
+            self.depth = c['depth'].clone()
+            self.depth_badness = c['depth_badness'].clone()
+            self.light = c['light'].clone()
+            self.facade_light = c['facade_light'].clone()
+            self.usable = c['usable'].clone()
+            self.workload = WorkloadBudget.create(self, self.config)
+            self.unified_limit = max(6, self.workload.limit + 4)
+            self._ln_cache = None
+            self.organic_3d_growth = True
+            return
+
+        occ = self.allowed.clone()
+        occ[init_c:] = False
+        self.occupied = occ
+        self.count = int(occ.sum().detach().cpu())
+        self.count_fine = int((occ * self.cell_vol).sum().detach().cpu())
+        self.start_count = self.count
+        self.start_count_fine = self.count_fine
+        self.edits = 0
+        self.unified_actions = 0
+        self.termination = None
+        self.organic_3d_growth = True
+        self.light = None
+        self.frontier = PatchFacades(occ.detach().cpu().numpy(), self.allowed_np, self.env.seed, config=self.config, depth_device=self.device)
+        self._update_depth()
+        self.evaluate_fast()
+        self.workload = WorkloadBudget.create(self, self.config)
+        self.unified_limit = max(6, self.workload.limit + 4)
+        self._ln_cache = None
+        f = self.frontier
+        self._init_cache = (
+            init_c,
+            dict(
+                occupied=occ.clone(),
+                count=self.count,
+                count_fine=self.count_fine,
+                start_count=self.start_count,
+                start_count_fine=self.start_count_fine,
+                depth=self.depth.clone(),
+                depth_badness=self.depth_badness.clone(),
+                light=self.light.clone(),
+                facade_light=self.facade_light.clone(),
+                usable=self.usable.clone(),
+                frontier=dict(
+                    occupied=f.occupied.copy(),
+                    exterior_air=f.exterior_air.copy(),
+                    remove_faces=f.remove_faces.copy(),
+                    add_faces=f.add_faces.copy(),
+                    remove_skin=f.remove_skin.copy(),
+                    add_skin=f.add_skin.copy(),
+                    components=int(f.components),
+                    count=int(f.count),
+                    depth_tensor=f.depth_tensor.clone(),
+                    old_voids=[(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in f.old_voids] if f.old_voids is not None else None,
+                    facade_band=f.facade_band.copy(),
+                    _remove_eligible=f._remove_eligible.copy(),
+                ),
+            ),
+        )
+
+    def apply_move(self, move):
+        f = self.frontier
+        f.occupied[move.remove] = False
+        f.occupied[move.add] = True
+        f.version += 1
+        f.refresh()
+        rm_t = torch.as_tensor(move.remove, device=self.device)
+        ad_t = torch.as_tensor(move.add, device=self.device)
+        self.occupied.masked_fill_(rm_t, False)
+        self.occupied.masked_fill_(ad_t, True)
+        self.count = int(f.occupied.sum())
+        self.count_fine = int((self.occupied * self.cell_vol).sum().detach().cpu())
+        self.edits += 1
+        self._update_depth()
+        self.evaluate_fast()
+
+    def observation(self, z_slice=None):
+        occ = self.occupied[:z_slice] if z_slice is not None else self.occupied
+        remove = self.frontier.weights_tensor(-1, self.device)
+        grow = torch.as_tensor(growth_mask(self), device=self.device, dtype=torch.float32)
+        ep = self.external_potential
+        fl = self.facade_light
+        light = self.light
+        noise = self.noise
+        allowed = self.allowed.float()
+        rel_z = self.rel_z
+        depth_b = self.depth_badness
+        usable = self.usable
+        if z_slice is not None:
+            remove = remove[:z_slice]
+            grow = grow[:z_slice]
+            ep = ep[:z_slice]
+            fl = fl[:z_slice]
+            light = light[:z_slice]
+            noise = noise[:z_slice]
+            allowed = allowed[:z_slice]
+            rel_z = rel_z[:z_slice]
+            depth_b = depth_b[:z_slice]
+            usable = usable[:z_slice]
+
+        if self.bxy == 2 and self.plot_area >= 400 and self.ny >= 3 and self.nx >= 3:
+            c_key = (self.frontier.version, z_slice)
+            cache = self._ln_cache
+            if cache is not None and cache[0] == c_key:
+                ln_bool = cache[1]
+            else:
+                if not hasattr(self, '_allowed_ln3'):
+                    self._allowed_ln3 = long_narrow_mask(self.allowed, width=3, stub=1)
+                aln = self._allowed_ln3[:z_slice] if z_slice is not None else self._allowed_ln3
+                ln_bool = long_narrow_mask(occ, width=3, stub=1) & ~aln
+                self._ln_cache = (c_key, ln_bool)
+        else:
+            ln_bool = torch.zeros_like(occ, dtype=torch.bool)
+
+        return torch.stack(
+            (occ.float(), light, noise, allowed, rel_z, depth_b, remove, grow, ep, fl, ln_bool.float(), usable.float()),
+            dim=1,
+        )
+
+    def upsample_to_coarse(self, target_cenv):
+        rz = max(1, self.bz // target_cenv.bz)
+        rxy = max(1, self.bxy // target_cenv.bxy)
+        Zt, Yt, Xt = target_cenv.shape
+        exp = self.occupied.repeat_interleave(rz, dim=0).repeat_interleave(rxy, dim=1).repeat_interleave(rxy, dim=2)
+        occ_t = (exp[:Zt, :Yt, :Xt] & target_cenv.allowed).detach().cpu().numpy()
+        labels, n = ndi.label(occ_t, STRUCTURE)
+        grounded = np.unique(labels[0])
+        grounded = grounded[grounded != 0]
+        if n == 0 or len(grounded) == 0:
+            occ_t = target_cenv.allowed_np.copy()
+            occ_t[min(Zt, max(1, int(round(self.target_far / target_cenv.bz)))):] = False
+        elif len(grounded) != n or n > 2:
+            sizes = np.bincount(labels.ravel())
+            keep_ids = grounded[np.argsort(-sizes[grounded])[:2]]
+            occ_t = occ_t & np.isin(labels, keep_ids)
+        target_cenv.restore_occupancy(occ_t)
+
+    def upsample_to_fine(self):
+        Z, Y, X = self.env.shape
+        exp = self.occupied.repeat_interleave(self.bz, dim=0).repeat_interleave(self.bxy, dim=1).repeat_interleave(self.bxy, dim=2)
+        occ_fine = exp[:Z, :Y, :X] & self.env.allowed
+        occ_np = occ_fine.detach().cpu().numpy()
+        mw = min_room_width(self.env)
+        if mw > 1:
+            al_np = self.env.frontier.allowed
+            clean_al = clean_floor_numpy(al_np, mw)
+            occ_np = occ_np & (clean_floor_numpy(occ_np, mw) | ~clean_al)
+        labels, n = ndi.label(occ_np, STRUCTURE)
+        grounded = np.unique(labels[0])
+        grounded = grounded[grounded != 0]
+        if n == 0 or len(grounded) == 0:
+            fallback = self.env.allowed.detach().cpu().numpy().copy()
+            fallback[min(Z, max(1, int(round(self.target_far)))):] = False
+            occ_np = fallback
+        elif len(grounded) != n or n > 2:
+            sizes = np.bincount(labels.ravel())
+            keep_ids = grounded[np.argsort(-sizes[grounded])[:2]]
+            occ_np = occ_np & np.isin(labels, keep_ids)
+        self.env.restore_occupancy(occ_np)
+        self.env.copy_labels = np.zeros(self.env.shape, dtype=np.int64)
+        self.env._ln6_cache = None
+        self.env.organic_3d_growth = True
+        self.env.floor_copy_growth = False
+        # Compact Stage 2 fine refinement budget
+        self.env.unified_limit = max(6, self.env.workload.limit + 4)
+        self.env.unified_actions = 0
+        self.env.termination = None
+
+
+def _project_coarse_valid(cenv, f, r, a, changed, air_after, mw, clean_old, rem_s, g_s):
+    zs = changed.shape[0]
+    if not (r.any() or a.any()) or (r & a).any():
+        return False
+    if (r & ~rem_s).any() or (a & ~g_s).any():
+        return False
+    for mask in (r, a):
+        if not mask.any():
+            continue
+        labels, n = ndi.label(mask, np.ones((3, 3, 3), bool))
+        if f.config.maximum_patches and n > f.config.maximum_patches:
+            return False
+        minimum = 1 if int(mask.sum()) <= f.config.minimum_patch * max(1, f.config.maximum_patches) else f.config.minimum_patch
+        if (np.bincount(labels.ravel())[1:] < minimum).any():
+            return False
+    if mw > 1:
+        clean_changed = clean_floor_numpy(changed, mw)
+        if ((changed & ~clean_changed) & (clean_old | a)).any():
+            return False
+    if (r & ~air_after).any() or (f.exterior_air[:zs] & ~a & ~air_after).any():
+        return False
+    if f.old_voids is not None:
+        for z in range(zs):
+            if not (r[z].any() or a[z].any()):
+                continue
+            lab, ids, sizes = f._floor_voids(changed[z], z)
+            oldlab, oldids, oldsizes = f.old_voids[z]
+            if f.config.maximum_voids and len(ids) > max(f.config.maximum_voids, len(oldids)):
+                return False
+            for i in ids:
+                prior = [oldsizes[j] for j in np.unique(oldlab[lab == i]) if j in oldids]
+                if sizes[i] < min([f.config.minimum_void_area, *prior]):
+                    return False
+    return True
+
+
+def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_buildings=2):
+    """Project coarse stage masks with cell_vol-exact FAR progress & stem preservation."""
+    f = cenv.frontier
+    mw = (2 if cenv.bxy == 2 else 1) if cenv.plot_area >= 400 else 1
+    z_occ = np.flatnonzero((f.occupied | masks[1]).any((1, 2)))
+    zs = min(cenv.nz, int(z_occ[-1]) + 2) if len(z_occ) else min(cenv.nz, 1)
+    occ_s = f.occupied[:zs]
+    vol_s = cenv.cell_vol_np[:zs]
+    r = masks[0, :zs].copy()
+    a = masks[1, :zs].copy()
+    s0 = scores[0, :zs]
+    s1 = scores[1, :zs]
+    skin_s = f.remove_skin[:zs]
+    f_ext_s = f.exterior_air[:zs]
+    rem_s = f.eligible(-1)[:zs]
+    g_s = growth_mask(cenv)[:zs]
+    clean_old = clean_floor_numpy(occ_s, mw) if mw > 1 else None
+    low_f, high_f = cenv.acceptable_fine_counts
+    for _ in range(6):
+        if r.any():
+            if (r & ~skin_s).any():
+                r &= exterior_air(occ_s & ~r)
+            r = f._patch_filter(r, int(r.sum())) if r.any() else r
+            if mw > 1 and r.any():
+                for _ in range(3):
+                    after_r = occ_s & ~r
+                    slim_r = (after_r & ~clean_floor_numpy(after_r, mw)) & clean_old
+                    if not slim_r.any():
+                        break
+                    zone = ndi.binary_dilation(slim_r, structure=np.ones((1, 3, 3), bool))
+                    if not (r & zone).any():
+                        break
+                    r &= ~zone
+                r = f._patch_filter(r, int(r.sum())) if r.any() else r
+        if a.any():
+            a = f._patch_filter(a, int(a.sum())) if a.any() else a
+            if mw > 1 and a.any():
+                cand = (occ_s & ~r) | a
+                cleaned = a & clean_floor_numpy(cand, mw)
+                if not np.array_equal(cleaned, a):
+                    a = f._patch_filter(cleaned, int(cleaned.sum())) if cleaned.any() else cleaned
+        if operation == 'remove' and not r.any():
+            return None
+        if operation == 'grow' and not a.any():
+            return None
+        if operation == 'exchange' and (not r.any() or not a.any()):
+            return None
+        changed = (occ_s & ~r) | a
+        labels, n = ndi.label(changed, STRUCTURE)
+        grounded = np.unique(labels[0])
+        grounded = grounded[grounded != 0]
+        if n == 0:
+            return None
+        if len(grounded) == 0 and r[0].any():
+            r[0] = False
+            continue
+        if len(grounded) != n or n > maximum_buildings:
+            sizes = np.bincount(labels.ravel())
+            keep_ids = grounded[np.argsort(-sizes[grounded])[:maximum_buildings]] if len(grounded) else np.empty(0, int)
+            keep_mask = np.isin(labels, keep_ids)
+            bad_solid = changed & ~keep_mask
+            if bad_solid.any():
+                bad_nbr = ndi.binary_dilation(bad_solid, structure=STRUCTURE)
+                repaired = False
+                if r.any() and (r & bad_nbr).any():
+                    bridge = r & ndi.binary_dilation(keep_mask, structure=STRUCTURE) & bad_nbr if keep_mask.any() else np.zeros_like(r)
+                    if not bridge.any() and keep_mask.any():
+                        bridge = r & ndi.binary_dilation(keep_mask, structure=STRUCTURE, iterations=2) & bad_nbr
+                    r &= ~(bridge if bridge.any() else (r & bad_nbr))
+                    repaired = True
+                if a.any() and (a & bad_solid).any():
+                    a &= ~bad_solid
+                    repaired = True
+                if repaired:
+                    continue
+        air_after = exterior_air(changed)
+        sealed = f_ext_s & ~a & ~air_after
+        if sealed.any():
+            bad_air = ndi.binary_dilation(sealed, structure=STRUCTURE)
+            if (a & bad_air).any():
+                a &= ~bad_air
+                continue
+        if net_guided:
+            rem_f = int(vol_s[r].sum()) if r.any() else 0
+            add_f = int(vol_s[a].sum()) if a.any() else 0
+            after_f = cenv.count_fine - rem_f + add_f
+            if cenv.count_fine > high_f:
+                req_lo, req_hi = low_f, cenv.count_fine - 1
+            elif cenv.count_fine < low_f:
+                req_lo, req_hi = cenv.count_fine + 1, high_f
+            else:
+                req_lo, req_hi = low_f, high_f
+            if after_f < req_lo:
+                need_drop = req_lo - after_f
+                ids = np.flatnonzero(r)
+                if not len(ids):
+                    return None
+                order = ids[np.argsort(s0.ravel()[ids], kind='stable')]
+                vs = vol_s.ravel()[order]
+                csum = np.cumsum(vs)
+                stop = int(np.searchsorted(csum, need_drop, side='left')) + 1
+                if stop >= len(order):
+                    return None
+                r.ravel()[order[:stop]] = False
+                continue
+            if after_f > req_hi:
+                need_drop = after_f - req_hi
+                ids = np.flatnonzero(a)
+                if not len(ids):
+                    return None
+                order = ids[np.argsort(s1.ravel()[ids], kind='stable')]
+                vs = vol_s.ravel()[order]
+                csum = np.cumsum(vs)
+                stop = int(np.searchsorted(csum, need_drop, side='left')) + 1
+                if stop >= len(order):
+                    return None
+                a.ravel()[order[:stop]] = False
+                continue
+        if not _project_coarse_valid(cenv, f, r, a, changed, air_after, mw, clean_old, rem_s, g_s):
+            return None
+        if zs == cenv.nz:
+            return Exchange(r.copy(), a.copy(), f.version)
+        r_full = np.zeros(cenv.shape, bool)
+        a_full = np.zeros(cenv.shape, bool)
+        r_full[:zs] = r
+        a_full[:zs] = a
+        return Exchange(r_full, a_full, f.version)
+    return None
+
+
+class CoarseToFineNetwork(Organic3DNetwork):
+    """Shared 2D+1D trunk with macro (4 m), coarse (2 m), and fine (1 m) stems."""
+
+    def __init__(self, input_channels=12):
+        super().__init__(input_channels)
+        self.macro_stem = nn.Sequential(nn.Conv2d(input_channels, 32, 3, stride=1, padding=1), nn.SiLU())
+        self.coarse_stem = nn.Sequential(nn.Conv2d(input_channels, 32, 3, stride=2, padding=1), nn.SiLU())
+        self.goal_encoder = nn.Linear(6, 32)
+        self.critic = nn.Sequential(nn.Linear(70, 32), nn.SiLU(), nn.Linear(32, 1))
+        self.operation_head = nn.Linear(70, 4)
+        nn.init.zeros_(self.goal_encoder.weight)
+        nn.init.zeros_(self.goal_encoder.bias)
+        nn.init.zeros_(self.operation_head.weight)
+        nn.init.zeros_(self.operation_head.bias)
+        with torch.no_grad():
+            self.operation_head.weight[0, 64:66] = torch.tensor([3., -3.])
+            self.operation_head.weight[1, 64:66] = torch.tensor([-3., 3.])
+            self.operation_head.bias[2] = 0.6
+
+    def _encode_stage_window(self, obs_w, scale):
+        B, Zw, C, H, W = obs_w.shape
+        flat = obs_w.reshape(B * Zw, C, H, W)
+        if scale == 8:
+            x = self.macro_stem(F.interpolate(flat, scale_factor=2, mode='nearest'))
+        elif scale == 4:
+            x = self.macro_stem(flat)
+        elif scale == 2:
+            x = self.coarse_stem(flat)
+        else:
+            x = self.down(self.stem(flat))
+        v = F.silu(self.ctx_xy1(x))
+        v = F.silu(v + self._zmix(v, self.ctx_z1, self.ctx_z1_bias, B, Zw))
+        v = F.silu(self.ctx_xy2(v))
+        v = F.silu(v + self._zmix(v, self.ctx_z2, self.ctx_z2_bias, B, Zw))
+        return v.view(B, Zw, 32, v.shape[-2], v.shape[-1])
+
+    def _head_stage_slice(self, v_keep, obs_keep, goal_exp, scale):
+        B, Zk, C, H, W = obs_keep.shape
+        flat_k = obs_keep.reshape(B * Zk, C, H, W)
+        vk = v_keep.reshape(B * Zk, 32, v_keep.shape[-2], v_keep.shape[-1])
+        if scale >= 4:
+            oc = flat_k
+        else:
+            s = 2 if scale == 2 else 4
+            ky, kx = min(s, H), min(s, W)
+            oc = F.avg_pool2d(flat_k, kernel_size=(ky, kx), stride=s, ceil_mode=True, count_include_pad=False)
+        if oc.shape[-2:] != vk.shape[-2:]:
+            oc = F.interpolate(oc, size=vk.shape[-2:], mode='bilinear', align_corners=False)
+        loc = F.silu(self.local_skip(oc))
+        gk = goal_exp.expand(-1, Zk, -1, -1, -1).reshape(B * Zk, 32, 1, 1)
+        cond = torch.cat((vk + gk, loc), dim=1)
+        return self.head(cond).view(B, Zk, 2, vk.shape[-2], vk.shape[-1]).permute(0, 2, 1, 3, 4)
+
+    def forward_stage_batch(self, obs_b, goal_b, is_coarse=False, stride=(2, 4, 4), window_floors=16, scale=None):
+        st_scale = (2 if is_coarse else 1) if scale is None else int(scale)
+        B, Z, C, H, W = obs_b.shape
+        win = max(6, int(window_floors))
+        halo = 2
+        goal_exp = self.goal_encoder(goal_b)[:, None, :, None, None]
+        if Z <= win:
+            v_bz = self._encode_stage_window(obs_b, st_scale)
+            fl = v_bz.mean((-1, -2))
+            context = torch.cat((fl.mean(1), fl.amax(1), goal_b), dim=-1)
+            coarse_z = self._head_stage_slice(v_bz, obs_b, goal_exp, st_scale)
+        else:
+            cz_parts = []
+            floor_sum = None
+            floor_max = None
+            k0 = 0
+            while k0 < Z:
+                w_start = max(0, k0 - halo)
+                w_end = min(Z, w_start + win)
+                k1 = Z if w_end == Z else w_end - halo
+                keep_s = k0 - w_start
+                keep_e = k1 - w_start
+                v_win = self._encode_stage_window(obs_b[:, w_start:w_end], st_scale)
+                v_keep = v_win[:, keep_s:keep_e]
+                fl = v_keep.mean((-1, -2))
+                f_sum = fl.sum(1)
+                f_max = fl.amax(1)
+                floor_sum = f_sum if floor_sum is None else (floor_sum + f_sum)
+                floor_max = f_max if floor_max is None else torch.maximum(floor_max, f_max)
+                cz_parts.append(self._head_stage_slice(v_keep, obs_b[:, k0:k1], goal_exp, st_scale))
+                k0 = k1
+            coarse_z = torch.cat(cz_parts, dim=2)
+            context = torch.cat((floor_sum / Z, floor_max, goal_b), dim=-1)
+
+        target = (max(1, math.ceil(Z / stride[0])), max(1, math.ceil(H / stride[1])), max(1, math.ceil(W / stride[2])))
+        if stride[0] == 1 and coarse_z.shape[2:] == target:
+            coarse = coarse_z
+        elif stride[0] == 2 and coarse_z.shape[-2:] == target[1:]:
+            kz = min(2, coarse_z.shape[2])
+            coarse = F.avg_pool3d(coarse_z, (kz, 1, 1), stride=(2, 1, 1), ceil_mode=True, count_include_pad=False)
+        else:
+            coarse = F.interpolate(
+                coarse_z.reshape(B * 2, 1, Z, coarse_z.shape[-2], coarse_z.shape[-1]),
+                size=target,
+                mode='trilinear',
+                align_corners=False,
+            ).reshape(B, 2, *target)
+        coarse = 3.0 * torch.tanh(coarse / 3.0)
+        return coarse, self.critic(context).squeeze(-1), self.operation_head(context)
+
+
+class CoarseToFineLearner:
+    """Two-stage actor-critic training coarse Stage 1 + fine Stage 2 in unified GAE."""
+
+    def __init__(self, device='cpu', seed=123, block=(2, 2, 2), fine_config=None):
+        self.device = torch.device(device)
+        self.seed = int(seed)
+        self.block = tuple(int(v) for v in block)
+        self.bz = self.block[0]
+        self.fine_config = fine_config or PatchConfig(
+            mode='combined',
+            allocation='feedback',
+            eligibility='depth',
+            facade_layers=2,
+            minimum_patch=4,
+            maximum_patches=4,
+            maximum_voids=1,
+            minimum_void_area=4,
+            batched=True,
+            vertical_interior=False,
+            budget_reserve_fraction=0.2,
+        )
+        with torch.random.fork_rng(devices=[]):
+            torch.manual_seed(self.seed)
+            self.model = CoarseToFineNetwork(12).to(self.device)
+        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1.2e-3, weight_decay=1e-4)
+        self.tape = []
+        self.updates = 0
+        self.direct_updates = 0
+
+    def clear(self):
+        self.tape = []
+
+    def _goal_vec(self, env_or_cenv, scale):
+        limit = getattr(env_or_cenv, 'unified_limit', 1)
+        spent = getattr(env_or_cenv, 'unified_actions', env_or_cenv.edits)
+        g_scale = max(10.0, 3.0 * float(env_or_cenv.target_far))
+        stage_feat = 1.0 if scale >= 4 else (0.5 if scale == 2 else 0.0)
+        return torch.tensor(
+            [
+                min(2.0, float(env_or_cenv.far) / g_scale),
+                min(2.0, float(env_or_cenv.target_far) / g_scale),
+                min(2.0, float(env_or_cenv.far_error) / g_scale),
+                max(0, limit - spent) / max(1, limit),
+                spent / max(1, limit),
+                stage_feat,
+            ],
+            device=self.device,
+            dtype=torch.float32,
+        )
+
+    def _fine_obs(self, e, z_slice=None):
+        if not hasattr(e, 'external_potential'):
+            e.precompute_external()
+            normals = e.suns.new_tensor(((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)))
+            w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor((3., 3., 3., 3., 1., 1.))[None]
+            e.external_potential = (
+                e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float() * w[:, :, None, None, None]
+            ).sum((0, 1)) / w.sum().clamp_min(1)
+        remove = e.frontier.weights_tensor(-1, self.device)
+        grow = torch.as_tensor(growth_mask(e), device=self.device, dtype=torch.float32)
+        ep = e.external_potential
+        fl = e.facade_light
+        occ_sub = e.occupied
+        usb_sub = e.usable
+        if z_slice is not None:
+            remove = remove[:z_slice]
+            grow = grow[:z_slice]
+            ep = ep[:z_slice]
+            fl = fl[:z_slice]
+            occ_sub = occ_sub[:z_slice]
+            usb_sub = usb_sub[:z_slice]
+        if e.plot_area >= 400 and e.ny >= 6 and e.nx >= 6:
+            c_key = (e.frontier.version, z_slice)
+            cache = getattr(e, '_ln6_cache', None)
+            if cache is not None and cache[0] == c_key:
+                ln6 = cache[1]
+            else:
+                if not hasattr(e, '_allowed_ln6_t'):
+                    e._allowed_ln6_t = long_narrow_mask(e.allowed, 6, 2)
+                aln = e._allowed_ln6_t[:z_slice] if z_slice is not None else e._allowed_ln6_t
+                ln6 = long_narrow_mask(occ_sub, 6, 2) & ~aln
+                e._ln6_cache = (c_key, ln6)
+        else:
+            ln6 = torch.zeros_like(occ_sub, dtype=torch.bool)
+        channels = (e.observation(include_depth=True, z_slice=z_slice), remove[:, None], grow[:, None], ep[:, None], fl[:, None], ln6.float()[:, None], usb_sub.float()[:, None])
+        return torch.cat(channels, 1)
+
+    def choose_stage(self, env_or_cenv, is_coarse, training=True, retries=8):
+        self.last_operation = None
+        self.last_rejection = None
+        cfg = env_or_cenv.config if is_coarse else self.fine_config
+        stride = cfg.stride
+        scale = int(env_or_cenv.bxy) if is_coarse else 1
+        bz = int(env_or_cenv.bz) if is_coarse else 1
+        mw = ((2 if scale == 2 else 1) if env_or_cenv.plot_area >= 400 else 1) if is_coarse else min_room_width(env_or_cenv)
+        ln_w, ln_stub = (3, 1) if scale == 2 else ((1, 0) if scale >= 4 else (6, 2))
+        z_floor_min = ((6 if bz == 1 else 4) if is_coarse else 10)
+
+        with torch.no_grad():
+            occ_z = env_or_cenv.occupied.any(dim=(1, 2)).nonzero(as_tuple=False)
+            z_top = int(occ_z[-1].item()) + 1 if len(occ_z) else 0
+            z_step = 4 if (not is_coarse or bz == 1) else 2
+            z_act = min(env_or_cenv.nz, max(min(env_or_cenv.nz, z_floor_min), ((z_top + z_step) // z_step) * z_step))
+            obs = env_or_cenv.observation(z_slice=z_act) if is_coarse else self._fine_obs(env_or_cenv, z_slice=z_act)
+            goal = self._goal_vec(env_or_cenv, scale)
+            mean_all, value, logits = self.model.forward_stage_batch(obs[None], goal[None], is_coarse=is_coarse, stride=stride, scale=scale)
+            mean_all, value, logits = mean_all[0], value[0], logits[0]
+
+            r_avail = bool(env_or_cenv.frontier.eligible(-1).any())
+            a_avail = bool(growth_mask(env_or_cenv).any())
+            if is_coarse:
+                low_f, high_f = env_or_cenv.acceptable_fine_counts
+                remove = r_avail and env_or_cenv.count_fine > low_f
+                grow = a_avail and env_or_cenv.count_fine < high_f
+                can_finish = bool(env_or_cenv.near_far)
+            else:
+                low_f, high_f = env_or_cenv.acceptable_counts
+                remove = r_avail and env_or_cenv.count > low_f
+                grow = a_avail and env_or_cenv.count < high_f
+                can_finish = bool(env_or_cenv.far_satisfied)
+
+            legal = torch.tensor([remove, grow, r_avail and a_avail, can_finish], device=self.device, dtype=torch.bool)
+            if training and env_or_cenv.edits == 0 and bool(legal[:3].any()):
+                legal = legal.clone()
+                legal[3] = False
+            if not bool(legal.any()):
+                self.last_rejection = 'no_admissible_edits'
+                return None
+
+            eff_logits = logits if training else logits * 2.5
+            dist_op = Categorical(logits=eff_logits.masked_fill(~legal, float('-inf')))
+            op = dist_op.sample()
+            operation = OPERATIONS[int(op.cpu())]
+            self.last_operation = operation
+
+            move = None
+            latent = None
+            consumed = None
+            elig_c = None
+            local_adv = None
+            if operation != 'finish':
+                w_rem = env_or_cenv.frontier.weights_tensor(-1, self.device)[:z_act]
+                add_np = growth_mask(env_or_cenv)[:z_act]
+                w_add = torch.as_tensor(add_np, device=self.device, dtype=torch.float32)
+                avail_rem = int(env_or_cenv.frontier.eligible(-1)[:z_act].sum())
+                avail_add = int(add_np.sum())
+                occ_s = env_or_cenv.occupied[:z_act]
+                kernel = tuple(min(n, s) for n, s in zip(occ_s.shape, stride))
+                consumed = [0] if operation == 'remove' else [1] if operation == 'grow' else [0, 1]
+                mean = mean_all[consumed]
+                std = self.model.patch_log_std[consumed].clamp(-1.4, -0.3).exp()[:, None, None, None]
+                dist = Normal(mean, std, validate_args=False)
+
+                if is_coarse:
+                    avg_v = max(1e-6, env_or_cenv.avg_vol)
+                    c_low = max(1, int(round(low_f / avg_v)))
+                    c_high = min(env_or_cenv.capacity_coarse, int(round(high_f / avg_v)))
+                    c_goal = min(c_high, max(c_low, env_or_cenv.count))
+                    remaining = max(0, abs(env_or_cenv.count_fine - env_or_cenv.goal_count_fine))
+                    rem_c = max(0, int(round(remaining / avg_v)))
+                    productive = max(1, env_or_cenv.workload.limit - env_or_cenv.workload.margin - env_or_cenv.unified_actions)
+                    ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
+                    min_step = 1 if scale == 4 else 2
+                    step_net = max(min_step, math.ceil(rem_c / productive / ret)) if rem_c else 0
+                    reloc = max(min_step, min(int(round((env_or_cenv.plot_area / float(scale * scale)) * 0.35)), max(min_step, round(env_or_cenv.target_coarse * 0.10))))
+                else:
+                    c_low, c_high = low_f, high_f
+                    c_goal = env_or_cenv.goal_count
+                    remaining = abs(env_or_cenv.count - c_goal)
+                    rem_c = remaining
+                    productive = max(1, env_or_cenv.workload.limit - env_or_cenv.workload.margin - env_or_cenv.unified_actions)
+                    ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
+                    step_net = max(4, math.ceil(rem_c / productive / ret)) if rem_c else 0
+                    reloc = max(16, min(int(round(env_or_cenv.plot_area * 0.35)), max(16, round(env_or_cenv.target_count * 0.08))))
+                    min_step = 4
+
+                base_rem = 0
+                base_add = 0
+                cur_c = env_or_cenv.count
+                if operation == 'remove':
+                    if cur_c > c_goal:
+                        base_rem = min(max(1, cur_c - c_low), step_net)
+                    else:
+                        base_rem = min(max(1, cur_c - c_low), max(min_step, round(c_goal * 0.04)))
+                    base_rem = min(avail_rem, max(0, base_rem))
+                elif operation == 'grow':
+                    if cur_c < c_goal:
+                        base_add = min(max(1, c_high - cur_c), step_net)
+                    else:
+                        base_add = min(max(1, c_high - cur_c), max(min_step, round(c_goal * 0.05)))
+                    base_add = min(avail_add, max(0, base_add))
+                else:
+                    if cur_c > c_goal:
+                        base_add = min(avail_add, reloc)
+                        base_rem = min(avail_rem, base_add + min(max(1, cur_c - c_low), max(min_step, step_net)))
+                    elif cur_c < c_goal:
+                        base_rem = min(avail_rem, reloc)
+                        base_add = min(avail_add, base_rem + min(max(1, c_high - cur_c), max(min_step, step_net)))
+                    else:
+                        both = min(reloc, avail_rem, avail_add)
+                        base_rem = both
+                        base_add = both
+
+                clean_occ = clean_floor_tensor(occ_s, mw) if mw > 1 else None
+                skin = torch.as_tensor(env_or_cenv.frontier.remove_skin[:z_act], device=self.device) if mw > 1 else None
+                ln_before = None
+                allowed_ln = None
+                if env_or_cenv.plot_area >= 400 and ln_w > 1 and env_or_cenv.ny >= ln_w and env_or_cenv.nx >= ln_w:
+                    allowed_ln = long_narrow_mask(env_or_cenv.allowed, ln_w, ln_stub)[:z_act]
+                    ln_before = long_narrow_mask(occ_s, ln_w, ln_stub) & ~allowed_ln
+                ln_f = ln_before.float() if ln_before is not None else torch.zeros_like(env_or_cenv.facade_light[:z_act])
+
+                for attempt in range(retries):
+                    latent = dist.sample() if (training or attempt > 0) else (mean + 0.08 * std * torch.randn_like(mean))
+                    decoded = F.interpolate(latent[:, None], size=occ_s.shape, mode='trilinear', align_corners=False)[:, 0]
+                    if cfg.mode == 'combined':
+                        decoded = gaussian_field(decoded, cfg.sigma)
+                    sc = (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)[min(attempt, 7)]
+                    scores = torch.zeros((2, *occ_s.shape), device=self.device, dtype=torch.float32)
+                    masks = torch.zeros((2, *occ_s.shape), device=self.device, dtype=torch.bool)
+                    if 0 in consumed and avail_rem > 0 and base_rem > 0:
+                        n_r = min(avail_rem, max(1, round(base_rem * sc)))
+                        s0 = decoded[consumed.index(0)].sigmoid() * w_rem
+                        if mw > 1 and skin is not None:
+                            bound = torch.where(skin, s0, torch.zeros_like(s0))
+                            near = skin
+                            for _ in range(max(1, cfg.facade_layers)):
+                                nbr_b = F.max_pool2d(bound[:, None], 3, stride=1, padding=1)[:, 0]
+                                nbr_n = F.max_pool2d(near.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                bound = torch.where(near, bound, nbr_b * 0.999)
+                                near = near | nbr_n
+                            inner = (w_rem > 0) & ~skin & near
+                            s0 = torch.where(inner, torch.minimum(s0, bound), s0)
+                        scores[0] = s0
+                        r_t = torch.zeros_like(occ_s)
+                        ids = s0.masked_fill(w_rem <= 0, -1).flatten().topk(n_r).indices
+                        r_t.flatten()[ids] = True
+                        if mw > 1:
+                            if ln_before is not None and attempt < 3:
+                                after_t = occ_s & ~r_t
+                                new_ln = long_narrow_mask(after_t, ln_w, ln_stub) & ~ln_before & ~allowed_ln
+                                zone_ln = F.max_pool2d(new_ln.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                r_t = r_t & ~zone_ln
+                            after_t = occ_s & ~r_t
+                            slim_t = (after_t & ~clean_floor_tensor(after_t, mw)) & clean_occ
+                            r_t = r_t | (slim_t & (w_rem > 0))
+                            for _ in range(2):
+                                after_t = occ_s & ~r_t
+                                slim_t = (after_t & ~clean_floor_tensor(after_t, mw)) & clean_occ
+                                zone = F.max_pool2d(slim_t.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                r_t = r_t & ~zone
+                        masks[0] = r_t
+                    if 1 in consumed and avail_add > 0 and base_add > 0:
+                        n_a = min(avail_add, max(1, round(base_add * sc)))
+                        s1 = decoded[consumed.index(1)].sigmoid() * w_add
+                        scores[1] = s1
+                        a_t = torch.zeros_like(occ_s)
+                        ids = s1.masked_fill(w_add <= 0, -1).flatten().topk(n_a).indices
+                        a_t.flatten()[ids] = True
+                        if mw > 1:
+                            base_occ = occ_s & ~masks[0]
+                            a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
+                            if ln_before is not None:
+                                cand = base_occ | a_t
+                                has_core = (F.avg_pool2d(cand.float()[:, None], ln_w, stride=1) > 1.0 - 1e-4).amax((-1, -2, -3))
+                                new_ln = long_narrow_mask(cand, ln_w, ln_stub) & ~long_narrow_mask(base_occ, ln_w, ln_stub) & ~allowed_ln & has_core[:, None, None]
+                                a_t = a_t & ~new_ln
+                                a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
+                        masks[1] = a_t
+
+                    if z_act == env_or_cenv.nz:
+                        masks_np = masks.cpu().numpy()
+                        scores_np = scores.cpu().numpy()
+                    else:
+                        masks_np = np.zeros((2, *env_or_cenv.shape), dtype=bool)
+                        scores_np = np.zeros((2, *env_or_cenv.shape), dtype=np.float32)
+                        masks_np[:, :z_act] = masks.cpu().numpy()
+                        scores_np[:, :z_act] = scores.cpu().numpy()
+                    if is_coarse:
+                        move = project_coarse_3d(env_or_cenv, masks_np, scores_np, operation, True)
+                    else:
+                        from .unified import project_organic_3d
+                        move = project_organic_3d(env_or_cenv, masks_np, scores_np, operation, True)
+                    if move is not None:
+                        if training:
+                            elig_full = torch.stack(((w_rem > 0).float(), (w_add > 0).float()))[consumed]
+                            elig_c = (F.max_pool3d(elig_full[:, None], kernel, stride=stride, ceil_mode=True)[:, 0] > 0.5).float()
+                            des_c = compute_spatial_desirability(env_or_cenv, w_rem, w_add, ln_f, consumed, kernel, stride, z_slice=z_act)
+                            la_raw = (latent.sigmoid() - mean.detach().sigmoid()) * des_c * elig_c
+                            local_adv = torch.zeros_like(la_raw)
+                            for c in range(la_raw.shape[0]):
+                                w_c = elig_c[c]
+                                n_c = w_c.sum().clamp_min(1.0)
+                                sd_c = (la_raw[c].square().sum() / n_c).sqrt().clamp_min(1e-4)
+                                local_adv[c] = la_raw[c] / sd_c
+                        break
+                if move is None:
+                    self.last_rejection = 'mask_generation_failed'
+
+            if training:
+                self.tape.append(
+                    dict(
+                        obs=obs.detach(),
+                        goal=goal.detach(),
+                        is_coarse=bool(is_coarse),
+                        scale=int(scale),
+                        stride=tuple(stride),
+                        op=op.detach(),
+                        legal=legal.detach(),
+                        value=value.detach(),
+                        latent=latent.detach() if move is not None else None,
+                        consumed=consumed if move is not None else None,
+                        elig_c=elig_c.detach() if elig_c is not None else None,
+                        local_adv=local_adv.detach() if local_adv is not None else None,
+                        reward=None,
+                        done=False,
+                    )
+                )
+        return move
+
+    def record(self, reward):
+        if not self.tape:
+            return
+        self.tape[-1]['reward'] = torch.as_tensor(reward, dtype=torch.float32, device=self.device).detach()
+
+    def add_reward(self, reward):
+        if not self.tape:
+            return
+        r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).detach()
+        last = self.tape[-1]
+        last['reward'] = r if last['reward'] is None else (last['reward'] + r)
+
+    def mark_done(self):
+        if self.tape:
+            self.tape[-1]['done'] = True
+
+    def finish(self, bootstrap=0.0):
+        if not self.tape:
+            return dict(updates=self.updates, loss=0.0, gradientNorm=0.0)
+        rewards = []
+        dones = []
+        val_old = []
+        zero_r = torch.zeros((), dtype=torch.float32, device=self.device)
+        for entry in self.tape:
+            val_old.append(entry['value'])
+            rew = entry['reward']
+            rewards.append(zero_r if rew is None else rew)
+            dones.append(bool(entry['done']))
+        val_old_t = torch.stack(val_old)
+        next_val = torch.as_tensor(bootstrap, dtype=torch.float32, device=self.device).detach()
+        gamma, lam = 0.99, 0.95
+        gae = torch.zeros((), dtype=torch.float32, device=self.device)
+        advs = []
+        for t in range(len(self.tape) - 1, -1, -1):
+            mask = 0.0 if dones[t] else 1.0
+            nv = next_val if t == len(self.tape) - 1 else val_old_t[t + 1]
+            delta = rewards[t] + gamma * nv * mask - val_old_t[t]
+            gae = delta + gamma * lam * mask * gae
+            advs.append(gae)
+        adv = torch.stack(list(reversed(advs)))
+        returns = adv + val_old_t
+        if len(adv) > 1:
+            adv = (adv - adv.mean()) / adv.std().clamp_min(1e-5)
+
+        groups = {}
+        for t, entry in enumerate(self.tape):
+            key = (entry['is_coarse'], entry.get('scale', 2 if entry['is_coarse'] else 1), entry['stride'], int(entry['obs'].shape[0]))
+            groups.setdefault(key, []).append(t)
+
+        values_out = [None] * len(self.tape)
+        ent_terms = []
+        actor_terms = []
+        stds = self.model.patch_log_std.clamp(-1.4, -0.3).exp()
+        for (is_c, st_scale, stride, _z), idxs in groups.items():
+            obs_b = torch.stack([self.tape[t]['obs'] for t in idxs], dim=0)
+            goal_b = torch.stack([self.tape[t]['goal'] for t in idxs], dim=0)
+            mean_b, val_b, logits_b = self.model.forward_stage_batch(obs_b, goal_b, is_coarse=is_c, stride=stride, scale=st_scale)
+            for k, t in enumerate(idxs):
+                entry = self.tape[t]
+                values_out[t] = val_b[k]
+                dist_op = Categorical(logits=logits_b[k].masked_fill(~entry['legal'], float('-inf')))
+                logp = dist_op.log_prob(entry['op'])
+                ent_terms.append(dist_op.entropy())
+                a_ep = adv[t].detach()
+                term = -(logp * a_ep)
+                if entry['latent'] is not None:
+                    consumed = entry['consumed']
+                    mean = mean_b[k, consumed]
+                    std = stds[consumed][:, None, None, None]
+                    dist_s = Normal(mean, std, validate_args=False)
+                    elig_c = entry['elig_c']
+                    sp_lp = (dist_s.log_prob(entry['latent']) + dist_s.entropy().detach()) * elig_c
+                    ecnt = elig_c.sum().clamp_min(1.0)
+                    term = term - (sp_lp.sum() / ecnt.sqrt()) * a_ep
+                    term = term - 1.2 * ((sp_lp * entry['local_adv']).sum() / ecnt.sqrt())
+                actor_terms.append(term)
+        values_t = torch.stack(values_out)
+        actor = torch.stack(actor_terms).mean()
+        critic = F.smooth_l1_loss(values_t, returns)
+        loss = actor + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
+        self.optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        norm = nn.utils.clip_grad_norm_(self.model.parameters(), 2.0, error_if_nonfinite=True)
+        self.optimizer.step()
+        self.updates += 1
+        self.direct_updates += 1
+        result = dict(
+            updates=self.updates,
+            loss=float(loss.detach().cpu()),
+            gradientNorm=float(norm.detach().cpu()),
+        )
+        self.clear()
+        return result
+
+
+def run_cascade_episode(env, coarse_envs, learner, initial_storeys, objective_fn, training=True, rollout_steps=16, audit_steps=5):
+    """Run an arbitrary N-stage coarse -> ... -> fine episode and return timing + exact fine metrics."""
+    t0 = time.perf_counter()
+    coarse_envs = list(coarse_envs)
+    coarse_envs[0].reset(initial_storeys)
+    start_fine = coarse_envs[0].start_count_fine
+    stage_steps = []
+
+    for idx, ce in enumerate(coarse_envs):
+        c_steps = 0
+        while not ce.near_far and ce.unified_actions < ce.unified_limit:
+            move = learner.choose_stage(ce, is_coarse=True, training=training)
+            ce.unified_actions += 1
+            if learner.last_operation == 'finish':
+                if training and learner.tape:
+                    learner.record(0.0)
+                break
+            if move is None:
+                if training and learner.tape:
+                    learner.record(-0.02)
+                continue
+            ce.apply_move(move)
+            c_steps += 1
+            if learner.fine_config.allocation == 'feedback':
+                ce.workload.observe(int(move.remove.sum() + move.add.sum()), int(move.remove.sum() + move.add.sum()))
+            if training:
+                learner.record(-0.002)
+        stage_steps.append(c_steps)
+        if idx + 1 < len(coarse_envs):
+            ce.upsample_to_coarse(coarse_envs[idx + 1])
+        else:
+            ce.upsample_to_fine()
+
+    fine_steps = 0
+    while not env.terminal:
+        move = learner.choose_stage(env, is_coarse=False, training=training)
+        env.unified_actions += 1
+        if learner.last_operation == 'finish':
+            env.termination = 'far_reached'
+            if training and learner.tape:
+                learner.record(0.0)
+            break
+        if move is None:
+            if training and learner.tape:
+                learner.record(-0.02)
+            if env.unified_actions >= env.unified_limit:
+                env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+                break
+            continue
+        commit_fine(env, move, validated=True)
+        fine_steps += 1
+        if learner.fine_config.allocation == 'feedback':
+            env.workload.observe(int(move.remove.sum() + move.add.sum()), int(move.remove.sum() + move.add.sum()))
+        if training:
+            learner.record(-0.005 if env.far_satisfied else 0.0)
+        if env.unified_actions >= env.unified_limit:
+            env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+            break
+        if env.edits % audit_steps == 0:
+            env.evaluate()
+
+    if env.last_audit_edit != env.edits:
+        env.evaluate()
+    obj, diag = objective_fn(env)
+    if training and learner.tape:
+        far_pen = 0.0 if env.far_satisfied else -(
+            0.35 + 0.85 * abs(env.count - env.goal_count) / max(1, abs(start_fine - env.goal_count))
+        )
+        learner.add_reward(5.0 * (obj + far_pen))
+        learner.mark_done()
+        if len(learner.tape) >= rollout_steps:
+            learner.finish(0.0)
+    sync(env.device)
+    dt = time.perf_counter() - t0
+    m = env.metrics()
+    fa = [int(x) for x in env.occupied.sum((1, 2)).detach().cpu().tolist()]
+    return dict(
+        seconds=round(dt, 4),
+        stageSteps=stage_steps + [fine_steps],
+        coarseSteps=sum(stage_steps),
+        fineSteps=fine_steps,
+        totalSteps=sum(stage_steps) + fine_steps,
+        success=bool(env.termination == 'far_reached'),
+        termination=env.termination,
+        far=round(float(m['far']), 4),
+        organicObjective=round(float(obj), 4),
+        usableGoodArea=round(float(diag['usableGoodArea']), 1),
+        directSunProxy=round(float(m['directSunProxy']), 4),
+        diffuseFacadeProxy=round(float(m['diffuseFacadeProxy']), 4),
+        longNarrowFraction=round(float(diag['longNarrowFraction']), 4),
+        slimVoxels=int(diag['slimVoxels']),
+        cantileverVoxels=int(diag['cantileverVoxels']),
+        topFloor=max((i + 1 for i, v in enumerate(fa) if v > 0), default=0),
+        floorAreas=fa,
+    )
+
+
+def run_episode(env, cenv, learner, initial_storeys, objective_fn, training=True, rollout_steps=16, audit_steps=5):
+    """Run one two-stage coarse-to-fine episode."""
+    return run_cascade_episode(env, [cenv], learner, initial_storeys, objective_fn, training=training, rollout_steps=rollout_steps, audit_steps=audit_steps)

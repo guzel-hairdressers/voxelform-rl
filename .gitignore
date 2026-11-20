@@ -2,4 +2,10 @@ __pycache__/
 *.pyc
 .venv/
 results/checkpoints/
+results/scene_cache/
 .DS_Store
+runs/
+*.egg-info/
+.ruff_cache/
+dist/
+build/

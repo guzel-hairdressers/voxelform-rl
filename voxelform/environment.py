@@ -1,11 +1,25 @@
 """Surface-anchored volume edits and explicit proxy evaluation."""
-import math,random,time
+import hashlib,math,os,random,time
+from pathlib import Path
 import numpy as np
 import torch
-from .shadows import DirectShadows,BoundaryShadows,DepthShadows,SelfShadowMaps,ReceiverCache,MeshShadows,sun_path,sync
+from .shadows import DirectShadows,BoundaryShadows,DepthShadows,SelfShadowMaps,FastVoxelShadows,ReceiverCache,MeshShadows,sun_path,sync
 from .actions import ExteriorFacades
 from .workload import reset_budget
 from .fields import grid_points,noise_prior,sky_boundary,diffuse_access,facade_sky_access,receivers,usable_depth_proxy,facade_depth,depth_badness
+from .cores import solve_cores,DEFAULT_MIN_CORE_SPACING,DEFAULT_MAX_CORE_DIST
+
+
+def _scene_cache_path(cache_dir,context,shape,sun_count,angle,allowed_np,suns_np,pitch=1.,version='scene_cache_v2'):
+    h=hashlib.sha256()
+    for part in (str(version),context.get('site_id',''),repr(tuple(shape)),context.get('gridAlignment','world'),f'{float(angle):.9f}',str(int(sun_count)),f'{float(pitch):.6f}'):
+        h.update(part.encode('utf-8'))
+    h.update(np.ascontiguousarray(allowed_np,dtype=np.bool_).tobytes())
+    h.update(np.ascontiguousarray(suns_np,dtype=np.float32).tobytes())
+    for b in context.get('buildings',()):
+        h.update(np.ascontiguousarray(b['vertices'],dtype=np.float32).tobytes())
+        h.update(np.ascontiguousarray(b['faces'],dtype=np.int32).tobytes())
+    return Path(cache_dir)/f"{context.get('site_id','site')}_{h.hexdigest()[:16]}.pt"
 
 
 def context_boxes(nx,ny,count=16,seed=123,height=24.):
@@ -18,14 +32,24 @@ def context_boxes(nx,ny,count=16,seed=123,height=24.):
 
 
 class Environment:
-    def __init__(self,shape=(6,24,32),seed=123,device='cpu',shadow_method='boundary',sun_count=8,pitch=1.,plan='rectangle',context=None,target_far=3.,depth_weight=0.,frontier_factory=ExteriorFacades,far_tolerance=0.):
+    def __init__(self,shape=(6,24,32),seed=123,device='cpu',shadow_method='boundary',sun_count=8,pitch=1.,plan='rectangle',context=None,target_far=3.,depth_weight=0.,frontier_factory=ExteriorFacades,far_tolerance=0.,scene_cache_dir=None,fast_self_shadows=False,fast_diffuse=False,cores_enabled=False,min_core_spacing=DEFAULT_MIN_CORE_SPACING,max_core_dist=DEFAULT_MAX_CORE_DIST):
         if context is not None:shape=context['shape']
         self.shape=tuple(shape);self.device=torch.device(device);self.seed=seed;self.pitch=pitch;self.sun_count=sun_count
         self.nz,self.ny,self.nx=self.shape;self.plan=plan;self.context=context
         self.frontier_factory=frontier_factory
+        self.fast_self_shadows=bool(fast_self_shadows)
+        self.fast_diffuse=bool(fast_diffuse)
+        self.cores_enabled=bool(cores_enabled)
+        self.min_core_spacing=max(0,int(min_core_spacing))
+        self.max_core_dist=max(1,int(max_core_dist))
+        self._reset_core_fields()
         self.depth_weight=float(depth_weight)
         if not math.isfinite(self.depth_weight) or self.depth_weight<0:raise ValueError("depth_weight must be nonnegative and finite")
+        ctx_metrics=(context or {}).get('metrics') or {}
+        self.context_avg_height=float((context or {}).get('avgHeight') or ctx_metrics.get('avgHeight') or 18.)
+        self.context_max_height=float((context or {}).get('maxHeight') or ctx_metrics.get('maxHeight') or float(self.nz*3))
         self.points=grid_points(shape,self.device);self.x=self.points[...,0];self.y=self.points[...,1];self.z=self.points[...,2]/3
+        self.rel_z=torch.tanh(self.points[...,2]/36.)
         allowed=torch.ones(shape,dtype=torch.bool,device=self.device)
         if plan=='triangle':allowed&=self.x/self.nx+self.y/self.ny<1.
         elif plan=='courtyard':allowed&=~((self.x>.65*self.nx)&(self.y>.65*self.ny))
@@ -50,8 +74,50 @@ class Environment:
         else:
             self.static=cls(self.boxes,self.suns_np,self.bounds,pitch,self.device) if shadow_method!='direct' else cls(self.boxes,self.suns_np,self.device)
         self.static_receivers=ReceiverCache(self.static,6*int(np.prod(shape)))
-        self.dynamic=SelfShadowMaps(shape,self.suns_np,pitch,device=self.device)
-        self.sky_boundary=sky_boundary(shape,self.boxes,self.device,buildings=None if context is None else context['buildings'],grid_angle=angle)
+        self._scene_cache_path=None;self._scene_cache_hit=False;self._precomputed_hit=False
+        self._cache_version='scene_cache_v3_fast' if self.fast_self_shadows else 'scene_cache_v2'
+        if context is not None and scene_cache_dir is not None:
+            cache_path=_scene_cache_path(scene_cache_dir,context,self.shape,self.sun_count,angle,context['allowed'],self.suns_np,pitch,version=self._cache_version)
+            self._scene_cache_path=cache_path
+            if cache_path.is_file():
+                try:
+                    cached=torch.load(cache_path,map_location='cpu',weights_only=True)
+                    base_ok=(isinstance(cached,dict) and cached.get('version')==self._cache_version
+                        and tuple(cached['shape'])==self.shape and int(cached['sun_count'])==self.sun_count
+                        and tuple(cached['sky_boundary'].shape)==tuple(n+2 for n in self.shape)
+                        and cached['known'].shape==self.static_receivers.known.shape
+                        and cached['values'].shape==self.static_receivers.values.shape)
+                    if base_ok and self.fast_self_shadows:
+                        self.sky_boundary=cached['sky_boundary'].to(self.device)
+                        self.static_receivers.known=cached['known'].to(self.device)
+                        self.static_receivers.values=cached['values'].to(self.device)
+                        self.dynamic=FastVoxelShadows(shape,self.suns_np,device=self.device)
+                        self._scene_cache_hit=True
+                        self._precomputed_hit=bool(cached.get('precomputed',True))
+                    elif base_ok and isinstance(cached.get('dynamic_maps'),list) and len(cached['dynamic_maps'])==self.sun_count:
+                        self.sky_boundary=cached['sky_boundary'].to(self.device)
+                        self.static_receivers.known=cached['known'].to(self.device)
+                        self.static_receivers.values=cached['values'].to(self.device)
+                        dyn=SelfShadowMaps.__new__(SelfShadowMaps)
+                        dyn.suns=self.suns
+                        dyn.anchor=cached['dynamic_anchor'].to(self.device)
+                        dyn.maps=[
+                            dict(
+                                parameters=(m['u'].to(self.device),m['v'].to(self.device),m['low'].to(self.device),float(m['pitch']),m['sizes'].cpu().numpy(),None),
+                                ids=m['ids'].to(self.device),
+                                entry=m['entry'].to(self.device),
+                                image=None,
+                            )
+                            for m in cached['dynamic_maps']
+                        ]
+                        self.dynamic=dyn
+                        self._scene_cache_hit=True
+                        self._precomputed_hit=bool(cached.get('precomputed',True))
+                except Exception:
+                    self._scene_cache_hit=False;self._precomputed_hit=False
+        if not self._scene_cache_hit:
+            self.dynamic=FastVoxelShadows(shape,self.suns_np,device=self.device) if self.fast_self_shadows else SelfShadowMaps(shape,self.suns_np,pitch,device=self.device)
+            self.sky_boundary=sky_boundary(shape,self.boxes,self.device,buildings=None if context is None else context['buildings'],grid_angle=angle)
         road=((-15.,-8.,0.),(self.nx+15.,-8.,0.),1.)
         rail=((-11.,-15.,0.),(-11.,self.ny+15.,0.),.6)
         self.noise_raw=noise_prior(self.points,[road,rail] if context is None else []);self.noise=self.noise_raw/(self.noise_raw+.12)
@@ -138,28 +204,98 @@ class Environment:
         Cache validity is scoped to this environment's immutable scene/sun setup.
         """
         if isinstance(chunk,bool) or int(chunk)!=chunk or chunk<1:raise ValueError('chunk must be a positive integer')
-        stamp=time.perf_counter();cells=self.allowed.flatten().nonzero().flatten();new=0
+        stamp=time.perf_counter()
+        if self._scene_cache_hit and self._precomputed_hit:
+            return dict(seconds=time.perf_counter()-stamp,newReceivers=0,knownReceivers=int(self.static_receivers.known.sum().cpu()),
+                cacheBytes=self.static_receivers.known.numel()+self.static_receivers.values.numel())
+        cells=self.allowed.flatten().nonzero().flatten();new=0
         normals=self.points.new_tensor(((1,0,0),(-1,0,0),(0,1,0),(0,-1,0),(0,0,1),(0,0,-1)))
         spacing=self.points.new_tensor((1.,1.,3.));volume=self.occupied.numel()
-        for face in range(6):
-            eligible=cells if face!=5 else cells[cells>=self.nx*self.ny]
-            for begin in range(0,len(eligible),int(chunk)):
-                ids=eligible[begin:begin+int(chunk)]
-                xyz=torch.stack((ids%self.nx+.5,ids//self.nx%self.ny+.5,ids//(self.nx*self.ny)+.5),dim=1)
-                points=xyz*spacing+normals[face]*spacing/2
-                _,fresh=self.static_receivers.query(face*volume+ids,points);new+=fresh
+        if isinstance(self.static,MeshShadows) and self.static._all_suns_up:
+            slice_area=self.nx*self.ny
+            max_z=self.static.max_z-1e-4
+            for face in range(6):
+                nz_off=normals[face][2].item()*1.5
+                for z in range(0 if face!=5 else 1,self.nz):
+                    z_ids=self.allowed[z].flatten().nonzero().flatten()
+                    if not len(z_ids):continue
+                    r_z=z*slice_area+z_ids
+                    pz=(z+.5)*3.+nz_off
+                    if face!=5 and pz>=max_z:
+                        r_keys=face*volume+r_z
+                        fresh_mask=~self.static_receivers.known[r_keys]
+                        if bool(fresh_mask.any()):
+                            fk=r_keys[fresh_mask]
+                            self.static_receivers.values[:,fk]=True
+                            self.static_receivers.known[fk]=True
+                            new+=int(fk.numel())
+                    else:
+                        for begin in range(0,len(r_z),int(chunk)):
+                            ids=r_z[begin:begin+int(chunk)]
+                            xyz=torch.stack((ids%self.nx+.5,ids//self.nx%self.ny+.5,ids//slice_area+.5),dim=1)
+                            points=xyz*spacing+normals[face]*spacing/2
+                            _,fresh=self.static_receivers.query(face*volume+ids,points);new+=fresh
+        else:
+            for face in range(6):
+                eligible=cells if face!=5 else cells[cells>=self.nx*self.ny]
+                for begin in range(0,len(eligible),int(chunk)):
+                    ids=eligible[begin:begin+int(chunk)]
+                    xyz=torch.stack((ids%self.nx+.5,ids//self.nx%self.ny+.5,ids//(self.nx*self.ny)+.5),dim=1)
+                    points=xyz*spacing+normals[face]*spacing/2
+                    _,fresh=self.static_receivers.query(face*volume+ids,points);new+=fresh
         sync(self.device)
+        if self._scene_cache_path is not None and not self._scene_cache_hit:
+            self._scene_cache_path.parent.mkdir(parents=True,exist_ok=True)
+            tmp=self._scene_cache_path.with_name(f'{self._scene_cache_path.name}.{os.getpid()}.tmp')
+            payload=dict(version=self._cache_version,shape=self.shape,sun_count=self.sun_count,precomputed=True,
+                sky_boundary=self.sky_boundary.detach().cpu(),
+                known=self.static_receivers.known.detach().cpu(),
+                values=self.static_receivers.values.detach().cpu())
+            if not self.fast_self_shadows:
+                payload['dynamic_anchor']=self.dynamic.anchor.detach().cpu()
+                payload['dynamic_maps']=[
+                    dict(
+                        u=m['parameters'][0].detach().cpu(),
+                        v=m['parameters'][1].detach().cpu(),
+                        low=m['parameters'][2].detach().cpu(),
+                        pitch=float(m['parameters'][3]),
+                        sizes=torch.as_tensor(m['parameters'][4],dtype=torch.long).cpu(),
+                        ids=m['ids'].detach().cpu(),
+                        entry=m['entry'].detach().cpu(),
+                    )
+                    for m in self.dynamic.maps
+                ]
+            torch.save(payload,tmp)
+            os.replace(tmp,self._scene_cache_path)
+            self._scene_cache_hit=True;self._precomputed_hit=True
         return dict(seconds=time.perf_counter()-stamp,newReceivers=new,knownReceivers=int(self.static_receivers.known.sum().cpu()),
             cacheBytes=self.static_receivers.known.numel()+self.static_receivers.values.numel())
 
     def evaluate(self):
-        stamp=time.perf_counter();self.light=diffuse_access(self.occupied,self.sky_boundary,iterations=48)
+        stamp=time.perf_counter()
+        if self.fast_diffuse and self.edits>0 and getattr(self,'last_audit_edit',-1)!=self.edits and getattr(self,'light',None) is not None and self.light.shape==self.occupied.shape:
+            z_occ=self.occupied.any(dim=(1,2)).nonzero(as_tuple=False)
+            z_top=int(z_occ[-1].item())+1 if len(z_occ) else 1
+            z_hi=min(self.nz,z_top+4)
+            if z_hi<self.nz:
+                bnd=self.sky_boundary[:z_hi+2].clone()
+                bnd[-1,1:-1,1:-1]=self.light[z_hi]
+                sub=diffuse_access(self.occupied[:z_hi],bnd,iterations=20,init=self.light[:z_hi])
+                light_new=self.light.clone();light_new[:z_hi]=sub;self.light=light_new
+            else:
+                self.light=diffuse_access(self.occupied,self.sky_boundary,iterations=20,init=self.light)
+        else:
+            self.light=diffuse_access(self.occupied,self.sky_boundary,iterations=48)
         lateral=torch.as_tensor(self.frontier.remove_faces[[1,0,3,2]],device=self.device)
         self.facade_light_faces,self.facade_light=facade_sky_access(self.occupied,self.light,self.sky_boundary,lateral)
         self.usable=usable_depth_proxy(self.occupied,self.light,boundary=self.sky_boundary)
         ids,p,n,cells,faces=receivers(self.occupied)
         outside,new=self.static_receivers.query(ids,p);self.dynamic.update(self.occupied)
-        own=self.dynamic.query(p,normals=n);front=(self.suns@n.T)>1e-6
+        if isinstance(self.dynamic,FastVoxelShadows):
+            own=self.dynamic.query(p,normals=n,active_mask=outside,faces=faces)
+        else:
+            own=self.dynamic.query(p,normals=n)
+        front=(self.suns@n.T)>1e-6
         self.visible=outside&own&front;self.receiver_data=(ids,p,n,cells,faces)
         side=faces<4;roof=faces==4;areas=torch.where(side,3.,1.)
         weights=(self.suns@n.T).clamp_min(0)*areas[None]
@@ -170,6 +306,7 @@ class Environment:
         exposure=self.noise.flatten()[cells[side]].mean() if bool(side.any()) else torch.zeros((),device=self.device)
         quality=.70*usable+.18*sunlight+.12*roof_opportunity-.08*exposure
         quality=quality-self.depth_weight*self.depth_badness.sum()/self.capacity
+        self.update_cores()
         self.quality=quality;self.values=dict(quality=quality,retention=retention,potentialUsableFraction=usable,
             directSunProxy=sunlight,roofOpportunity=roof_opportunity,noisePrior=exposure,
             diffuseFacadeProxy=self.facade_light_faces.sum()/lateral.sum().clamp_min(1),
@@ -178,10 +315,13 @@ class Environment:
         self.last_audit_edit=self.edits;self.last_new_receivers=new;self.last_receiver_count=len(ids);self.last_eval_seconds=time.perf_counter()-stamp
         return quality
 
-    def observation(self,include_depth=False):
+    def observation(self,include_depth=False,z_slice=None):
         # All channels stay on the chosen device; no per-voxel Python work.
-        channels=(self.occupied.float(),self.light,self.noise,self.allowed.float(),self.z/self.nz)
+        h_feat=self.rel_z if getattr(self,'organic_3d_growth',False) else (self.z/self.nz)
+        channels=(self.occupied.float(),self.light,self.noise,self.allowed.float(),h_feat)
         if include_depth:channels=(*channels,self.depth_badness)
+        if z_slice is not None:
+            channels=tuple(c[:z_slice] for c in channels)
         return torch.stack(channels,dim=1)
 
     def apply(self,action,audit=True):
@@ -226,4 +366,39 @@ class Environment:
             initialEditCapacity=self.workload.initial_capacity if self.workload else None,
             suggestedEditVoxels=self.workload.quota(abs(self.count-self.goal_count),self.edits) if self.workload else None)
         if self.context is not None:result['noisePrior']=None
+        result.update(coresEnabled=self.cores_enabled,minCoreSpacing=self.min_core_spacing,maxCoreDist=self.max_core_dist,
+            coreEvaluationSeconds=self.core_seconds,**self.core_metrics)
         return result
+
+    def _reset_core_fields(self):
+        self.cores=()
+        self.core_mask=torch.zeros(self.shape,dtype=torch.bool,device=self.device)
+        self.core_distance=torch.zeros(self.shape,dtype=torch.float32,device=self.device)
+        self.core_dist_badness=torch.zeros(self.shape,dtype=torch.float32,device=self.device)
+        self.core_seconds=0.
+        self.core_metrics={
+            'coreCount':0,'coreVoxels':0,'coreFootprintArea':0,'coreRatio':0.0,
+            'coreDistanceMean':0.0,'coreDistanceMax':0.0,
+            'coreUncoveredFraction':0.0,'coreUnreachableFraction':0.0,
+            'coreDistBadness':0.0,'coreMinSpacingActual':0.0,
+        }
+
+    def configure_cores(self,*,cores_enabled=None,min_core_spacing=None,max_core_dist=None):
+        if cores_enabled is not None:self.cores_enabled=bool(cores_enabled)
+        if min_core_spacing is not None:self.min_core_spacing=max(0,int(min_core_spacing))
+        if max_core_dist is not None:self.max_core_dist=max(1,int(max_core_dist))
+        self.update_cores()
+
+    def update_cores(self):
+        if not self.cores_enabled:
+            if not hasattr(self,'core_mask') or self.cores:
+                self._reset_core_fields()
+            return
+        stamp=time.perf_counter()
+        res=solve_cores(self.occupied,min_core_spacing=self.min_core_spacing,max_core_dist=self.max_core_dist)
+        self.cores=res.cores
+        self.core_mask=res.core_mask
+        self.core_distance=res.core_distance
+        self.core_dist_badness=res.core_dist_badness
+        self.core_metrics=res.metrics
+        self.core_seconds=time.perf_counter()-stamp

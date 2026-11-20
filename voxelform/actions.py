@@ -32,7 +32,19 @@ class FacadeMaskAction:
 
 
 def exterior_air(occupied):
-    air=~occupied;seeds=np.zeros_like(air)
+    occ=np.asarray(occupied,dtype=bool);air=~occ
+    if not occ.any():return air
+    occ_z=np.flatnonzero(occ.any((1,2)))
+    z_hi=min(occ.shape[0],int(occ_z[-1])+2)
+    if z_hi<occ.shape[0]:
+        air_sub=air[:z_hi]
+        seeds=np.zeros_like(air_sub)
+        seeds[:,0,:]=air_sub[:,0,:];seeds[:,-1,:]=air_sub[:,-1,:]
+        seeds[:,:,0]=air_sub[:,:,0];seeds[:,:,-1]=air_sub[:,:,-1];seeds[-1]=air_sub[-1]
+        out=np.ones_like(air)
+        out[:z_hi]=ndi.binary_propagation(seeds,structure=STRUCTURE,mask=air_sub)
+        return out
+    seeds=np.zeros_like(air)
     seeds[:,0,:]=air[:,0,:];seeds[:,-1,:]=air[:,-1,:]
     seeds[:,:,0]=air[:,:,0];seeds[:,:,-1]=air[:,:,-1];seeds[-1]=air[-1]
     return ndi.binary_propagation(seeds,structure=STRUCTURE,mask=air)

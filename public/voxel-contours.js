@@ -27,7 +27,7 @@ export function voxelContours(occupied,shape){
 // The material tests their facing on GPU as the camera moves. A concave pair
 // may reverse both normals: their facing-product (and silhouette) is unchanged.
 export function voxelSilhouetteEdges(occupied,shape){
- const [nz,ny,nx]=shape,size=[nx,ny,nz],positions=[],faceA=[],faceB=[];
+ const [nz,ny,nx]=shape,size=[nx,ny,nz],positions=[],faceA=[],faceB=[],concave=[];
  const at=p=>p[0]>=0&&p[0]<nx&&p[1]>=0&&p[1]<ny&&p[2]>=0&&p[2]<nz&&!!occupied[(p[2]*ny+p[1])*nx+p[0]];
  for(let axis=0;axis<3;axis++){
   const b=(axis+1)%3,c=(axis+2)%3,p=[0,0,0];
@@ -40,19 +40,19 @@ export function voxelSilhouetteEdges(occupied,shape){
      const cells=[a,d,e,f],count=cells.filter(Boolean).length;
      if(count===1||count===3||(count===2&&((a&&e)||(d&&f)))){
       const corner=count===3?cells.indexOf(false):cells.indexOf(true);
-      code=[1,2,4,3][corner];
+      code=(count===3?4:0)+[1,2,4,3][corner];
      }
     }
     if(code!==previous){
      if(previous){
       p[axis]=start;positions.push(...p);p[axis]=i;positions.push(...p);
-      const signs=[[1,1],[-1,1],[1,-1],[-1,-1]][previous-1],a=[0,0,0],bNormal=[0,0,0];a[b]=signs[0];bNormal[c]=signs[1];
-      faceA.push(...a,...a);faceB.push(...bNormal,...bNormal);
+      const signs=[[1,1],[-1,1],[1,-1],[-1,-1]][(previous-1)&3],a=[0,0,0],bNormal=[0,0,0];a[b]=signs[0];bNormal[c]=signs[1];
+      faceA.push(...a,...a);faceB.push(...bNormal,...bNormal);concave.push(previous>4?1:0);
      }
      start=i;previous=code;
     }
    }
   }
  }
- return {positions:new Float32Array(positions),faceA:new Float32Array(faceA),faceB:new Float32Array(faceB)};
+ return {positions:new Float32Array(positions),faceA:new Float32Array(faceA),faceB:new Float32Array(faceB),concave:new Uint8Array(concave)};
 }

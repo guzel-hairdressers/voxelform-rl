@@ -19,6 +19,7 @@ function rebuildDevoxSceneObjects() {
   }
   const active = Boolean(devoxEnabled && currentDevoxMesh?.faces?.length && lastDevoxView === 'solid' && lastDevoxState && currentDevoxMesh.revision === lastDevoxState.revision);
   mass.visible = !active;
+  if (typeof coreMass !== 'undefined' && coreMass) coreMass.visible = !active;
   if (outline) outline.visible = !active && lastDevoxView === 'solid';
   devoxGroup.visible = active;
   if (!active || (devoxBuiltMesh === currentDevoxMesh && devoxBuiltRevision === lastDevoxState.revision)) return;

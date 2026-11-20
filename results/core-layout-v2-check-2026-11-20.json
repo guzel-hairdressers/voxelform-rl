@@ -1,0 +1,1060 @@
+{
+  "note": "Single CPU fixture calls; correctness/reservation checks, not an isolated timing or learned-quality study.",
+  "plans": [
+    {
+      "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.",
+      "carDepth": 1.4,
+      "carWidth": 1.1,
+      "clearFlightWidth": 1.2,
+      "components": [
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 0.15,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 1.45,
+          "y": 1.35
+        }
+      ],
+      "doors": [
+        {
+          "orientation": "horizontal",
+          "type": "entrance",
+          "width": 0.9,
+          "x": 0.95,
+          "y": 0.0
+        }
+      ],
+      "floorHeight": 3.0,
+      "landingDepth": 1.2,
+      "length": 5,
+      "liftCount": 0,
+      "maxHeight": 5,
+      "metricArea": 13.832,
+      "metricLength": 4.94,
+      "metricWidth": 2.8,
+      "minHeight": 1,
+      "riserCount": 18,
+      "riserHeight": 0.16666666666666666,
+      "shaftClearDepth": 1.9000000000000001,
+      "shaftClearWidth": 1.8,
+      "stairCount": 1,
+      "tier": "T1",
+      "tread": 0.28,
+      "version": "compact-core.v2",
+      "wallThickness": 0.15,
+      "width": 3,
+      "zones": [
+        {
+          "h": 4.94,
+          "label": "Stair 1",
+          "type": "stair",
+          "w": 2.8,
+          "x": 0.0,
+          "y": 0
+        }
+      ]
+    },
+    {
+      "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.",
+      "carDepth": 1.4,
+      "carWidth": 1.1,
+      "clearFlightWidth": 1.2,
+      "components": [
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 0.15,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 1.45,
+          "y": 1.35
+        },
+        {
+          "h": 1.4,
+          "label": "Car 1",
+          "type": "car",
+          "w": 1.1,
+          "x": 3.3,
+          "y": 3.19
+        }
+      ],
+      "doors": [
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 2.8,
+          "y": 0.3
+        },
+        {
+          "orientation": "horizontal",
+          "type": "entrance",
+          "width": 0.9,
+          "x": 3.4,
+          "y": 0.0
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 3.45,
+          "y": 2.74
+        }
+      ],
+      "floorHeight": 3.0,
+      "landingDepth": 1.2,
+      "length": 5,
+      "liftCount": 1,
+      "maxHeight": 10,
+      "metricArea": 24.206,
+      "metricLength": 4.94,
+      "metricWidth": 4.9,
+      "minHeight": 6,
+      "riserCount": 18,
+      "riserHeight": 0.16666666666666666,
+      "shaftClearDepth": 1.9000000000000001,
+      "shaftClearWidth": 1.8,
+      "stairCount": 1,
+      "tier": "T2",
+      "tread": 0.28,
+      "version": "compact-core.v2",
+      "wallThickness": 0.15,
+      "width": 5,
+      "zones": [
+        {
+          "h": 4.94,
+          "label": "Stair 1",
+          "type": "stair",
+          "w": 2.8,
+          "x": 0.0,
+          "y": 0
+        },
+        {
+          "h": 2.74,
+          "label": "Shared lobby",
+          "type": "lobby",
+          "w": 2.1,
+          "x": 2.8,
+          "y": 0
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 1",
+          "type": "lift",
+          "w": 2.1,
+          "x": 2.8,
+          "y": 2.74
+        }
+      ]
+    },
+    {
+      "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.",
+      "carDepth": 1.4,
+      "carWidth": 1.1,
+      "clearFlightWidth": 1.2,
+      "components": [
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 0.15,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 1.45,
+          "y": 1.35
+        },
+        {
+          "h": 1.4,
+          "label": "Car 1",
+          "type": "car",
+          "w": 1.1,
+          "x": 3.3,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 2",
+          "type": "car",
+          "w": 1.1,
+          "x": 5.4,
+          "y": 3.19
+        }
+      ],
+      "doors": [
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 2.8,
+          "y": 0.3
+        },
+        {
+          "orientation": "horizontal",
+          "type": "entrance",
+          "width": 0.9,
+          "x": 4.45,
+          "y": 0.0
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 3.45,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 5.55,
+          "y": 2.74
+        }
+      ],
+      "floorHeight": 3.0,
+      "landingDepth": 1.2,
+      "length": 5,
+      "liftCount": 2,
+      "maxHeight": 18,
+      "metricArea": 34.58,
+      "metricLength": 4.94,
+      "metricWidth": 7.0,
+      "minHeight": 11,
+      "riserCount": 18,
+      "riserHeight": 0.16666666666666666,
+      "shaftClearDepth": 1.9000000000000001,
+      "shaftClearWidth": 1.8,
+      "stairCount": 1,
+      "tier": "T3",
+      "tread": 0.28,
+      "version": "compact-core.v2",
+      "wallThickness": 0.15,
+      "width": 7,
+      "zones": [
+        {
+          "h": 4.94,
+          "label": "Stair 1",
+          "type": "stair",
+          "w": 2.8,
+          "x": 0.0,
+          "y": 0
+        },
+        {
+          "h": 2.74,
+          "label": "Shared lobby",
+          "type": "lobby",
+          "w": 4.2,
+          "x": 2.8,
+          "y": 0
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 1",
+          "type": "lift",
+          "w": 2.1,
+          "x": 2.8,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 2",
+          "type": "lift",
+          "w": 2.1,
+          "x": 4.9,
+          "y": 2.74
+        }
+      ]
+    },
+    {
+      "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.",
+      "carDepth": 1.4,
+      "carWidth": 1.1,
+      "clearFlightWidth": 1.2,
+      "components": [
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 0.15,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 1.45,
+          "y": 1.35
+        },
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 1,
+          "type": "landing",
+          "w": 2.5,
+          "x": 9.25,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 1,
+          "type": "landing",
+          "w": 2.5,
+          "x": 9.25,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 1,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 9.25,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 1,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 10.55,
+          "y": 1.35
+        },
+        {
+          "h": 1.4,
+          "label": "Car 1",
+          "type": "car",
+          "w": 1.1,
+          "x": 3.3,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 2",
+          "type": "car",
+          "w": 1.1,
+          "x": 5.4,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 3",
+          "type": "car",
+          "w": 1.1,
+          "x": 7.5,
+          "y": 3.19
+        }
+      ],
+      "doors": [
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 2.8,
+          "y": 0.3
+        },
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 9.1,
+          "y": 0.3
+        },
+        {
+          "orientation": "horizontal",
+          "type": "entrance",
+          "width": 0.9,
+          "x": 5.5,
+          "y": 0.0
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 3.45,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 5.55,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 7.65,
+          "y": 2.74
+        }
+      ],
+      "floorHeight": 3.0,
+      "landingDepth": 1.2,
+      "length": 5,
+      "liftCount": 3,
+      "maxHeight": 30,
+      "metricArea": 58.786,
+      "metricLength": 4.94,
+      "metricWidth": 11.9,
+      "minHeight": 19,
+      "riserCount": 18,
+      "riserHeight": 0.16666666666666666,
+      "shaftClearDepth": 1.9000000000000001,
+      "shaftClearWidth": 1.8,
+      "stairCount": 2,
+      "tier": "T4",
+      "tread": 0.28,
+      "version": "compact-core.v2",
+      "wallThickness": 0.15,
+      "width": 12,
+      "zones": [
+        {
+          "h": 4.94,
+          "label": "Stair 1",
+          "type": "stair",
+          "w": 2.8,
+          "x": 0.0,
+          "y": 0
+        },
+        {
+          "h": 4.94,
+          "label": "Stair 2",
+          "type": "stair",
+          "w": 2.8,
+          "x": 9.1,
+          "y": 0
+        },
+        {
+          "h": 2.74,
+          "label": "Shared lobby",
+          "type": "lobby",
+          "w": 6.3,
+          "x": 2.8,
+          "y": 0
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 1",
+          "type": "lift",
+          "w": 2.1,
+          "x": 2.8,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 2",
+          "type": "lift",
+          "w": 2.1,
+          "x": 4.9,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 3",
+          "type": "lift",
+          "w": 2.1,
+          "x": 7.0,
+          "y": 2.74
+        }
+      ]
+    },
+    {
+      "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.",
+      "carDepth": 1.4,
+      "carWidth": 1.1,
+      "clearFlightWidth": 1.2,
+      "components": [
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 0,
+          "type": "landing",
+          "w": 2.5,
+          "x": 0.15,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 0.15,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 0,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 1.45,
+          "y": 1.35
+        },
+        {
+          "h": 1.2,
+          "label": "Floor landing",
+          "stair": 1,
+          "type": "landing",
+          "w": 2.5,
+          "x": 11.35,
+          "y": 0.15
+        },
+        {
+          "h": 1.2,
+          "label": "Half landing",
+          "stair": 1,
+          "type": "landing",
+          "w": 2.5,
+          "x": 11.35,
+          "y": 3.59
+        },
+        {
+          "direction": 1,
+          "h": 2.24,
+          "label": "Flight 1",
+          "risers": 9,
+          "stair": 1,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 11.35,
+          "y": 1.35
+        },
+        {
+          "direction": -1,
+          "h": 2.24,
+          "label": "Flight 2",
+          "risers": 9,
+          "stair": 1,
+          "treads": 8,
+          "type": "flight",
+          "w": 1.2,
+          "x": 12.65,
+          "y": 1.35
+        },
+        {
+          "h": 1.4,
+          "label": "Car 1",
+          "type": "car",
+          "w": 1.1,
+          "x": 3.3,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 2",
+          "type": "car",
+          "w": 1.1,
+          "x": 5.4,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 3",
+          "type": "car",
+          "w": 1.1,
+          "x": 7.5,
+          "y": 3.19
+        },
+        {
+          "h": 1.4,
+          "label": "Car 4",
+          "type": "car",
+          "w": 1.1,
+          "x": 9.6,
+          "y": 3.19
+        }
+      ],
+      "doors": [
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 2.8,
+          "y": 0.3
+        },
+        {
+          "orientation": "vertical",
+          "type": "stair_door",
+          "width": 0.9,
+          "x": 11.2,
+          "y": 0.3
+        },
+        {
+          "orientation": "horizontal",
+          "type": "entrance",
+          "width": 0.9,
+          "x": 6.55,
+          "y": 0.0
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 3.45,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 5.55,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 7.65,
+          "y": 2.74
+        },
+        {
+          "orientation": "horizontal",
+          "type": "lift_door",
+          "width": 0.8,
+          "x": 9.75,
+          "y": 2.74
+        }
+      ],
+      "floorHeight": 3.0,
+      "landingDepth": 1.2,
+      "length": 5,
+      "liftCount": 4,
+      "maxHeight": 60,
+      "metricArea": 69.16,
+      "metricLength": 4.94,
+      "metricWidth": 14.0,
+      "minHeight": 31,
+      "riserCount": 18,
+      "riserHeight": 0.16666666666666666,
+      "shaftClearDepth": 1.9000000000000001,
+      "shaftClearWidth": 1.8,
+      "stairCount": 2,
+      "tier": "T5",
+      "tread": 0.28,
+      "version": "compact-core.v2",
+      "wallThickness": 0.15,
+      "width": 14,
+      "zones": [
+        {
+          "h": 4.94,
+          "label": "Stair 1",
+          "type": "stair",
+          "w": 2.8,
+          "x": 0.0,
+          "y": 0
+        },
+        {
+          "h": 4.94,
+          "label": "Stair 2",
+          "type": "stair",
+          "w": 2.8,
+          "x": 11.2,
+          "y": 0
+        },
+        {
+          "h": 2.74,
+          "label": "Shared lobby",
+          "type": "lobby",
+          "w": 8.4,
+          "x": 2.8,
+          "y": 0
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 1",
+          "type": "lift",
+          "w": 2.1,
+          "x": 2.8,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 2",
+          "type": "lift",
+          "w": 2.1,
+          "x": 4.9,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 3",
+          "type": "lift",
+          "w": 2.1,
+          "x": 7.0,
+          "y": 2.74
+        },
+        {
+          "h": 2.2,
+          "label": "Lift 4",
+          "type": "lift",
+          "w": 2.1,
+          "x": 9.1,
+          "y": 2.74
+        }
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "cores": [
+        {
+          "centerX": 9.0,
+          "centerY": 8.0,
+          "floors": 4,
+          "footprintArea": 15,
+          "id": 1,
+          "label": "1-5F (3x5 m grid \u00b7 1 stair + 0 lift)",
+          "sizeX": 5,
+          "sizeY": 3,
+          "tier": "T1",
+          "volume": 60,
+          "x0": 7,
+          "y0": 7
+        }
+      ],
+      "metrics": {
+        "coreCount": 1,
+        "coreDistBadness": 0.0006669491995126009,
+        "coreDistanceMax": 12.071066856384277,
+        "coreDistanceMean": 5.1354546546936035,
+        "coreFootprintArea": 15,
+        "coreMinSpacingActual": 0.0,
+        "coreRatio": 0.0625,
+        "coreUncoveredFraction": 0.004166666666666667,
+        "coreUnreachableFraction": 0.0,
+        "coreVoxels": 60
+      },
+      "seconds": 0.0031276249937945977,
+      "shape": [
+        4,
+        16,
+        24
+      ]
+    },
+    {
+      "cores": [
+        {
+          "centerX": 14.0,
+          "centerY": 10.0,
+          "floors": 10,
+          "footprintArea": 25,
+          "id": 1,
+          "label": "6-10F (5x5 m grid \u00b7 1 stair + 1 lift)",
+          "sizeX": 5,
+          "sizeY": 5,
+          "tier": "T2",
+          "volume": 250,
+          "x0": 12,
+          "y0": 8
+        }
+      ],
+      "metrics": {
+        "coreCount": 1,
+        "coreDistBadness": 0.04331701248884201,
+        "coreDistanceMax": 16.727920532226562,
+        "coreDistanceMean": 7.589476585388184,
+        "coreFootprintArea": 25,
+        "coreMinSpacingActual": 0.0,
+        "coreRatio": 0.044642857142857144,
+        "coreUncoveredFraction": 0.11785714285714285,
+        "coreUnreachableFraction": 0.0,
+        "coreVoxels": 250
+      },
+      "seconds": 0.002837958003510721,
+      "shape": [
+        10,
+        24,
+        32
+      ]
+    },
+    {
+      "cores": [
+        {
+          "centerX": 15.5,
+          "centerY": 14.0,
+          "floors": 20,
+          "footprintArea": 60,
+          "id": 1,
+          "label": "19-30F (12x5 m grid \u00b7 2 stair + 3 lift)",
+          "sizeX": 12,
+          "sizeY": 5,
+          "tier": "T4",
+          "volume": 1200,
+          "x0": 10,
+          "y0": 12
+        },
+        {
+          "centerX": 34.0,
+          "centerY": 17.5,
+          "floors": 20,
+          "footprintArea": 60,
+          "id": 2,
+          "label": "19-30F (12x5 m grid \u00b7 2 stair + 3 lift)",
+          "sizeX": 5,
+          "sizeY": 12,
+          "tier": "T4",
+          "volume": 1200,
+          "x0": 32,
+          "y0": 12
+        }
+      ],
+      "metrics": {
+        "coreCount": 2,
+        "coreDistBadness": 0.016187796369194984,
+        "coreDistanceMax": 16.313705444335938,
+        "coreDistanceMean": 6.291283130645752,
+        "coreFootprintArea": 120,
+        "coreMinSpacingActual": 10.0,
+        "coreRatio": 0.11904761904761904,
+        "coreUncoveredFraction": 0.047619047619047616,
+        "coreUnreachableFraction": 0.0,
+        "coreVoxels": 2400
+      },
+      "seconds": 0.007269458001246676,
+      "shape": [
+        20,
+        32,
+        40
+      ]
+    }
+  ],
+  "runtime": {
+    "coreLayoutVersion": "compact-core.v2",
+    "createdAt": "2026-11-20T16:49:36.838996+00:00",
+    "cuda": false,
+    "deterministic": false,
+    "gitCommit": "b913a15cce3d058500cb0fe9133784cb7414758c",
+    "gitDirty": true,
+    "machine": "arm64",
+    "mps": true,
+    "packages": {
+      "fastapi": "0.165.0",
+      "numpy": "2.5.5",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "torch": "2.15.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "protocol": "voxelform.research.v1",
+    "python": "3.12.11",
+    "source": {
+      "configs/research-real-aux.json": "c3ad4c692f2930ece7742a7906681fe79ac6bef09a1e0c3e013fd38887826891",
+      "configs/research-real.json": "00c5f6456cdb039b0fe1954fdb6ca9673b8a5253993fd3dc319c7046070cc29b",
+      "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+      "pyproject.toml": "6468094a97eea471b8ff5554ef1d4cfb4b1c57e9c6956d7dc2f00c12e650e823",
+      "tools/architecture_hypotheses.py": "81a61f2fee0fe48058eb219cd20339649a20f5b61da2394e6261f7cbb696dcc5",
+      "tools/architecture_sensitivity.py": "2c05deb3d296e017b753df146e03de24f26a2b2c7984d7b776978afaf069ddc8",
+      "tools/benchmark.py": "1f1ea70b6274e0015907de14b9387ae375abf2305fa4dc7dd7a110b92cdd2e63",
+      "tools/benchmark_facade_masks.py": "cd4099735bdd7f55a20f76bc0e99e6998a337bfd117c8adb89e3e359dc65674f",
+      "tools/build_devoxelize_lab.py": "c9417dd76c40485eae06492ef01b9575e09c978c662344273e01966f459527b8",
+      "tools/check_floor_growth.py": "b7e2b92e1339bebdf5dfae11f8599be06391f26167dc03cd4bdb9b67780782e4",
+      "tools/coherent_gpu.py": "03d16242fbdf0d1ea96a2f5b1fec7ef906f51ed5b16cc1a319e98673e111bdcf",
+      "tools/coherent_guarded.py": "690b4efa1a37b68f472f70deaf48c206d80179a7664b23231b5665fb5dd562bb",
+      "tools/coherent_masks.py": "fa3d6cf9bac07e60667bcd45e09669e47122e901747afd491f356efb1ac817ce",
+      "tools/coherent_sampled.py": "30c0e0995a0db7acde59e9176eb2da38b8804668d9bbe34304d545d9f0a67a22",
+      "tools/coherent_wide.py": "821f89219d60a33893c466566c9f23bc6022517eff6fd2ac411ee4a53546e000",
+      "tools/evaluate_m4.py": "634601bd4ed729e54ff38f98ac8ea25d4060cc48a6958807e8510eaaa3c3d0b5",
+      "tools/grid_fit_study.py": "7e7ce201fd2d051f860160838cf7630dce33a238dd8a79f16b88c2b568604650",
+      "tools/grid_quality.py": "07fa16b9b87d8c66777441eaa7f2637e35d6043ecda0cfa7788ad5f9fbbf55fb",
+      "tools/packed_condition_latency.py": "71c8c4544ac6926eba45881257c7fc6cd33a396ee2467e3cbf7571ab0c63120b",
+      "tools/paired_head_latency.py": "077687ba75f92262b70a6bcf63cef8239af4cf91d93e212909d65780eafba149",
+      "tools/plot_architecture_hypotheses.py": "ed204212d5f6be6e3b8bd91f340eb31dbfdb219ba4efccd0df9d1f38ddb48137",
+      "tools/plot_grid_fit.py": "df69d9a57ca7787fe7e93cf018975bc4a563adb79b8472f6277835fac5aa1bfd",
+      "tools/render_core_plans.py": "8fe09a0f72326f50118a63f41a5db5966a717be80254fa6aa80b8164b29d695d",
+      "tools/replicate_architecture_controls.py": "d4ce45cba4cbf929df03ea83e4f462547d35896a97e4dc5a58a3f72cd48f7996",
+      "tools/report_coherent_masks.py": "0c4433150a11f5f6b311db436fd77a773ac9104b25bfc1a6f62bf114221088ee",
+      "tools/report_workload.py": "b5e7a3bd8c1c464e8ae94dc41381d9795382beb4b5c25f87b0ea49b1ff09347c",
+      "tools/research.py": "65f1e930863fdffe08e1b176db626e5633175549ffba625ad8207c2ad9a83e16",
+      "tools/summarize_architecture_hypotheses.py": "a09588d1908f28a4b9f249d9b6c5e1787b5e588c6d9081f2f1343b3f87638d43",
+      "tools/test_redistribution.py": "a54391bf5d25fbe73e570738be192b20b4c886f628ea29a547e0352f5d981b6b",
+      "tools/train_m4.py": "f337dca625bf4ea8b4f55f55e07bc9175268e084b844df90d781fbfc874da26e",
+      "tools/training_profile.py": "afc697e94d366122fdcc9ee988697dfbe18d583489cdb0bbb5b3f012acccc5af",
+      "tools/unified_coupled.py": "2b4dc4912426e8f5827f055bd56812a1f7029092ae0ec0c3a80f89bab0083d9b",
+      "tools/unified_feedback.py": "fb45b63094654363ec852f05809f30ce551a88f143c080426d72e6b0327b8cbf",
+      "tools/unified_net.py": "d092fe1fc7d9eebe61642e976201d2a2b7525cfaf1faf4987f88f9ad09de72e6",
+      "tools/unified_projection.py": "fa09c5dfdf54b2d321a053194978bca21cf73597f9670385a360ccb84ec3efb2",
+      "tools/unified_training.py": "2a1ce44021210d153be47000e6f0442858a00878abb51a4e072d3aa3d069be29",
+      "tools/validate_fields.py": "2c27a6da7cc535061eede6b7701b76d49288aa159f5e382dacc99a7a949c1711",
+      "tools/validate_grid_sky.py": "5cd2ec6d1b2ad9c1a5c35414daa10c0d9de1d2235113c18b235acaf16c575e03",
+      "tools/workload_budget.py": "c6ead1841a1f56082b3a02822b74ae1db55ba340cbf321ef1869286afe0da67e",
+      "tools/workload_device.py": "7aa17e2658c3dbb2adffff35fb9e2d7135737acc0bbbf9b2498e2a4bf1dcc5ef",
+      "tools/workload_feedback.py": "eb7ab3c1a63ad57fbacc9f92e04da09a0aad75b42a72bb8a76c46f194345f432",
+      "unified_server.py": "b3206d5a0dbd16b5993936f13e0a8d8a4762553756efec4cddaf993cb8925744",
+      "uv.lock": "bde5b76b4208f6a5057e067fcbd76fb194a419f3ee4c080fecaf1ab45bed1a59",
+      "voxelform/__init__.py": "6295ff2dec72839fd42726d4dada256043cd952d49fc34fab4ff77d9e7c872da",
+      "voxelform/actions.py": "da64c1ee579dfb35c5a0bc69d557f0be58af1ebe7c4d3d1a2c8eb68fd0da832e",
+      "voxelform/coarse_to_fine.py": "36504aba03584666e386df7e70987bcbc5e1c5dfad939ece664cb992c102cfd0",
+      "voxelform/context.py": "2dfbfdb83c9fb628cfc1772d417e2278116f853626ea1c248671b02b140696d5",
+      "voxelform/core_plans.py": "df03e6fa2160dcfd2b63a08e340950f45a529b3eb4c70e1d8195c78a3271e429",
+      "voxelform/cores.py": "bf53fbf795a4f7240d97e3a4672873403370c564ac826f86dfdcafc95d32ba69",
+      "voxelform/devoxelize.py": "a2405717efc36515eda96d524370713e83e5996a7d8a64cbd617bb889be6437e",
+      "voxelform/environment.py": "cc3657f31779daa86b7ffd538e312149c23e043aa646a2bd9e83777679d4d4b2",
+      "voxelform/experiment.py": "30c6fa4ae103dac8f41cf7345f5f618850b608b9598621dc961498ab13244945",
+      "voxelform/fields.py": "5b919e0b4611e35c037bb71f66f022f3d06de4a9a9f78281bbdb993f029aa1dd",
+      "voxelform/objectives.py": "fc1c7ec1f76fbc59a7f57fc5a380b29fbff345646f7c8292bce60c301ae93899",
+      "voxelform/patch_policy.py": "792ee76862c8cf0cc8a938199be5d61e0d60ef645b8c73c919f23d2eea271b1f",
+      "voxelform/policy.py": "8a2811a4d355889f4043de8bb7af6a6ef928a19163cb8adb5f08fcbfd33a92dc",
+      "voxelform/redistribution.py": "1e7120701f462c3b977cf3682b99dab79519bf3d1b731fabc3cdc8751e2d5107",
+      "voxelform/server.py": "9fb3ac9d99baab0215e6e62f01ecf727cb11121090cc65ca3c42aacbd13b7fd4",
+      "voxelform/session.py": "14d824002c975f20cf362872702cdb791cf13d9ebb77ff3e15727153eace8b69",
+      "voxelform/shadows.py": "fcce13c6c1ee98a7c44fc623f17f9952b15d622217ed2587a5380c2237abdae3",
+      "voxelform/training.py": "831560ccc9904ae898b0cef3bf835cf3969b0000a72a6f8ce0afa136d36aa33d",
+      "voxelform/unified.py": "999faa37ea6e0f470a5cfbd353dedb1d471494ed1cfe6e154cc7d4323d24c61d",
+      "voxelform/workload.py": "84eca16c3ebd76e2f5cbbd74c684e5953a3bbdacbea99199238f8228d10dfd99"
+    }
+  },
+  "version": "compact-core.v2"
+}

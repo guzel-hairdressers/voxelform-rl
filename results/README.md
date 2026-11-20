@@ -1,3 +1,12 @@
+# Results and evidence
+
+Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
+New verification: [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
+[compact cores](core-layout-v2-check-2026-11-20.json). Historical raw files are
+preserved and [indexed by hash](historical-experiment-index-2026-11-20.json);
+their older reward/core semantics must not be conflated with current experiments.
+The short checks are not convergence or learned-quality evidence.
+
 # First prototype measurements — 2026-11-06
 
 Raw data: [CPU](benchmark-cpu.json), [MPS](benchmark-mps.json),

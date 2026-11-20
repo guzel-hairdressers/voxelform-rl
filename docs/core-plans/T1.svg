@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 462" role="img" aria-label="T1 core plan">
+<defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#1645ff"/></marker></defs>
+<rect width="390" height="462" fill="white"/>
+<g font-family="Arial,sans-serif" fill="#182238"><text x="20" y="25" font-size="16" font-weight="bold">T1 · 1–5 floors</text>
+<text x="20" y="46" font-size="11">1 stair(s) · 0 lift(s) · 13.832 m² metric / 15 m² grid reservation</text>
+<rect x="70" y="85" width="150" height="250" fill="#fafbff" stroke="#b8c7ef" stroke-width="1"/>
+<rect x="70" y="85" width="140" height="247" fill="#e2e8f0" stroke="#344158" stroke-width="2"/>
+<rect x="77.5" y="92.5" width="125" height="232" fill="white" stroke="#344158" stroke-width="1"/>
+<rect x="77.5" y="92.5" width="125" height="60" fill="#f0f6ff" stroke="#94a3b8" stroke-width="1"/>
+<text x="140" y="125.5" text-anchor="middle" font-size="8">Floor landing</text>
+<rect x="77.5" y="264.5" width="125" height="60" fill="#f0f6ff" stroke="#94a3b8" stroke-width="1"/>
+<text x="140" y="297.5" text-anchor="middle" font-size="8">Half landing</text>
+<rect x="77.5" y="152.5" width="60" height="112" fill="white" stroke="#94a3b8" stroke-width="1"/>
+<line x1="77.5" y1="152.5" x2="137.5" y2="152.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="166.5" x2="137.5" y2="166.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="180.5" x2="137.5" y2="180.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="194.5" x2="137.5" y2="194.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="208.5" x2="137.5" y2="208.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="222.5" x2="137.5" y2="222.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="236.5" x2="137.5" y2="236.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="250.5" x2="137.5" y2="250.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="77.5" y1="264.5" x2="137.5" y2="264.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="107.5" y1="162.5" x2="107.5" y2="254.5" stroke="#1645ff" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="107.5" y="214.1" font-size="8" fill="#1645ff">UP</text>
+<rect x="142.5" y="152.5" width="60" height="112" fill="white" stroke="#94a3b8" stroke-width="1"/>
+<line x1="142.5" y1="152.5" x2="202.5" y2="152.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="166.5" x2="202.5" y2="166.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="180.5" x2="202.5" y2="180.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="194.5" x2="202.5" y2="194.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="208.5" x2="202.5" y2="208.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="222.5" x2="202.5" y2="222.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="236.5" x2="202.5" y2="236.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="250.5" x2="202.5" y2="250.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="142.5" y1="264.5" x2="202.5" y2="264.5" stroke="#64748b" stroke-width="0.8" />
+<line x1="172.5" y1="254.5" x2="172.5" y2="162.5" stroke="#1645ff" stroke-width="1.8" marker-end="url(#arrow)"/>
+<text x="172.5" y="214.1" font-size="8" fill="#1645ff">UP</text>
+<line x1="117.5" y1="85" x2="162.5" y2="85" stroke="white" stroke-width="17.0" />
+<line x1="117.5" y1="85" x2="162.5" y2="85" stroke="#16a34a" stroke-width="2" />
+<line x1="117.5" y1="85" x2="117.5" y2="50" stroke="#344158" stroke-width="1" />
+<line x1="70" y1="70" x2="210" y2="70" stroke="#344158" stroke-width="1" />
+<line x1="55" y1="85" x2="55" y2="332" stroke="#344158" stroke-width="1" />
+<text x="140" y="62" text-anchor="middle" font-size="11">2.80 m</text>
+<text transform="translate(44,208.5) rotate(-90)" text-anchor="middle" font-size="11">4.94 m</text>
+<text x="20" y="397" font-size="10">Flights 1.20 m · landings 1.20 m · treads 0.28 m</text>
+<text x="20" y="415" font-size="10">18 risers × 166.7 mm = 3.00 m storey</text>
+<text x="20" y="433" font-size="9" fill="#64748b">Green = openings · pale outer band = grid rounding · compact-core.v2</text>
+<text x="20" y="450" font-size="9" fill="#64748b">Experimental geometry; no fire, accessibility or lift-capacity certification.</text></g></svg>

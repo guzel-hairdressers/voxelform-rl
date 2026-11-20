@@ -1,5 +1,35 @@
 # VoxelForm RL — Agent Instructions
 
+## ML research contract (2026-11-20, takes precedence over older notes)
+- This is an ML research project for structured/constrained 3D reinforcement
+  learning. Urban geometry is a test domain and UI, not an architectural thesis.
+- Read `docs/EXPERIMENT_PROTOCOL.md`, `docs/MODEL_CARD.md`, `docs/DATA_CARD.md`
+  and `docs/CORE_LAYOUTS.md` for current scientific assumptions and limitations.
+- Canonical compact-core library: `voxelform/core_plans.py`, version
+  `compact-core.v2`. T1 (1–5F) is stairs only, two flights/two landings, 3x5 m
+  grid. T2 (6–10F) is one stair + one lift, 5x5 m. Higher configured bands have
+  more lifts. `cores.py`, API/SVGs and exported plans share this source. Do not
+  reinstate the prior 30/48/72/108/160 m² rectangles or compliance claims.
+- Final core distances converge on an 8-neighbour occupied grid without blocked
+  corner cutting, tested against independent Dijkstra. They are footprint-
+  distance proxies, not actual door/corridor/egress solutions.
+- Corrected organic `record` writes dictionary `reward`, not legacy key `3`.
+  Score the full Gaussian retry path, including rejected draws. The optional
+  physical spatial auxiliary is a heuristic objective, not an exact control
+  variate. Reference research configs set its weight to zero; a separate config
+  ablates 1.2. Do not call hybrid decoder behaviour unrestricted/pure learned RL.
+- `vf-research` / `tools.research` is the headless research entry point, independent
+  of Module Lab for synthetic experiments. JSON configs, site/seed separation,
+  fixed-budget checkpoint selection, full failure logs, common reference
+  evaluator, source archives, RNG checkpoints and resume checks are mandatory.
+- Train/test summaries must include FAR failures and separate proxy components.
+  A few episodes or an 80-episode single-site curve do not establish convergence.
+  Historical results remain intact but use earlier core/loss semantics.
+- Use `uv sync --frozen --extra dev` and `uv.lock`. Synthetic CPU CI plus JS
+  checks require no sibling renderer/data. Record real hardware for MPS claims.
+- The user's own-code license remains undecided; preserve vendored licenses and
+  OSM attribution without inventing a new repository license.
+
 ## Scope and design intent
 - This is an independent voxel massing project, separate from Module Lab.
 - Cached OSM geometry may be read from the sibling Module-Lab checkout using
@@ -38,16 +68,107 @@
 - Do not claim a massing proposal establishes detailed rooms, circulation,
   structure, daylight compliance or acoustic compliance.
 
-## Active growing preview (2026-11-14)
+## Active organic 3D preview (2026-11-18)
+- Default demonstration site: `m_bcn_0093` (Barcelona / Eixample), served via
+  `main.py` (`unified_server.app`, port 8011; note `uvicorn` runs without
+  `--reload`, so restart `main.py` after backend edits).
+- Active `UnifiedSession` defaults to `UnifiedLearner(..., organic_3d=True,
+  floor_copy=False, net_guided=True, amount_feedback=True)` with `Organic3DNetwork`
+  (`coarse_2d1d_v2`, 12 input channels: 10 standard + `long_narrow6` `< 6m` strip
+  map + `usable`; strided 2D stem/down -> factored 2D+1D blocks + `1x1`
+  coarse `local_skip` -> `3.0 * tanh(coarse / 3.0)` bounded logits; ~20.8× faster
+  MPS fwd+bwd than the prior `Conv3d` full-res network).
+- **Organic decoder without legacy vertical locks**: In `organic_3d=True`,
+  cantilever / vertical-support restrictions (`changed[1:] & ~changed[:-1]`),
+  persistent `copy_labels` coupling, `col_mean` / `cummin` column-collapse
+  averaging, and hardcoded inference score overrides are removed. Legacy
+  `floor_copy=True` remains in `voxelform/unified.py` only for backward
+  compatibility with existing unit tests (`tests/test_floor_copy.py`,
+  `tests/test_unified_server.py`).
+- **Two-tier vectorized anti-sliver rules**:
+  1. Hard width guard (`min_room_width = 3` on `plot_area >= 400`): async
+     2-pool GPU `clean_floor_tensor` (zero sync stalls) and pure-NumPy
+     separable bitwise `clean_floor_numpy` (~0.14 ms) eliminate all 1-voxel
+     slits/walls and 2-voxel-wide long strips while permitting arbitrary 3D
+     cantilevers, overhangs, and bridges.
+  2. `< 6m` long narrow strip defense (`long_narrow_mask(occ, width=6, stub=2)`):
+     3-pool vectorized detector flags narrow `< 6m` strips extending > 2 m past
+     any 6×6 core (exempting 2 m stubs on stepped facades). Fed as CNN channel
+     10, used in GPU carve/grow guards, excluded from `usableGoodArea`, and
+     penalized `-0.55 * ln6_frac` in `organic_objective` (`0.65 * usable_good +
+     0.55 * sun + 0.45 * diff + 0.10 * roof - 0.20 * deep - 0.55 * ln6_frac -
+     0.08 * noise`).
+- **Vectorized engine & server speedups**:
+  - `gaussian_field` (`voxelform/patch_policy.py`): exact separable 1D (Z) + 2D
+    (Y, X) convolutions replacing `F.conv3d` (zero `Conv3d` MPS stall).
+  - `diffuse_access` (`voxelform/fields.py`): single preallocated `padded` buffer.
+  - `SelfShadowMaps.query` (`voxelform/shadows.py`): batched `(U, V, S)` matmul.
+  - `project_organic_3d` (`voxelform/unified.py`): `_remaining_organic_valid`
+    avoids duplicate `exterior_air` / `ndi.label` passes.
+  - `UnifiedSession` (`unified_server.py`): cached initial-state snapshot reset
+    in `next_episode()` (`1.34 ms`), 4-step training burst loop, and cached /
+    view-aware `/api/state?view=solid` (`18.1 ms` / `211 KB` uncached, `0.02 ms`
+    cached vs `73.2 ms` / `1,186 KB` for `view=all`).
+- **Dense Spatial RL Credit Assignment & Live Dashboard**:
+  - `UnifiedLearner` (`organic_3d=True`) wraps mask decoding in `no_grad()`,
+    combines multi-episode GAE (`rollout_steps=16`, `audit_steps=5`,
+    `lr=1.2e-3`, `weight_decay=1e-4`, `mark_done()`) with an experimental physics-shaped
+    dense spatial auxiliary objective (not an exact control variate) (`(latent.sigmoid() - mean.detach().sigmoid()) *
+    des_c`) using orientation-neutral room-scale physical desirability
+    (`compute_spatial_desirability`), weighted by `1.2 / sqrt(N_elig)`.
+  - Built-in **Training & Massing Dashboard** (`public/index.html`,
+    `public/style.css`, `public/app.js`) shows live KPI cards (`Organic score`,
+    `Usable good area`, `Direct sun · Diffuse sky` kept separate, `Geometry
+    health`, `RL policy`, `Throughput`), learning curves (`#qualityChart`,
+    `#history`), recent episode table, and `Episode-sync 3D during training`.
+- **Verified checks (`results/organic-3d-rl-demo-2026-11-18.json`, 2026-11-18)**:
+  - Unit tests: **168 Python tests** + **10 JavaScript tests** passed.
+  - 35-episode M4 MPS continuous training on `m_bcn_0093` (`53.85 s`, `1.539
+    s/ep`, `19` updates, `maxSlimVoxels = 0`): EP 30 reached `obj=0.7041,
+    good=3,061 m², sun=47.8%, diff=9.9%`; EP 35 reached `obj=0.8052,
+    good=2,893 m², sun=59.9%, diff=13.6%, ln6=5.9%`.
+  - 5-ep eval (`trainedEval` vs `untrainedEval` on `m_bcn_0093`):
+    `meanOrganicObjective` `0.3260 -> 0.8224`, `meanUsableGoodArea`
+    `995.0 -> 2,957.0 m²`, `meanDirectSunProxy` `38.3% -> 61.2%`,
+    `meanDiffuseFacadeProxy` `4.0% -> 14.0%`, `meanLongNarrowFraction`
+    `13.6% -> 5.5%`, `maxSlimVoxels = 0`, `deepFloorArea = 0.0 m²`; `farSuccessRate`
+    was `3/5` (`meanFar = 3.1084`, 2 slight overshoots at `3.14` and `3.16`).
+  - Zero-shot held-out eval (before -> after): `m_bcn_0094` `obj 0.1089 -> 0.6307`,
+    `usableGoodArea 288.7 -> 1,973.3 m²`, `directSunProxy 25.9% -> 51.0%`,
+    `diffuseFacadeProxy 2.4% -> 11.6%`, `ln6 20.6% -> 8.7%`, `slim=0`,
+    `farSuccessRate 2/3` (`3.1004` overshoot); `m_nyc_0003` `obj 0.0515 -> 0.4490`,
+    `usableGoodArea 130.0 -> 1,944.3 m²`, `directSunProxy 14.6% -> 22.8%`,
+    `diffuseFacadeProxy 1.6% -> 6.5%`, `ln6 13.2% -> 4.4%`, `slim=0`,
+    `farSuccessRate 3/3`, `0.761 s/ep`. Metrics remain uncalibrated proxies.
+
+## Legacy whole-floor preview (2026-11-14, retained for test compatibility)
+- Older `floor_copy=True` behavior (retained for `tests/test_floor_copy.py` and legacy `floorCopy` tests in `tests/test_unified_server.py`) uses vertical support checks, `copy_labels`, and whole-plate extrusion:
+- For height increase/decrease and action-space continuation, read
+  [HEIGHT_GROWTH_HANDOVER.md](HEIGHT_GROWTH_HANDOVER.md) first. It separates user
+  intent from implemented restrictions and records unresolved reversibility limits.
 - `main.py` serves `unified_server.app` on port 8011. The `devox` branch was
   integrated, preserving its commit. `voxelform.server` is the historical app.
 - Default `UnifiedLearner` in the active session uses net guidance and
   `floor_copy=True`. Whole-floor growth and carving/exchange are available from
   step zero; do not add a carve-first schedule or a floor-perfection threshold.
-- Growth copies a complete highest floor of a grounded mass. In an exchange,
-  source cuts also affect the new copy. `env.copy_labels` couples copied cells
-  to source cells for subsequent edits. Projection only prunes partial linked
-  selections; it must not invent additional cuts. Reset copy labels with volume.
+- Growth copies exposed roof plates or (on plots >= 400 m²) coherent extruded
+  tower sub-plates via `copy_plates` and `extract_tower_plate`, filtering out
+  thin fins and small upper slivers (`min_plate_area`, `coherent_plate`).
+  In an exchange, source cuts also affect the new copy. `env.copy_labels`
+  couples copied cells to source cells for partial cuts, while complete
+  exposed upper tiers (`unstack_cells`) can unstack reversibly without deleting
+  their supporting source floor and release stale vertical links on `commit`.
+  Column-consistent removal ranking (`0.85 * col_mean + 0.15 * scores`) with
+  outward-to-inward `remove_skin` score ordering, vectorized 2D morphological
+  thickness + neighbor-count filtering (`clean_floor_tensor` / `clean_floor_numpy`,
+  `min_room_width=3` on `plot_area >= 400`), and upward-propagated slim-fin
+  absorption prevent hollow outer walls and slim unusable appendages while
+  keeping projection selection-only. Reset copy labels with volume.
+- Continuous training in `UnifiedSession.finish_episode` stays running across
+  episodes (including `step_budget_exhausted` and rejected-draw episodes where
+  `unified_actions > 0`), pausing only when `training=False`, on `pause()`, or
+  if `edits == 0 and unified_actions == 0`. During `training=True`, `finish` is
+  masked on step 0 (`e.edits == 0`) when other edits are legal.
 - Enforce direct vertical support for this decoder. No upper occupied cell may
   sit above an empty cell. This disallows cantilevers deliberately and does not
   certify livability. Legacy `floor_copy=False` preserves roof-patch experiments.
@@ -68,9 +189,13 @@
   verify revisions before/after reconstruction, and never run it during training.
   Complex meshes may retain boundary/nonmanifold edges: expose diagnostics and
   never claim arbitrary watertight export. `/devoxelize` is a fixed synthetic lab.
-- Four untrained matched-seed real-site runs reached FAR, eliminated unsupported
-  upper cells and used fewer edits; this is feasibility evidence only. See the
-  Nov 14 notes/results. Do not infer learned daylight placement or compliance.
+- Updated `v2-tower-growth` real-site controls (`m_nyc_0003`, `m_bcn_0094` ×
+  seeds 123/456) reached FAR in 4/4 runs with 0 unsupported upper cells across
+  7–9 storeys, raising proxy quality from `0.051–0.096` to `0.166–0.207` and
+  `potentialUsableArea` from `36–611 m²` to `1,369–2,257 m²` in 10–12 accepted
+  edits; see [results/floor-growth-preview-v2-tower-growth-2026-11-14.json](results/floor-growth-preview-v2-tower-growth-2026-11-14.json).
+  This establishes geometry/exposure-guided action-space improvements, not
+  converged RL learning or residential compliance.
 - Older sections below describe the legacy FAR-only policy and prior research;
   the active contract above takes precedence where they differ.
 

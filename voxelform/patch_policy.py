@@ -55,23 +55,36 @@ class PatchConfig:
 
 
 def gaussian_field(field,sigma):
-    """Differentiable separable Gaussian smoothing, CPU/MPS-native torch kernels."""
+    """Differentiable separable Gaussian smoothing, CPU/MPS-native 1D/2D kernels."""
     batched=field.ndim==4
-    out=field[:,None] if batched else field[None,None]
-    for axis,s in enumerate(sigma):
-        if s==0:continue
-        radius=max(1,int(math.ceil(3*s)));key=(str(field.device),field.dtype,float(s))
+    out=field if batched else field[None]
+    B,Z,Y,X=out.shape
+    sz,sy,sx=(float(s) for s in sigma)
+    def _kernel(s):
+        key=(str(field.device),field.dtype,s)
         if key not in _GAUSSIAN_KERNELS:
-            x=torch.arange(-radius,radius+1,device=field.device,dtype=field.dtype);kernel=torch.exp(-.5*(x/s).square());_GAUSSIAN_KERNELS[key]=kernel/kernel.sum()
-        k=_GAUSSIAN_KERNELS[key];shape=[1,1,1,1,1];shape[axis+2]=len(k)
-        padding=[0,0,0];padding[axis]=radius
-        # Replication avoids depressed values at roof/grid edges; slicing/concat
-        # works on MPS as well as CPU, without a SciPy gradient/device fallback.
-        dim=axis+2;first=out.narrow(dim,0,1);last=out.narrow(dim,out.shape[dim]-1,1)
-        repeats=[1]*5;repeats[dim]=radius
-        out=torch.cat((first.repeat(*repeats),out,last.repeat(*repeats)),dim=dim)
-        out=F.conv3d(out,k.reshape(shape))
-    return out[:,0] if batched else out[0,0]
+            radius=max(1,int(math.ceil(3*s)))
+            x=torch.arange(-radius,radius+1,device=field.device,dtype=field.dtype)
+            k=torch.exp(-.5*(x/s).square())
+            _GAUSSIAN_KERNELS[key]=k/k.sum()
+        return _GAUSSIAN_KERNELS[key]
+    if sz>0:
+        k=_kernel(sz);r=len(k)//2
+        t=out.permute(0,2,3,1).reshape(B*Y*X,1,Z)
+        t=torch.cat((t[:,:,:1].expand(-1,-1,r),t,t[:,:,-1:].expand(-1,-1,r)),dim=2)
+        out=F.conv1d(t,k.view(1,1,-1)).reshape(B,Y,X,Z).permute(0,3,1,2)
+    if sy>0 or sx>0:
+        t=out.reshape(B*Z,1,Y,X)
+        if sy>0:
+            k=_kernel(sy);r=len(k)//2
+            t=torch.cat((t[:,:,:1,:].expand(-1,-1,r,-1),t,t[:,:,-1:,:].expand(-1,-1,r,-1)),dim=2)
+            t=F.conv2d(t,k.view(1,1,-1,1))
+        if sx>0:
+            k=_kernel(sx);r=len(k)//2
+            t=torch.cat((t[:,:,:,:1].expand(-1,-1,-1,r),t,t[:,:,:,-1:].expand(-1,-1,-1,r)),dim=3)
+            t=F.conv2d(t,k.view(1,1,1,-1))
+        out=t.reshape(B,Z,Y,X)
+    return out if batched else out[0]
 
 
 def components(mask):
@@ -83,17 +96,58 @@ def components(mask):
 
 class PatchFacades(ExteriorFacades):
     def __init__(self,occupied,allowed,seed=123,config=None,depth_device=None):
-        self.config=config or PatchConfig();self.depth_device=torch.device(depth_device) if depth_device is not None else None;super().__init__(occupied,allowed,seed)
+        self.config=config or PatchConfig();self.depth_device=torch.device(depth_device) if depth_device is not None else None
+        self._prev_occ=None;self._prev_air=None;self._empty_voids=None;self.plot_edge=None
+        super().__init__(occupied,allowed,seed)
     @property
     def action_space(self):return 'neural_patch_'+self.config.eligibility+'_v1'
     def refresh(self):
+        stamp=time.perf_counter()
+        prev_occ=self._prev_occ;prev_air=self._prev_air
         super().refresh();self._weight_tensors={}
+        if self.plot_edge is None or self.plot_edge.shape!=self.shape:
+            self.plot_edge=self.allowed&neighbors_horizontal(~self.allowed,outside=True).any(0)
+            self._empty_voids=None
+        occ_z=np.flatnonzero(self.occupied.any((1,2)))
+        z_mask=((self.occupied!=prev_occ)|(self.exterior_air!=prev_air)) if (prev_occ is not None and prev_occ.shape==self.shape) else None
+        changed_z=np.flatnonzero(z_mask.any((1,2))) if z_mask is not None else None
         if self.depth_device is None:
-            self.depth_tensor=None;self.depth_numpy=facade_depth(self.occupied,self.exterior_air)
+            if changed_z is not None and getattr(self,'depth_numpy',None) is not None:
+                if len(changed_z):
+                    self.depth_numpy[changed_z]=facade_depth(self.occupied[changed_z],self.exterior_air[changed_z])
+            else:
+                self.depth_numpy=np.zeros(self.shape,dtype=np.float32)
+                if len(occ_z):
+                    self.depth_numpy[occ_z]=facade_depth(self.occupied[occ_z],self.exterior_air[occ_z])
+            self.depth_tensor=None
         else:
-            self.depth_tensor=facade_depth_tensor(torch.as_tensor(self.occupied,device=self.depth_device),torch.as_tensor(self.exterior_air,device=self.depth_device));self.depth_numpy=None
-        self.plot_edge=self.allowed&neighbors_horizontal(~self.allowed,outside=True).any(0)
-        self.old_voids=[self._floor_voids(self.occupied[z],z) for z in range(self.shape[0])] if self.config.maximum_voids or self.config.minimum_void_area>1 else None
+            if changed_z is not None and getattr(self,'depth_tensor',None) is not None:
+                if len(changed_z):
+                    occ_sub=torch.as_tensor(self.occupied[changed_z],device=self.depth_device)
+                    air_sub=torch.as_tensor(self.exterior_air[changed_z],device=self.depth_device)
+                    self.depth_tensor[changed_z]=facade_depth_tensor(occ_sub,air_sub)
+            else:
+                self.depth_tensor=torch.zeros(self.shape,dtype=torch.float32,device=self.depth_device)
+                if len(occ_z):
+                    occ_sub=torch.as_tensor(self.occupied[occ_z],device=self.depth_device)
+                    air_sub=torch.as_tensor(self.exterior_air[occ_z],device=self.depth_device)
+                    self.depth_tensor[occ_z]=facade_depth_tensor(occ_sub,air_sub)
+            self.depth_numpy=None
+        if self.config.maximum_voids or self.config.minimum_void_area>1:
+            if changed_z is not None and getattr(self,'old_voids',None) is not None and len(self.old_voids)==self.shape[0]:
+                for z in changed_z:
+                    zi=int(z);self.old_voids[zi]=self._floor_voids(self.occupied[zi],zi)
+            else:
+                uniform=bool((self.allowed==self.allowed[:1]).all())
+                if uniform and self._empty_voids is None:
+                    self._empty_voids=self._floor_voids(np.zeros_like(self.occupied[0]),0)
+                if uniform:
+                    el,ei,es=self._empty_voids
+                    self.old_voids=[self._floor_voids(self.occupied[z],z) if self.occupied[z].any() else (el.copy(),list(ei),es.copy()) for z in range(self.shape[0])]
+                else:
+                    self.old_voids=[self._floor_voids(self.occupied[z],z) for z in range(self.shape[0])]
+        else:
+            self.old_voids=None
         self.facade_band=self.remove_skin.copy()
         for _ in range(self.config.facade_layers-1):self.facade_band|=self.occupied&neighbors_horizontal(self.facade_band).any(0)
         self.remove_weights=self.facade_band.astype(np.float32)
@@ -103,6 +157,8 @@ class PatchFacades(ExteriorFacades):
                 self.remove_weights=np.maximum(self.remove_weights,depth_badness(self.depth_numpy)*self.occupied);self._remove_eligible=self.remove_weights>0
             else:
                 self._remove_eligible|=(self.depth_tensor>8).cpu().numpy();self.remove_weights=None
+        self._prev_occ=self.occupied.copy();self._prev_air=self.exterior_air.copy()
+        self.facade_seconds=time.perf_counter()-stamp
     def eligible(self,operation):return self._remove_eligible if operation==-1 else self.add_skin
     def weights(self,operation):
         if operation==1:return self.add_skin.astype(np.float32)

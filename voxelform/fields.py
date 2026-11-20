@@ -47,7 +47,7 @@ def sky_boundary(shape,boxes,device='cpu',samples=12,spacing=(1.,1.,3.),building
     return out
 
 
-def diffuse_access(occupied,boundary=None,iterations=64,decay_length=12.,spacing=(1.,1.,3.)):
+def diffuse_access(occupied,boundary=None,iterations=64,decay_length=12.,spacing=(1.,1.,3.),init=None):
     """Screened Laplace/Jacobi accessibility in exterior air, not radiance.
 
     Solid walls absorb to zero; open boundaries inject scalar sky openness.
@@ -56,10 +56,13 @@ def diffuse_access(occupied,boundary=None,iterations=64,decay_length=12.,spacing
     """
     if boundary is None:
         boundary=torch.ones(tuple(n+2 for n in occupied.shape),device=occupied.device);boundary[0]=0
-    field=torch.zeros_like(occupied,dtype=torch.float32);wx,wy,wz=[1/(v*v) for v in spacing]
-    denominator=2*(wx+wy+wz)+1/(decay_length**2);air=~occupied
+    air=~occupied
+    field=(init*air) if init is not None else torch.zeros_like(occupied,dtype=torch.float32)
+    wx,wy,wz=[1/(v*v) for v in spacing]
+    denominator=2*(wx+wy+wz)+1/(decay_length**2)
+    padded=boundary.clone()
     for _ in range(iterations):
-        padded=boundary.clone();padded[1:-1,1:-1,1:-1]=field
+        padded[1:-1,1:-1,1:-1]=field
         field=(wx*(padded[1:-1,1:-1,2:]+padded[1:-1,1:-1,:-2])+
                wy*(padded[1:-1,2:,1:-1]+padded[1:-1,:-2,1:-1])+
                wz*(padded[2:,1:-1,1:-1]+padded[:-2,1:-1,1:-1]))/denominator

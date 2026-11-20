@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "voxelform-rl"
+version = "0.2.0"
+description = "Reproducible reinforcement-learning experiments for constrained 3D voxel editing"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = ["numpy>=2.0", "torch>=2.4", "fastapi>=0.110", "uvicorn>=0.30", "scipy>=1.11", "shapely>=2.1"]
+
+[project.optional-dependencies]
+dev = ["httpx>=0.28", "ruff>=0.12"]
+
+[project.scripts]
+vf-research = "tools.research:main"
+vf-core-plans = "tools.render_core_plans:main"
+
+[tool.setuptools.packages.find]
+include = ["voxelform*", "tools*"]
+namespaces = true
+
+[tool.ruff]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["F", "E9"]
+
+[tool.uv]
+# Resolve the CPU wheel on Linux/CI; the default macOS wheel supports MPS.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
