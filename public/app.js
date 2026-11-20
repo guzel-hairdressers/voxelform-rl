@@ -139,9 +139,9 @@ function render(){
   if(settings.coresEnabled===false){$('coreNote').textContent='Vertical cores disabled (toggle checkbox above to include core shapes, travel limits & Core score).';}
   else{
    const counts=new Map();
-   for(const cr of (data.cores||[])){const k=`${cr.tier} ${cr.sizeY}x${cr.sizeX}x${cr.floors}F`;counts.set(k,(counts.get(k)||0)+1);}
+   for(const cr of (data.cores||[])){const layout=cr.stairLayout==='scissor'?' scissor':'';const lifts=Number.isInteger(cr.liftCount)?` · ${cr.liftCount} lift${cr.liftCount===1?'':'s'}`:'';const k=`${cr.tier}${layout} ${cr.sizeY}×${cr.sizeX} m · ${cr.floors}F${lifts}`;counts.set(k,(counts.get(k)||0)+1);}
    const coreList=Array.from(counts,([k,n])=>n>1?`${n}× ${k}`:k).join(', ')||'none fit';
-   $('coreNote').textContent=`${m.coreCount??0} core${(m.coreCount??0)===1?'':'s'} (${coreList}) · ${(100*(m.coreRatio||0)).toFixed(1)}% GFA · avg ${(m.coreDistanceMean??0).toFixed(1)} / max ${(m.coreDistanceMax??0).toFixed(1)} m · ${(100*(m.coreUncoveredFraction||0)).toFixed(1)}% > ${settings.maxCoreDist??12} m.`;
+   $('coreNote').textContent=`${data.coreLayoutVersion?data.coreLayoutVersion+' · ':''}${m.coreCount??0} core${(m.coreCount??0)===1?'':'s'} (${coreList}) · ${(100*(m.coreRatio||0)).toFixed(1)}% GFA · avg ${(m.coreDistanceMean??0).toFixed(1)} / max ${(m.coreDistanceMax??0).toFixed(1)} m · ${(100*(m.coreUncoveredFraction||0)).toFixed(1)}% > ${settings.maxCoreDist??12} m.`;
   }
  }
  const currentFar=m.far??m.occupiedFloorArea/(c?.siteArea||data.shape[1]*data.shape[2]);

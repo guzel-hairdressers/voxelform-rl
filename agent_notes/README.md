@@ -25,3 +25,7 @@
 - 2026-11-20 scissor follow-up: active T4 now uses compact-core.v3, two
   interlocking routes with separate +1.5 m landings, three lifts; metric
   6.55×8.38 m / grid 7×9 m. See docs/CORE_LAYOUTS.md for the area tradeoff.
+
+- Four-lift follow-up: compact-core.v4 is active in the 3D solver and actor
+  masks, T4 is 6.55×8.40 m metric / 7×9 grid with four lifts. 8011 was
+  refreshed with user weights/geometry preserved; 8015 stopped by request.

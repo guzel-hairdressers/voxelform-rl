@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from html import escape
 import math
 
-CORE_LAYOUT_VERSION = 'compact-core.v3'
+CORE_LAYOUT_VERSION = 'compact-core.v4'
 
 @dataclass(frozen=True)
 class CorePlanParameters:
@@ -49,7 +49,7 @@ class HeightBand:
     stair_layout: str = 'dogleg'
 
 DEFAULT_HEIGHT_BANDS=(HeightBand('T1',1,5,1,0),HeightBand('T2',6,10,1,1),
-    HeightBand('T3',11,18,1,2),HeightBand('T4',19,30,2,3,'scissor'),HeightBand('T5',31,60,2,4))
+    HeightBand('T3',11,18,1,2),HeightBand('T4',19,30,2,4,'scissor'),HeightBand('T5',31,60,2,4))
 
 def make_plan(band: HeightBand, p: CorePlanParameters | None = None) -> dict:
     p=p or CorePlanParameters()
@@ -114,28 +114,31 @@ def make_scissor_plan(band: HeightBand, p: CorePlanParameters) -> dict:
         raise ValueError('Scissor section has less than the assumed 2 m headroom')
     run=(p.risers_per_flight-1)*p.tread
     sw=2*p.wall+2*p.flight_width+p.stair_separator
-    length=2*p.wall+3*p.landing_depth+2*run
+    stair_length=2*p.wall+3*p.landing_depth+2*run
+    length=max(stair_length,band.lifts*p.shaft_width)
+    # Distribute any extra bank length across the end landings; flights and
+    # the intermediate landings retain their original run/depth.
+    end_landing=p.landing_depth+(length-stair_length)/2
     lobby_width=p.lobby_clear_width+2*p.wall
     width=sw+lobby_width+p.shaft_depth
-    if band.lifts*p.shaft_width > length:
-        raise ValueError('Lift bank exceeds scissor enclosure length')
     def rect(kind,x,y,w,h,label,**extra):
         return dict(type=kind,x=round(x,6),y=round(y,6),w=round(w,6),h=round(h,6),label=label,**extra)
     zones=[rect('stair',0,0,sw,length,'Scissor enclosure: routes A/B'),
-           rect('lobby',sw,0,lobby_width,length,'Lift lobby'),
-           rect('service',sw+lobby_width,band.lifts*p.shaft_width,p.shaft_depth,
-                length-band.lifts*p.shaft_width,'Service reserve')]
+           rect('lobby',sw,0,lobby_width,length,'Lift lobby')]
+    if length-band.lifts*p.shaft_width>1e-8:
+        zones.append(rect('service',sw+lobby_width,band.lifts*p.shaft_width,p.shaft_depth,
+                          length-band.lifts*p.shaft_width,'Service reserve'))
     parts=[];doors=[];routes=[]
-    middle=p.wall+p.landing_depth+run
-    far=length-p.wall-p.landing_depth
+    middle=p.wall+end_landing+run
+    far=length-p.wall-end_landing
     for lane,route in enumerate(('A','B')):
         x=p.wall+lane*(p.flight_width+p.stair_separator)
         start_y=p.wall if lane==0 else far
-        parts.append(rect('landing',p.wall,start_y,sw-2*p.wall,p.landing_depth,
+        parts.append(rect('landing',p.wall,start_y,sw-2*p.wall,end_landing,
                           f'{route}: floor landing',route=route,elevation=0.,level='floor'))
         parts.append(rect('landing',x,middle,p.flight_width,p.landing_depth,
                           f'{route}: +{p.floor_height/2:g} m',route=route,elevation=p.floor_height/2,level='intermediate'))
-        for j,y in enumerate((p.wall+p.landing_depth,middle+p.landing_depth)):
+        for j,y in enumerate((p.wall+end_landing,middle+p.landing_depth)):
             low=j if lane==0 else 1-j
             parts.append(rect('flight',x,y,p.flight_width,run,f'{route}: flight {low+1}',
                 route=route,risers=p.risers_per_flight,treads=p.risers_per_flight-1,
@@ -163,7 +166,7 @@ def make_scissor_plan(band: HeightBand, p: CorePlanParameters) -> dict:
         width=math.ceil(width-1e-9),length=math.ceil(length-1e-9),floorHeight=p.floor_height,
         riserCount=2*p.risers_per_flight,riserHeight=p.floor_height/(2*p.risers_per_flight),
         tread=p.tread,clearFlightWidth=p.flight_width,landingDepth=p.landing_depth,
-        wallThickness=p.wall,separatorThickness=p.stair_separator,stairSlabThickness=p.stair_slab,
+        wallThickness=p.wall,separatorThickness=p.stair_separator,stairSlabThickness=p.stair_slab,endLandingDepth=end_landing,
         clearStackedHeadroom=p.floor_height-p.stair_slab,clearLobbyWidth=p.lobby_clear_width,
         shaftClearWidth=p.shaft_width-2*p.wall,shaftClearDepth=p.shaft_depth-2*p.wall,
         carWidth=p.car_width,carDepth=p.car_depth,zones=zones,components=parts,doors=doors,routes=routes,

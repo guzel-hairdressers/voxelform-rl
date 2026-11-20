@@ -70,7 +70,7 @@ and openings. Height-dependent lift counts are explicit research priors.
 | 1–5 | 1 | 0 | 3 × 5 m |
 | 6–10 | 1 | 1 | 5 × 5 m |
 | 11–18 | 1 | 2 | 7 × 5 m |
-| 19–30 | 2 interlocking scissor routes | 3 | 7 × 9 m |
+| 19–30 | 2 interlocking scissor routes | 4 | 7 × 9 m |
 | 31–60 | 2 | 4 | 14 × 5 m |
 
 [Metric dimensions, drawings and assumptions](docs/CORE_LAYOUTS.md) ·

@@ -55,6 +55,22 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(sorted((core.size_x,core.size_y)),[7,9])
         self.assertEqual(int(result.core_mask.sum()),24*63)
         self.assertEqual(template_for_height(24).metric_plan['stairLayout'],'scissor')
+        self.assertEqual(core.to_dict()['liftCount'],4)
+        self.assertEqual(core.to_dict()['layoutVersion'],'compact-core.v4')
+
+    def test_active_environment_and_actor_use_four_lift_scissor_core(self):
+        cfg=PatchConfig(eligibility='depth',facade_layers=2)
+        env=Environment((24,16,16),sun_count=2,device='cpu',cores_enabled=True,
+            frontier_factory=functools.partial(PatchFacades,config=cfg,depth_device='cpu'))
+        env.organic_3d_growth=True
+        learner=UnifiedLearner('cpu',123,cfg,organic_3d=True,net_guided=True)
+        self.assertTrue(env.cores)
+        self.assertTrue(all(c.tier=='T4' and c.to_dict()['liftCount']==4 for c in env.cores))
+        obs=learner.observation(env)
+        self.assertEqual(obs.shape[1],14)
+        torch.testing.assert_close(obs[:,12],env.core_mask[:obs.shape[0]].float())
+        torch.testing.assert_close(obs[:,13],env.core_dist_badness[:obs.shape[0]])
+        self.assertEqual(env.metrics()['coreVoxels'],len(env.cores)*24*63)
 
     def test_tall_tower_cannot_cheat_with_low_rise_core(self):
         # 12F tower only 5x6 fits T2 (6-10F) but NOT T3 (7x5 for 11-18F), so T1/T2 must NOT place inside it

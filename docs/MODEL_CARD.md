@@ -32,7 +32,7 @@ itself a hand-designed proxy.
 passenger-capacity or occupancy decisions. A stair/lift count based only on height
 is a chosen environment prior, not a conclusion about a real building.
 
-**Version boundaries:** compact core library `compact-core.v2`; corrected Gaussian
+**Version boundaries:** compact core library `compact-core.v4`; corrected Gaussian
 retry path `gaussian-retry-path.v1`; experiment wrapper `voxelform.research.v1`.
 Network checkpoint compatibility does not imply task/reward compatibility. See
 [experiment protocol](EXPERIMENT_PROTOCOL.md) for exact resume requirements.

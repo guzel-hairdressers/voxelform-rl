@@ -24,7 +24,7 @@ import numpy as np
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response, FileResponse
+from fastapi.responses import HTMLResponse, Response, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from voxelform.context import ContextLibrary, public_scene
@@ -907,6 +907,7 @@ class UnifiedSession:
             _, allowed_list, boxes_list, ctx_pub = static
             payload = dict(
                 ready=True,
+                coreLayoutVersion=CORE_LAYOUT_VERSION,
                 error=self.error,
                 running=self.running,
                 training=self.training,
@@ -1228,18 +1229,18 @@ def devoxelize():
 
 @app.get('/api/core-plans')
 def core_plan_data():
-    return dict(version=CORE_LAYOUT_VERSION,plans=plan_library())
+    return JSONResponse(dict(version=CORE_LAYOUT_VERSION,plans=plan_library()),headers={'Cache-Control':'no-store'})
 
 @app.get('/api/core-plans/{tier}.svg')
 def core_plan_svg(tier: str):
     plan=next((p for p in plan_library() if p['tier']==tier),None)
     if plan is None:raise HTTPException(404,'Unknown core tier')
-    return Response(render_plan_svg(plan),media_type='image/svg+xml')
+    return Response(render_plan_svg(plan),media_type='image/svg+xml',headers={'Cache-Control':'no-store'})
 
 @app.get('/core-plans')
 def core_plans():
     html_file = VOXELFORM_ROOT / 'public/core-plans.html'
-    return FileResponse(html_file)
+    return FileResponse(html_file,headers={'Cache-Control':'no-store'})
 
 @app.get('/api/state')
 def state(view: str = 'all'):

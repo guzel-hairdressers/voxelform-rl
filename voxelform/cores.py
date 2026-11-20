@@ -76,7 +76,15 @@ class PlacedCore:
     center_x: float
 
     def to_dict(self) -> dict:
+        template = next(t for t in CORE_TEMPLATES if t.tier == self.tier)
+        plan = template.metric_plan
         return {
+            "layoutVersion": CORE_LAYOUT_VERSION,
+            "stairLayout": plan['stairLayout'],
+            "stairCount": plan['stairCount'],
+            "liftCount": plan['liftCount'],
+            "metricWidth": plan['metricWidth'],
+            "metricLength": plan['metricLength'],
             "id": self.id,
             "tier": self.tier,
             "label": self.label,

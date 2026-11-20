@@ -218,7 +218,10 @@ class CorePlanAPI(unittest.TestCase):
     def test_canonical_plan_data_and_svg_endpoints(self):
         client=TestClient(server.app)
         result=client.get('/api/core-plans');self.assertEqual(result.status_code,200)
+        self.assertEqual(result.headers['cache-control'],'no-store')
         plans=result.json()['plans'];self.assertEqual(len(plans),5)
+        t4=next(p for p in plans if p['tier']=='T4')
+        self.assertEqual((t4['liftCount'],t4['width'],t4['length']),(4,7,9))
         self.assertEqual(plans[0]['liftCount'],0)
         self.assertEqual((plans[1]['width'],plans[1]['length']),(5,5))
         for p in plans:

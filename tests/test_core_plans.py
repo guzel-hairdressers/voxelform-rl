@@ -22,10 +22,14 @@ class CorePlans(unittest.TestCase):
     def test_scissor_routes_landings_and_repeated_section(self):
         plan=make_plan(next(b for b in DEFAULT_HEIGHT_BANDS if b.tier=='T4'))
         self.assertEqual(plan['stairLayout'],'scissor')
-        self.assertEqual((plan['stairCount'],plan['stairEnclosureCount'],plan['liftCount']),(2,1,3))
+        self.assertEqual((plan['stairCount'],plan['stairEnclosureCount'],plan['liftCount']),(2,1,4))
         self.assertEqual((plan['width'],plan['length']),(7,9))
-        self.assertAlmostEqual(plan['metricArea'],54.889)
+        self.assertAlmostEqual(plan['metricArea'],55.02)
         self.assertEqual(len([d for d in plan['doors'] if d['type']=='stair_door']),2)
+        self.assertEqual(len([d for d in plan['doors'] if d['type']=='lift_door']),4)
+        self.assertEqual(len([c for c in plan['components'] if c['type']=='car']),4)
+        self.assertAlmostEqual(plan['endLandingDepth'],1.21)
+        self.assertEqual(len([z for z in plan['zones'] if z['type']=='service']),0)
         flights=[c for c in plan['components'] if c['type']=='flight']
         for route in plan['routes']:
             self.assertEqual([n['z'] for n in route['nodes']],[0.,1.5,3.])

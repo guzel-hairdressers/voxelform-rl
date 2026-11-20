@@ -6,10 +6,10 @@
 - Read `docs/EXPERIMENT_PROTOCOL.md`, `docs/MODEL_CARD.md`, `docs/DATA_CARD.md`
   and `docs/CORE_LAYOUTS.md` for current scientific assumptions and limitations.
 - Canonical compact-core library: `voxelform/core_plans.py`, version
-  `compact-core.v3`. T1 (1–5F) is stairs only, two flights/two landings, 3x5 m
+  `compact-core.v4`. T1 (1–5F) is stairs only, two flights/two landings, 3x5 m
   grid. T2 (6–10F) is one stair + one lift, 5x5 m. Higher configured bands have
   more lifts. T4 (19–30F) uses two interlocking scissor routes in one enclosure,
-  separate +1.5 m landings, 3 lifts, 6.55x8.38 m metric / 7x9 m grid. Metric area
+  separate +1.5 m landings, 4 lifts, 6.55x8.40 m metric / 7x9 m grid. Metric area
   is smaller than v2, grid reservation slightly larger (63 vs 60 m²); do not
   claim a voxel-area saving. T5 remains two conventional stairs. `cores.py`, API/SVGs and exported plans share this source. Do not
   reinstate the prior 30/48/72/108/160 m² rectangles or compliance claims.

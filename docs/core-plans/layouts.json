@@ -1,6 +1,6 @@
 [
   {
-    "version": "compact-core.v3",
+    "version": "compact-core.v4",
     "tier": "T1",
     "minHeight": 1,
     "maxHeight": 5,
@@ -90,7 +90,7 @@
     "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
   },
   {
-    "version": "compact-core.v3",
+    "version": "compact-core.v4",
     "tier": "T2",
     "minHeight": 6,
     "maxHeight": 10,
@@ -218,7 +218,7 @@
     "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
   },
   {
-    "version": "compact-core.v3",
+    "version": "compact-core.v4",
     "tier": "T3",
     "minHeight": 11,
     "maxHeight": 18,
@@ -369,17 +369,17 @@
     "assumptions": "Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment."
   },
   {
-    "version": "compact-core.v3",
+    "version": "compact-core.v4",
     "tier": "T4",
     "minHeight": 19,
     "maxHeight": 30,
     "stairCount": 2,
     "stairLayout": "scissor",
     "stairEnclosureCount": 1,
-    "liftCount": 3,
+    "liftCount": 4,
     "metricWidth": 6.55,
-    "metricLength": 8.38,
-    "metricArea": 54.889,
+    "metricLength": 8.4,
+    "metricArea": 55.02,
     "width": 7,
     "length": 9,
     "floorHeight": 3.0,
@@ -391,6 +391,7 @@
     "wallThickness": 0.15,
     "separatorThickness": 0.15,
     "stairSlabThickness": 0.15,
+    "endLandingDepth": 1.2100000000000006,
     "clearStackedHeadroom": 2.85,
     "clearLobbyWidth": 1.2,
     "shaftClearWidth": 1.8,
@@ -403,7 +404,7 @@
         "x": 0,
         "y": 0,
         "w": 2.85,
-        "h": 8.38,
+        "h": 8.4,
         "label": "Scissor enclosure: routes A/B"
       },
       {
@@ -411,16 +412,8 @@
         "x": 2.85,
         "y": 0,
         "w": 1.5,
-        "h": 8.38,
+        "h": 8.4,
         "label": "Lift lobby"
-      },
-      {
-        "type": "service",
-        "x": 4.35,
-        "y": 6.3,
-        "w": 2.2,
-        "h": 2.08,
-        "label": "Service reserve"
       },
       {
         "type": "lift",
@@ -445,6 +438,14 @@
         "w": 2.2,
         "h": 2.1,
         "label": "Lift 3"
+      },
+      {
+        "type": "lift",
+        "x": 4.35,
+        "y": 6.3,
+        "w": 2.2,
+        "h": 2.1,
+        "label": "Lift 4"
       }
     ],
     "components": [
@@ -453,7 +454,7 @@
         "x": 0.15,
         "y": 0.15,
         "w": 2.55,
-        "h": 1.2,
+        "h": 1.21,
         "label": "A: floor landing",
         "route": "A",
         "elevation": 0.0,
@@ -462,7 +463,7 @@
       {
         "type": "landing",
         "x": 0.15,
-        "y": 3.59,
+        "y": 3.6,
         "w": 1.2,
         "h": 1.2,
         "label": "A: +1.5 m",
@@ -473,7 +474,7 @@
       {
         "type": "flight",
         "x": 0.15,
-        "y": 1.35,
+        "y": 1.36,
         "w": 1.2,
         "h": 2.24,
         "label": "A: flight 1",
@@ -487,7 +488,7 @@
       {
         "type": "flight",
         "x": 0.15,
-        "y": 4.79,
+        "y": 4.8,
         "w": 1.2,
         "h": 2.24,
         "label": "A: flight 2",
@@ -501,9 +502,9 @@
       {
         "type": "landing",
         "x": 0.15,
-        "y": 7.03,
+        "y": 7.04,
         "w": 2.55,
-        "h": 1.2,
+        "h": 1.21,
         "label": "B: floor landing",
         "route": "B",
         "elevation": 0.0,
@@ -512,7 +513,7 @@
       {
         "type": "landing",
         "x": 1.5,
-        "y": 3.59,
+        "y": 3.6,
         "w": 1.2,
         "h": 1.2,
         "label": "B: +1.5 m",
@@ -523,7 +524,7 @@
       {
         "type": "flight",
         "x": 1.5,
-        "y": 1.35,
+        "y": 1.36,
         "w": 1.2,
         "h": 2.24,
         "label": "B: flight 2",
@@ -537,7 +538,7 @@
       {
         "type": "flight",
         "x": 1.5,
-        "y": 4.79,
+        "y": 4.8,
         "w": 1.2,
         "h": 2.24,
         "label": "B: flight 1",
@@ -571,6 +572,14 @@
         "w": 1.4,
         "h": 1.1,
         "label": "Car 3"
+      },
+      {
+        "type": "car",
+        "x": 4.8,
+        "y": 6.8,
+        "w": 1.4,
+        "h": 1.1,
+        "label": "Car 4"
       }
     ],
     "doors": [
@@ -586,7 +595,7 @@
         "type": "stair_door",
         "route": "B",
         "x": 2.85,
-        "y": 7.18,
+        "y": 7.19,
         "width": 0.9,
         "orientation": "vertical"
       },
@@ -608,6 +617,13 @@
         "type": "lift_door",
         "x": 4.35,
         "y": 4.85,
+        "width": 0.8,
+        "orientation": "vertical"
+      },
+      {
+        "type": "lift_door",
+        "x": 4.35,
+        "y": 6.95,
         "width": 0.8,
         "orientation": "vertical"
       },
@@ -670,7 +686,7 @@
     "assumptions": "Research scissor prior: two routes in one enclosure, separated lanes and intermediate landings. Not an egress independence or compliance assessment."
   },
   {
-    "version": "compact-core.v3",
+    "version": "compact-core.v4",
     "tier": "T5",
     "minHeight": 31,
     "maxHeight": 60,
