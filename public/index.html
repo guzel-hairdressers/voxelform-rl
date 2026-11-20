@@ -1,11 +1,15 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoxelForm RL · Urban workspace</title><link rel="stylesheet" href="/assets/style.css?v=dashboard-4"></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VoxelForm RL · Urban workspace</title><link rel="stylesheet" href="/assets/style.css?v=site-layouts-5"></head>
 <body>
 <header class="lab-header">
   <a class="brand" href="/">VoxelForm <span>RL</span><small>Building massing / Research preview</small></a>
   <div id="status" role="status">Preparing urban context…</div>
   <nav class="action-bar" aria-label="Run controls">
+    <select id="trainingSiteMode" aria-label="Training sites">
+      <option value="current">Current site</option>
+      <option value="rotation">Rotate training sites</option>
+    </select>
     <button id="train" class="primary" aria-pressed="false">▶ Train</button>
     <button id="infer">Generate one</button><button id="step">One mask</button>
     <details class="checkpoint"><summary>Policy</summary><div class="menu"><a href="/api/policy">Save policy</a><label>Load policy<input id="load" type="file" accept=".pt" hidden></label><button id="resetWeights" type="button">Reset weights</button></div></details>
@@ -74,13 +78,13 @@
   </aside>
   <section class="drawing-region" aria-label="Building study">
     <div class="workspace-title"><div><span class="eyebrow">Workspace / Urban massing</span><h1 id="studyTitle">Preparing site study</h1></div><div class="navigation"><button id="previous" aria-label="Previous site">←</button><button id="new">Next site →</button></div></div>
-    <div class="toolbar"><span class="subtle" id="envelopeLabel">6-floor envelope · 1 m resolution</span><div class="view-controls"><button id="reset">Reset volume</button></div></div>
+    <div class="toolbar"><span class="subtle" id="envelopeLabel">6-floor envelope · 1 m resolution</span><div class="view-controls"><select id="savedLayout" aria-label="Saved layouts"><option value="">Live layout</option></select><button id="reset">Reset volume</button></div></div>
     <div class="drawing-surfaces" id="surfaces">
       <div class="context-surface" id="contextSurface">
         <div class="viewer-toolbar" role="group" aria-label="Camera projection">
           <button id="axono" aria-pressed="true">Axonometric</button><button id="perspective" aria-pressed="false">Perspective</button><button id="fit">Fit view</button>
         </div>
-        <div class="surface-heading"><span id="cameraStatus" role="status">Axonometric</span><span id="buildingCount"></span></div>
+        <div class="surface-heading"><span id="cameraStatus" role="status">Axonometric</span><span id="savedLayoutStatus" hidden></span><span id="buildingCount"></span></div>
         <iframe id="viewport" title="Module Lab 3D engine · VoxelForm massing" src="about:blank"></iframe>
         <div class="surface-foot">Drag to orbit · Scroll to zoom · Click an axis to snap</div>
 
@@ -100,13 +104,14 @@
         <div class="dash-chart-card">
           <div class="chart-caption">
             <strong>Quality &amp; sunlight learning curves</strong>
-            <span class="dash-legend">
-              <span><i class="score-key"></i> Layout score</span>
-              <span><i class="avg-key"></i> 5-ep avg</span>
-              <span><i class="sun-key"></i> Direct sun</span>
-              <span><i class="good-key"></i> Usable good %</span>
-              <span><i class="core-key"></i> Core score</span>
-              <span><i class="narrow-key"></i> Narrow &lt;6m %</span>
+            <span class="dash-legend" data-chart="quality">
+              <button type="button" data-series="organicObjective" aria-pressed="false"><i class="score-key"></i> Layout score</button>
+              <button type="button" data-series="objectiveAverage" aria-pressed="false"><i class="avg-key"></i> 5-ep avg</button>
+              <button type="button" data-series="directSunProxy" aria-pressed="false"><i class="sun-key"></i> Direct sun</button>
+              <button type="button" data-series="diffuseFacadeProxy" aria-pressed="false"><i class="sky-key"></i> Diffuse sky</button>
+              <button type="button" data-series="usableGoodFraction" aria-pressed="false"><i class="good-key"></i> Usable good %</button>
+              <button type="button" data-series="coreScore" aria-pressed="false"><i class="core-key"></i> Core score</button>
+              <button type="button" data-series="longNarrowFraction" aria-pressed="false"><i class="narrow-key"></i> Narrow &lt;6m %</button>
             </span>
           </div>
           <canvas id="qualityChart" aria-label="Quality and sunlight learning curves"></canvas>
@@ -114,9 +119,9 @@
         <div class="dash-chart-card">
           <div class="chart-caption">
             <strong>FAR convergence &amp; speed</strong>
-            <span class="dash-legend">
-              <span><i class="retained-key"></i> Target FAR</span>
-              <span><i class="usable-key"></i> Achieved FAR</span>
+            <span class="dash-legend" data-chart="far">
+              <button type="button" data-series="targetFar" aria-pressed="false"><i class="retained-key"></i> Target FAR</button>
+              <button type="button" data-series="far" aria-pressed="false"><i class="usable-key"></i> Achieved FAR</button>
               <span><i class="time-key"></i> s/ep</span>
             </span>
           </div>
@@ -134,5 +139,5 @@
   </section>
 </main>
 <footer><span>VoxelForm RL · Research preview</span><span>Geometry from <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noreferrer">© OpenStreetMap contributors</a> · Module Lab cache</span><span id="connection">Connecting</span></footer>
-<script type="module" src="/assets/app.js?v=cores-v4-10"></script>
+<script type="module" src="/assets/app.js?v=site-layouts-11"></script>
 </body></html>

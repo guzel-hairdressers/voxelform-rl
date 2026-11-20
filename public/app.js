@@ -1,13 +1,30 @@
 // Host controls only. The iframe runs Module Lab's actual urban_viewer.js.
 const $=id=>document.getElementById(id);
 let data=null,lastGeomRevision=-1,lastRenderedEpisode=-1,lastGeomAt=0,lastSite=null,view='solid',catalog=[],busy=false,frameReady=false,cameraMode='axonometric',lastSettingsKey=null,polling=false,pendingPoll=false;
+let savedPreview = null;
+let archiveOptionsKey = '';
+let requestedLayout = null;
+let trainingModeLoaded = false;
 const frame=$('viewport');
 function error(message){$('error').textContent=message||'';$('error').hidden=!message;}
 function option(value,label){const o=document.createElement('option');o.value=value;o.textContent=label;return o;}
 function viewerMessage(message){frame.contentWindow?.postMessage(message,location.origin);}
 function displayOptions(){return {visible:$('showContext').checked,transparent:$('transparentContext').checked};}
 function updateContext(){frameReady=false;frame.src='/assets/viewer.html?renderer=outlines-hsl-13&site='+encodeURIComponent(data.context?.site_id||'synthetic-'+data.seed);}
-function updateGeometry(){if(frameReady&&data&&(view==='solid'||data[view]!=null))viewerMessage({type:'voxel_update',state:data,view,...displayOptions()});}
+function displayedGeometry() {
+ if (!savedPreview) return {state: data, view};
+ return {
+  state: {...data, ...savedPreview.geometry, revision: savedPreview.geometry.layout.id},
+  view: 'solid',
+ };
+}
+function updateGeometry(){
+ if (!frameReady || !data) return;
+ const shown = displayedGeometry();
+ if (shown.view === 'solid' || shown.state[shown.view] != null) {
+  viewerMessage({type:'voxel_update', ...shown, ...displayOptions()});
+ }
+}
 function fitViews(){if(frameReady)viewerMessage({type:'reset_camera'});}
 function setProjection(mode){cameraMode=mode;viewerMessage({type:'set_camera_mode',mode});updateCameraUI();}
 function updateCameraUI(){
@@ -16,7 +33,7 @@ function updateCameraUI(){
  $('cameraStatus').textContent=cameraMode==='axonometric'?'Axonometric':'Perspective';
  frame.dataset.projection=cameraMode;frame.dataset.engine='Module Lab urban_viewer.js';
 }
-frame.onload=()=>{if(data?.ready)viewerMessage({type:'voxel_initialize',state:data,view,mode:cameraMode,...displayOptions()});};
+frame.onload=()=>{if(data?.ready)viewerMessage({type:'voxel_initialize',...displayedGeometry(),mode:cameraMode,...displayOptions()});};
 window.addEventListener('message',event=>{
  if(event.source!==frame.contentWindow||event.origin!==location.origin)return;
  if(event.data?.type==='voxel_viewer_ready'){frameReady=true;if(data){lastGeomRevision=data.revision;lastRenderedEpisode=data.episodes;lastGeomAt=performance.now();}updateGeometry();updateCameraUI();}
@@ -36,11 +53,85 @@ function canvasSize(canvas){
 function escapeAttr(s){return String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');}
 function metric(value,label,note){return `<div class="metric"><b>${value}</b><span>${label}</span><small title="${escapeAttr(note)}">${note}</small></div>`;}
 function kpiCard(label,value,note,cls=''){return `<div class="dash-kpi"><span>${label}</span><b>${value}</b><small class="${cls}" title="${escapeAttr(note)}">${note}</small></div>`;}
+let chartHistory = [];
+let chartScope = null;
+let chartEpisode = null;
+let chartRequest = null;
+const legendFocus = Object.fromEntries(['quality', 'far'].map(chart =>
+ [chart, {hover: null, focus: null, pinned: null}]));
+
+function activeSeries(chart) {
+ const state = legendFocus[chart];
+ return state.hover || state.focus || state.pinned;
+}
+function seriesOpacity(chart, series) {
+ const active = activeSeries(chart);
+ return !active || active === series ? 1 : 0.15;
+}
+function showLegendFocus(chart) {
+ const legend = document.querySelector(`.dash-legend[data-chart="${chart}"]`);
+ for (const button of legend.querySelectorAll('button')) {
+  button.classList.toggle('dimmed', seriesOpacity(chart, button.dataset.series) < 1);
+  button.setAttribute('aria-pressed', String(button.dataset.series === legendFocus[chart].pinned));
+ }
+ if (data?.ready) {
+  if (chart === 'quality') drawQualityChart();
+  else drawHistory();
+ }
+}
+for (const button of document.querySelectorAll('[data-series]')) {
+ const chart = button.closest('[data-chart]').dataset.chart;
+ const state = legendFocus[chart];
+ const series = button.dataset.series;
+ for (const [event, key, next] of [
+  ['pointerenter', 'hover', series], ['pointerleave', 'hover', null],
+  ['focus', 'focus', series], ['blur', 'focus', null],
+ ]) {
+  button.addEventListener(event, () => {
+   state[key] = next;
+   showLegendFocus(chart);
+  });
+ }
+ button.addEventListener('click', () => {
+  state.pinned = state.pinned === series ? null : series;
+  showLegendFocus(chart);
+ });
+}
+function chartRows() {
+ if (chartScope && chartScope === data.layoutMemory?.scope) return chartHistory;
+ return (data.recent || []).filter(row =>
+  row.siteId === data.siteId && row.plan === data.plan && row.targetFar === data.settings.targetFar);
+}
+async function refreshChartHistory() {
+ const scope = data.layoutMemory?.scope;
+ if (!scope || !$('progress').open || chartRequest) return;
+ const episode = data.episodes;
+ if (chartScope === scope && chartEpisode === episode) return;
+ const request = {scope, episode};
+ chartRequest = request;
+ const sameScope = chartScope === scope;
+ const after = sameScope ? chartHistory.at(-1)?.id ?? 0 : 0;
+ try {
+  const response = await fetch(`/api/episodes/${encodeURIComponent(scope)}?after=${after}`);
+  if (!response.ok || scope !== data?.layoutMemory?.scope) return;
+  const {rows} = await response.json();
+  if (scope !== data?.layoutMemory?.scope) return;
+  chartHistory = [...(sameScope ? chartHistory : []), ...rows].slice(-5000);
+  chartScope = scope;
+  chartEpisode = episode;
+  drawDashboard();
+ } catch {
+  // The live tail supplies the charts while a history request is unavailable.
+ } finally {
+  chartRequest = null;
+ }
+}
+
 function drawQualityChart(){
  const size=canvasSize($('qualityChart'));if(!size)return;
- const {ctx,width,height}=size;ctx.clearRect(0,0,width,height);ctx.font='8px system-ui';
- const rows=(data.recent||[]).filter(r=>Number.isFinite(r.organicObjective)||Number.isFinite(r.directSunProxy));
- const allVals=rows.flatMap(r=>[r.organicObjective,r.directSunProxy,r.usableGoodFraction,r.coreScore,r.longNarrowFraction]).filter(Number.isFinite);
+ const {ctx,width,height}=size;ctx.globalAlpha=1;ctx.clearRect(0,0,width,height);ctx.font='8px system-ui';
+ const rows = chartRows().filter(r => Number.isFinite(r.organicObjective) || Number.isFinite(r.directSunProxy));
+ const allVals=rows.flatMap(r=>[r.organicObjective,r.directSunProxy,r.diffuseFacadeProxy,r.usableGoodFraction,r.coreScore,r.longNarrowFraction]).filter(Number.isFinite);
  const lo=allVals.length?Math.min(0,Math.floor(Math.min(...allVals)*10)/10):0;
  const hi=allVals.length?Math.max(1,Math.ceil(Math.max(...allVals)*10)/10):1;
  const span=Math.max(1e-6,hi-lo);
@@ -48,15 +139,15 @@ function drawQualityChart(){
  if(!rows.length){ctx.fillStyle='#999';ctx.textAlign='center';ctx.fillText('Run training or Generate one to populate learning curves.',width/2,height/2);ctx.textAlign='left';return;}
  const xAt=i=>34+i*(width-48)/Math.max(1,rows.length-1);
  const yAt=v=>height-18-((v-lo)/span)*(height-30);
- const series=[['longNarrowFraction','#9333ea',1.2],['coreScore','#dc2626',1.4],['usableGoodFraction','#0f766e',1.3],['directSunProxy','#d97706',1.3],['organicObjective','#1645ff',1.8]];
+ const series=[['longNarrowFraction','#9333ea',1.2],['coreScore','#dc2626',1.4],['usableGoodFraction','#0f766e',1.3],['directSunProxy','#d97706',1.3],['diffuseFacadeProxy','#0891b2',1.3],['organicObjective','#1645ff',1.8]];
  for(const [key,color,lw] of series){
-  ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.beginPath();let started=false;
+  ctx.globalAlpha=seriesOpacity('quality',key);ctx.strokeStyle=color;ctx.lineWidth=lw;ctx.beginPath();let started=false;
   rows.forEach((r,i)=>{if(!Number.isFinite(r[key])){started=false;return;}const x=xAt(i),y=yAt(r[key]);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);});
   ctx.stroke();
  }
  const objs=rows.map(r=>r.organicObjective);
  if(objs.filter(Number.isFinite).length>=2){
-  ctx.save();ctx.setLineDash([4,3]);ctx.strokeStyle='#1645ff';ctx.lineWidth=1.5;ctx.beginPath();let started=false;
+  ctx.save();ctx.globalAlpha=seriesOpacity('quality','objectiveAverage');ctx.setLineDash([4,3]);ctx.strokeStyle='#1645ff';ctx.lineWidth=1.5;ctx.beginPath();let started=false;
   objs.forEach((_,i)=>{const win=objs.slice(Math.max(0,i-4),i+1).filter(Number.isFinite);if(!win.length){started=false;return;}const avg=win.reduce((a,b)=>a+b,0)/win.length,x=xAt(i),y=yAt(avg);if(!started){ctx.moveTo(x,y);started=true;}else ctx.lineTo(x,y);});
   ctx.stroke();ctx.restore();
  }
@@ -64,17 +155,18 @@ function drawQualityChart(){
 function drawHistory(){
  if(!data||!$('progress').open)return;
  const size=canvasSize($('history'));if(!size)return;
- const {ctx,width,height}=size;ctx.clearRect(0,0,width,height);ctx.font='8px system-ui';
- const rows=data.recent.filter(r=>Number.isFinite(r.far)&&Number.isFinite(r.targetFar));
+ const {ctx,width,height}=size;ctx.globalAlpha=1;ctx.clearRect(0,0,width,height);ctx.font='8px system-ui';
+ const rows=chartRows().filter(r=>Number.isFinite(r.far)&&Number.isFinite(r.targetFar));
  const maximum=Math.max(1,Math.ceil(Math.max(data.metrics.far||0,data.settings?.targetFar||3,...rows.flatMap(r=>[r.far,r.targetFar]))));
  for(let i=0;i<=4;i++){const value=i*maximum/4,y=height-18-(height-30)*i/4;ctx.strokeStyle='#ececec';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(30,y);ctx.lineTo(width-30,y);ctx.stroke();ctx.fillStyle='#999';ctx.fillText(value.toFixed(1),3,y+3);ctx.fillText(value.toFixed(1),width-24,y+3);}
  if(!rows.length){ctx.fillStyle='#999';ctx.textAlign='center';ctx.fillText('Episodes appear here as training or generation completes.',width/2,height/2);ctx.textAlign='left';return;}
  const maxSec=Math.max(0.5,...rows.map(r=>r.episodeSeconds||0));
  const barW=Math.max(1,Math.min(8,(width-68)/Math.max(1,rows.length)*0.6));
- ctx.fillStyle='rgba(148,163,184,.35)';
+ ctx.globalAlpha=seriesOpacity('far','episodeSeconds');
+ ctx.fillStyle='rgba(148,163,184,.55)';
  rows.forEach((r,i)=>{if(!Number.isFinite(r.episodeSeconds))return;const x=34+i*(width-68)/Math.max(1,rows.length-1)-barW/2,h=(r.episodeSeconds/maxSec)*(height-30)*0.45;ctx.fillRect(x,height-18-h,barW,h);});
  for(const [key,color] of [['targetFar','#999'],['far','#a04476']]){
-  ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();let previous=null;
+  ctx.globalAlpha=seriesOpacity('far',key);ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.5;ctx.beginPath();let previous=null;
   rows.forEach((r,i)=>{const x=34+i*(width-68)/Math.max(1,rows.length-1),y=height-18-r[key]*(height-30)/maximum,identity=`${r.siteId??r.seed}:${r.targetFar}:${r.training}`;if(previous!==identity)ctx.moveTo(x,y);else ctx.lineTo(x,y);previous=identity;});ctx.stroke();
   rows.forEach((r,i)=>{const x=34+i*(width-68)/Math.max(1,rows.length-1),y=height-18-r[key]*(height-30)/maximum;ctx.beginPath();if(r.success===false){ctx.moveTo(x-3,y-3);ctx.lineTo(x+3,y+3);ctx.moveTo(x+3,y-3);ctx.lineTo(x-3,y+3);ctx.stroke();}else{ctx.arc(x,y,2,0,Math.PI*2);ctx.fill();}});
  }
@@ -122,8 +214,85 @@ function drawDashboard(){
   }
  }
 }
+function renderSavedLayouts() {
+ const memory = data.layoutMemory;
+ const picker = $('savedLayout');
+ const layouts = memory?.layouts ?? [];
+ if (savedPreview && (savedPreview.scope !== memory?.scope ||
+     !layouts.some(layout => layout.id === savedPreview.geometry.layout.id))) {
+  savedPreview = null;
+  updateGeometry();
+ }
+ const key = JSON.stringify([memory?.scope, layouts.map(layout => layout.id)]);
+ if (key !== archiveOptionsKey) {
+  archiveOptionsKey = key;
+  picker.replaceChildren(
+   option('', layouts.length ? 'Live layout' : 'Live layout · no saved designs'),
+   ...layouts.map((layout, i) => option(layout.id,
+    `#${i + 1} · Score ${layout.score.toFixed(3)} · FAR ${layout.far.toFixed(2)}`)),
+  );
+ }
+ picker.disabled = layouts.length === 0;
+ picker.title = memory?.warning || 'Five best distinct FAR-valid layouts for this site and setup';
+ if (requestedLayout?.scope !== memory?.scope) requestedLayout = null;
+ picker.value = requestedLayout?.id || savedPreview?.geometry.layout.id || '';
+ const label = $('savedLayoutStatus');
+ const layout = savedPreview?.geometry.layout;
+ label.hidden = !layout;
+ label.textContent = layout ? `Saved layout · FAR ${layout.far.toFixed(2)} · ${Math.round(layout.usableArea)} m² usable · dashboard shows live run` : '';
+ $('field').disabled = Boolean(layout);
+}
+
+$('savedLayout').onchange = async () => {
+ const id = $('savedLayout').value;
+ const scope = data?.layoutMemory?.scope;
+ const request = id ? {id, scope} : null;
+ requestedLayout = request;
+ if (!id) {
+  savedPreview = null;
+  renderSavedLayouts();
+  updateGeometry();
+  return;
+ }
+ try {
+  const response = await fetch(`/api/layouts/${encodeURIComponent(scope)}/${encodeURIComponent(id)}`);
+  if (!response.ok) throw new Error('This layout is no longer available for the active site.');
+  const geometry = await response.json();
+  if (request !== requestedLayout || scope !== data?.layoutMemory?.scope) return;
+  requestedLayout = null;
+  savedPreview = {scope, geometry};
+  renderSavedLayouts();
+  updateGeometry();
+ } catch (err) {
+  if (request !== requestedLayout) return;
+  requestedLayout = null;
+  renderSavedLayouts();
+  error(err.message);
+ }
+};
+
+function trainToggle() {
+ return control(data?.running && data.training ? 'pause' : 'run', {
+  training: true,
+  acrossSites: $('trainingSiteMode').value === 'rotation',
+ });
+}
+
 function render(){
  if(!data?.ready)return;
+ renderSavedLayouts();
+ const rotation = data.siteRotation;
+ const trainingMode = $('trainingSiteMode');
+ if (!trainingModeLoaded && rotation) {
+  trainingMode.value = rotation.enabled ? 'rotation' : 'current';
+  trainingModeLoaded = true;
+ }
+ trainingMode.disabled = Boolean(data.running);
+ trainingMode.querySelector('option[value=rotation]').disabled = (rotation?.sites.length ?? 0) < 2;
+ trainingMode.title = rotation?.sites.length
+  ? `${rotation.block} episodes per site: ${rotation.sites.join(', ')}`
+  : 'No training sites configured';
+ if (rotation?.error) error(`Training rotation paused: ${rotation.error}`);
  const m=data.metrics,l=data.learning,c=data.context,siteKey=c?`${c.site_id}:${c.gridAlignment||'world'}:${data.shape[0]}`:`synthetic:${data.seed}:${data.shape[0]}`,changedSite=siteKey!==lastSite;
  $('status').textContent=`${data.running?(data.training?'Training':'Generating'):'Paused'} · ${m.device.toUpperCase()} · ${data.activeSeconds.toFixed(1)} s active`;
  $('sourceLabel').textContent=c?'Fetched urban context':'Synthetic method fixture';
@@ -153,8 +322,10 @@ function render(){
  $('contextStatus').textContent=c?`${c.site_id} · ${c.tier} · ${c.buildings.length} neighbours`:`Synthetic plot · seed ${data.seed}`;
  const termination=data.termination==='far_reached'?' · FAR reached':data.termination==='no_admissible_edits'?' · No facade cells':data.termination==='mask_generation_failed'?' · Generated mask rejected':data.termination==='step_budget_exhausted'?' · Step budget exhausted · FAR not reached':'';
  const epStatusText=`${data.episodes} completed episode${data.episodes===1?'':'s'} · ${m.edits} ${m.edits===1?'mask':'masks'}${data.attempts!=null?` · ${data.attempts} attempts`:''}${m.stepBudget!=null?` / ${m.stepBudget} budget`:''} · ${m.voxelsEdited??0} voxels changed · ${l.directMaskUpdates??0} mask-head updates${l.importedUpdates?` · ${l.importedUpdates} imported updates`:""}${termination}${data.lastRejection&&!data.episodeComplete?' · Last draw rejected; try again':''}`;
- $('episodeStatus').textContent=epStatusText;$('episodeStatus').title=epStatusText;
- $('progressCount').textContent=`${data.recent.length} recorded result${data.recent.length===1?'':'s'}`;
+ const rotationText = rotation?.enabled ? ` · Site rotation ${rotation.completed}/${rotation.block}` : '';
+ $('episodeStatus').textContent=epStatusText+rotationText;$('episodeStatus').title=epStatusText+rotationText;
+ const chartCount = chartRows().length;
+ $('progressCount').textContent=`${chartCount} site episode${chartCount===1?'':'s'} charted`;
  $('details').textContent=`Loss ${l.loss.toFixed(4)} · gradient ${l.gradientNorm.toFixed(4)}. Evaluation ${(m.evaluationSeconds*1000).toFixed(1)} ms · action ${(data.actionSeconds*1000).toFixed(1)} ms · learning ${(data.learningSeconds*1000).toFixed(1)} ms. ${m.newReceivers} new / ${m.receivers} exposed receivers. Seed ${data.seed}. Optimizer rollout: ${data.rolloutSteps||16} masks; this does not end the episode. Environmental fields audited every ${data.environmentAuditSteps||5} masks and at completion. Last audit: mask ${m.environmentalAuditEdit??0}. Target tolerance: ±${(m.farTolerance||0).toFixed(6)} FAR. Facade snapshot ${(1000*(m.facadeEvaluationSeconds||0)).toFixed(2)} ms · neural mask generation ${(1000*(data.neuralGenerationSeconds||0)).toFixed(2)} ms · constraint projection ${(1000*(m.maskProjectionSeconds||0)).toFixed(2)} ms. Last mask: ${m.lastChangedVoxels||0} applied / ${m.lastGeneratedVoxels||0} generated voxels. Direct mask-head updates: ${l.directMaskUpdates??0}; imported historical updates: ${l.importedUpdates??0}. Last mask: ${data.maskStructure?.components??'—'} patches; largest patch ${((data.maskStructure?.largestShare??0)*100).toFixed(0)}%. Deep floor area (>8 m): ${Math.round(m.deepFloorArea||0)} m².`;
  $('field').querySelector('option[value=noise]').disabled=!m.noiseAvailable;
  if(!m.noiseAvailable&&view==='noise'){view='solid';$('field').value=view;updateLayerLegend();lastGeomRevision=-1;}
@@ -179,6 +350,7 @@ function render(){
  $('connection').textContent='Optimizer connected';
  if(data.error)error(data.error);
  drawDashboard();
+ refreshChartHistory();
 }
 function updateLayerLegend(){
  const maxD=data?.settings?.maxCoreDist??12;
@@ -211,7 +383,7 @@ async function navigateSite(direction){
  const rows=filteredSites();if(!rows.length)return;
  const current=rows.findIndex(r=>r.siteId===data?.siteId),next=rows[(current+direction+rows.length)%rows.length];$('site').value=next.siteId;await loadSite(next.siteId);
 }
-$('train').onclick=()=>control(data?.running&&data.training?'pause':'run',{training:true});$('infer').onclick=()=>control(data?.running&&!data.training?'pause':'run',{training:false});$('step').onclick=()=>control('step',{training:false});$('reset').onclick=()=>control('reset');
+$('train').onclick=trainToggle;$('infer').onclick=()=>control(data?.running&&!data.training?'pause':'run',{training:false});$('step').onclick=()=>control('step',{training:false});$('reset').onclick=()=>control('reset');
 $('new').onclick=()=>navigateSite(1);$('previous').onclick=()=>navigateSite(-1);$('applySite').onclick=()=>loadSite();$('applySynthetic').onclick=()=>control('site',{source:'synthetic',plan:$('plan').value});
 $('densityPreset').onchange=()=>{const presets=data?.settings?.densityPresets||{low:1.5,medium:3,high:4.5};if($('densityPreset').value!=='custom')$('targetFar').value=presets[$('densityPreset').value];};
 $('targetFar').oninput=()=>{$('densityPreset').value='custom';};
@@ -246,6 +418,6 @@ async function init(){
 }
 const ro=new ResizeObserver(drawDashboard);ro.observe($('history'));if($('qualityChart'))ro.observe($('qualityChart'));
 setInterval(poll,500);init();
-document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,button,summary,a')||e.metaKey||e.ctrlKey||e.altKey||e.repeat)return;if(e.code==='Space'){e.preventDefault();control(data?.running?'pause':'run',{training:true});}if(e.key==='0')fitViews();});
+document.addEventListener('keydown',e=>{if(e.target.closest('input,select,textarea,button,summary,a')||e.metaKey||e.ctrlKey||e.altKey||e.repeat)return;if(e.code==='Space'){e.preventDefault();data?.running ? control('pause') : trainToggle();}if(e.key==='0')fitViews();});
 
 $('applyGrid').onclick=()=>control('grid',{alignment:$('gridAlignment').value});

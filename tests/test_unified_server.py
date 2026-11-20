@@ -1,4 +1,6 @@
 import functools,tempfile,unittest
+from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import Mock,patch
 import numpy as np
 import torch
@@ -8,6 +10,7 @@ from tests.test_unified import fixture
 import unified_server as server
 from voxelform.context import prepare_scene
 from voxelform.environment import Environment
+from voxelform.layout_archive import LayoutArchive
 from voxelform.patch_policy import PatchConfig,PatchFacades
 from voxelform.unified import UnifiedLearner
 
@@ -85,6 +88,54 @@ class LivePreview(unittest.TestCase):
         s.last_objective,s.last_diag=server.organic_objective(e)
         s.ready=True;s.env.unified_actions=0
         return s
+
+    def test_saved_layout_and_stats_routes_keep_live_geometry_intact(self):
+        session = self._organic_session()
+        session.env.restore_occupancy(session.env.occupied.clone())
+        session.env.target_far = session.env.far
+        session.env.target_count = session.env.count
+        session.env.termination = 'far_reached'
+        with tempfile.TemporaryDirectory() as directory, patch.object(server, 'session', session):
+            session.archive = LayoutArchive(directory)
+            session.finish_episode()
+            client = TestClient(server.app)
+            state = client.get('/api/state?view=solid').json()
+            scope = state['layoutMemory']['scope']
+            layout_id = state['layoutMemory']['layouts'][0]['id']
+            session.archive = LayoutArchive(directory)
+            restored = client.get(f'/api/layouts/{scope}/{layout_id}').json()
+            self.assertEqual(restored['occupied'], state['occupied'])
+            self.assertEqual(restored['coreMask'], state['coreMask'])
+            self.assertEqual(session.revision, state['revision'])
+            rows = client.get(f'/api/episodes/{scope}').json()['rows']
+            self.assertEqual(len(rows), 1)
+            self.assertTrue(rows[0]['success'])
+            self.assertEqual(client.get(f'/api/episodes/{scope}?after={rows[0]["id"]}').json()['rows'], [])
+
+    def test_training_rotation_switches_only_at_boundary_and_keeps_optimizer(self):
+        session = self._organic_session()
+        session.training_sites = ('a', 'b')
+        session.library = Mock()
+        session.library.catalog.return_value = [{'site_id': 'a'}, {'site_id': 'b'}]
+        session.site_id = 'a'
+        session.initial_storeys, session.ceiling_storeys = 4, 8
+        session.start_run(training=True, across_sites=True)
+        policy, optimizer = session.policy, session.policy.optimizer
+        session.rotation_episodes = session.episodes_per_site
+        session.env.termination = 'far_reached'
+        session.episode_recorded = True
+        scene = prepare_scene(ctx_fixture(), {'site_id': 'b'}, floors=8, grid_alignment='auto_fit')
+        with tempfile.TemporaryDirectory() as directory:
+            session.scene_cache_dir = Path(directory)
+            with patch.object(session, '_load_context', return_value=scene):
+                session.advance_one()
+        self.assertEqual(session.site_id, 'b')
+        self.assertTrue(session.training and session.running)
+        self.assertIs(session.policy, policy)
+        self.assertIs(session.policy.optimizer, optimizer)
+        self.assertEqual(session.rotation_episodes, 0)
+        self.assertEqual(session.steps, 0)
+        self.assertEqual(session.env.target_far, 3.0)
 
     def test_exact_disk_scene_cache_hit_matches_cold_build(self):
         scene=prepare_scene(ctx_fixture(),dict(site_id='test'),floors=4)
@@ -213,6 +264,30 @@ class LivePreview(unittest.TestCase):
             self.assertIsNone(st3['metrics'].get('coreCoverage'))
 
 
+
+class LayoutMemory(unittest.TestCase):
+    def test_top_five_unique_geometry_and_incremental_stats_survive_restart(self):
+        with tempfile.TemporaryDirectory() as directory:
+            archive = LayoutArchive(directory)
+            env = SimpleNamespace(far_satisfied=True, cores=(), occupied=torch.ones((1, 3, 3), dtype=torch.bool))
+            env.core_mask = torch.zeros_like(env.occupied)
+            for i in range(7):
+                env.occupied[:] = True
+                env.occupied.flatten()[min(i, 5)] = False
+                row = dict(success=i < 6, episode=i, quality=float(i), far=3., potentialUsableArea=8.)
+                archive.record_episodes('a', [row])
+                archive.remember('a', {'site': 'a'}, row, env)
+            archive.remember('a', {'site': 'a'}, dict(success=True, episode=7, quality=8., far=3.,
+                                                   potentialUsableArea=8.), env)
+            archive = LayoutArchive(directory)
+            saved = archive.summary('a')['layouts']
+            self.assertEqual([r['score'] for r in saved], [8., 4., 3., 2., 1.])
+            self.assertEqual(len({r['id'] for r in saved}), 5)
+            self.assertEqual(archive.summary('b')['layouts'], [])
+            rows = archive.chart_history('a')
+            self.assertEqual(len(rows), 7)
+            self.assertFalse(rows[-1]['success'])
+            self.assertEqual(archive.chart_history('a', after=rows[-2]['id']), rows[-1:])
 
 class CorePlanAPI(unittest.TestCase):
     def test_canonical_plan_data_and_svg_endpoints(self):

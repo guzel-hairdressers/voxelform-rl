@@ -846,3 +846,30 @@ iframe#viewport{position:absolute;inset:0;display:block;border:0;width:100%;heig
 @media(max-width:1100px){.dash-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.dash-charts{grid-template-columns:1fr}}
 @media(max-width:700px){.dash-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.dash-summary-right .dash-toggle{display:none}}
+
+
+#trainingSiteMode, #savedLayout {
+  max-width: 190px;
+  font-size: 10px;
+}
+#savedLayoutStatus {
+  color: #2445a6;
+}
+.dash-legend button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: inherit;
+  font: inherit;
+  border: 0;
+  background: none;
+  padding: 2px;
+}
+.dash-legend button[aria-pressed="true"], .dash-legend button:focus-visible {
+  outline: 1px solid currentColor;
+}
+.dash-legend button.dimmed {
+  opacity: 0.4;
+}
+
+.dash-legend .sky-key {background: #0891b2;}

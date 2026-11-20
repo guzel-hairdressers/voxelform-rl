@@ -10,6 +10,7 @@ import json
 import math
 import os
 import pickle
+import sqlite3
 import sys
 import threading
 import time
@@ -31,6 +32,7 @@ from voxelform.context import ContextLibrary, public_scene
 from voxelform.cores import DEFAULT_MAX_CORE_DIST, DEFAULT_MIN_CORE_SPACING, core_templates_summary
 from voxelform.core_plans import plan_library, render_plan_svg, CORE_LAYOUT_VERSION
 from voxelform.environment import Environment
+from voxelform.layout_archive import LayoutArchive, layout_scope
 from voxelform.patch_policy import PatchConfig, PatchFacades
 from voxelform.session import DENSITY_PRESETS
 from voxelform.shadows import device_name, sync
@@ -68,7 +70,8 @@ def derive_site_storeys(record=None, buildings=None):
 torch.set_num_threads(max(1, int(os.getenv('VOXELFORM_THREADS', '1'))))
 
 class UnifiedSession:
-    def __init__(self, library=None, device=None, initial_storeys=None, ceiling_storeys=None, autostart=True):
+    def __init__(self, library=None, device=None, initial_storeys=None, ceiling_storeys=None,
+                 autostart=True, archive_dir=None, training_sites=(), episodes_per_site=3):
         self.library = library or ContextLibrary()
         self.lock = threading.RLock()
         self.running = False
@@ -115,6 +118,13 @@ class UnifiedSession:
         self.episode_recorded = False
         self.action_seconds = 0.0
         self.learning_seconds = 0.0
+
+        self.archive = LayoutArchive(archive_dir) if archive_dir is not None else None
+        self.training_sites = tuple(training_sites)
+        self.episodes_per_site = episodes_per_site
+        self.rotate_sites = False
+        self.rotation_episodes = 0
+        self.rotation_error = None
 
         self.worker = threading.Thread(target=self.loop, daemon=True)
         if autostart:self.worker.start()
@@ -211,21 +221,21 @@ class UnifiedSession:
                 min_core_spacing=self.min_core_spacing,
                 max_core_dist=self.max_core_dist,
             )
-        self.env = replacement
-        self.target_far = self.env.target_far
-        self.env.precompute_external()
-        solid = self.env.allowed.clone()
+        replacement.precompute_external()
+        solid = replacement.allowed.clone()
         solid[int(self.initial_storeys):] = False
-        self.env.restore_occupancy(solid)
-        self.env.copy_labels = np.zeros(self.env.shape, dtype=np.int64)
-        self.env._ln6_cache = None
-        self.env.unified_limit = max(8, self.env.workload.limit + 8)
-        self.env.unified_actions = 0
-        self.env.termination = None
-        pol = getattr(self, 'policy', None)
-        self.env.organic_3d_growth = getattr(pol, 'organic_3d', True)
-        self.env.floor_copy_growth = getattr(pol, 'floor_copy', False)
-        self.last_objective, self.last_diag = organic_objective(self.env)
+        replacement.restore_occupancy(solid)
+        replacement.copy_labels = np.zeros(replacement.shape, dtype=np.int64)
+        replacement._ln6_cache = None
+        replacement.unified_limit = max(8, replacement.workload.limit + 8)
+        replacement.unified_actions = 0
+        replacement.termination = None
+        policy = getattr(self, 'policy', None)
+        replacement.organic_3d_growth = getattr(policy, 'organic_3d', True)
+        replacement.floor_copy_growth = getattr(policy, 'floor_copy', False)
+        self.last_objective, self.last_diag = organic_objective(replacement)
+        self.env = replacement
+        self.target_far = replacement.target_far
 
     def build(self):
         catalog = self.library.catalog()
@@ -453,6 +463,67 @@ class UnifiedSession:
         self._state_cache.clear()
         self.revision += 1
 
+    def start_run(self, training, across_sites):
+        if training and across_sites:
+            available = {record['site_id'] for record in self.library.catalog()}
+            missing = [site for site in self.training_sites if site not in available]
+            if len(self.training_sites) < 2 or missing:
+                raise ValueError('Training rotation needs both configured training sites in the local cache')
+            if self.site_id not in self.training_sites:
+                self.learn_rollout()
+                self.switch_training_site(self.training_sites[0])
+                self.policy.clear()
+            if not self.rotate_sites:
+                self.rotation_episodes = 0
+        else:
+            self.rotation_episodes = 0
+        self.rotate_sites = bool(training and across_sites)
+        self.rotation_error = None
+        self.start(training=training)
+
+    def switch_training_site(self, site_id):
+        """Same FAR, envelope, policy and rollout across an episode boundary."""
+        e = self.env
+        align = (e.context or {}).get('gridAlignment', 'auto_fit')
+        context = self._load_context(site_id, grid_alignment=align, ceiling_storeys=self.ceiling_storeys)
+        maximum = int(context['allowed'].sum()) * self.ceiling_storeys / float(context['siteArea'])
+        minimum = 0.5 / float(context['siteArea'])
+        if not minimum <= self.target_far <= maximum:
+            raise ValueError(f'Target FAR {self.target_far:g} does not fit {site_id}')
+        previous_target, previous_preset = self.target_far, self.density_preset
+        seed = self.pending_seed + 1
+        try:
+            self._install_env(context, seed=seed, plan='rectangle', far_tolerance=e.far_tolerance)
+        except (ValueError, RuntimeError, OSError):
+            self.target_far, self.density_preset = previous_target, previous_preset
+            raise
+        self.pending_seed = seed
+        self.site_id = site_id
+        self.plan = 'rectangle'
+        self.steps = 0
+        self.rotation_episodes = 0
+        self.episode_started = time.perf_counter()
+        self.episode_recorded = False
+        self.edit_trace = []
+        self._init_snap = None
+        self._env_static_cache = None
+        self._state_cache.clear()
+        self._capture_initial_snapshot()
+        self.revision += 1
+
+    def remember_layout(self, row):
+        if self.archive is None:
+            return
+        scope, settings = layout_scope(self.env, self.site_id, self.plan, self.policy.organic_3d)
+        try:
+            self.archive.record_episodes(scope, (row,))
+        except (sqlite3.Error, OSError, ValueError, TypeError) as exc:
+            self.archive.warning = str(exc)
+        try:
+            self.archive.remember(scope, settings, row, self.env)
+        except (OSError, ValueError, KeyError, TypeError) as exc:
+            self.archive.warning = str(exc)
+
     def start(self, training=True, single=False, force_operation=None):
         if force_operation is not None:
             if force_operation not in ('remove','grow','exchange'):raise ValueError('Unknown probe action')
@@ -505,6 +576,9 @@ class UnifiedSession:
         if plan not in ('rectangle', 'triangle', 'courtyard', 'branch'):
             raise ValueError('Unknown synthetic plot')
         self.pause()
+        self.rotate_sites = False
+        self.rotation_episodes = 0
+        self.rotation_error = None
         if source == 'cached_osm':
             target_id = site_id or self.site_id
             record = next((r for r in self.library.catalog() if r['site_id'] == target_id), None)
@@ -695,6 +769,9 @@ class UnifiedSession:
         )
         if is_organic and self.last_diag:
             row.update(self.last_diag)
+        self.remember_layout(row)
+        if self.training and self.rotate_sites:
+            self.rotation_episodes += 1
         self.recent.append(row)
         self.recent = self.recent[-200:]
         if not self.training:
@@ -708,6 +785,15 @@ class UnifiedSession:
                 self.finish_episode()
                 self.single = False
                 self.revision += 1
+                return
+            if self.running and self.training and self.rotate_sites and self.rotation_episodes >= self.episodes_per_site:
+                next_index = (self.training_sites.index(self.site_id) + 1) % len(self.training_sites)
+                try:
+                    self.switch_training_site(self.training_sites[next_index])
+                except (ValueError, OSError, RuntimeError) as exc:
+                    self.rotation_error = str(exc)
+                    self.pause()
+                    self._state_cache.clear()
                 return
             self.next_episode(clear_tape=not self.training)
             if self.env.terminal:
@@ -908,6 +994,9 @@ class UnifiedSession:
             payload = dict(
                 ready=True,
                 coreLayoutVersion=CORE_LAYOUT_VERSION,
+                siteRotation=dict(enabled=self.rotate_sites, sites=self.training_sites,
+                                  completed=self.rotation_episodes, block=self.episodes_per_site,
+                                  error=self.rotation_error),
                 error=self.error,
                 running=self.running,
                 training=self.training,
@@ -976,6 +1065,9 @@ class UnifiedSession:
                 recent=self.recent,
                 dashboard=self._dashboard_summary(),
             )
+            if self.archive is not None:
+                scope, _ = layout_scope(e, self.site_id, self.plan, is_organic)
+                payload['layoutMemory'] = self.archive.summary(scope)
             if req_view == 'all':
                 payload['facadeDepth'] = e.depth.detach().cpu().flatten().tolist()
                 payload['depthBadness'] = e.depth_badness.detach().cpu().flatten().tolist()
@@ -1005,7 +1097,11 @@ from voxelform.devoxelize import devoxelize_occupancy
 
 # Create FastAPI app
 library = ContextLibrary()
-session = UnifiedSession(library=library, autostart=False)
+# Reuse the declared training split and keep validation/test sites out of rotation.
+training_config = json.loads((VOXELFORM_ROOT / 'configs/research-real.json').read_text())
+session = UnifiedSession(library=library, autostart=False,
+                         training_sites=training_config['train_sites'],
+                         archive_dir=VOXELFORM_ROOT / 'runs/layouts')
 from contextlib import asynccontextmanager
 @asynccontextmanager
 async def lifespan(app):
@@ -1246,6 +1342,37 @@ def core_plans():
 def state(view: str = 'all'):
     return Response(content=session.state_json(view=view), media_type='application/json')
 
+@app.get('/api/layouts/{scope}/{layout_id}')
+def saved_layout(scope: str, layout_id: str):
+    with session.lock:
+        if not session.ready or session.archive is None:
+            raise HTTPException(409, 'The layout archive is unavailable')
+        current_scope, _ = layout_scope(session.env, session.site_id, session.plan, session.policy.organic_3d)
+        if scope != current_scope:
+            raise HTTPException(409, 'The active site or settings changed')
+        try:
+            return session.archive.preview(scope, layout_id, session.env.shape)
+        except KeyError as exc:
+            raise HTTPException(404, 'Layout unavailable in the current top five') from exc
+        except (OSError, ValueError, TypeError) as exc:
+            raise HTTPException(409, 'Could not read the saved layout') from exc
+
+
+@app.get('/api/episodes/{scope}')
+def episode_history(scope: str, after: int = 0):
+    with session.lock:
+        if not session.ready or session.archive is None:
+            raise HTTPException(409, 'The episode history is unavailable')
+        current_scope, _ = layout_scope(session.env, session.site_id, session.plan, session.policy.organic_3d)
+        if scope != current_scope:
+            raise HTTPException(409, 'The active site or settings changed')
+        archive = session.archive
+    try:
+        return {'rows': archive.chart_history(scope, after=max(0, after))}
+    except (sqlite3.Error, OSError, ValueError, TypeError) as exc:
+        raise HTTPException(409, 'Could not read saved episode statistics') from exc
+
+
 @app.get('/api/sites')
 def sites():
     return [
@@ -1269,7 +1396,8 @@ async def control(request: Request):
             raise HTTPException(409, 'Environment is still preparing')
         try:
             if command == 'run':
-                session.start(training=bool(data.get('training', True)))
+                session.start_run(training=bool(data.get('training', True)),
+                                  across_sites=bool(data.get('acrossSites', session.rotate_sites)))
             elif command == 'pause':
                 session.pause()
             elif command == 'step':

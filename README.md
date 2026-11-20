@@ -99,6 +99,25 @@ shadows are not the physical evaluation. Devoxelization is display-only and neve
 changes occupied floor area or training reward. No main-workspace floor-plan pane
 is added; `/core-plans` is a component-geometry diagnostic.
 
+## Site exploration and saved layouts
+
+Choose **Rotate training sites** beside Train. The live run uses the training
+list in `configs/research-real.json` and rotates after three completed episodes
+on each site. The policy and optimizer carry across the switch. Each new episode
+starts with a fresh massing, with stochastic masks exploring that site's design
+space. Use separate held-out sites for evaluating generalization.
+
+The **Saved layouts** picker previews the five highest-scoring distinct,
+FAR-valid layouts for the selected site and comparable setup. FAR target, grid
+and core rules define separate leaderboards. Previewing one shows its massing in
+the viewer while the live run continues. Hover or focus a chart legend to
+emphasize that metric, or click to pin it.
+
+Layout masks and episode statistics persist locally in `runs/layouts/`. Every
+completed episode contributes metrics, including FAR misses. The dashboard
+charts up to 5,000 recent episodes for the selected setup and fetches new points
+incrementally.
+
 ## Checks
 
 ```sh
