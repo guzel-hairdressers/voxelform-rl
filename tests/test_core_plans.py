@@ -1,7 +1,7 @@
 import heapq,math,unittest,xml.etree.ElementTree as ET
 import numpy as np
 import torch
-from voxelform.core_plans import CorePlanParameters,DEFAULT_HEIGHT_BANDS,make_plan,render_plan_svg
+from voxelform.core_plans import CorePlanParameters,HeightBand,DEFAULT_HEIGHT_BANDS,make_plan,render_plan_svg
 from voxelform.cores import compute_core_distance,UNREACHABLE_DIST
 
 class CorePlans(unittest.TestCase):
@@ -19,6 +19,39 @@ class CorePlans(unittest.TestCase):
     def test_bad_geometry_rejected(self):
         for kwargs in [dict(tread=-1),dict(landing_depth=.2),dict(car_width=4),dict(floor_height=float('nan'))]:
             with self.assertRaises(ValueError):CorePlanParameters(**kwargs)
+    def test_scissor_routes_landings_and_repeated_section(self):
+        plan=make_plan(next(b for b in DEFAULT_HEIGHT_BANDS if b.tier=='T4'))
+        self.assertEqual(plan['stairLayout'],'scissor')
+        self.assertEqual((plan['stairCount'],plan['stairEnclosureCount'],plan['liftCount']),(2,1,3))
+        self.assertEqual((plan['width'],plan['length']),(7,9))
+        self.assertAlmostEqual(plan['metricArea'],54.889)
+        self.assertEqual(len([d for d in plan['doors'] if d['type']=='stair_door']),2)
+        flights=[c for c in plan['components'] if c['type']=='flight']
+        for route in plan['routes']:
+            self.assertEqual([n['z'] for n in route['nodes']],[0.,1.5,3.])
+            self.assertNotEqual(route['laneOnEvenStorey'],route['laneOnOddStorey'])
+            self.assertEqual(route['risersPerStorey'],18)
+            mid=[c for c in plan['components'] if c.get('route')==route['id'] and c.get('level')=='intermediate']
+            self.assertEqual(len(mid),1)
+            self.assertAlmostEqual(mid[0]['elevation'],1.5)
+        # The two routes have disjoint walking surfaces, including half landings.
+        routes=[[c for c in plan['components'] if c.get('route')==r] for r in ('A','B')]
+        for a in routes[0]:
+            for b in routes[1]:
+                dx=min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x'])
+                dy=min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y'])
+                self.assertFalse(dx>1e-6 and dy>1e-6)
+        # Flights repeat after a FULL storey, never a 1.5m overlap. Test slopes
+        # independently at points along each flight with slab depth subtracted.
+        for f in flights:
+            for t in (.1,.5,.9):
+                z=f['zStart']+(t if f['direction']>0 else 1-t)*(f['zEnd']-f['zStart'])
+                upper_z=z+plan['floorHeight']
+                self.assertGreaterEqual(upper_z-plan['stairSlabThickness']-z,2.0)
+        # Impossible headroom must fail instead of silently shrinking the core.
+        with self.assertRaises(ValueError):
+            make_plan(HeightBand('test',19,30,2,3,'scissor'),CorePlanParameters(floor_height=2.0))
+
     def test_no_corner_cutting_and_long_corridor_matches_independent_dijkstra(self):
         rng=np.random.default_rng(4)
         for k in range(5):

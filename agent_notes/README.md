@@ -21,3 +21,7 @@
 - [Single-voxel FAR episodes — superseded](far_episodes_2026-11-07/README.md): original episode and density implementation.
 - [Urban 3D workspace](urban_workspace_2026-11-07/README.md): fetched context and actual shared Module Lab graphic engine.
 - [Raw measurements](../results/).
+
+- 2026-11-20 scissor follow-up: active T4 now uses compact-core.v3, two
+  interlocking routes with separate +1.5 m landings, three lifts; metric
+  6.55×8.38 m / grid 7×9 m. See docs/CORE_LAYOUTS.md for the area tradeoff.

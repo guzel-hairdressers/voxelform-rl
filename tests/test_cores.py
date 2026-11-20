@@ -21,7 +21,7 @@ class CoreTests(unittest.TestCase):
     def test_height_schedule_and_compact_grid_reservations(self):
         areas = [t.area for t in CORE_TEMPLATES]
         self.assertEqual(areas, sorted(areas))
-        self.assertEqual(areas, [15, 25, 35, 60, 70])
+        self.assertEqual(areas, [15, 25, 35, 63, 70])
         self.assertEqual(template_for_height(3).tier, "T1")
         self.assertEqual(template_for_height(8).tier, "T2")
         self.assertEqual(template_for_height(15).tier, "T3")
@@ -44,6 +44,17 @@ class CoreTests(unittest.TestCase):
                     self.assertLess(overlap,1e-8)
         self.assertEqual(CORE_TEMPLATES[0].metric_plan['liftCount'],0)
         self.assertLess(CORE_TEMPLATES[1].area,36)
+
+    def test_24_storey_core_uses_active_scissor_reservation(self):
+        occ=torch.zeros((24,16,16),dtype=torch.bool)
+        occ[:,1:15,1:15]=True
+        result=solve_cores(occ,min_core_spacing=10,max_core_dist=12)
+        self.assertEqual(len(result.cores),1)
+        core=result.cores[0]
+        self.assertEqual((core.tier,core.floors,core.footprint_area),('T4',24,63))
+        self.assertEqual(sorted((core.size_x,core.size_y)),[7,9])
+        self.assertEqual(int(result.core_mask.sum()),24*63)
+        self.assertEqual(template_for_height(24).metric_plan['stairLayout'],'scissor')
 
     def test_tall_tower_cannot_cheat_with_low_rise_core(self):
         # 12F tower only 5x6 fits T2 (6-10F) but NOT T3 (7x5 for 11-18F), so T1/T2 must NOT place inside it

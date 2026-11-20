@@ -225,7 +225,12 @@ class CorePlanAPI(unittest.TestCase):
             response=client.get('/api/core-plans/'+p['tier']+'.svg')
             self.assertEqual(response.status_code,200)
             self.assertIn('image/svg+xml',response.headers['content-type'])
-            self.assertIn('Half landing',response.text)
+            if p['stairLayout']=='scissor':
+                self.assertIn('A: +1.5 m',response.text)
+                self.assertIn('B: +1.5 m',response.text)
+                self.assertIn('2 interlocking routes',response.text)
+            else:
+                self.assertIn('Half landing',response.text)
         self.assertEqual(client.get('/api/core-plans/unknown.svg').status_code,404)
 
 if __name__=='__main__':unittest.main()

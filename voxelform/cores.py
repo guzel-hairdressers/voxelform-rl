@@ -55,7 +55,7 @@ class CoreTemplate:
 CORE_TEMPLATES: tuple[CoreTemplate, ...] = tuple(
     CoreTemplate(tier=p['tier'],label=f"{p['minHeight']}-{p['maxHeight']}F ({p['width']}x{p['length']} m grid · {p['stairCount']} stair + {p['liftCount']} lift)",
         min_height=p['minHeight'],max_height=p['maxHeight'],width=p['width'],length=p['length'],
-        program=f"{p['stairCount']} dog-leg stair(s), {p['liftCount']} lift(s); {p['metricWidth']:.2f}x{p['metricLength']:.2f} m metric enclosure",
+        program=f"{p['stairCount']} {p['stairLayout']} stair route(s), {p['liftCount']} lift(s); {p['metricWidth']:.2f}x{p['metricLength']:.2f} m metric enclosure",
         zones=tuple(p['zones']),attachment_sides=('S',),metric_plan=p)
     for p in plan_library()
 )

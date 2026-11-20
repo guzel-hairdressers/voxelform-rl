@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from html import escape
 import math
 
-CORE_LAYOUT_VERSION = 'compact-core.v2'
+CORE_LAYOUT_VERSION = 'compact-core.v3'
 
 @dataclass(frozen=True)
 class CorePlanParameters:
@@ -24,9 +24,12 @@ class CorePlanParameters:
     car_width: float = 1.10
     car_depth: float = 1.40
     door_width: float = 0.80
+    stair_separator: float = 0.15
+    stair_slab: float = 0.15
+    lobby_clear_width: float = 1.20
 
     def __post_init__(self):
-        values=(self.floor_height,self.tread,self.flight_width,self.landing_depth,self.wall,self.shaft_width,self.shaft_depth,self.car_width,self.car_depth,self.door_width)
+        values=(self.floor_height,self.tread,self.flight_width,self.landing_depth,self.wall,self.shaft_width,self.shaft_depth,self.car_width,self.car_depth,self.door_width,self.stair_separator,self.stair_slab,self.lobby_clear_width)
         if any(not math.isfinite(v) or v<=0 for v in values) or self.risers_per_flight<2 or self.stair_gap<0:
             raise ValueError('Core geometry must be finite and positive')
         if self.landing_depth < self.flight_width:
@@ -43,14 +46,19 @@ class HeightBand:
     maximum: int
     stairs: int
     lifts: int
+    stair_layout: str = 'dogleg'
 
 DEFAULT_HEIGHT_BANDS=(HeightBand('T1',1,5,1,0),HeightBand('T2',6,10,1,1),
-    HeightBand('T3',11,18,1,2),HeightBand('T4',19,30,2,3),HeightBand('T5',31,60,2,4))
+    HeightBand('T3',11,18,1,2),HeightBand('T4',19,30,2,3,'scissor'),HeightBand('T5',31,60,2,4))
 
 def make_plan(band: HeightBand, p: CorePlanParameters | None = None) -> dict:
     p=p or CorePlanParameters()
     if band.stairs not in (1,2) or band.lifts<0 or band.minimum<1 or band.maximum<band.minimum:
         raise ValueError('Unsupported height band')
+    if band.stair_layout == 'scissor':
+        return make_scissor_plan(band, p)
+    if band.stair_layout != 'dogleg':
+        raise ValueError('Unknown stair layout')
     run=(p.risers_per_flight-1)*p.tread
     sw=2*p.wall+2*p.flight_width+p.stair_gap
     length=2*p.wall+2*p.landing_depth+run
@@ -83,13 +91,83 @@ def make_plan(band: HeightBand, p: CorePlanParameters | None = None) -> dict:
             doors.append(dict(type='lift_door',x=round(x+(p.shaft_width-p.door_width)/2,6),y=round(y,6),width=p.door_width,orientation='horizontal'))
     width=round(width,6);length=round(length,6)
     return dict(version=CORE_LAYOUT_VERSION,tier=band.tier,minHeight=band.minimum,maxHeight=band.maximum,
-        stairCount=band.stairs,liftCount=band.lifts,metricWidth=width,metricLength=length,
+        stairCount=band.stairs,stairLayout='dogleg',stairEnclosureCount=band.stairs,liftCount=band.lifts,metricWidth=width,metricLength=length,
         metricArea=round(width*length,4),width=math.ceil(width-1e-9),length=math.ceil(length-1e-9),
         floorHeight=p.floor_height,riserCount=2*p.risers_per_flight,riserHeight=p.floor_height/(2*p.risers_per_flight),tread=p.tread,
         clearFlightWidth=p.flight_width,landingDepth=p.landing_depth,wallThickness=p.wall,
         shaftClearWidth=p.shaft_width-2*p.wall,shaftClearDepth=p.shaft_depth-2*p.wall,
         carWidth=p.car_width,carDepth=p.car_depth,zones=zones,components=parts,doors=doors,
         assumptions='Research layout prior; lift counts depend on this configured height schedule. Not a code, traffic or evacuation assessment.')
+
+def make_scissor_plan(band: HeightBand, p: CorePlanParameters) -> dict:
+    """Two interlocking routes; straight half-flights split by a mid-landing.
+
+    Lane 0 always rises towards the far end; lane 1 towards the near end.
+    Routes change lanes at the full-width storey landings, so each route
+    exchanges ends on successive storeys. Flights stacked in the same lane
+    have a full storey's clearance, not the impossible half-storey overlap
+    produced by superimposing two compact doglegs.
+    """
+    if band.stairs != 2 or band.lifts < 1:
+        raise ValueError('Scissor prior requires two routes and a lift bank')
+    if p.floor_height-p.stair_slab < 2.0:
+        raise ValueError('Scissor section has less than the assumed 2 m headroom')
+    run=(p.risers_per_flight-1)*p.tread
+    sw=2*p.wall+2*p.flight_width+p.stair_separator
+    length=2*p.wall+3*p.landing_depth+2*run
+    lobby_width=p.lobby_clear_width+2*p.wall
+    width=sw+lobby_width+p.shaft_depth
+    if band.lifts*p.shaft_width > length:
+        raise ValueError('Lift bank exceeds scissor enclosure length')
+    def rect(kind,x,y,w,h,label,**extra):
+        return dict(type=kind,x=round(x,6),y=round(y,6),w=round(w,6),h=round(h,6),label=label,**extra)
+    zones=[rect('stair',0,0,sw,length,'Scissor enclosure: routes A/B'),
+           rect('lobby',sw,0,lobby_width,length,'Lift lobby'),
+           rect('service',sw+lobby_width,band.lifts*p.shaft_width,p.shaft_depth,
+                length-band.lifts*p.shaft_width,'Service reserve')]
+    parts=[];doors=[];routes=[]
+    middle=p.wall+p.landing_depth+run
+    far=length-p.wall-p.landing_depth
+    for lane,route in enumerate(('A','B')):
+        x=p.wall+lane*(p.flight_width+p.stair_separator)
+        start_y=p.wall if lane==0 else far
+        parts.append(rect('landing',p.wall,start_y,sw-2*p.wall,p.landing_depth,
+                          f'{route}: floor landing',route=route,elevation=0.,level='floor'))
+        parts.append(rect('landing',x,middle,p.flight_width,p.landing_depth,
+                          f'{route}: +{p.floor_height/2:g} m',route=route,elevation=p.floor_height/2,level='intermediate'))
+        for j,y in enumerate((p.wall+p.landing_depth,middle+p.landing_depth)):
+            low=j if lane==0 else 1-j
+            parts.append(rect('flight',x,y,p.flight_width,run,f'{route}: flight {low+1}',
+                route=route,risers=p.risers_per_flight,treads=p.risers_per_flight-1,
+                direction=1 if lane==0 else -1,zStart=low*p.floor_height/2,
+                zEnd=(low+1)*p.floor_height/2))
+        nodes=[dict(lane=lane,end='near' if lane==0 else 'far',z=0.),
+               dict(lane=lane,end='middle',z=p.floor_height/2),
+               dict(lane=1-lane,end='far' if lane==0 else 'near',z=p.floor_height)]
+        routes.append(dict(id=route,laneOnEvenStorey=lane,laneOnOddStorey=1-lane,
+                           nodes=nodes,risersPerStorey=2*p.risers_per_flight))
+        doors.append(dict(type='stair_door',route=route,x=round(sw,6),
+                          y=round(start_y+.15,6),width=.9,orientation='vertical'))
+    for i in range(band.lifts):
+        x=sw+lobby_width;y=i*p.shaft_width
+        zones.append(rect('lift',x,y,p.shaft_depth,p.shaft_width,f'Lift {i+1}'))
+        parts.append(rect('car',x+p.wall+.30,y+(p.shaft_width-p.car_width)/2,
+                          p.car_depth,p.car_width,f'Car {i+1}'))
+        doors.append(dict(type='lift_door',x=round(x,6),y=round(y+(p.shaft_width-p.door_width)/2,6),
+                          width=p.door_width,orientation='vertical'))
+    doors.append(dict(type='entrance',x=round(sw+(lobby_width-.9)/2,6),y=0.,width=.9,orientation='horizontal'))
+    width=round(width,6);length=round(length,6)
+    return dict(version=CORE_LAYOUT_VERSION,tier=band.tier,minHeight=band.minimum,maxHeight=band.maximum,
+        stairCount=2,stairLayout='scissor',stairEnclosureCount=1,liftCount=band.lifts,
+        metricWidth=width,metricLength=length,metricArea=round(width*length,4),
+        width=math.ceil(width-1e-9),length=math.ceil(length-1e-9),floorHeight=p.floor_height,
+        riserCount=2*p.risers_per_flight,riserHeight=p.floor_height/(2*p.risers_per_flight),
+        tread=p.tread,clearFlightWidth=p.flight_width,landingDepth=p.landing_depth,
+        wallThickness=p.wall,separatorThickness=p.stair_separator,stairSlabThickness=p.stair_slab,
+        clearStackedHeadroom=p.floor_height-p.stair_slab,clearLobbyWidth=p.lobby_clear_width,
+        shaftClearWidth=p.shaft_width-2*p.wall,shaftClearDepth=p.shaft_depth-2*p.wall,
+        carWidth=p.car_width,carDepth=p.car_depth,zones=zones,components=parts,doors=doors,routes=routes,
+        assumptions='Research scissor prior: two routes in one enclosure, separated lanes and intermediate landings. Not an egress independence or compliance assessment.')
 
 def plan_library():
     return [make_plan(b) for b in DEFAULT_HEIGHT_BANDS]
@@ -98,11 +176,13 @@ def render_plan_svg(plan: dict) -> str:
     """Scaled vector plan with separate flights, landings, car/shaft and openings."""
     scale=50.;ox=70.;oy=85.;w=plan['metricWidth'];h=plan['metricLength']
     vw=max(390.,ox+w*scale+80);vh=oy+h*scale+130
+    if plan.get('stairLayout')=='scissor':vh+=155
+    stair_label='2 interlocking routes' if plan.get('stairLayout')=='scissor' else f'{plan["stairCount"]} stair(s)'
     out=[f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {vw:g} {vh:g}" role="img" aria-label="{plan["tier"]} core plan">',
          '<defs><marker id="arrow" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6" fill="#1645ff"/></marker></defs>',
          f'<rect width="{vw:g}" height="{vh:g}" fill="white"/>',
          f'<g font-family="Arial,sans-serif" fill="#182238"><text x="20" y="25" font-size="16" font-weight="bold">{plan["tier"]} · {plan["minHeight"]}–{plan["maxHeight"]} floors</text>',
-         f'<text x="20" y="46" font-size="11">{plan["stairCount"]} stair(s) · {plan["liftCount"]} lift(s) · {plan["metricArea"]:g} m² metric / {plan["width"]*plan["length"]} m² grid reservation</text>']
+         f'<text x="20" y="46" font-size="11">{stair_label} · {plan["liftCount"]} lift(s) · {plan["metricArea"]:g} m² metric / {plan["width"]*plan["length"]} m² grid reservation</text>']
     def line(x1,y1,x2,y2,stroke='#344158',width=1,extra=''):
         out.append(f'<line x1="{ox+x1*scale:g}" y1="{oy+y1*scale:g}" x2="{ox+x2*scale:g}" y2="{oy+y2*scale:g}" stroke="{stroke}" stroke-width="{width}" {extra}/>')
     def rect(c,fill,stroke='#344158',width=1):
@@ -110,11 +190,14 @@ def render_plan_svg(plan: dict) -> str:
     # Dashed outline shows the conservative one-metre solver reservation.
     rect(dict(x=0,y=0,w=plan['width'],h=plan['length']),'#fafbff','#b8c7ef')
     for z in plan['zones']:
-        rect(z,{'stair':'#e2e8f0','lobby':'#fff5d8','lift':'#c7d2fe'}[z['type']],width=2)
+        rect(z,{'stair':'#e2e8f0','lobby':'#fff5d8','lift':'#c7d2fe','service':'#f1f5f9'}[z['type']],width=2)
         if z['type'] in ('stair','lift'):
             t=plan['wallThickness'];rect(dict(x=z['x']+t,y=z['y']+t,w=z['w']-2*t,h=z['h']-2*t),'white')
         elif z['type']=='lobby':
             out.append(f'<text x="{ox+(z["x"]+z["w"]*.5)*scale:g}" y="{oy+(z["y"]+z["h"]*.55)*scale:g}" text-anchor="middle" font-size="11">Lobby</text>')
+    if plan.get('stairLayout')=='scissor':
+        stair=plan['zones'][0];x=plan['wallThickness']+plan['clearFlightWidth']+plan['separatorThickness']/2
+        line(x,plan['wallThickness']+plan['landingDepth'],x,stair['h']-plan['wallThickness']-plan['landingDepth'],width=plan['separatorThickness']*scale)
     for c in plan['components']:
         if c['type']=='landing':
             rect(c,'#f0f6ff','#94a3b8')
@@ -140,6 +223,18 @@ def render_plan_svg(plan: dict) -> str:
     line(0,-.3,w,-.3);line(-.3,0,-.3,h)
     out.append(f'<text x="{ox+w*scale/2:g}" y="{oy-23:g}" text-anchor="middle" font-size="11">{w:.2f} m</text>')
     out.append(f'<text transform="translate({ox-26:g},{oy+h*scale/2:g}) rotate(-90)" text-anchor="middle" font-size="11">{h:.2f} m</text>')
+    if plan.get('stairLayout')=='scissor':
+        sy=oy+h*scale+40;sh=55;left=ox;span=w*scale
+        out.append(f'<text x="20" y="{sy-15:g}" font-size="10">Developed scissor profiles · routes swap lanes each storey</text>')
+        for lane in (0,1):
+            x0=left+lane*(span/2+10);length=span/2-20
+            pts=[]
+            for t,z in ((0,0),(.4,.5),(.6,.5),(1,1)):
+                if lane:z=1-z
+                pts.append(f'{x0+t*length:g},{sy+sh-z*sh:g}')
+            out.append(f'<polyline points="{" ".join(pts)}" fill="none" stroke="#1645ff" stroke-width="2"/>')
+            out.append(f'<text x="{x0:g}" y="{sy+sh+16:g}" font-size="9">Lane {lane+1}: {"0 → 1.5 → 3" if lane==0 else "3 → 1.5 → 0"} m</text>')
+        out.append(f'<text x="20" y="{sy+sh+37:g}" font-size="9">Mid-landings are separate; stacked flights: {plan["clearStackedHeadroom"]:.2f} m vertical clearance (simplified).</text>')
     out.extend([f'<text x="20" y="{vh-65:g}" font-size="10">Flights {plan["clearFlightWidth"]:.2f} m · landings {plan["landingDepth"]:.2f} m · treads {plan["tread"]:.2f} m</text>',
         f'<text x="20" y="{vh-47:g}" font-size="10">{plan["riserCount"]} risers × {plan["riserHeight"]*1000:.1f} mm = {plan["floorHeight"]:.2f} m storey</text>',
         f'<text x="20" y="{vh-29:g}" font-size="9" fill="#64748b">Green = openings · pale outer band = grid rounding · {CORE_LAYOUT_VERSION}</text>',

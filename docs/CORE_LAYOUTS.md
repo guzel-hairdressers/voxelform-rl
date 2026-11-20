@@ -1,4 +1,4 @@
-# Compact core geometry, version `compact-core.v2`
+# Compact core geometry, version `compact-core.v3`
 
 This is a parameterized service-space prior for an ML environment. It replaces
 large opaque rectangles with inspectable metric component plans. The experiment
@@ -11,19 +11,44 @@ still reserves the conservative enclosing rectangle on its one-metre grid.
 | 1–5 | 1 | 0 | 2.80 × 4.94 m | 13.83 m² | 3 × 5 = 15 m² | 30 m² |
 | 6–10 | 1 | 1 | 4.90 × 4.94 m | 24.21 m² | 5 × 5 = 25 m² | 48 m² |
 | 11–18 | 1 | 2 | 7.00 × 4.94 m | 34.58 m² | 7 × 5 = 35 m² | 72 m² |
-| 19–30 | 2 | 3 | 11.90 × 4.94 m | 58.79 m² | 12 × 5 = 60 m² | 108 m² |
+| 19–30 | 2 scissor routes | 3 | 6.55 × 8.38 m | 54.89 m² | 7 × 9 = 63 m² | 108 m² |
 | 31–60 | 2 | 4 | 14.00 × 4.94 m | 69.16 m² | 14 × 5 = 70 m² | 160 m² |
 
 [1–5 floor plan](core-plans/T1.svg) · [6–10](core-plans/T2.svg) ·
 [11–18](core-plans/T3.svg) · [19–30](core-plans/T4.svg) · [31–60](core-plans/T5.svg).
 The same drawings are available in the live app at `/core-plans`.
 
-Each stair shows **two separate flights and two landings**. At 3 m storey height,
+Each conventional dogleg shows **two separate flights and two landings**. At 3 m storey height,
 each flight has nine risers and eight 0.28 m treads: 18 × 166.67 mm total rise,
 2.24 m run per flight, 1.20 m clear width and 1.20 m landing depth. Two 0.15 m
 walls plus two flights and a 0.10 m gap give 2.80 m enclosure width. The two
 landings, run and end walls give 4.94 m length. Thus a six-metre stair length
 was not an unavoidable consequence of the selected geometry.
+
+### 19–30 floors: scissor replacement
+
+T4 now uses **two interlocking routes in one enclosure**, not two dogleg
+stairwells. Each route has two straight half-flights of nine risers, a separate
++1.50 m intermediate landing and an entrance at one end. The 1.20 m lanes are
+separated by 0.15 m; full-width storey landings turn routes into the other lane,
+so each route swaps ends on successive storeys. A longitudinal lobby reaches both
+stair entrances and the three lift doors. The plan includes developed lane
+profiles; this is a simplified section, not a construction drawing.
+
+Two overlapping 3 m doglegs would leave only half-storey separation. This layout
+instead stacks flights a full 3 m apart: assumed 0.15 m slabs leave 2.85 m vertical
+clearance. With the intermediate landings, its stair enclosure is 2.85 × 8.38 m.
+The resulting complete enclosure is **6.55 × 8.38 = 54.89 m²** versus v2's
+58.79 m². However the rectangular one-metre reservation is **7 × 9 = 63 m²**, up
+from 60 m². This is a measured geometry/quantization tradeoff, not an overall voxel
+area saving. No training-quality improvement is inferred from switching layouts.
+
+The interlocking concept is illustrated in the Toronto Society of Architects'
+[Future-Ready Design Guide, p.34](https://torontosocietyofarchitects.ca/wp-content/uploads/2026/01/2026-01-14_FutureReadyDesignGuide_v1-0-0.pdf).
+The added mid-landings and dimensions here are this project's assumptions. The
+two schematic routes do not establish independent protected exits; separation,
+smoke/door design and egress requirements are not certified by the ML template.
+Only T4 changes; T5 retains its two conventional stairwells.
 
 Each lift reservation is 2.10 × 2.20 m outside the walls; clear shaft 1.80 ×
 1.90 m, drawn car 1.10 × 1.40 m and 0.80 m door. A shared lobby connects the
