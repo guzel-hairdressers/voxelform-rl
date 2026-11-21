@@ -13,8 +13,10 @@ import matplotlib
 matplotlib.use('Agg')
 from matplotlib import cm as mpl_cm, colors as mcolors, gridspec, patches
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
 import numpy as np
+from shapely.geometry import Point, Polygon
+from shapely.ops import triangulate, unary_union
 import torch
 
 from voxelform.coarse_to_fine import (
@@ -80,8 +82,175 @@ def _shade_rgba(base_rgb: tuple[float, float, float], faces: np.ndarray, alpha: 
     return np.column_stack((rgb, np.full(len(faces), alpha, dtype=np.float32)))
 
 
-def _setup_3d_axes(ax, occ: np.ndarray, dz: float = 3.0, elev: float = 28.0, azim: float = -52.0):
-    """Set tight isometric metric bounds and clean white studio axes."""
+def _extract_building_footprint(building: dict) -> tuple[Polygon | None, float, float]:
+    """Recover clean 2D Shapely footprint and metric (z_min, z_max) from a cached context prism."""
+    verts_raw = building.get('vertices') or []
+    faces_raw = building.get('faces') or []
+    if not verts_raw or not faces_raw:
+        return None, 0.0, 0.0
+    verts = np.asarray(verts_raw, dtype=np.float32)
+    z_min = float(verts[:, 2].min())
+    z_max = float(building.get('height') or verts[:, 2].max())
+    if z_max <= z_min + 0.2:
+        return None, z_min, z_max
+    faces = np.asarray(faces_raw, dtype=np.int32)
+    base_polys = []
+    for f in faces:
+        if len(f) < 3:
+            continue
+        zf = verts[f, 2]
+        if np.all(zf <= z_min + 0.1) or np.all(zf >= z_max - 0.1):
+            p = Polygon(verts[f, :2])
+            if not p.is_valid:
+                p = p.buffer(0)
+            if p.area > 0.05:
+                base_polys.append(p)
+    if not base_polys:
+        return None, z_min, z_max
+    merged = unary_union(base_polys)
+    if not merged.is_valid:
+        merged = merged.buffer(0)
+    return merged, z_min, z_max
+
+
+def _iter_polygons(geom):
+    if geom.is_empty:
+        return
+    if geom.geom_type == 'Polygon':
+        if geom.area >= 8.0:
+            yield geom
+    elif geom.geom_type in ('MultiPolygon', 'GeometryCollection'):
+        for sub in geom.geoms:
+            yield from _iter_polygons(sub)
+
+
+def _extrude_clean_prism(poly: Polygon, z_lo: float, z_hi: float) -> tuple[list[np.ndarray], list[float], list[np.ndarray]]:
+    """Extrude a clean 2D Shapely polygon into non-triangulated walls, flat roof, and crease edges."""
+    faces_out: list[np.ndarray] = []
+    shades_out: list[float] = []
+    segs_out: list[np.ndarray] = []
+
+    rings = [poly.exterior] + list(poly.interiors)
+    for ring_idx, ring in enumerate(rings):
+        pts = np.asarray(ring.coords, dtype=np.float32)[:-1]
+        if len(pts) < 3:
+            continue
+        n = len(pts)
+        # Ensure consistent outward horizontal normals for side shading
+        for i in range(n):
+            p0 = pts[i]
+            p1 = pts[(i + 1) % n]
+            seg = p1 - p0
+            seg_len = float(np.hypot(seg[0], seg[1]))
+            if seg_len < 1e-3:
+                continue
+            wall = np.array([
+                [p0[0], p0[1], z_lo],
+                [p1[0], p1[1], z_lo],
+                [p1[0], p1[1], z_hi],
+                [p0[0], p0[1], z_hi],
+            ], dtype=np.float32)
+            nx = float(seg[1]) / seg_len
+            ny = -float(seg[0]) / seg_len
+            if ring_idx > 0:
+                nx, ny = -nx, -ny
+            shade = 0.88 + 0.08 * max(-1.0, min(1.0, 0.5 * nx - 0.5 * ny))
+            faces_out.append(wall)
+            shades_out.append(shade)
+            segs_out.append(np.array([[p0[0], p0[1], z_hi], [p1[0], p1[1], z_hi]], dtype=np.float32))
+            segs_out.append(np.array([[p0[0], p0[1], z_lo], [p1[0], p1[1], z_lo]], dtype=np.float32))
+
+            # Draw vertical corner edge only at crisp corners (skip dense circular clip arcs)
+            prev_p = pts[(i - 1) % n]
+            d_prev = p0 - prev_p
+            lp = float(np.hypot(d_prev[0], d_prev[1]))
+            if lp > 1e-3:
+                dot = float((d_prev[0] * seg[0] + d_prev[1] * seg[1]) / (lp * seg_len))
+                if dot < 0.94:
+                    segs_out.append(np.array([[p0[0], p0[1], z_lo], [p0[0], p0[1], z_hi]], dtype=np.float32))
+
+    if not poly.interiors:
+        pts = np.asarray(poly.exterior.coords, dtype=np.float32)[:-1]
+        if len(pts) >= 3:
+            roof = np.column_stack((pts, np.full(len(pts), z_hi, dtype=np.float32)))
+            faces_out.append(roof)
+            shades_out.append(1.0)
+    else:
+        for t in triangulate(poly):
+            if poly.covers(t.representative_point()) and t.area > 0.05:
+                tp = np.asarray(t.exterior.coords, dtype=np.float32)[:-1]
+                roof = np.column_stack((tp, np.full(len(tp), z_hi, dtype=np.float32)))
+                faces_out.append(roof)
+                shades_out.append(1.0)
+
+    return faces_out, shades_out, segs_out
+
+
+def _build_context_geometry(
+    context: dict | None,
+    x_bounds: tuple[float, float],
+    y_bounds: tuple[float, float],
+    z_max: float,
+) -> dict | None:
+    """Build clean radially-clipped translucent context prisms and dashed parcel boundary."""
+    if not context or not context.get('buildings'):
+        return None
+    cx = 0.5 * (float(x_bounds[0]) + float(x_bounds[1]))
+    cy = 0.5 * (float(y_bounds[0]) + float(y_bounds[1]))
+    half = 0.5 * max(float(x_bounds[1]) - float(x_bounds[0]), float(y_bounds[1]) - float(y_bounds[0]))
+    ctx_radius = 0.80 * half
+    z_cap = 0.86 * float(z_max)
+    clip_disk = Point(cx, cy).buffer(ctx_radius, quad_segs=20)
+
+    faces_all: list[np.ndarray] = []
+    shades_all: list[float] = []
+    segs_all: list[np.ndarray] = []
+
+    for b in context.get('buildings', []):
+        footprint, z_lo, z_hi = _extract_building_footprint(b)
+        if footprint is None:
+            continue
+        if not footprint.intersects(clip_disk):
+            continue
+        clipped = footprint.intersection(clip_disk)
+        z_top_b = min(z_hi, z_cap)
+        if z_top_b <= z_lo + 0.3:
+            continue
+        for poly in _iter_polygons(clipped):
+            f_list, s_list, e_list = _extrude_clean_prism(poly, z_lo, z_top_b)
+            faces_all.extend(f_list)
+            shades_all.extend(s_list)
+            segs_all.extend(e_list)
+
+    perim_segs: list[np.ndarray] = []
+    perim = context.get('perimeter') or []
+    if len(perim) >= 3:
+        p_poly = Polygon(perim).buffer(0)
+        if not p_poly.is_empty:
+            p_clip = p_poly.intersection(clip_disk)
+            for p in _iter_polygons(p_clip):
+                pts = np.asarray(p.exterior.coords, dtype=np.float32)
+                for i in range(len(pts) - 1):
+                    perim_segs.append(np.array([[pts[i, 0], pts[i, 1], 0.08], [pts[i + 1, 0], pts[i + 1, 1], 0.08]], dtype=np.float32))
+
+    if not faces_all:
+        return None
+    shades_arr = np.asarray(shades_all, dtype=np.float32)[:, None]
+    face_rgba = np.column_stack((0.66 * shades_arr, 0.71 * shades_arr, 0.78 * shades_arr, np.full(len(faces_all), 0.055, dtype=np.float32)))
+    seg_arr = np.asarray(segs_all, dtype=np.float32) if segs_all else np.zeros((0, 2, 3), dtype=np.float32)
+    perim_arr = np.asarray(perim_segs, dtype=np.float32) if perim_segs else np.zeros((0, 2, 3), dtype=np.float32)
+    return {'faces': faces_all, 'rgba': face_rgba, 'segs': seg_arr, 'perim': perim_arr}
+
+
+def _setup_3d_axes(
+    ax,
+    occ: np.ndarray,
+    dz: float = 3.0,
+    elev: float = 28.0,
+    azim: float = -52.0,
+    context_pad: bool = False,
+) -> tuple[tuple[float, float], tuple[float, float], float]:
+    """Set tight isometric metric bounds and return clipped (x_bounds, y_bounds, z_top)."""
     zz, yy, xx = np.nonzero(occ)
     if len(xx) == 0:
         nx, ny, nz = occ.shape[2], occ.shape[1], occ.shape[0]
@@ -93,14 +262,21 @@ def _setup_3d_axes(ax, occ: np.ndarray, dz: float = 3.0, elev: float = 28.0, azi
         z1 = max(12.0, float((zz.max() + 1) * dz) + 2.0)
     span = max(x1 - x0, y1 - y0, z1, 10.0)
     cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
-    half = 0.48 * span
-    z_top = max(z1, 0.42 * span)
-    ax.set_xlim(cx - half, cx + half)
-    ax.set_ylim(cy - half, cy + half)
+    if context_pad:
+        half = max(0.66 * span, 0.50 * span + 14.0)
+        z_top = max(z1 + 8.0, 0.44 * (2.0 * half))
+    else:
+        half = 0.48 * span
+        z_top = max(z1, 0.42 * span)
+    xb = (cx - half, cx + half)
+    yb = (cy - half, cy + half)
+    ax.set_xlim(*xb)
+    ax.set_ylim(*yb)
     ax.set_zlim(0.0, z_top)
     ax.set_box_aspect((1.0, 1.0, z_top / (2.0 * half)))
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
+    return xb, yb, z_top
 
 
 def _render_voxel_panel(
@@ -114,8 +290,42 @@ def _render_voxel_panel(
     elev: float = 28.0,
     azim: float = -52.0,
     xray_mass: bool = True,
+    context: dict | None = None,
+    context_geom: dict | None = None,
+    bounds_occ: np.ndarray | None = None,
 ):
-    """Render exposed faces of mass and compact-core shafts onto a 3D Matplotlib axes."""
+    """Render exposed faces of mass, compact-core shafts, and optional ghosted urban context."""
+    ref_occ = occ if bounds_occ is None else bounds_occ
+    use_ctx = context_geom is not None or (context is not None and bool(context.get('buildings')))
+    xb, yb, z_top = _setup_3d_axes(ax, ref_occ, dz=3.0, elev=elev, azim=azim, context_pad=use_ctx)
+    if context_geom is None and use_ctx:
+        context_geom = _build_context_geometry(context, xb, yb, z_top)
+
+    if context_geom is not None:
+        if len(context_geom['perim']) > 0:
+            p_coll = Line3DCollection(
+                context_geom['perim'],
+                colors=[(0.22, 0.42, 0.78, 0.36)],
+                linewidths=0.75,
+                linestyles='--',
+            )
+            ax.add_collection3d(p_coll)
+        if len(context_geom['faces']) > 0:
+            c_poly = Poly3DCollection(
+                context_geom['faces'],
+                facecolors=context_geom['rgba'],
+                edgecolors='none',
+                zsort='average',
+            )
+            ax.add_collection3d(c_poly)
+        if len(context_geom['segs']) > 0:
+            c_lines = Line3DCollection(
+                context_geom['segs'],
+                colors=[(0.42, 0.48, 0.56, 0.18)],
+                linewidths=0.45,
+            )
+            ax.add_collection3d(c_lines)
+
     core_occ = occ & core_mask
     shell_occ = occ & ~core_occ
     dz = 3.0
@@ -177,7 +387,6 @@ def _render_voxel_panel(
         edges = np.concatenate(edge_all, 0)
         poly = Poly3DCollection(verts, facecolors=rgba, edgecolors=edges, linewidths=0.25, zsort='average')
         ax.add_collection3d(poly)
-    _setup_3d_axes(ax, occ, dz=dz, elev=elev, azim=azim)
 
 
 def _patch_cfg() -> PatchConfig:
@@ -526,6 +735,7 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained, to
     chosen_decode = ''
     best_rank = -1e9
     envs = {}
+    chosen_site = None
     for site_id, label, temp, noise in candidates:
         if site_id not in envs:
             envs[site_id] = _load_env(site_id, cfg, dev)
@@ -538,10 +748,18 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained, to
             if rank > best_rank:
                 best_rank = rank
                 chosen = snaps
+                chosen_site = site_id
                 chosen_label = f'{label}, seed {s}'
                 chosen_decode = f'temp={temp:g}, noise={noise:g}'
     assert chosen is not None and len(chosen) >= 4
     print(f'Trained rollout: {chosen_label} ({chosen_decode}), {len(chosen)} states, FAR={chosen[-1]["far"]:.2f}, obj={chosen[-1]["obj"]:.3f}')
+
+    rollout_occ = np.logical_or.reduce([s['occ'] for s in chosen])
+    tmp_fig = plt.figure()
+    tmp_ax = tmp_fig.add_subplot(111, projection='3d')
+    xb, yb, z_top = _setup_3d_axes(tmp_ax, rollout_occ, dz=3.0, context_pad=True)
+    plt.close(tmp_fig)
+    rollout_ctx = _build_context_geometry(envs[chosen_site].context, xb, yb, z_top)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
@@ -553,13 +771,13 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained, to
             gs = gridspec.GridSpec(1, 3, figure=fig, left=0.02, right=0.98, top=0.81, bottom=0.14, wspace=0.04)
             axes = [fig.add_subplot(gs[0, i], projection='3d') for i in range(3)]
 
-            _render_voxel_panel(axes[0], snap['occ'], snap['core_mask'], mode='mass', azim=azim, xray_mass=True)
+            _render_voxel_panel(axes[0], snap['occ'], snap['core_mask'], mode='mass', azim=azim, xray_mass=True, context_geom=rollout_ctx, bounds_occ=rollout_occ)
             axes[0].set_title('Occupied Mass + compact-core.v5', fontsize=10.5, fontweight='bold', color='#0f172a', pad=4)
 
-            _render_voxel_panel(axes[1], snap['occ'], snap['core_mask'], mode='sun', sun_map=snap['sun_grid'], azim=azim)
+            _render_voxel_panel(axes[1], snap['occ'], snap['core_mask'], mode='sun', sun_map=snap['sun_grid'], azim=azim, context_geom=rollout_ctx, bounds_occ=rollout_occ)
             axes[1].set_title('Direct Sun Proxy (Cores Exempt)', fontsize=10.5, fontweight='bold', color='#0f172a', pad=4)
 
-            _render_voxel_panel(axes[2], snap['occ'], snap['core_mask'], mode='core_dist', dist_map=snap['core_dist'], max_dist=float(cfg.max_core_dist), azim=azim)
+            _render_voxel_panel(axes[2], snap['occ'], snap['core_mask'], mode='core_dist', dist_map=snap['core_dist'], max_dist=float(cfg.max_core_dist), azim=azim, context_geom=rollout_ctx, bounds_occ=rollout_occ)
             axes[2].set_title(f'Geodesic Core Distance (Limit {cfg.max_core_dist} m)', fontsize=10.5, fontweight='bold', color='#0f172a', pad=4)
 
             cax1 = fig.add_axes([0.39, 0.11, 0.22, 0.022])
@@ -675,7 +893,7 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
         occ = best['occ']
         cmask = best['core_mask']
         ax = fig.add_subplot(gs[0, idx], projection='3d')
-        _render_voxel_panel(ax, occ, cmask, mode='mass', elev=29.0, azim=-48.0, xray_mass=True)
+        _render_voxel_panel(ax, occ, cmask, mode='mass', elev=29.0, azim=-48.0, xray_mass=True, context=env.context)
         z_top = int(np.flatnonzero(occ.any((1, 2)))[-1]) + 1 if occ.any() else 0
         nc = best['core_count']
         blocks = tier_cascade_blocks(env) if cfg.multiscale_schedule == 'tier_adaptive' else ()
@@ -723,10 +941,11 @@ def generate_heldout_generalization(cfg: ExperimentConfig, dev: str, untrained, 
         u_res, _ = _run_eval_episode(untrained, env, cfg, best_seed, temp=1.0, noise=1.0, record_trace=False)
         t_res, _ = _run_eval_episode(trained, env, cfg, best_seed, temp=1.0, noise=1.0, record_trace=False)
         pair_axes = []
+        union_occ = np.logical_or(u_res['occ'], t_res['occ'])
         for row, (res, row_tag) in enumerate(((u_res, 'Untrained'), (t_res, 'Trained'))):
             ax = fig.add_subplot(gs[row, col], projection='3d')
             ax.patch.set_alpha(0.0)
-            _render_voxel_panel(ax, res['occ'], res['core_mask'], mode='mass', elev=29.0, azim=-48.0, xray_mass=True)
+            _render_voxel_panel(ax, res['occ'], res['core_mask'], mode='mass', elev=29.0, azim=-48.0, xray_mass=True, context=env.context, bounds_occ=union_occ)
             z_top = int(np.flatnonzero(res['occ'].any((1, 2)))[-1]) + 1 if res['occ'].any() else 0
             nc = res['core_count']
             ax.set_title(
