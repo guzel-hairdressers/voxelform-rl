@@ -61,18 +61,26 @@ At decision step $t$, state $s_t = (O_t, g_t)$ consists of a dense voxel observa
 
 Rather than stepping over $\mathcal{O}(Z \cdot Y \cdot X)$ per-voxel Bernoulli variables independently, an action $a_t$ couples a high-level categorical edit operation with correlated coarse Gaussian spatial fields:
 
-$$o_t \sim \pi_\theta(o \mid s_t) \in \{\text{remove},\ \text{grow},\ \text{exchange},\ \text{finish}\}, \qquad z_t^{(k)} \sim \mathcal{N}\!\left(\mu_\theta(s_t),\ \operatorname{diag}(\sigma_\theta^2)\right)$$
+$$
+o_t \sim \pi_\theta(o \mid s_t) \in \{\text{remove},\ \text{grow},\ \text{exchange},\ \text{finish}\}, \qquad z_t^{(k)} \sim \mathcal{N}\!\left(\mu_\theta(s_t),\ \mathrm{diag}(\sigma_\theta^2)\right)
+$$
 
 1. **Correlated Decoding:** Sampled coarse fields $z_t^{(k)} \in \mathbb{R}^{|\mathcal{C}_t| \times \lceil Z/2 \rceil \times \lceil Y/4 \rceil \times \lceil X/4 \rceil}$ are trilinearly upsampled, smoothed via exact separable 1D ($Z$) + 2D ($Y, X$) Gaussian convolutions (avoiding MPS `Conv3d` host stalls), and ranked inside eligible edit frontiers with area budgets scaled to the target FAR band.
 2. **Augmented Retry Accounting:** When geometric projection rejects a candidate draw (up to `retries = 8`), `UnifiedLearner` records **all consumed Gaussian draws** (rejected + accepted) on the full coarse lattice without spatial eligibility masking, scoring the unbiased joint action log-probability:
-   $$\log \pi_\theta(a_t \mid s_t) = \log \pi_\theta(o_t \mid s_t) + \sum_{k=1}^{K_t} \log \mathcal{N}\!\left(z_t^{(k)} ;\, \mu_\theta(s_t),\, \sigma_\theta^2\right)$$
+
+   $$
+   \log \pi_\theta(a_t \mid s_t) = \log \pi_\theta(o_t \mid s_t) + \sum_{k=1}^{K_t} \log \mathcal{N}\!\left(z_t^{(k)} ;\, \mu_\theta(s_t),\, \sigma_\theta^2\right)
+   $$
+
 3. **Deterministic Feasibility Projection $\Pi_{\text{valid}}$:** Committed edits must satisfy the FAR band or move strictly toward it, maintain 6-neighbor solid connectivity and exterior-air cavity validity, enforce $k=3\,\text{m}$ separable morphological floor width on plots $\ge 400\,\text{m}^2$, and preserve active `compact-core.v5` ground-to-roof shafts. Core placement uses a deterministic height-graded heuristic (`solve_cores`) over compact metric plans ([docs/CORE_LAYOUTS.md](docs/CORE_LAYOUTS.md)). Because $\Pi_{\text{valid}}$ and `solve_cores` embed strong domain priors, the policy acts within a **constrained hybrid decoder** rather than an unconstrained end-to-end generator.
 
 ### 3. Objective Decomposition & Policy Optimization
 
 The shared live/headless scalar objective (`voxelform/objectives.py`) intentionally keeps directional sunlight (`sun`) and sky diffusion (`diff`) **separate**:
 
-$$J(M_t) = 0.65\,u_{\text{good}} + 0.55\,\bar{s}_{\text{sun}} + 0.45\,\bar{s}_{\text{diff}} + 0.10\,r_{\text{roof}} + 0.20\,s_{\text{core}} - 0.20\,\bar{d}_{\text{deep}} - 0.55\,f_{<6\text{m}} - 0.08\,\bar{\eta}_{\text{noise}} - 0.45\,f_{\text{uncov}} - 0.35\,\bar{b}_{\text{core}}$$
+$$
+J(M_t) = 0.65\,u_{\text{good}} + 0.55\,\bar{s}_{\text{sun}} + 0.45\,\bar{s}_{\text{diff}} + 0.10\,r_{\text{roof}} + 0.20\,s_{\text{core}} - 0.20\,\bar{d}_{\text{deep}} - 0.55\,f_{<6\text{m}} - 0.08\,\bar{\eta}_{\text{noise}} - 0.45\,f_{\text{uncov}} - 0.35\,\bar{b}_{\text{core}}
+$$
 
 where $s_{\text{core}} = \max(0,\,(1 - f_{\text{uncov}})(1 - 0.5\,\bar{b}_{\text{core}}))$. Step rewards add $0.50\,\Delta s_{\text{core}}$ (plus a small `-0.005` hold penalty when $\text{FAR}$ is already satisfied); terminal rewards scale $5\cdot(J(M_T) - P_{\text{FAR}})$ where $P_{\text{FAR}} = 0$ inside the band and penalizes remaining relative volume error otherwise.
 
