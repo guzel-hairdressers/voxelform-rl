@@ -49,6 +49,8 @@ class ExperimentConfig:
     strict_determinism: bool=False
     evaluation_temperature: float=1.
     evaluation_noise_scale: float=1.
+    multiscale_schedule: str='none'
+    lr_schedule: str='constant'
 
     def __post_init__(self):
         for key in ('seeds','evaluation_seeds','train_sites','validation_sites','test_sites'):
@@ -78,6 +80,8 @@ class ExperimentConfig:
         if self.target_far<=0 or self.far_tolerance>=self.target_far or self.target_far+self.far_tolerance>self.ceiling_storeys:raise ValueError('Invalid FAR range')
         if self.evaluation_temperature<=0:raise ValueError('Temperature multiplier must be positive')
         if self.device not in ('cpu','mps','cuda','auto'):raise ValueError('Unknown compute device')
+        if self.multiscale_schedule not in ('none','tier_adaptive'):raise ValueError('Unknown multiscale schedule')
+        if self.lr_schedule not in ('constant','cosine'):raise ValueError('Unknown learning-rate schedule')
 
     @classmethod
     def read(cls,path):

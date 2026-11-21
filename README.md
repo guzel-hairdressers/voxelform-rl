@@ -8,29 +8,31 @@
 
 **Structured deep reinforcement learning for constrained 3D combinatorial optimization.**
 
-VoxelForm-RL is a PyTorch research codebase studying **correlated, high-dimensional 3D spatial actions under hard geometric, topological, and accessibility constraints**. Starting from an initial discrete voxel lattice $`M_0 \in \{0,1\}^{Z \times Y \times X}`$ clipped to a permitted spatial envelope $`A \in \{0,1\}^{Z \times Y \times X}`$, a factored 2D+1D actor–critic sequentially carves, grows, and redistributes volumetric elements over a finite edit horizon while targeting a prescribed volumetric density band (`FAR* ± ε`) and optimizing multiple uncalibrated spatial exposure and accessibility proxies.
+> **Architectural / Urban Design Overview:** Looking for a non-ML introduction focused on site massing, FAR targets, daylight/sky access, and vertical core layouts? Read [**README_ARCHITECTURE.md**](README_ARCHITECTURE.md).
 
-Urban building massing provides the concrete constraint structure, proxy physics, and 3D inspection UI; **representation, correlated Gaussian latent action spaces, feasibility projection, spatial credit assignment, and multi-scale/vertical compute scaling** are the primary Machine Learning objects of study.
+VoxelForm-RL is a PyTorch research codebase studying **correlated, high-dimensional 3D spatial actions under hard geometric, topological, and accessibility constraints**. Starting from an initial discrete voxel lattice $`M_0 \in \{0,1\}^{Z \times Y \times X}`$ clipped to a permitted spatial envelope $`A \in \{0,1\}^{Z \times Y \times X}`$, a tier-adaptive factored 2D+1D actor–critic sequentially carves, grows, and redistributes volumetric elements over a finite edit horizon while targeting a prescribed volumetric density band (`FAR* ± ε`) and optimizing multiple uncalibrated spatial exposure and accessibility proxies.
+
+Urban building massing provides the concrete constraint structure, proxy physics, and 3D inspection UI; **multi-scale hierarchical representation, correlated Gaussian latent action spaces, feasibility projection, path-normalized credit assignment, and vertical compute scaling** are the primary Machine Learning objects of study.
 
 ---
 
 ## Visual Overview
 
-### Sequential 3D Editing Trajectory on Held-Out Paris (`1,200`-Episode Policy)
+### Sequential 3D Editing Trajectory on Held-Out Paris (`600`-Episode Tier-Adaptive Policy)
 
-![1,200-episode trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
+![600-episode tier-adaptive trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
 
-*Zero-shot rollout of the **1,200-episode multi-site trained checkpoint** (`runs/real-aux-1200ep`, `seed=123`, `compact-core.v5`, target `FAR = 3.00 ± 0.10`, `spatial_aux_weight=1.2`, deployment decoding `temp=2.5, noise=0.08`) on unseen **Paris (`m_prs_0315`, eval seed `9005`)**: reaches `FAR 3.10`, `Obj 1.033`, `67.6%` (`2,917 m²`) usable floor area, `71.3%` `directSunProxy`, `12.4%` `diffuseFacadeProxy`, and `96.9%` core coverage across `2` continuous crimson cores. **Left:** translucent occupied voxels (`1 m × 1 m × 3 m`) with embedded vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without corner cutting. Full clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4).*
+*Zero-shot rollout of the **600-episode tier-adaptive shared policy** (`runs/real-aux-tier-600ep`, `seed=123`, `compact-core.v5`, target `FAR = 3.00 ± 0.10`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 → 2.0e-4`) on unseen **Paris (`m_prs_0315`, eval seed `9003`, matched decoding `temp=1.0, noise=1.0`)**: over 10 sculpting steps from `FAR 5.70` down to `FAR 3.10`, objective reaches `Obj 1.169` with `69.9%` (`3,013 m²`) usable floor area, `78.0%` `directSunProxy`, `15.9%` `diffuseFacadeProxy`, and `99.2%` core coverage across `4` continuous crimson cores. **Left:** translucent occupied voxels (`1 m × 1 m × 3 m`) with embedded vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without corner cutting. Full clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4).*
 
 ### Cross-Scale Trained Showcase (`XS` → `XL`) & Zero-Shot Unseen City Transfer
 
-![1,200-episode trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL training sites](docs/media/multitier-showcase.png)
+![600-episode tier-adaptive trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL training sites](docs/media/multitier-showcase.png)
 
-*Best FAR-satisfied evaluation rollouts per training plot-size tier from the **1,200-episode shared policy** (`target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, eval seeds `9001–9008`, deployment decoding `temp=2.5, noise=0.08`), spanning `xs_sgp_0346` (`0.852` obj) through `xl_tokyo_0185` (`18F`, 7 cores).*
+*Best FAR-satisfied evaluation rollouts per training plot-size tier from the **600-episode tier-adaptive shared policy** (`XS/S/M`: direct `1×1×1`; `L`: `2×2×1 → 1×1×1`; `XL`: `4×4×1 → 2×2×1 → 1×1×1`; `target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, eval seeds `9001–9010`, matched decoding `temp=1.0, noise=1.0`), spanning `xs_sgp_0346` (`1.105` obj, `97%` core coverage), `l_bcn_0074` (`1.025` obj, `4,803 m²` usable, `100%` coverage), and `xl_tokyo_0185` (`0.738` obj, `10` cores, `96%` coverage).*
 
-![Paired zero-shot comparison between untrained control and 1,200-episode trained policy across unseen Hong Kong, New York, and Paris plots](docs/media/heldout-generalization.png)
+![Paired zero-shot comparison between untrained control and 600-episode tier-adaptive trained policy across unseen Hong Kong, New York, and Paris plots](docs/media/heldout-generalization.png)
 
-*Zero-shot generalization on unseen held-out cities under **matched evaluation decoding (`temp=1.0, noise=1.0`)**: identical seeds (`9005`, `9004`, `9001`) compare untrained seed-123 initialization (top) against the 1,200-episode trained checkpoint (bottom).*
+*Zero-shot generalization on unseen held-out cities under **matched evaluation decoding (`temp=1.0, noise=1.0`)**: identical seeds (`9005`, `9002`, `9003`) compare untrained seed-123 initialization (top) against the 600-episode tier-adaptive trained checkpoint (bottom).*
 
 <details>
 <summary>Local Web UI Screenshots (<code>main.py</code>)</summary>
@@ -51,7 +53,7 @@ We model sequential 3D editing as a finite-horizon Markov Decision Process $`(\m
 
 ### 1. State Space & 14-Channel Observation Tensor
 
-At decision step `t`, state $`s_t = (O_t, g_t)`$ consists of a dense voxel observation tensor $`O_t \in \mathbb{R}^{Z \times 14 \times Y \times X}`$ paired with a normalized 5-dimensional goal vector $`g_t \in \mathbb{R}^5`$ (`[far, target_far, far_error, remaining_budget_frac, spent_budget_frac]`):
+At decision step `t`, state $`s_t = (O_t, g_t)`$ consists of a dense voxel observation tensor $`O_t \in \mathbb{R}^{Z_c \times 14 \times Y_c \times X_c}`$ (at the active stage resolution) paired with a normalized goal vector $`g_t \in \mathbb{R}^5`$ in `UnifiedLearner` or $`g_t \in \mathbb{R}^6`$ in `CoarseToFineLearner` (`[far, target_far, far_error, remaining_budget_frac, spent_budget_frac, scale_feature]`):
 
 | Channels | Group | Description (`environment.py`, `unified.py`) |
 |---|---|---|
@@ -71,10 +73,10 @@ o_t \sim \pi_\theta(o \mid s_t) \in \{\text{remove},\ \text{grow},\ \text{exchan
 
 **1. Correlated Decoding:** Sampled coarse fields $`z_t^{(k)} \in \mathbb{R}^{|\mathcal{C}_t| \times \lceil Z/2 \rceil \times \lceil Y/4 \rceil \times \lceil X/4 \rceil}`$ are trilinearly upsampled, smoothed via exact separable 1D (`Z`) + 2D (`Y, X`) Gaussian convolutions (avoiding MPS `Conv3d` host stalls), and ranked inside eligible edit frontiers with area budgets scaled to the target FAR band.
 
-**2. Augmented Retry Accounting:** When geometric projection rejects a candidate draw (up to `retries = 8`), `UnifiedLearner` records **all consumed Gaussian draws** (rejected + accepted) on the full coarse lattice without spatial eligibility masking, scoring the unbiased joint action log-probability:
+**2. Augmented Retry Accounting & Scale-Normalized Gradients:** When geometric projection rejects a candidate draw (up to `retries = 8`), both `UnifiedLearner` and `CoarseToFineLearner` record **all consumed Gaussian draws** (rejected + accepted) on the full coarse lattice without spatial eligibility masking, scoring the unbiased joint action log-probability. In `CoarseToFineLearner`, each Gaussian retry block is normalized by $`1 / \sqrt{|\mathcal{N}_{\text{lat}}|}`$ across the stage latent grid size so `XS` and `XL` updates maintain comparable policy-gradient magnitude:
 
 ```math
-\log \pi_\theta(a_t \mid s_t) = \log \pi_\theta(o_t \mid s_t) + \sum_{k=1}^{K_t} \log \mathcal{N}\left(z_t^{(k)} ; \mu_\theta(s_t), \sigma_\theta^2\right)
+\log \pi_\theta(a_t \mid s_t) = \log \pi_\theta(o_t \mid s_t) + \sum_{k=1}^{K_t} \frac{1}{\sqrt{N_{\text{lat}}^{(t)}}} \log \mathcal{N}\left(z_t^{(k)} ; \mu_\theta(s_t), \sigma_\theta^2\right)
 ```
 
 **3. Deterministic Feasibility Projection** ($`\Pi_{\text{valid}}`$): Committed edits must satisfy the FAR band or move strictly toward it, maintain 6-neighbor solid connectivity and exterior-air cavity validity, enforce `k = 3 m` separable morphological floor width on plots `≥ 400 m²`, and preserve active `compact-core.v5` ground-to-roof shafts. Core placement uses a deterministic height-graded heuristic (`solve_cores`) over compact metric plans ([docs/CORE_LAYOUTS.md](docs/CORE_LAYOUTS.md)). Because $`\Pi_{\text{valid}}`$ and `solve_cores` embed strong domain priors, the policy acts within a **constrained hybrid decoder** rather than an unconstrained end-to-end generator.
@@ -92,20 +94,19 @@ J(M_t) =\;& 0.65\,u_{\text{good}} + 0.55\,\bar{s}_{\text{sun}} + 0.45\,\bar{s}_{
 
 where $`s_{\text{core}} = \max(0, (1 - f_{\text{uncov}})(1 - 0.5\,\bar{b}_{\text{core}}))`$. Step rewards add $`0.50\,\Delta s_{\text{core}}`$ (plus a small `-0.005` hold penalty when FAR is already satisfied); terminal rewards scale $`5\cdot(J(M_T) - P_{\text{FAR}})`$ where $`P_{\text{FAR}} = 0`$ inside the band and penalizes remaining relative volume error otherwise.
 
-Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-real.json](configs/research-real.json); `1.2` ablation in [configs/research-real-aux.json](configs/research-real-aux.json)).
+Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, optional cosine annealing to `2.0e-4` via `lr_schedule = "cosine"`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-real.json](configs/research-real.json); `1.2` ablation in [configs/research-real-aux.json](configs/research-real-aux.json) and [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)).
 
 ---
 
-## Neural Architecture (`Organic3DNetwork`, 48,125 Parameters)
+## Neural Architecture (`CoarseToFineNetwork`, 56,321 Parameters)
 
-![MDP loop and Organic3DNetwork factored 2D+1D architecture with halo-2 sliding vertical window](docs/media/mdp-architecture.png)
+![MDP loop and CoarseToFineNetwork tier-adaptive factored 2D+1D architecture with halo-2 sliding vertical window](docs/media/mdp-architecture.png)
 
-Instead of memory-bound full-resolution 3D convolutions across arbitrary building heights $`Z \in [8, 60]`$, `Organic3DNetwork` (`coarse_2d1d_v4`, `voxelform/unified.py`) uses a **factored 2D+1D encoder with an exact halo-2 sliding vertical window**:
+Instead of memory-bound full-resolution 3D convolutions across arbitrary building heights $`Z \in [8, 60]`$ or flat single-scale decoding on huge blocks, `CoarseToFineNetwork` (`voxelform/coarse_to_fine.py`) extends the `Organic3DNetwork` `48,125`-parameter factored 2D+1D core (`voxelform/unified.py`) with lightweight multi-scale stems and an exact **halo-2 sliding vertical window**:
 
-- **Strided 2D Spatial Stem:** Compresses each 14-channel slice `(Y, X)` by `4×` (`Conv2d 14→24→32, k=3, s=2, SiLU`).
-- **Factored 2D+1D Residual Mixing (`_zmix`):** Applies planar `3×3` convolutions (`ctx_xy1`, `ctx_xy2`) followed by shift-and-add `Z`-neighbor projections (`Z-1, Z, Z+1`) inside overlapping windows (`win=16` floors, `halo=2`), keeping peak activation memory independent of maximum storey count while remaining mathematically identical to global 2-block `Z`-receptive fields.
-- **FiLM-Style Additive Goal & Local Skip Conditioning:** Combines exact floor-mean/max global pooling with `goal_encoder(g_t)` and a `4×`-pooled `1×1` `local_skip`, outputting bounded coarse latent means $`\mu_\theta = 3\tanh(\text{head}/3) \in [-3, 3]^{2 \times \lceil Z/2 \rceil \times \lceil Y/4 \rceil \times \lceil X/4 \rceil}`$, categorical operation logits, and scalar critic value $`V_\phi(s_t)`$.
-- **Multi-Scale Extension:** `CoarseToFineNetwork` (`voxelform/coarse_to_fine.py`) supports optional coarse-to-fine lattice schedules (`4×4×2 → 2×2×1 → 1×1×1`) for large footprints and tall envelopes.
+- **Tier-Adaptive Entry Stems:** Routes parcels by metric area (`tier_cascade_blocks`): `XS / S / M` (`< 2,500 m²`) run directly at `1×1×1` via the strided `4×` fine stem; `L` (`2,500–3,799 m²`) runs `2×2×1 → 1×1×1` via `coarse_stem`; `XL` (`≥ 3,800 m²`) runs `4×4×1 → 2×2×1 → 1×1×1` via `macro_stem → coarse_stem → fine stem`, preserving exact `2:1` / `4:1` grounded refinement handoffs between stages.
+- **Shared Factored 2D+1D Residual Mixing (`_zmix`):** Applies planar `3×3` convolutions (`ctx_xy1`, `ctx_xy2`) followed by shift-and-add `Z`-neighbor projections (`Z-1, Z, Z+1`) inside overlapping windows (`win=16` floors, `halo=2`), keeping peak activation memory independent of maximum storey count while sharing inductive bias across all spatial scales.
+- **FiLM-Style Additive Goal & Local Skip Conditioning:** Combines exact floor-mean/max global pooling with `goal_encoder(g_t)` and a pooled `1×1` `local_skip`, outputting bounded coarse latent means $`\mu_\theta = 3\tanh(\text{head}/3)`$, categorical operation logits, and scalar critic value $`V_\phi(s_t)`$.
 
 ---
 
@@ -117,20 +118,35 @@ The `vf-research` runner (`tools/research.py`, `voxelform/experiment.py`) enforc
 - **Controlled Baselines & Honest Accounting:** Evaluates untrained controls and fixed-budget final checkpoints on shared evaluation seeds (isolating evaluation RNG state), retains failed-FAR episodes in every mean, and computes `meanReferenceQuality` using a standardized `10 m / 12 m` `compact-core.v5` referee so core-on/off and travel-limit ablations remain comparable.
 - **Full Provenance & Exact CPU Resume:** Each run archives `config.json`, `manifest.json` (git SHA, source SHA-256s, hardware/packages), `source.tar.gz` (including dirty diffs), `scenes.json`, and atomic optimizer+RNG checkpoints with strict hash verification on `--resume`.
 
-### 1,200-Episode Multi-Tier Training & Held-Out City Generalization
+### 600-Episode Tier-Adaptive Training & Held-Out City Generalization
 
-![1,200-episode multi-site learning curve and matched zero-shot held-out city comparison](docs/media/training-curves-1200ep.png)
+![600-episode tier-adaptive multi-site learning curve and matched zero-shot held-out city comparison against flat 1x1x1 baseline](docs/media/training-curves-600ep.png)
 
-Trained for **1,200 episodes** (`2,625.6 s`, `690` synchronous GAE updates on Apple M4 MPS, `seed=123`, `spatial_aux_weight=1.2`, [configs/research-real-aux-1200ep.json](configs/research-real-aux-1200ep.json)) rotating uniformly across all 10 balanced XS–XL training sites, and evaluated under the matched research decoding distribution (`temp=1.0, noise=1.0`) against the identical untrained initialization ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)):
+Trained for **600 episodes** (`409.0 s`, `0.67 s/ep`, `255` synchronous GAE updates on Apple M4 MPS, `seed=123`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 → 2.0e-4`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) rotating uniformly across all 10 balanced XS–XL training sites, and evaluated under the matched research decoding distribution (`temp=1.0, noise=1.0`) against both its untrained initialization ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)) and the prior 1,200-episode flat `1×1×1` baseline ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)):
 
-| Split / Held-Out Site | FAR Success | Objective (`meanQuality` / Ref) | Usable Area (m²) | `directSunProxy` | `diffuseFacadeProxy` |
+| Split / Held-Out Site | FAR Success | Objective (`meanQuality`: Untr. → Flat `1,200` → Tier `600`) | Usable Area (m², Untr. → Tier `600`) | `directSunProxy` | `diffuseFacadeProxy` |
 |---|---:|---:|---:|---:|---:|
-| **Validation:** Hong Kong `m_hk_0199` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.5675 → 0.7729` | `1,051.6 → 3,163.0` | `61.8% → 64.5%` | `6.2% → 12.5%` |
-| **Test:** New York `m_nyc_0003` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.0546 → 0.3406` | `84.4 → 1,016.8` | `14.6% → 26.6%` | `1.8% → 4.0%` |
-| **Test:** Paris `m_prs_0315` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.5042 → 0.8157` | `688.8 → 2,427.2` | `64.1% → 67.7%` | `5.9% → 12.6%` |
-| **Test Aggregate** (10 eps, Untrained → 1,200 ep) | `1.00 → 1.00` | `0.2794 → 0.5782` (**+107%**) | `386.6 → 1,722.0` (**4.45×**) | `39.4% → 47.1%` | `3.8% → 8.3%` |
+| **Validation:** Hong Kong `m_hk_0199` | `1.00 → 1.00` | `0.4742 → 0.7729 →` **`1.0539`** | `1,048.8 →` **`3,552.8`** (`3.39×`) | `61.2% →` **`78.8%`** | `6.1% →` **`18.8%`** |
+| **Test:** New York `m_nyc_0003` | `1.00 → 1.00` | `0.0575 → 0.3406 →` **`0.5504`** | `106.8 →` **`1,544.6`** (`14.46×`) | `13.5% →` **`22.1%`** | `1.6% →` **`5.8%`** |
+| **Test:** Paris `m_prs_0315` | `1.00 → 1.00` | `0.5761 → 0.8157 →` **`1.0999`** | `846.8 →` **`2,727.8`** (`3.22×`) | `63.0% →` **`77.8%`** | `6.2% →` **`16.3%`** |
+| **Test Aggregate** (10 eps) | `1.00 → 1.00` | `0.3168 → 0.5782 →` **`0.8252`** (**+42.7%** vs flat) | `476.8 →` **`2,136.2`** (`4.48×`) | `38.3% →` **`50.0%`** | `3.9% →` **`11.1%`** |
 
-*Scope & Training Dynamics Note:* Because `seed=123` uses unannealed on-policy updates (`lr=1.2e-3`) across heterogeneous XS–XL action scales and `spatial_aux_weight=1.2`, the 30-episode rolling training objective peaks early (`0.617` at ep `101–200`), oscillates mid-run (`0.107` at ep `701–800`), and recovers (`0.422` at ep `1101–1200`). Establishing variance across multiple seeds and isolating `spatial_aux_weight=0.0` at matching budget remain open experiments.
+### Flat `1×1×1` (1,200 Ep) vs. Tier-Adaptive Multi-Scale (600 Ep) Ablation
+
+![Flat 1x1x1 vs Tier-Adaptive Multi-Scale ablation comparing L and XL training FAR compliance, GAE gradient stability, and deterministic evaluation](docs/media/multiscale-ablation.png)
+
+Switching large blocks from flat `1×1×1` updates to progressive coarse-to-fine sculpting (`L`: `2×2×1 → 1×1×1`; `XL`: `4×4×1 → 2×2×1 → 1×1×1`), normalizing per-draw Gaussian log-probabilities by $`1/\sqrt{N_{\text{lat}}}`$, and annealing the learning rate fixes the two failure modes observed in the 1,200-episode flat run while cutting wall-clock time by **6.4×** (`409.0 s` vs `2,625.6 s`):
+
+| Comparison Metric (Apple M4 MPS, `seed=123`) | Flat `1×1×1` (`1,200` ep) | Tier-Adaptive Multi-Scale (`600` ep) |
+|---|---:|---:|
+| Overall Training FAR Compliance (last 500 ep / ep `101–600`) | `0.70 – 0.89` | **`1.00`** across all 10 `XS–XL` sites |
+| `L`-Tier Training Quality (`l_bcn_0074` / `l_sgp_0369`, last 20 visits) | `0.4995` / `0.575*` | **`1.0085`** / **`0.9659`** (`FAR 1.00`) |
+| `XL`-Tier Training FAR Compliance (late half: `xl_tokyo_0185` / `xl_sgp_0386`) | `0.52` / `0.17` | **`1.00`** / **`1.00`** |
+| Mean GAE Gradient Norm across 100-Ep Bins | `48.6 → 1,900.2` (diverging) | **`49.8 → 256.0`** (`7.4×` lower peak) |
+| Deterministic Eval (`seed=9001`): `XL` Sites (`xl_tokyo_0185` / `xl_sgp_0386`) | `FAR 5.69` / `5.79` (**FAIL**) | **`FAR 3.10`** (`0.7176`) / **`FAR 3.10`** (`0.6985`) |
+| Deterministic Eval (`seed=9001`): `L` Sites (`l_bcn_0074` / `l_sgp_0369`) | `0.5747` / `0.2923` | **`1.0164`** / **`0.8523`** |
+
+*\*Note: Both checkpoints evaluate matched `temp=1.0, noise=1.0`; flat 1,200-ep had its own fresh untrained control (`0.5675` Val / `0.2794` Test Agg in [results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)) due to the added macro/coarse entry stems in `CoarseToFineNetwork`, while training-window per-site `l_sgp_0369` `last10` was `0.575` in flat `1×1×1`. Single seed (`123`) and `spatial_aux_weight=1.2` apply; multi-seed and `spatial_aux_weight=0.0` tier-adaptive ablations remain open experiments.*
 
 ### Infrastructure Verification & Compute Scaling
 
@@ -182,7 +198,12 @@ uv run --frozen vf-research train \
   --config configs/research-real-aux.json \
   --output runs/real-aux-ablation
 
-# Reproduce the 1,200-episode single-seed auxiliary run on Apple MPS
+# Tier-adaptive multi-scale 600-episode run on Apple MPS (cosine LR, XS–XL)
+uv run --frozen vf-research train \
+  --config configs/research-real-aux-tier-600ep.json \
+  --output runs/real-aux-tier-600ep
+
+# Flat 1x1x1 1,200-episode baseline on Apple MPS
 uv run --frozen vf-research train \
   --config configs/research-real-aux-1200ep.json \
   --output runs/real-aux-1200ep
@@ -194,11 +215,11 @@ uv run --frozen vf-research train \
 # Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans)
 uv run --frozen python main.py
 
-# Run complete verification suite (200 Python tests, 11 JS geometry tests, static lint)
+# Run complete verification suite (202 Python tests, 11 JS geometry tests, static lint)
 uv run --frozen --extra dev python -m unittest discover -s tests
 node --check public/*.js
 node --test tests/*.test.mjs
-uv run --frozen --extra dev ruff check voxelform/core_plans.py voxelform/experiment.py voxelform/objectives.py voxelform/layout_archive.py tools/research.py tools/render_core_plans.py tools/generate_readme_media.py tests/test_core_plans.py tests/test_experiment.py
+uv run --frozen --extra dev ruff check voxelform/coarse_to_fine.py voxelform/core_plans.py voxelform/experiment.py voxelform/objectives.py voxelform/layout_archive.py tools/research.py tools/render_core_plans.py tools/generate_readme_media.py tests/test_coarse_to_fine.py tests/test_core_plans.py tests/test_experiment.py
 ```
 
 ---
@@ -219,13 +240,14 @@ VoxelForm-RL/
 │   ├── patch_policy.py      # Separable Gaussian field smoothing & frontier patch allocation
 │   ├── experiment.py        # Config schema, atomic RNG checkpoints, source archival & resume
 │   └── layout_archive.py    # SQLite episode ledger & top-five distinct layout archive
-├── configs/                 # Reproducible experiment specs (smoke, real, real-aux)
+├── configs/                 # Reproducible experiment specs (smoke, real, real-aux, tier-600ep)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
-├── tests/                   # 200 Python unittest specs + 11 Node geometry/syntax tests
+├── tests/                   # 202 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
 ├── results/                 # Indexed raw JSON benchmarks & historical ablation logs
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer
 ├── unified_server.py        # FastAPI inspection server (port 8011)
+├── README_ARCHITECTURE.md   # Architectural & urban massing overview (non-ML reader guide)
 └── .github/workflows/       # CPU CI: unit tests, JS checks, ruff lint & smoke train
 ```
 
@@ -241,6 +263,7 @@ VoxelForm-RL/
 
 ## Documentation & Citation
 
+- [Architectural & Urban Design Overview](README_ARCHITECTURE.md)
 - [Experiment Protocol](docs/EXPERIMENT_PROTOCOL.md) · [Model Card](docs/MODEL_CARD.md) · [Data & Simulator Card](docs/DATA_CARD.md)
 - [Compact Core Geometry (`compact-core.v5`)](docs/CORE_LAYOUTS.md) · [2026-11-20 Technical Review](docs/REVIEW_2026-11-20.md)
 - [Results Index](results/README.md) · [Contributing Guidelines](CONTRIBUTING.md) · [Citation Metadata](CITATION.cff)

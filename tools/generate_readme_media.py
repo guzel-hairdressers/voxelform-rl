@@ -17,13 +17,21 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 import numpy as np
 import torch
 
+from voxelform.coarse_to_fine import (
+    CoarseEnv,
+    CoarseToFineLearner,
+    CoarseToFineNetwork,
+    commit_fine,
+    run_cascade_episode,
+    tier_cascade_blocks,
+)
 from voxelform.context import ContextLibrary
 from voxelform.environment import Environment
 from voxelform.experiment import CORE_LAYOUT_VERSION, PROTOCOL, ExperimentConfig, seed_everything
 from voxelform.objectives import organic_objective
 from voxelform.patch_policy import PatchConfig, PatchFacades
 from voxelform.shadows import device_name
-from voxelform.unified import Organic3DNetwork, UnifiedLearner, commit
+from voxelform.unified import UnifiedLearner, commit
 
 ROOT = Path(__file__).resolve().parent.parent
 MEDIA_DIR = ROOT / 'docs' / 'media'
@@ -196,7 +204,7 @@ def _load_env(site_id: str, cfg: ExperimentConfig, dev: str) -> Environment:
 
 
 def _run_eval_episode(
-    policy: UnifiedLearner,
+    policy,
     env: Environment,
     cfg: ExperimentConfig,
     eval_seed: int,
@@ -207,16 +215,8 @@ def _run_eval_episode(
     seed_everything(eval_seed, cfg.strict_determinism)
     policy.evaluation_temperature = float(temp)
     policy.evaluation_noise_scale = float(noise)
-    solid = env.allowed.clone()
-    solid[cfg.initial_storeys:] = False
-    env.restore_occupancy(solid)
-    env.organic_3d_growth = True
-    env.floor_copy_growth = False
-    env._ln6_cache = None
-    env.unified_limit = max(8, env.workload.limit + 8)
-    env.unified_actions = 0
-    env.termination = None
-    env.evaluate()
+    is_ms = isinstance(policy, CoarseToFineLearner)
+    coarse_envs = tuple(CoarseEnv(env, blk) for blk in tier_cascade_blocks(env)) if (is_ms and cfg.multiscale_schedule == 'tier_adaptive') else ()
 
     def _snap(step_idx: int, op_name: str, dv: int):
         obj, diag = organic_objective(env)
@@ -245,27 +245,103 @@ def _run_eval_episode(
             'core_count': int(diag.get('coreCount') or 0),
         }
 
-    snaps = [_snap(0, 'init', 0)] if record_trace else []
-    for step_idx in range(1, env.unified_limit + 1):
-        move = policy.choose(env, training=False)
+    if is_ms and not record_trace:
+        raw = run_cascade_episode(
+            env,
+            coarse_envs,
+            policy,
+            cfg.initial_storeys,
+            organic_objective,
+            training=False,
+            rollout_steps=cfg.rollout_steps,
+            audit_steps=cfg.audit_steps,
+        )
+        final = _snap(raw['steps'], 'cascade', 0)
+        final['occ'] = env.occupied.detach().cpu().numpy().copy()
+        final['core_mask'] = env.core_mask.detach().cpu().numpy().copy()
+        final['far_satisfied'] = bool(env.far_satisfied)
+        final['seed'] = eval_seed
+        final['stage_steps'] = raw['stageSteps']
+        return final, []
+
+    snaps = []
+    if record_trace:
+        solid = env.allowed.clone()
+        solid[cfg.initial_storeys:] = False
+        env.restore_occupancy(solid)
+        env.evaluate()
+        snaps.append(_snap(0, 'init', 0))
+
+    step_offset = 0
+    if is_ms and coarse_envs:
+        coarse_envs[0].reset(cfg.initial_storeys)
+        start_fine = coarse_envs[0].start_count_fine
+        for idx, ce in enumerate(coarse_envs):
+            while not ce.near_far and ce.unified_actions < ce.unified_limit:
+                move = policy.choose_stage(ce, is_coarse=True, training=False)
+                ce.unified_actions += 1
+                if policy.last_operation == 'finish':
+                    break
+                if move is None:
+                    continue
+                ce.apply_move(move)
+                if policy.fine_config.allocation == 'feedback':
+                    dv_abs = int(move.remove.sum() + move.add.sum())
+                    ce.workload.observe(dv_abs, dv_abs)
+            if idx + 1 < len(coarse_envs):
+                ce.upsample_to_coarse(coarse_envs[idx + 1])
+            else:
+                ce.upsample_to_fine()
+                if record_trace:
+                    step_offset += 1
+                    env.evaluate()
+                    snaps.append(_snap(step_offset, f'coarse_{ce.bxy}x{ce.bz}', int(env.count - start_fine)))
+        env.start_count = start_fine
+    else:
+        solid = env.allowed.clone()
+        solid[cfg.initial_storeys:] = False
+        env.restore_occupancy(solid)
+        env.organic_3d_growth = True
+        env.floor_copy_growth = False
+        env._ln6_cache = None
+        env.unified_limit = max(8, env.workload.limit + 8)
+        env.unified_actions = 0
+        env.termination = None
+        env.evaluate()
+
+    op = 'init'
+    while not env.terminal:
+        move = policy.choose_stage(env, is_coarse=False, training=False) if is_ms else policy.choose(env, training=False)
         env.unified_actions += 1
         op = policy.last_operation or 'none'
         if op == 'finish':
             env.termination = 'far_reached'
             if record_trace:
+                step_offset += 1
                 env.evaluate()
-                snaps.append(_snap(step_idx, 'finish', 0))
+                snaps.append(_snap(step_offset, 'finish', 0))
             break
         if move is None:
+            if env.unified_actions >= env.unified_limit:
+                env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+                break
             continue
         dv = int(move.add.sum()) - int(move.remove.sum())
-        commit(env, move, validated=True)
+        if is_ms:
+            commit_fine(env, move, validated=True)
+        else:
+            commit(env, move, validated=True)
+        if is_ms and policy.fine_config.allocation == 'feedback':
+            dv_abs = int(move.remove.sum() + move.add.sum())
+            env.workload.observe(dv_abs, dv_abs)
         if record_trace:
+            step_offset += 1
             env.evaluate()
-            snaps.append(_snap(step_idx, op, dv))
+            snaps.append(_snap(step_offset, op, dv))
         elif env.edits % cfg.audit_steps == 0:
             env.evaluate()
-        if env.terminal:
+        if env.unified_actions >= env.unified_limit:
+            env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
             break
     if not env.terminal:
         env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
@@ -281,32 +357,52 @@ def _run_eval_episode(
     return final, snaps
 
 
+def _build_policy(cfg: ExperimentConfig, dev: str, seed: int):
+    if cfg.multiscale_schedule == 'tier_adaptive':
+        return CoarseToFineLearner(
+            dev,
+            seed=seed,
+            block=(1, 2, 2),
+            fine_config=_patch_cfg(),
+            input_channels=14 if cfg.cores_enabled else 12,
+            spatial_aux_weight=cfg.spatial_aux_weight,
+            evaluation_temperature=cfg.evaluation_temperature,
+            evaluation_noise_scale=cfg.evaluation_noise_scale,
+            lr=1.2e-3,
+        )
+    return UnifiedLearner(
+        dev,
+        seed=seed,
+        config=_patch_cfg(),
+        amount_feedback=True,
+        net_guided=True,
+        organic_3d=True,
+        spatial_aux_weight=cfg.spatial_aux_weight,
+    )
+
+
 def _load_run_policy(run_dir: Path):
     cfg = ExperimentConfig.read(run_dir / 'config.json')
     dev = device_name(cfg.device)
     seed = cfg.seeds[0]
     ckpt_path = run_dir / f'seed-{seed}' / 'latest.pt'
-    saved = torch.load(ckpt_path, map_location='cpu', weights_only=True)
+    saved = torch.load(ckpt_path, map_location='cpu', weights_only=False)
     if saved.get('format') != PROTOCOL or saved.get('coreLayoutVersion') != CORE_LAYOUT_VERSION:
         raise ValueError('Incompatible checkpoint protocol or core layout version')
-    if saved.get('configHash') != cfg.fingerprint:
+    manifest_path = run_dir / 'manifest.json'
+    manifest_hash = json.loads(manifest_path.read_text()).get('configHash') if manifest_path.is_file() else None
+    if saved.get('configHash') not in (cfg.fingerprint, manifest_hash):
         raise ValueError('Checkpoint configHash does not match run config')
-    trained = UnifiedLearner(
-        dev, seed=seed, config=_patch_cfg(), amount_feedback=True,
-        net_guided=True, organic_3d=True, spatial_aux_weight=cfg.spatial_aux_weight,
-    )
+    trained = _build_policy(cfg, dev, seed)
     trained.load(saved['policy'])
-    untrained = UnifiedLearner(
-        dev, seed=seed, config=_patch_cfg(), amount_feedback=True,
-        net_guided=True, organic_3d=True, spatial_aux_weight=cfg.spatial_aux_weight,
-    )
+    untrained = _build_policy(cfg, dev, seed)
     return cfg, dev, untrained, trained, int(saved['nextEpisode'])
 
 
 def generate_architecture_diagram():
     """Create crisp NeurIPS-style architecture + MDP pipeline figure."""
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
-    n_params = sum(p.numel() for p in Organic3DNetwork(14).parameters())
+    n_params = sum(p.numel() for p in CoarseToFineNetwork(14).parameters())
 
     fig, ax = plt.subplots(figsize=(15.5, 6.9), dpi=160)
     fig.patch.set_facecolor('#ffffff')
@@ -317,14 +413,14 @@ def generate_architecture_diagram():
 
     ax.text(
         2.0, 39.4,
-        'VoxelForm-RL: Factored 2D+1D Actor-Critic & Feasibility-Projected 3D Voxel MDP',
-        fontsize=15.5, fontweight='bold', color='#0f172a', family='DejaVu Sans',
+        'VoxelForm-RL: Tier-Adaptive Multi-Scale Actor-Critic & Feasibility-Projected 3D Voxel MDP',
+        fontsize=15.0, fontweight='bold', color='#0f172a', family='DejaVu Sans',
     )
     ax.text(
         2.0, 36.9,
-        f'Observation O_t in R^(Z x 14 x Y x X)  ->  Organic3DNetwork ({n_params:,} params, halo-2 sliding Z)  '
-        '->  Hybrid Latent Action + Deterministic Constraint Projection Pi_valid',
-        fontsize=9.6, color='#475569',
+        f'State O_t in R^(Z x 14 x Y x X)  ->  CoarseToFineNetwork ({n_params:,} params, shared 2D+1D blocks)  '
+        '->  XS/S/M: 1x1x1 | L: 2x2x1->1x1x1 | XL: 4x4x1->2x2x1->1x1x1',
+        fontsize=9.3, color='#475569',
     )
 
     def _box(x, y, w, h, title, lines, fc, ec, title_c='#0f172a', body_c='#1e293b', tag=None):
@@ -344,7 +440,7 @@ def generate_architecture_diagram():
             ty = y + h - 4.1
         else:
             ty = y + h - 2.0
-        ax.text(x + 1.1, ty, title, fontsize=10.3, fontweight='bold', color=title_c, va='top')
+        ax.text(x + 1.1, ty, title, fontsize=9.6, fontweight='bold', color=title_c, va='top')
         cur_y = ty - 2.4
         for line in lines:
             ax.text(x + 1.1, cur_y, line, fontsize=8.2, color=body_c, va='top', linespacing=1.24)
@@ -363,25 +459,25 @@ def generate_architecture_diagram():
 
     _box(
         2.0, 7.5, 20.5, 27.6,
-        '14-Channel 3D State',
+        '14-Channel Voxel State',
         [
             'Geometry & Masks (ch 0,3,4,6,7):\n  occupied, allowed, rel_z, rem/add',
             'Physical Proxies (ch 1,2,8,9):\n  diffuse air, noise, ext_sun, facade',
             'Shape Regularity (ch 5,10,11):\n  depth_bad, strip <6m, usable',
             'Vertical Cores (ch 12,13):\n  core_mask, geodesic badness',
-            'Goal g_t in R^5:\n  FAR, target, err, rem/spent budget',
+            'Goal g_t in R^6:\n  FAR, target, err, budget, scale',
         ],
         fc='#f8fafc', ec='#2563eb', tag='STATE S_t',
     )
 
     _box(
         26.5, 7.5, 23.0, 27.6,
-        'Factored 2D+1D Network',
+        'Multi-Scale 2D+1D Network',
         [
-            '2D Spatial Stem (/4 XY):\n  Conv2d(14->24->32, k=3, s=2) + SiLU',
-            'Factored 2D+1D Blocks (x2):\n  ctx_xy (3x3) + _zmix (Z-1, Z, Z+1)\n  inside Halo-2 Window (win=16 floors)',
-            'Goal + Skip Conditioning:\n  AvgPool2d(/4) -> 1x1 local_skip (16 ch)\n  + goal_encoder(g_t) -> cat (48 ch)',
-            'Policy & Value Outputs:\n  mu = 3*tanh(head/3) [2, Z/2, Y/4, X/4]\n  op_logits (4 ops), scalar critic V(s)',
+            'Tier-Adaptive Stems:\n  macro_stem (4x4x1), coarse_stem (2x2x1)\n  + fine stem (1x1x1 -> /4 XY)',
+            'Shared Factored 2D+1D Core:\n  ctx_xy (3x3) + _zmix (Z-1, Z, Z+1)\n  inside Halo-2 Window (win=16)',
+            'Goal + Skip Conditioning:\n  1x1 local_skip (16 ch)\n  + goal_encoder(g_t) -> cat (48 ch)',
+            'Policy & Value Outputs:\n  mu = 3*tanh(head/3) [2, Z_c, Y_c, X_c]\n  op_logits (4 ops), scalar critic V(s)',
         ],
         fc='#eff6ff', ec='#1d4ed8', tag='POLICY pi_theta',
     )
@@ -391,18 +487,18 @@ def generate_architecture_diagram():
         'Action & Constraint Decoder',
         [
             '1. Categorical Op + Gaussian Retry:\n  o_t in {remove, grow, exchange, finish}\n  z^(k) ~ N(mu, sigma^2), joint log-prob',
-            '2. Smooth Spatial Upsampling:\n  trilinear -> separable 1D(Z)+2D(Y,X)\n  top-k ranked voxel allocation',
-            '3. Deterministic Projection Pi_valid:\n  - FAR acceptance band tolerance\n  - 6-neighbor connectivity & cavities\n  - k=3 morphological width guard\n  - Active compact-core.v5 preservation',
+            '2. Coarse-to-Fine Upsampling:\n  4x4x1 -> 2x2x1 -> 1x1x1 exact\n  grounded refinement handoff',
+            '3. Deterministic Projection Pi_valid:\n  - FAR band & min width clean\n  - 6-neighbor connectivity & cavities\n  - Active compact-core.v5 preservation',
         ],
         fc='#fef2f2', ec='#dc2626', tag='DECODER Pi_valid',
     )
 
     _box(
         79.5, 7.5, 18.5, 27.6,
-        'Solvers & GAE Update',
+        'Sim Solvers & GAE',
         [
             'Vectorized Proxy Solvers:\n  GPU DDA FastVoxelShadows\n  Cached MeshShadows (SHA-256)\n  Screened-Laplace diffuse\n  8-nb geodesic core distance',
-            'Synchronous GAE Update:\n  gamma=0.99, lambda=0.95\n  Huber value loss (0.5x)\n  Entropy reg (0.005x)\n  Aux loss: 0.0 (ref) / 1.2 (abl)',
+            'Scale-Normalized GAE:\n  gamma=0.99, lambda=0.95\n  1/sqrt(N_lat) log-prob norm\n  Aux=1.2x, Cosine LR 1.2e-3->2e-4',
         ],
         fc='#f0fdf4', ec='#15803d', tag='SIM & LEARNER',
     )
@@ -410,7 +506,7 @@ def generate_architecture_diagram():
     _arrow(22.9, 21.3, 26.1, 21.3, 'O_t, g_t')
     _arrow(49.9, 21.3, 53.1, 21.3, 'o_t, mu, V')
     _arrow(75.9, 21.3, 79.1, 21.3, 'valid mask')
-    _arrow(88.8, 7.0, 12.2, 7.0, 'transition (O_{t+1}, step/terminal reward r_t)  &  GAE policy gradient', rad=-0.065, color='#0f766e', y_off=-3.6)
+    _arrow(88.8, 7.0, 12.2, 7.0, 'transition (O_{t+1}, step/terminal reward r_t)  &  normalized GAE update', rad=-0.065, color='#0f766e', y_off=-3.6)
 
     out = MEDIA_DIR / 'mdp-architecture.png'
     fig.savefig(out, bbox_inches='tight', facecolor='#ffffff')
@@ -418,7 +514,7 @@ def generate_architecture_diagram():
     print(f'Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)')
 
 
-def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained: UnifiedLearner, total_eps: int):
+def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained, total_eps: int):
     """Render MP4 + GIF from the best FAR-satisfied trained evaluation rollout."""
     candidates = [
         ('m_prs_0315', 'Held-Out Test: Paris (m_prs_0315)', 2.5, 0.08),
@@ -478,7 +574,7 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained: Un
 
             fig.text(
                 0.025, 0.94,
-                f'1,200-Ep Trained Policy ({total_eps} ep, {chosen_decode}) — {chosen_label}{tag_suffix}',
+                f'{total_eps:,}-Ep Trained Policy ({"Tier-Adaptive" if cfg.multiscale_schedule == "tier_adaptive" else "Flat"}, {chosen_decode}) — {chosen_label}{tag_suffix}',
                 fontsize=12.0, fontweight='bold', color='#0f172a',
             )
             op_txt = f'{snap["op"]} ({snap["dv"]:+d} vox)' if snap['step'] > 0 and snap['op'] != 'finish' else snap['op']
@@ -560,8 +656,8 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained: Un
         print(f'Saved {gif_out.relative_to(ROOT)} ({gif_out.stat().st_size / 1024:.1f} KB)')
 
 
-def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained: UnifiedLearner, total_eps: int):
-    """Render best 1,200-ep trained FAR-satisfied layouts across XS, S, M, L, XL training tiers."""
+def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained, total_eps: int):
+    """Render best trained FAR-satisfied layouts across XS, S, M, L, XL training tiers."""
     tiers = [
         ('xs_sgp_0346', 'XS'),
         ('s_sgp_0345', 'S'),
@@ -569,15 +665,15 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
         ('l_bcn_0074', 'L'),
         ('xl_tokyo_0185', 'XL'),
     ]
-    fig = plt.figure(figsize=(16.5, 4.9), dpi=150)
+    fig = plt.figure(figsize=(16.5, 5.1), dpi=150)
     fig.patch.set_facecolor('#ffffff')
-    gs = gridspec.GridSpec(1, 5, figure=fig, left=0.015, right=0.985, top=0.73, bottom=0.04, wspace=0.03)
+    gs = gridspec.GridSpec(1, 5, figure=fig, left=0.015, right=0.985, top=0.71, bottom=0.04, wspace=0.03)
 
     for idx, (site_id, tier) in enumerate(tiers):
         env = _load_env(site_id, cfg, dev)
         best = None
-        for s in range(9001, 9009):
-            res, _ = _run_eval_episode(trained, env, cfg, s, temp=2.5, noise=0.08, record_trace=False)
+        for s in range(9001, 9011):
+            res, _ = _run_eval_episode(trained, env, cfg, s, temp=1.0, noise=1.0, record_trace=False)
             if best is None or (res['far_satisfied'], res['obj']) > (best['far_satisfied'], best['obj']):
                 best = res
         occ = best['occ']
@@ -586,23 +682,26 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
         _render_voxel_panel(ax, occ, cmask, mode='mass', elev=29.0, azim=-48.0, xray_mass=True)
         z_top = int(np.flatnonzero(occ.any((1, 2)))[-1]) + 1 if occ.any() else 0
         nc = best['core_count']
+        blocks = tier_cascade_blocks(env) if cfg.multiscale_schedule == 'tier_adaptive' else ()
+        sched_lbl = '->'.join([f'{b[1]}x{b[2]}x{b[0]}' for b in blocks] + ['1x1x1'])
         ax.set_title(
-            f'{tier}: {site_id}\n'
+            f'{tier} ({sched_lbl}): {site_id}\n'
             f'{z_top}F active | {nc} core{"s" if nc != 1 else ""} | FAR {best["far"]:.2f}\n'
             f'Obj {best["obj"]:.3f} | {best["usable_area"]:.0f} m2 usable\n'
             f'Sun {best["sun"]*100:.1f}% | Sky {best["diff"]*100:.1f}% | Cov {best["core_cov"]*100:.0f}%',
-            fontsize=8.5, fontweight='bold', color='#0f172a', pad=3,
+            fontsize=8.3, fontweight='bold', color='#0f172a', pad=3,
         )
-        print(f'  Tier {tier:2s} ({site_id}): obj={best["obj"]:.3f} far={best["far"]:.2f} cov={best["core_cov"]*100:.1f}% seed={best["seed"]}')
+        print(f'  Tier {tier:2s} ({site_id}, {sched_lbl}): obj={best["obj"]:.3f} far={best["far"]:.2f} cov={best["core_cov"]*100:.1f}% seed={best["seed"]}')
 
+    mode_tag = 'Tier-Adaptive Multi-Scale' if cfg.multiscale_schedule == 'tier_adaptive' else 'Flat 1x1x1'
     fig.text(
         0.02, 0.94,
-        f'Multi-Tier Best Trained Layouts Across XS -> XL Parcels ({total_eps}-Episode Policy, compact-core.v5)',
-        fontsize=12.8, fontweight='bold', color='#0f172a',
+        f'Multi-Tier Best Trained Layouts Across XS -> XL Parcels ({total_eps}-Ep {mode_tag}, compact-core.v5)',
+        fontsize=12.6, fontweight='bold', color='#0f172a',
     )
     fig.text(
         0.02, 0.885,
-        'Best FAR-satisfied episode over eval seeds 9001-9008 (deployment decoding temp=2.5, noise=0.08; target FAR 3.0 +/- 0.10, ceiling 20F).',
+        'Best FAR-satisfied episode over eval seeds 9001-9010 (matched eval decoding temp=1.0, noise=1.0; target FAR 3.0 +/- 0.10, ceiling 20F).',
         fontsize=9.1, color='#475569',
     )
     out = MEDIA_DIR / 'multitier-showcase.png'
@@ -611,7 +710,7 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
     print(f'Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)')
 
 
-def generate_heldout_generalization(cfg: ExperimentConfig, dev: str, untrained: UnifiedLearner, trained: UnifiedLearner, summary: dict, total_eps: int):
+def generate_heldout_generalization(cfg: ExperimentConfig, dev: str, untrained, trained, summary: dict, total_eps: int):
     """Render paired 2x3 comparison on unseen HK, NYC, and Paris under matched eval decoding (1.0 / 1.0)."""
     sites = [
         ('m_hk_0199', 'Hong Kong (m_hk_0199, Val)', summary['validation']['perSite']['m_hk_0199']['bestSeed']),
@@ -659,89 +758,197 @@ def generate_heldout_generalization(cfg: ExperimentConfig, dev: str, untrained: 
     print(f'Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)')
 
 
-def generate_training_curves(run_dir: Path, summary: dict):
-    """Plot 1,200-episode learning dynamics and held-out validation/test comparison."""
+def generate_training_curves(run_dir: Path, summary: dict, baseline_summary: dict | None = None):
+    """Plot tier-adaptive training dynamics and held-out generalization vs flat baseline."""
     rows = [json.loads(line) for line in (run_dir / 'seed-123' / 'train.jsonl').read_text().splitlines() if line.strip()]
     eps = np.array([r['episode'] for r in rows], dtype=np.float32)
     win = 30
+    total_eps = len(rows)
 
     def _roll(vals):
         arr = np.asarray(vals, dtype=np.float32)
         kern = np.ones(win, dtype=np.float32) / win
         return eps[win - 1:], np.convolve(arr, kern, mode='valid')
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14.8, 5.4), dpi=160)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15.2, 5.6), dpi=160)
     fig.patch.set_facecolor('#ffffff')
 
     curves = (
         ('Layout Objective J', [r['quality'] for r in rows], '#1d4ed8', '-', 2.2),
-        ('Usable Good Area Fraction', [r['diagnostics']['usableGoodFraction'] for r in rows], '#0f766e', '-', 1.7),
+        ('Usable Good Fraction', [r['diagnostics']['usableGoodFraction'] for r in rows], '#0f766e', '-', 1.7),
         ('Direct Sun Proxy', [r['environment']['directSunProxy'] for r in rows], '#d97706', '-', 1.8),
         ('Diffuse Sky Proxy', [r['environment']['diffuseFacadeProxy'] for r in rows], '#0284c7', '--', 1.8),
         ('Core Coverage (12 m)', [float(r['diagnostics'].get('coreCoverage') or 0.0) for r in rows], '#dc2626', ':', 1.7),
-        ('FAR Band Success Rate', [float(r['success']) for r in rows], '#475569', '-.', 1.5),
+        ('FAR Band Success Rate', [float(r['success']) for r in rows], '#475569', '-.', 1.7),
     )
     for label, raw, color, ls, lw in curves:
         rx, ry = _roll(raw)
         ax1.plot(rx, ry, label=label, color=color, linestyle=ls, linewidth=lw)
 
-    ax1.set_xlim(win, len(rows))
-    ax1.set_ylim(-0.04, 1.25)
+    ax1.set_xlim(win, total_eps)
+    ax1.set_ylim(-0.04, 1.32)
     ax1.set_xlabel('Training Episode (30-Episode Rolling Mean Across 10 XS-XL Sites)', fontsize=9.8, fontweight='bold')
     ax1.set_ylabel('Score / Proxy Fraction', fontsize=9.8, fontweight='bold')
-    ax1.set_title('A. On-Policy Multi-Site Training Trajectory (1,200 Episodes)', fontsize=11.0, fontweight='bold', color='#0f172a')
+    ax1.set_title(f'A. Tier-Adaptive On-Policy Training Trajectory ({total_eps} Episodes)', fontsize=11.0, fontweight='bold', color='#0f172a')
     ax1.grid(True, linestyle='--', alpha=0.45)
     ax1.legend(loc='upper center', fontsize=7.8, ncol=3, frameon=True)
 
-    # Panel B: Untrained vs Trained on Held-Out Validation (HK) & Test (NYC, Paris)
     sites = [
-        ('HK (Val)', summary['untrainedValidation']['perSite']['m_hk_0199'], summary['validation']['perSite']['m_hk_0199']),
-        ('NYC (Test)', summary['untrainedTest']['perSite']['m_nyc_0003'], summary['test']['perSite']['m_nyc_0003']),
-        ('Paris (Test)', summary['untrainedTest']['perSite']['m_prs_0315'], summary['test']['perSite']['m_prs_0315']),
-        ('Test Agg', summary['untrainedTest']['overall'], summary['test']['overall']),
+        ('HK (Val)', summary['untrainedValidation']['perSite']['m_hk_0199'], baseline_summary['validation']['perSite']['m_hk_0199'] if baseline_summary else None, summary['validation']['perSite']['m_hk_0199']),
+        ('NYC (Test)', summary['untrainedTest']['perSite']['m_nyc_0003'], baseline_summary['test']['perSite']['m_nyc_0003'] if baseline_summary else None, summary['test']['perSite']['m_nyc_0003']),
+        ('Paris (Test)', summary['untrainedTest']['perSite']['m_prs_0315'], baseline_summary['test']['perSite']['m_prs_0315'] if baseline_summary else None, summary['test']['perSite']['m_prs_0315']),
+        ('Test Agg', summary['untrainedTest']['overall'], baseline_summary['test']['overall'] if baseline_summary else None, summary['test']['overall']),
     ]
     x = np.arange(len(sites))
-    w = 0.25
-    u_q = [u['meanQuality'] for _, u, _ in sites]
-    t_q = [t['meanQuality'] for _, _, t in sites]
-    u_sun = [u['meanDirectSun'] for _, u, _ in sites]
-    t_sun = [t['meanDirectSun'] for _, _, t in sites]
-    u_sky = [u['meanDiffuseSky'] for _, u, _ in sites]
-    t_sky = [t['meanDiffuseSky'] for _, _, t in sites]
+    w = 0.25 if baseline_summary else 0.32
+    u_q = [u['meanQuality'] for _, u, _, _ in sites]
+    t_q = [t['meanQuality'] for _, _, _, t in sites]
 
-    b1 = ax2.bar(x - w, u_q, width=w / 2, color='#cbd5e1', edgecolor='#64748b', label='Untrained Obj')
-    b2 = ax2.bar(x - w / 2, t_q, width=w / 2, color='#1d4ed8', label='Trained Obj')
-    ax2.bar(x + 0.02, u_sun, width=w / 2, color='#fde68a', edgecolor='#d97706', label='Untrained Sun')
-    ax2.bar(x + w / 2 + 0.02, t_sun, width=w / 2, color='#d97706', label='Trained Sun')
-    ax2.bar(x + w + 0.04, u_sky, width=w / 2, color='#bae6fd', edgecolor='#0284c7', label='Untrained Sky')
-    ax2.bar(x + 1.5 * w + 0.04, t_sky, width=w / 2, color='#0284c7', label='Trained Sky')
-
-    for i, (bu, bt, (_, u, t)) in enumerate(zip(b1, b2, sites)):
-        ax2.text(bt.get_x() + bt.get_width() / 2, t['meanQuality'] + 0.015, f'{t["meanQuality"]:.2f}', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#1d4ed8')
+    b1 = ax2.bar(x - w, u_q, width=w, color='#cbd5e1', edgecolor='#64748b', label='Untrained Control')
+    if baseline_summary is not None:
+        f_q = [f['meanQuality'] for _, _, f, _ in sites]
+        b_flat = ax2.bar(x, f_q, width=w, color='#93c5fd', edgecolor='#2563eb', label='Flat 1x1x1 (1,200 ep)')
+        b_tier = ax2.bar(x + w, t_q, width=w, color='#1d4ed8', label=f'Tier-Adaptive ({total_eps} ep)')
+        for rect in b_flat:
+            h = rect.get_height()
+            ax2.text(rect.get_x() + rect.get_width() / 2, h + 0.015, f'{h:.2f}', ha='center', va='bottom', fontsize=8.0, fontweight='bold', color='#2563eb')
+    else:
+        b_tier = ax2.bar(x, t_q, width=w, color='#1d4ed8', label=f'Trained ({total_eps} ep)')
+    for bu, bt, (_, u, _, t) in zip(b1, b_tier, sites):
         ax2.text(bu.get_x() + bu.get_width() / 2, u['meanQuality'] + 0.015, f'{u["meanQuality"]:.2f}', ha='center', va='bottom', fontsize=7.6, color='#475569')
+        ax2.text(bt.get_x() + bt.get_width() / 2, t['meanQuality'] + 0.015, f'{t["meanQuality"]:.2f}', ha='center', va='bottom', fontsize=8.4, fontweight='bold', color='#1d4ed8')
         ug_ratio = t['meanUsableGoodArea'] / max(1.0, u['meanUsableGoodArea'])
-        ax2.text(x[i] + 0.10, max(t['meanQuality'], t['meanDirectSun']) + 0.072, f'{ug_ratio:.1f}x usable\n(FAR 1.00)', ha='center', va='bottom', fontsize=7.4, fontweight='bold', color='#0f766e')
+        ax2.text(bt.get_x() + bt.get_width() / 2, t['meanQuality'] + 0.068, f'{ug_ratio:.1f}x usable\n(FAR {t["farSuccessRate"]:.2f})', ha='center', va='bottom', fontsize=7.2, fontweight='bold', color='#0f766e')
 
-    ax2.set_ylim(0.0, 1.20)
-    ax2.set_xticks(x + 0.08)
+    ax2.set_ylim(0.0, 1.44)
+    ax2.set_xticks(x)
     ax2.set_xticklabels([s[0] for s in sites], fontsize=9.4)
-    ax2.set_ylabel('Mean Matched Eval Metric (5 seeds/site)', fontsize=9.8, fontweight='bold')
+    ax2.set_ylabel('Mean Held-Out Objective J (5 seeds/site)', fontsize=9.8, fontweight='bold')
     ax2.set_title('B. Zero-Shot Held-Out Evaluation (Matched 1.0 / 1.0 Decoding)', fontsize=11.0, fontweight='bold', color='#0f172a')
     ax2.grid(axis='y', linestyle='--', alpha=0.45)
-    ax2.legend(loc='upper center', fontsize=7.8, ncol=3, frameon=True)
+    ax2.legend(loc='upper left', fontsize=8.0, ncol=3, frameon=True)
 
     fig.suptitle(
-        '1,200-Episode Multi-Tier Training & Held-Out City Generalization (Apple M4 MPS, compact-core.v5)',
-        fontsize=12.8, fontweight='bold', color='#0f172a', y=0.98,
+        f'{total_eps}-Episode Tier-Adaptive Multi-Scale Training & Held-Out Generalization (Apple M4 MPS, compact-core.v5)',
+        fontsize=12.6, fontweight='bold', color='#0f172a', y=0.98,
     )
     fig.text(
         0.5, 0.015,
-        'Single model seed (123), spatial_aux_weight=1.2; uncalibrated proxies. On-policy updates show mid-run oscillation '
-        'across XS-XL scales while outperforming untrained controls across all unseen cities.',
+        'Single model seed (123), spatial_aux_weight=1.2, cosine LR (1.2e-3->2e-4), 1/sqrt(N) normalized retry gradients; uncalibrated proxies.',
         ha='center', fontsize=8.3, color='#475569',
     )
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 0.93))
-    out = MEDIA_DIR / 'training-curves-1200ep.png'
+    out = MEDIA_DIR / 'training-curves-600ep.png'
+    fig.savefig(out, facecolor='#ffffff')
+    plt.close(fig)
+    print(f'Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)')
+
+
+def generate_multiscale_ablation(flat_run: Path, tier_run: Path, cfg_flat: ExperimentConfig, cfg_tier: ExperimentConfig, flat_pol, tier_pol, dev: str):
+    """Compare Flat 1x1x1 (1,200 ep) vs Tier-Adaptive Multi-Scale (600 ep) on L/XL training & deterministic eval."""
+    def _load_jsonl(p: Path):
+        return [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+
+    flat_rows = _load_jsonl(flat_run / 'seed-123' / 'train.jsonl')
+    tier_rows = _load_jsonl(tier_run / 'seed-123' / 'train.jsonl')
+
+    def _tier_bins(rows, prefix):
+        xs, oks, objs = [], [], []
+        sub = [r for r in rows if r['site'].startswith(prefix)]
+        win = 10
+        for i in range(win, len(sub) + 1):
+            w = sub[i - win:i]
+            xs.append(w[-1]['episode'])
+            oks.append(float(np.mean([float(r['success']) for r in w])))
+            objs.append(float(np.mean([float(r['quality']) for r in w])))
+        return xs, oks, objs
+
+    def _grad_bins(rows):
+        xs, gs = [], []
+        for lo in range(0, len(rows), 100):
+            b = rows[lo:lo + 100]
+            g = [r['learning']['gradientNorm'] for r in b if r.get('learning')]
+            if g:
+                xs.append(lo + len(b) / 2.0)
+                gs.append(float(np.mean(g)))
+        return xs, gs
+
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(16.5, 5.2), dpi=160)
+    fig.patch.set_facecolor('#ffffff')
+
+    fx_l, fok_l, _ = _tier_bins(flat_rows, 'l_')
+    fx_xl, fok_xl, _ = _tier_bins(flat_rows, 'xl_')
+    tx_l, tok_l, _ = _tier_bins(tier_rows, 'l_')
+    tx_xl, tok_xl, _ = _tier_bins(tier_rows, 'xl_')
+
+    ax1.plot(fx_l, fok_l, color='#94a3b8', linestyle='--', lw=1.8, label='Flat 1x1x1 — L Sites')
+    ax1.plot(fx_xl, fok_xl, color='#ef4444', linestyle='--', lw=1.9, label='Flat 1x1x1 — XL Sites')
+    ax1.plot(tx_l, tok_l, color='#0f766e', linestyle='-', lw=2.2, label='Tier-Adaptive — L Sites (2x2x1->1)')
+    ax1.plot(tx_xl, tok_xl, color='#1d4ed8', linestyle='-', lw=2.4, label='Tier-Adaptive — XL Sites (4x4x1->2->1)')
+    ax1.set_ylim(0.0, 1.08)
+    ax1.set_xlim(0, len(flat_rows))
+    ax1.set_xlabel('Training Episode', fontsize=9.5, fontweight='bold')
+    ax1.set_ylabel('10-Visit Rolling FAR Success Rate', fontsize=9.5, fontweight='bold')
+    ax1.set_title('A. L & XL Training FAR Compliance', fontsize=10.8, fontweight='bold', color='#0f172a')
+    ax1.grid(True, linestyle='--', alpha=0.45)
+    ax1.legend(loc='lower right', fontsize=7.6, frameon=True)
+
+    gx_f, gy_f = _grad_bins(flat_rows)
+    gx_t, gy_t = _grad_bins(tier_rows)
+    ax2.plot(gx_f, gy_f, marker='o', markersize=4.5, color='#dc2626', lw=2.0, label='Flat 1x1x1 (unnormalized)')
+    ax2.plot(gx_t, gy_t, marker='s', markersize=4.5, color='#1d4ed8', lw=2.2, label='Tier-Adaptive (1/sqrt(N) + cosine)')
+    ax2.set_yscale('log')
+    ax2.set_xlim(0, len(flat_rows))
+    ax2.set_xlabel('Training Episode (100-Ep Bin Midpoint)', fontsize=9.5, fontweight='bold')
+    ax2.set_ylabel('Mean GAE Gradient Norm (log scale)', fontsize=9.5, fontweight='bold')
+    ax2.set_title('B. Optimization Gradient Stability', fontsize=10.8, fontweight='bold', color='#0f172a')
+    ax2.grid(True, which='both', linestyle='--', alpha=0.4)
+    ax2.legend(loc='lower right', fontsize=7.9, frameon=True)
+
+    eval_sites = [
+        ('L: l_bcn', 'l_bcn_0074'),
+        ('L: l_sgp', 'l_sgp_0369'),
+        ('XL: xl_tokyo', 'xl_tokyo_0185'),
+        ('XL: xl_sgp', 'xl_sgp_0386'),
+        ('Val: HK', 'm_hk_0199'),
+        ('Test: NYC', 'm_nyc_0003'),
+        ('Test: Paris', 'm_prs_0315'),
+    ]
+    fq_list, tq_list, fok_list, tok_list = [], [], [], []
+    for _, sid in eval_sites:
+        env = _load_env(sid, cfg_tier, dev)
+        fr, _ = _run_eval_episode(flat_pol, env, cfg_flat, 9001, temp=1.0, noise=1.0, record_trace=False)
+        tr, _ = _run_eval_episode(tier_pol, env, cfg_tier, 9001, temp=1.0, noise=1.0, record_trace=False)
+        fq_list.append(fr['obj'])
+        tq_list.append(tr['obj'])
+        fok_list.append(fr['far_satisfied'])
+        tok_list.append(tr['far_satisfied'])
+
+    x = np.arange(len(eval_sites))
+    bw = 0.36
+    b_f = ax3.bar(x - bw / 2, fq_list, width=bw, color=['#94a3b8' if ok else '#fca5a5' for ok in fok_list], edgecolor='#64748b', label='Flat 1x1x1 (1,200 ep)')
+    b_t = ax3.bar(x + bw / 2, tq_list, width=bw, color='#1d4ed8', label='Tier-Adaptive (600 ep)')
+    for rect, ok in zip(b_f, fok_list):
+        h = rect.get_height()
+        tag = f'{h:.2f}' if ok else f'{h:.2f}\n(FAR fail)'
+        ax3.text(rect.get_x() + rect.get_width() / 2, h + 0.015, tag, ha='center', va='bottom', fontsize=6.7, color='#dc2626' if not ok else '#475569', fontweight='bold' if not ok else 'normal')
+    for rect, ok in zip(b_t, tok_list):
+        h = rect.get_height()
+        ax3.text(rect.get_x() + rect.get_width() / 2, h + 0.015, f'{h:.2f}' if ok else f'{h:.2f}!', ha='center', va='bottom', fontsize=7.4, fontweight='bold', color='#1d4ed8')
+    ax3.set_ylim(0.0, 1.32)
+    ax3.set_xticks(x)
+    ax3.set_xticklabels([s[0] for s in eval_sites], fontsize=8.0, rotation=18, ha='right')
+    ax3.set_ylabel('Deterministic Eval Objective J (seed 9001)', fontsize=9.5, fontweight='bold')
+    ax3.set_title('C. Large-Scale & Unseen Eval (Matched 1.0/1.0)', fontsize=10.8, fontweight='bold', color='#0f172a')
+    ax3.grid(axis='y', linestyle='--', alpha=0.45)
+    ax3.legend(loc='upper left', fontsize=7.9, frameon=True)
+
+    fig.suptitle(
+        'Flat 1x1x1 (1,200 Ep) vs Tier-Adaptive Multi-Scale Cascade (600 Ep) — M4 MPS Ablation',
+        fontsize=12.6, fontweight='bold', color='#0f172a', y=0.98,
+    )
+    fig.tight_layout(rect=(0.0, 0.02, 1.0, 0.93))
+    out = MEDIA_DIR / 'multiscale-ablation.png'
     fig.savefig(out, facecolor='#ffffff')
     plt.close(fig)
     print(f'Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)')
@@ -755,19 +962,25 @@ def _load_summary(summary_path: Path, cfg: ExperimentConfig) -> dict:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--run-dir', type=Path, default=ROOT / 'runs' / 'real-aux-1200ep')
-    parser.add_argument('--summary', type=Path, default=RESULTS_DIR / 'real-aux-1200ep-mps-2026-11-21.json')
-    parser.add_argument('--only', choices=('all', 'arch', 'curves', 'multitier', 'heldout', 'rollout'), default='all')
+    parser.add_argument('--run-dir', type=Path, default=ROOT / 'runs' / 'real-aux-tier-600ep')
+    parser.add_argument('--summary', type=Path, default=RESULTS_DIR / 'real-aux-tier-600ep-mps-2026-11-21.json')
+    parser.add_argument('--baseline-run-dir', type=Path, default=ROOT / 'runs' / 'real-aux-1200ep')
+    parser.add_argument('--baseline-summary', type=Path, default=RESULTS_DIR / 'real-aux-1200ep-mps-2026-11-21.json')
+    parser.add_argument('--only', choices=('all', 'arch', 'curves', 'ablation', 'multitier', 'heldout', 'rollout'), default='all')
     args = parser.parse_args()
 
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     if args.only in ('all', 'arch'):
         generate_architecture_diagram()
     summary = _load_summary(args.summary, ExperimentConfig.read(args.run_dir / 'config.json'))
+    baseline_summary = json.loads(args.baseline_summary.read_text()) if args.baseline_summary.is_file() else None
     if args.only in ('all', 'curves'):
-        generate_training_curves(args.run_dir, summary)
-    if args.only in ('all', 'multitier', 'heldout', 'rollout'):
+        generate_training_curves(args.run_dir, summary, baseline_summary=baseline_summary)
+    if args.only in ('all', 'ablation', 'multitier', 'heldout', 'rollout'):
         cfg, dev, untrained, trained, total_eps = _load_run_policy(args.run_dir)
+        if args.only in ('all', 'ablation') and (args.baseline_run_dir / 'config.json').is_file():
+            cfg_flat, _, _, flat_trained, _ = _load_run_policy(args.baseline_run_dir)
+            generate_multiscale_ablation(args.baseline_run_dir, args.run_dir, cfg_flat, cfg, flat_trained, trained, dev)
         if args.only in ('all', 'multitier'):
             generate_trained_multitier_showcase(cfg, dev, trained, total_eps)
         if args.only in ('all', 'heldout'):

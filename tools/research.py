@@ -6,12 +6,14 @@ import functools
 import hashlib
 import json
 from pathlib import Path
+import math
 import statistics
 import time
 
 import numpy as np
 import torch
 from types import SimpleNamespace
+from voxelform.coarse_to_fine import CoarseEnv,CoarseToFineLearner,run_cascade_episode,tier_cascade_blocks
 from voxelform.context import ContextLibrary
 from voxelform.cores import solve_cores
 from voxelform.environment import Environment
@@ -25,7 +27,7 @@ from voxelform.unified import UnifiedLearner,commit
 
 class Scenes:
     def __init__(self,config):
-        self.config=config;self.device=device_name(config.device);self.envs={};self.manifest={};self.setup=[]
+        self.config=config;self.device=device_name(config.device);self.envs={};self.manifest={};self.setup=[];self._coarse={}
         self.patch=PatchConfig(mode='combined',allocation='feedback',eligibility='depth',facade_layers=2,
             minimum_patch=4,maximum_patches=4,maximum_voids=1,minimum_void_area=4,batched=True,
             vertical_interior=False,budget_reserve_fraction=.2)
@@ -54,13 +56,19 @@ class Scenes:
         self.setup.append(dict(site=site,seconds=time.perf_counter()-t))
         return env
 
+    def coarse_envs(self,site):
+        if self.config.multiscale_schedule!='tier_adaptive':return ()
+        if site not in self._coarse:
+            env=self.get(site)
+            self._coarse[site]=tuple(CoarseEnv(env,blk) for blk in tier_cascade_blocks(env))
+        return self._coarse[site]
+
     def prepare(self):
         groups=(self.config.train_sites,self.config.validation_sites,self.config.test_sites)
         for group in groups:
             for site in group:self.get(site)
         # Reject cross-split context circles that overlap when georeferencing is
         # available. Distinct site identifiers alone do not prevent spatial leakage.
-        import math
         for i,group in enumerate(groups):
             for later in groups[i+1:]:
                 for left in group:
@@ -77,12 +85,39 @@ class Scenes:
 def make_policy(config,device,seed):
     patch=PatchConfig(mode='combined',allocation='feedback',eligibility='depth',facade_layers=2,
         minimum_patch=4,maximum_patches=4,maximum_voids=1,minimum_void_area=4,batched=True,vertical_interior=False,budget_reserve_fraction=.2)
+    if config.multiscale_schedule=='tier_adaptive':
+        return CoarseToFineLearner(device,seed,block=(1,2,2),fine_config=patch,input_channels=14 if config.cores_enabled else 12,
+            spatial_aux_weight=config.spatial_aux_weight,evaluation_temperature=config.evaluation_temperature,
+            evaluation_noise_scale=config.evaluation_noise_scale,lr=1.2e-3)
     p=UnifiedLearner(device,seed,patch,amount_feedback=True,net_guided=True,organic_3d=True,spatial_aux_weight=config.spatial_aux_weight)
     p.evaluation_temperature=config.evaluation_temperature;p.evaluation_noise_scale=config.evaluation_noise_scale
     return p
 
 
-def episode(policy,env,config,training):
+def _reference_eval(env):
+    # A common fixed referee makes cores-on/off and spacing ablations
+    # comparable without showing extra channels to the acting policy.
+    res=solve_cores(env.occupied,min_core_spacing=10,max_core_dist=12)
+    referee=SimpleNamespace(**env.__dict__)
+    referee.cores_enabled=True;referee.max_core_dist=12
+    referee.core_mask=res.core_mask;referee.core_distance=res.core_distance
+    referee.core_dist_badness=res.core_dist_badness;referee.core_metrics=res.metrics
+    direct,diffuse=env.daylight_proxies(res.core_mask)
+    referee.values=dict(env.values,directSunProxy=direct,diffuseFacadeProxy=diffuse)
+    score,diagnostics=organic_objective(referee)
+    return dict(quality=score,diagnostics=diagnostics,minCoreSpacing=10,maxCoreDist=12)
+
+
+def episode(policy,env,config,training,coarse_envs=()):
+    if isinstance(policy,CoarseToFineLearner):
+        raw=run_cascade_episode(env,coarse_envs,policy,config.initial_storeys,organic_objective,training=training,
+            rollout_steps=config.rollout_steps,audit_steps=config.audit_steps,
+            step_reward_fn=organic_step_reward,terminal_reward_fn=organic_terminal_reward)
+        return dict(reference=_reference_eval(env) if not training else None,success=raw['success'],termination=raw['termination'],
+            far=raw['far'],farError=raw['farError'],steps=raw['steps'],attempts=raw['attempts'],budget=raw['budget'],
+            seconds=raw['seconds'],reward=raw['reward'],quality=float(raw['rawObjective']),
+            environment={k:float(v.detach().cpu()) for k,v in env.values.items()},
+            diagnostics=raw['diagnostics'],learning=raw['learning'],trace=raw['trace'],stageSteps=raw['stageSteps'])
     solid=env.allowed.clone();solid[config.initial_storeys:]=False;env.restore_occupancy(solid)
     env.organic_3d_growth=True;env.floor_copy_growth=False;env._ln6_cache=None
     env.unified_limit=max(8,env.workload.limit+8);env.unified_actions=0;env.termination=None
@@ -115,19 +150,7 @@ def episode(policy,env,config,training):
     if training and len(policy.tape)>tape_start:
         policy.add_reward(terminal);policy.mark_done()
         if len(policy.tape)>=config.rollout_steps:learning=policy.finish(0.)
-    reference=None
-    if not training:
-        # A common fixed referee makes cores-on/off and spacing ablations
-        # comparable without showing extra channels to the acting policy.
-        res=solve_cores(env.occupied,min_core_spacing=10,max_core_dist=12)
-        referee=SimpleNamespace(**env.__dict__)
-        referee.cores_enabled=True;referee.max_core_dist=12
-        referee.core_mask=res.core_mask;referee.core_distance=res.core_distance
-        referee.core_dist_badness=res.core_dist_badness;referee.core_metrics=res.metrics
-        direct, diffuse = env.daylight_proxies(res.core_mask)
-        referee.values = dict(env.values, directSunProxy=direct, diffuseFacadeProxy=diffuse)
-        score,diagnostics=organic_objective(referee)
-        reference=dict(quality=score,diagnostics=diagnostics,minCoreSpacing=10,maxCoreDist=12)
+    reference=_reference_eval(env) if not training else None
     sync(env.device)
     return dict(reference=reference,success=env.termination=='far_reached',termination=env.termination,far=env.far,farError=env.far_error,
         steps=env.edits,attempts=env.unified_actions,budget=env.unified_limit,seconds=time.perf_counter()-start,
@@ -143,7 +166,7 @@ def evaluate(policy,scenes,config,split):
             env=scenes.get(site)
             for seed in config.evaluation_seeds:
                 seed_everything(seed,config.strict_determinism)
-                rows.append(dict(split=split,site=site,evaluationSeed=seed,**episode(policy,env,config,False)))
+                rows.append(dict(split=split,site=site,evaluationSeed=seed,**episode(policy,env,config,False,coarse_envs=scenes.coarse_envs(site))))
     finally:restore_rng(state)
     return rows
 
@@ -194,9 +217,15 @@ def train(args):
             baseline=evaluate(policy,scenes,config,'validation');write_json(folder/'untrained-validation.json',baseline)
         t=time.perf_counter();completed=start
         with (folder/'train.jsonl').open('x') as ledger:
+            base_lr=float(getattr(policy,'lr',1.2e-3 if isinstance(policy,CoarseToFineLearner) else 1e-3))
+            min_lr=min(2e-4,base_lr)
             for i in range(start,config.episodes):
+                if config.lr_schedule=='cosine':
+                    frac=min(1.,i/max(1,config.episodes-1))
+                    lr=min_lr+.5*(base_lr-min_lr)*(1.+math.cos(math.pi*frac))
+                    for g in policy.optimizer.param_groups:g['lr']=lr
                 site=config.train_sites[i%len(config.train_sites)]
-                row=dict(episode=i+1,modelSeed=seed,site=site,**episode(policy,scenes.get(site),config,True))
+                row=dict(episode=i+1,modelSeed=seed,site=site,**episode(policy,scenes.get(site),config,True,coarse_envs=scenes.coarse_envs(site)))
                 ledger.write(json.dumps(row,allow_nan=False)+'\n');ledger.flush();completed=i+1
                 stopping=args.stop_after is not None and completed-start>=args.stop_after
                 if completed%config.checkpoint_interval==0 or completed==config.episodes or stopping:

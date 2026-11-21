@@ -1,17 +1,20 @@
 import functools
+import math
+from types import SimpleNamespace
 import unittest
 
 import torch
 
 from unified_server import organic_objective
-from voxelform.coarse_to_fine import CoarseEnv, CoarseToFineLearner, run_cascade_episode, run_episode
+from voxelform.coarse_to_fine import CoarseEnv, CoarseToFineLearner, run_cascade_episode, run_episode, tier_cascade_blocks
 from voxelform.environment import Environment
+from voxelform.objectives import organic_step_reward, organic_terminal_reward
 from voxelform.patch_policy import PatchConfig, PatchFacades
 from voxelform.unified import clean_floor_tensor, min_room_width
 
 
 class CoarseToFineTests(unittest.TestCase):
-    def _make_env(self, shape=(10, 24, 24), plan='rectangle'):
+    def _make_env(self, shape=(10, 24, 24), plan='rectangle', cores_enabled=False):
         cfg = PatchConfig(
             mode='combined',
             allocation='feedback',
@@ -33,6 +36,7 @@ class CoarseToFineTests(unittest.TestCase):
             target_far=3.0,
             far_tolerance=0.1,
             frontier_factory=functools.partial(PatchFacades, config=cfg, depth_device='cpu'),
+            cores_enabled=cores_enabled,
         )
         env.precompute_external()
         solid = env.allowed.clone()
@@ -89,6 +93,60 @@ class CoarseToFineTests(unittest.TestCase):
         self.assertGreater(res['gradientNorm'], 0.0)
         self.assertIsNotNone(learner.model.macro_stem[0].weight.grad)
         self.assertIsNotNone(learner.model.coarse_stem[0].weight.grad)
+
+    def test_tier_cascade_blocks_thresholds(self):
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=1500.0)), ())
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=2499.9)), ())
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=2500.0)), ((1, 2, 2),))
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=3799.9)), ((1, 2, 2),))
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=3800.0)), ((1, 4, 4), (1, 2, 2)))
+        self.assertEqual(tier_cascade_blocks(SimpleNamespace(plot_area=5800.0)), ((1, 4, 4), (1, 2, 2)))
+
+    def test_multiscale_14ch_cores_empty_and_coarse_with_checkpoint(self):
+        env, cfg = self._make_env(shape=(12, 32, 32), plan='rectangle', cores_enabled=True)
+        c2 = CoarseEnv(env, block=(1, 2, 2))
+        c2.reset(6)
+        learner = CoarseToFineLearner(device='cpu', seed=123, block=(1, 2, 2), fine_config=cfg, input_channels=14)
+        self.assertEqual(c2.observation(include_cores=True).shape[1], 14)
+        self.assertEqual(learner._fine_obs(env).shape[1], 14)
+        r_direct = run_cascade_episode(
+            env,
+            [],
+            learner,
+            6,
+            organic_objective,
+            training=True,
+            rollout_steps=999,
+            step_reward_fn=organic_step_reward,
+            terminal_reward_fn=organic_terminal_reward,
+        )
+        self.assertEqual(len(r_direct['stageSteps']), 1)
+        self.assertTrue(all(key in r_direct for key in ('steps', 'attempts', 'budget', 'reward', 'diagnostics')))
+        r_two = run_cascade_episode(
+            env,
+            [c2],
+            learner,
+            6,
+            organic_objective,
+            training=True,
+            rollout_steps=999,
+            step_reward_fn=organic_step_reward,
+            terminal_reward_fn=organic_terminal_reward,
+        )
+        self.assertEqual(len(r_two['stageSteps']), 2)
+        self.assertGreater(len(learner.tape), 0)
+        res = learner.finish(0.0)
+        self.assertTrue(math.isfinite(res['gradientNorm']))
+        self.assertGreater(res['gradientNorm'], 0.0)
+        saved = learner.state()
+        self.assertEqual(saved['format'], 'voxelform.multiscale.v1')
+        self.assertEqual(saved['inputChannels'], 14)
+        restored = CoarseToFineLearner(device='cpu', seed=456, fine_config=cfg)
+        restored.load(saved)
+        self.assertEqual(restored.input_channels, 14)
+        self.assertEqual(restored.updates, learner.updates)
+        for k, v in learner.model.state_dict().items():
+            self.assertTrue(torch.equal(v, restored.model.state_dict()[k]))
 
 
 if __name__ == '__main__':
