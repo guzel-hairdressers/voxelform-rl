@@ -158,7 +158,7 @@ Switching large blocks from flat `1×1×1` updates to progressive coarse-to-fine
 | **Scene Cache & Vertical Scaling** (`coarse_2d1d_v3`, M4 MPS) | [results/scalable-height-speedup-2026-11-19.json](results/scalable-height-speedup-2026-11-19.json) | Cold→Warm SHA-256 cache setup: `8.16s→37ms` (`10F`), `8.53s→46ms` (`20F`), `4.57s→41ms` (`40F`); warm single-step eval stays `8.54–9.95 ms` across `10F→40F` | Historical pre-`compact-core.v5` compute benchmark; isolates scene cache and GPU/CPU field solver scaling |
 | **Multi-Scale Cascade Tradeoff** (M4 MPS, 20–35 ep) | [results/multiscale-ablation-2026-11-19.json](results/multiscale-ablation-2026-11-19.json) | On `xl_sgp_40F` (ep 25), `4×4×2`/`8×8×3` cascades cut wall-clock time vs `1×1×1` (`69.3s` vs `176.6s`) while `c2f_2x2x1` reached `0.707` objective (`40%` FAR success vs `100%` for `8×8×3` at `0.623`) | Historical pre-`compact-core.v5` exploratory ablation on single sites; full multi-seed study under `voxelform.research.v1` remains open |
 
-Complete raw JSON logs and hash indices (including earlier `compact-core.v2` check, single-site pilots, and solver validation probes) are preserved under [results/README.md](results/README.md).
+Retained raw benchmark summaries, pipeline verification checks, and solver probes are indexed in [results/README.md](results/README.md).
 
 ---
 
@@ -244,7 +244,7 @@ VoxelForm-RL/
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
 ├── tests/                   # 202 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
-├── results/                 # Indexed raw JSON benchmarks & historical ablation logs
+├── results/                 # Retained raw JSON benchmarks, core checks & solver probes
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer
 ├── unified_server.py        # FastAPI inspection server (port 8011)
 ├── README_ARCHITECTURE.md   # Architectural & urban massing overview (non-ML reader guide)
@@ -265,8 +265,7 @@ VoxelForm-RL/
 
 - [Architectural & Urban Design Overview](README_ARCHITECTURE.md)
 - [Experiment Protocol](docs/EXPERIMENT_PROTOCOL.md) · [Model Card](docs/MODEL_CARD.md) · [Data & Simulator Card](docs/DATA_CARD.md)
-- [Compact Core Geometry (`compact-core.v5`)](docs/CORE_LAYOUTS.md) · [2026-11-20 Technical Review](docs/REVIEW_2026-11-20.md)
-- [Results Index](results/README.md) · [Contributing Guidelines](CONTRIBUTING.md) · [Citation Metadata](CITATION.cff)
+- [Compact Core Geometry (`compact-core.v5`)](docs/CORE_LAYOUTS.md) · [Results Index](results/README.md) · [Contributing Guidelines](CONTRIBUTING.md) · [Citation Metadata](CITATION.cff)
 
 *Repository code licensing remains an explicit owner decision; vendored Three.js and OpenStreetMap context attributions are preserved under their original terms.*
 

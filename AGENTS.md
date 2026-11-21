@@ -151,9 +151,6 @@
 
 ## Legacy whole-floor preview (2026-11-14, retained for test compatibility)
 - Older `floor_copy=True` behavior (retained for `tests/test_floor_copy.py` and legacy `floorCopy` tests in `tests/test_unified_server.py`) uses vertical support checks, `copy_labels`, and whole-plate extrusion:
-- For height increase/decrease and action-space continuation, read
-  [HEIGHT_GROWTH_HANDOVER.md](HEIGHT_GROWTH_HANDOVER.md) first. It separates user
-  intent from implemented restrictions and records unresolved reversibility limits.
 - `main.py` serves `unified_server.app` on port 8011. The `devox` branch was
   integrated, preserving its commit. `voxelform.server` is the historical app.
 - Default `UnifiedLearner` in the active session uses net guidance and
@@ -201,7 +198,7 @@
   seeds 123/456) reached FAR in 4/4 runs with 0 unsupported upper cells across
   7–9 storeys, raising proxy quality from `0.051–0.096` to `0.166–0.207` and
   `potentialUsableArea` from `36–611 m²` to `1,369–2,257 m²` in 10–12 accepted
-  edits; see [results/floor-growth-preview-v2-tower-growth-2026-11-14.json](results/floor-growth-preview-v2-tower-growth-2026-11-14.json).
+  edits (2026-11-14 `v2-tower-growth` snapshot, pruned from working tree during cleanup).
   This establishes geometry/exposure-guided action-space improvements, not
   converged RL learning or residential compliance.
 - Older sections below describe the legacy FAR-only policy and prior research;

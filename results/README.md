@@ -4,15 +4,13 @@ Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PRO
 - **600-episode tier-adaptive multi-scale run (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 -> 2.0e-4`):** [600-ep tier-adaptive summary](real-aux-tier-600ep-mps-2026-11-21.json) (`configs/research-real-aux-tier-600ep.json`; `XS/S/M` direct `1×1×1`, `L` `2×2×1 → 1×1×1`, `XL` `4×4×1 → 2×2×1 → 1×1×1`, path-normalized Gaussian retry gradients; `farSuccessRate = 1.0` across ep `101–600` on all 10 sites including `L`/`XL`, zero-shot `m_hk_0199` Val `1.0539`, aggregate Test `0.8252` in `409.0 s`).
 - **1,200-episode flat `1×1×1` baseline (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`):** [1,200-ep flat baseline summary](real-aux-1200ep-mps-2026-11-21.json) (`configs/research-real-aux-1200ep.json`; 10 balanced XS–XL sites, zero-shot held-out eval on HK `0.7729` + NYC/Paris `0.5782`, matched decoding `1.0/1.0`, full `1200`-episode traces aggregated in 30-ep bins).
 - **Pipeline & compact-core verification:** [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
-[compact cores](core-layout-v2-check-2026-11-20.json). Historical raw files are
-preserved and [indexed by hash](historical-experiment-index-2026-11-20.json);
-their older reward/core semantics must not be conflated with current experiments.
-The short checks are not convergence or learned-quality evidence.
+[compact cores](core-layout-v2-check-2026-11-20.json). The short checks are not convergence or learned-quality evidence.
+- **Historical compute & cascade pilots (`2026-11-19`):** [scene cache & vertical scaling](scalable-height-speedup-2026-11-19.json), [early multi-scale cascade tradeoff](multiscale-ablation-2026-11-19.json) (pre-`compact-core.v5`; their older reward/core semantics must not be conflated with current runs).
 
 # First prototype measurements — 2026-11-06
 
 Raw data: [CPU](benchmark-cpu.json), [MPS](benchmark-mps.json),
-[field probes](field-probes.json). Initial development runs remain in `initial/`.
+[field probes](field-probes.json).
 These are synthetic method checks, not a design-quality or convergence study.
 
 The final CPU and MPS runs used identical eight-edit volume sequences and

@@ -1,9 +1,0 @@
-prepared train-wide
-prepared train-Barcelona
-prepared heldout-XL
-prepared heldout-Barcelona
-phased 123 heldout 1 /2 updates 22
-unified 123 heldout 0 /2 updates 13
-unified 456 heldout 0 /2 updates 29
-phased 456 heldout 2 /2 updates 112
-/Users/ruslan_faz/Desktop/Work/Thesis/VoxelForm-RL/results/unified-training-2026-11-10.json

@@ -1,9 +1,0 @@
-m_bcn_0093 world {'diffuseReference': 0.22642120718955994, 'meanFace': 0.22697792947292328, 'faceStdError': 0.01220611110329628, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_bcn_0093 longest_edge {'diffuseReference': 0.21575766801834106, 'meanFace': 0.21608246862888336, 'faceStdError': 0.013119990937411785, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_bcn_0094 world {'diffuseReference': 0.0963207259774208, 'meanFace': 0.09678634256124496, 'faceStdError': 0.009204263798892498, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_bcn_0094 longest_edge {'diffuseReference': 0.08630973100662231, 'meanFace': 0.08619265258312225, 'faceStdError': 0.008949988521635532, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_nyc_0003 world {'diffuseReference': 0.03784669190645218, 'meanFace': 0.03773067891597748, 'faceStdError': 0.003717065555974841, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_nyc_0003 longest_edge {'diffuseReference': 0.04188569635152817, 'meanFace': 0.041790299117565155, 'faceStdError': 0.003781910752877593, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_prs_0315 world {'diffuseReference': 0.36148497462272644, 'meanFace': 0.36065956950187683, 'faceStdError': 0.0173539686948061, 'sampledFaces': 256, 'hemisphereDirections': 64}
-m_prs_0315 longest_edge {'diffuseReference': 0.3758143186569214, 'meanFace': 0.3752511739730835, 'faceStdError': 0.01774190366268158, 'sampledFaces': 256, 'hemisphereDirections': 64}
-/Users/ruslan_faz/Desktop/Work/Thesis/VoxelForm-RL/results/grid-sky-validation-2026-11-09.json
