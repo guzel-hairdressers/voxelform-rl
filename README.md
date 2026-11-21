@@ -146,7 +146,7 @@ Switching large blocks from flat `1×1×1` updates to progressive coarse-to-fine
 | Deterministic Eval (`seed=9001`): `XL` Sites (`xl_tokyo_0185` / `xl_sgp_0386`) | `FAR 5.69` / `5.79` (**FAIL**) | **`FAR 3.10`** (`0.7176`) / **`FAR 3.10`** (`0.6985`) |
 | Deterministic Eval (`seed=9001`): `L` Sites (`l_bcn_0074` / `l_sgp_0369`) | `0.5747` / `0.2923` | **`1.0164`** / **`0.8523`** |
 
-*\*Note: Both checkpoints evaluate matched `temp=1.0, noise=1.0`; flat 1,200-ep had its own fresh untrained control (`0.5675` Val / `0.2794` Test Agg in [results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)) due to the added macro/coarse entry stems in `CoarseToFineNetwork`, while training-window per-site `l_sgp_0369` `last10` was `0.575` in flat `1×1×1`. Single seed (`123`) and `spatial_aux_weight=1.2` apply; multi-seed and `spatial_aux_weight=0.0` tier-adaptive ablations remain open experiments.*
+**Note:** *Both checkpoints evaluate matched `temp=1.0, noise=1.0`; flat 1,200-ep had its own fresh untrained control (`0.5675` Val / `0.2794` Test Agg in [results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)) due to the added macro/coarse entry stems in `CoarseToFineNetwork`, while training-window per-site `l_sgp_0369` `last10` was `0.575` in flat `1×1×1`. Single seed (`123`) and `spatial_aux_weight=1.2` apply; multi-seed and `spatial_aux_weight=0.0` tier-adaptive ablations remain open experiments.*
 
 ### Infrastructure Verification & Compute Scaling
 
