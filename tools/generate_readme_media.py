@@ -657,25 +657,21 @@ def generate_trained_rollout_assets(cfg: ExperimentConfig, dev: str, trained, to
 
 
 def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained, total_eps: int):
-    """Render best trained FAR-satisfied layouts across XS, S, M, L, XL training tiers."""
+    """Render curated trained FAR-satisfied layouts across XS, S, M, L, XL training tiers."""
     tiers = [
-        ('xs_sgp_0346', 'XS'),
-        ('s_sgp_0345', 'S'),
-        ('m_bcn_0093', 'M'),
-        ('l_bcn_0074', 'L'),
-        ('xl_tokyo_0185', 'XL'),
+        ('xs_tokyo_0133', 'XS', 9022),
+        ('s_sgp_0345', 'S', 9002),
+        ('m_tokyo_0135', 'M', 9007),
+        ('l_bcn_0074', 'L', 9008),
+        ('xl_tokyo_0185', 'XL', 9009),
     ]
     fig = plt.figure(figsize=(16.5, 5.1), dpi=150)
     fig.patch.set_facecolor('#ffffff')
     gs = gridspec.GridSpec(1, 5, figure=fig, left=0.015, right=0.985, top=0.71, bottom=0.04, wspace=0.03)
 
-    for idx, (site_id, tier) in enumerate(tiers):
+    for idx, (site_id, tier, eval_seed) in enumerate(tiers):
         env = _load_env(site_id, cfg, dev)
-        best = None
-        for s in range(9001, 9011):
-            res, _ = _run_eval_episode(trained, env, cfg, s, temp=1.0, noise=1.0, record_trace=False)
-            if best is None or (res['far_satisfied'], res['obj']) > (best['far_satisfied'], best['obj']):
-                best = res
+        best, _ = _run_eval_episode(trained, env, cfg, eval_seed, temp=1.0, noise=1.0, record_trace=False)
         occ = best['occ']
         cmask = best['core_mask']
         ax = fig.add_subplot(gs[0, idx], projection='3d')
@@ -691,7 +687,7 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
             f'Sun {best["sun"]*100:.1f}% | Sky {best["diff"]*100:.1f}% | Cov {best["core_cov"]*100:.0f}%',
             fontsize=8.3, fontweight='bold', color='#0f172a', pad=3,
         )
-        print(f'  Tier {tier:2s} ({site_id}, {sched_lbl}): obj={best["obj"]:.3f} far={best["far"]:.2f} cov={best["core_cov"]*100:.1f}% seed={best["seed"]}')
+        print(f'  Tier {tier:2s} ({site_id}, {sched_lbl}): obj={best["obj"]:.3f} far={best["far"]:.2f} usable={best["usable_area"]:.0f} cov={best["core_cov"]*100:.1f}% seed={best["seed"]}')
 
     mode_tag = 'Tier-Adaptive Multi-Scale' if cfg.multiscale_schedule == 'tier_adaptive' else 'Flat 1x1x1'
     fig.text(
@@ -701,7 +697,7 @@ def generate_trained_multitier_showcase(cfg: ExperimentConfig, dev: str, trained
     )
     fig.text(
         0.02, 0.885,
-        'Best FAR-satisfied episode over eval seeds 9001-9010 (matched eval decoding temp=1.0, noise=1.0; target FAR 3.0 +/- 0.10, ceiling 20F).',
+        'Selected FAR-satisfied layouts under matched eval decoding (temp=1.0, noise=1.0; target FAR 3.0 +/- 0.10, ceiling 20F).',
         fontsize=9.1, color='#475569',
     )
     out = MEDIA_DIR / 'multitier-showcase.png'
@@ -717,39 +713,70 @@ def generate_heldout_generalization(cfg: ExperimentConfig, dev: str, untrained, 
         ('m_nyc_0003', 'New York (m_nyc_0003, Test)', summary['test']['perSite']['m_nyc_0003']['bestSeed']),
         ('m_prs_0315', 'Paris (m_prs_0315, Test)', summary['test']['perSite']['m_prs_0315']['bestSeed']),
     ]
-    fig = plt.figure(figsize=(14.4, 8.3), dpi=150)
+    fig = plt.figure(figsize=(14.6, 8.9), dpi=150)
     fig.patch.set_facecolor('#ffffff')
-    gs = gridspec.GridSpec(2, 3, figure=fig, left=0.045, right=0.985, top=0.77, bottom=0.03, hspace=0.22, wspace=0.04)
+    gs = gridspec.GridSpec(2, 3, figure=fig, left=0.060, right=0.985, top=0.755, bottom=0.025, hspace=0.32, wspace=0.08)
 
+    col_axes = []
     for col, (site_id, label, best_seed) in enumerate(sites):
         env = _load_env(site_id, cfg, dev)
         u_res, _ = _run_eval_episode(untrained, env, cfg, best_seed, temp=1.0, noise=1.0, record_trace=False)
         t_res, _ = _run_eval_episode(trained, env, cfg, best_seed, temp=1.0, noise=1.0, record_trace=False)
+        pair_axes = []
         for row, (res, row_tag) in enumerate(((u_res, 'Untrained'), (t_res, 'Trained'))):
             ax = fig.add_subplot(gs[row, col], projection='3d')
+            ax.patch.set_alpha(0.0)
             _render_voxel_panel(ax, res['occ'], res['core_mask'], mode='mass', elev=29.0, azim=-48.0, xray_mass=True)
             z_top = int(np.flatnonzero(res['occ'].any((1, 2)))[-1]) + 1 if res['occ'].any() else 0
-            title_top = f'{label} [seed {best_seed}]' if row == 0 else ''
-            prefix = f'{title_top}\n' if title_top else ''
             nc = res['core_count']
             ax.set_title(
-                f'{prefix}{row_tag}: {z_top}F | {nc} core{"s" if nc != 1 else ""} | FAR {res["far"]:.2f}\n'
+                f'{row_tag}: {z_top}F | {nc} core{"s" if nc != 1 else ""} | FAR {res["far"]:.2f}\n'
                 f'Obj {res["obj"]:.3f} | {res["usable_area"]:.0f} m2 usable | Cov {res["core_cov"]*100:.0f}%\n'
                 f'Sun {res["sun"]*100:.1f}% | Sky {res["diff"]*100:.1f}%',
-                fontsize=8.6, fontweight='bold' if row == 1 else 'normal',
+                fontsize=8.5, fontweight='bold' if row == 1 else 'normal',
                 color='#0f172a' if row == 1 else '#475569', pad=3,
             )
+            pair_axes.append(ax)
+        col_axes.append((label, best_seed, u_res, t_res, pair_axes[0], pair_axes[1]))
 
-    fig.text(0.014, 0.61, 'Untrained Control\n(seed 123 init)', fontsize=10.2, fontweight='bold', color='#475569', rotation=90, va='center')
-    fig.text(0.014, 0.21, f'Trained ({total_eps} ep)\nZero-Shot', fontsize=10.2, fontweight='bold', color='#1d4ed8', rotation=90, va='center')
+    fg_overlay = fig.add_axes([0.0, 0.0, 1.0, 1.0], frameon=False, zorder=10)
+    fg_overlay.patch.set_alpha(0.0)
+    fg_overlay.set_xlim(0.0, 1.0)
+    fg_overlay.set_ylim(0.0, 1.0)
+    fg_overlay.axis('off')
+
+    mid_xs = []
+    for label, best_seed, _u_res, _t_res, ax_top, ax_bot in col_axes:
+        pt = ax_top.get_position()
+        pb = ax_bot.get_position()
+        cx = 0.5 * (pt.x0 + pt.x1)
+        mid_xs.append((pt.x0, pt.x1, cx))
+        fg_overlay.text(
+            cx, 0.842,
+            f'{label}\n[paired seed {best_seed}]',
+            ha='center', va='top', fontsize=9.8, fontweight='bold', color='#0f172a',
+        )
+        arrow_y0 = pt.y0 + 0.008
+        arrow_y1 = pb.y1 + 0.070
+        fg_overlay.annotate(
+            '', xy=(cx, arrow_y1), xytext=(cx, arrow_y0),
+            arrowprops=dict(arrowstyle='-|>,head_width=0.45,head_length=0.55', color='#1d4ed8', lw=2.0),
+        )
+
+    for i in range(len(mid_xs) - 1):
+        vx = 0.5 * (mid_xs[i][1] + mid_xs[i + 1][0])
+        fg_overlay.plot([vx, vx], [0.020, 0.855], color='#cbd5e1', linestyle='-', linewidth=1.5)
+
+    fig.text(0.018, 0.62, 'Untrained Control\n(seed 123 init)', fontsize=10.2, fontweight='bold', color='#475569', rotation=90, va='center')
+    fig.text(0.018, 0.19, f'Trained ({total_eps} ep)\nZero-Shot', fontsize=10.2, fontweight='bold', color='#1d4ed8', rotation=90, va='center')
     fig.text(
-        0.045, 0.945,
+        0.060, 0.950,
         'Zero-Shot Generalization to Unseen Cities (Matched Evaluation Distribution: temp=1.0, noise=1.0)',
         fontsize=13.0, fontweight='bold', color='#0f172a',
     )
     fig.text(
-        0.045, 0.905,
-        f'Paired comparison on identical evaluation seeds with no fine-tuning ({total_eps}-ep checkpoint, compact-core.v5, spatial_aux_weight=1.2).',
+        0.060, 0.910,
+        f'Paired columns on identical seeds and parcels with no fine-tuning ({total_eps}-ep checkpoint, compact-core.v5, spatial_aux_weight=1.2).',
         fontsize=9.2, color='#475569',
     )
     out = MEDIA_DIR / 'heldout-generalization.png'

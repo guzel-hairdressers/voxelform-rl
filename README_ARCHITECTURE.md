@@ -31,7 +31,7 @@ Real plots span nearly `40×` in footprint area (`155 m²` Tokyo infill to `5,73
 
 ![Trained architectural massings across XS, S, M, L, and XL parcel scales with compact-core.v5 vertical cores](docs/media/multitier-showcase.png)
 
-*Best FAR-compliant designs across parcel scales from the **600-episode shared policy** (`target FAR = 3.0 ± 0.10`, `20F` envelope ceiling): ranging from compact `7F` single-core infill (`xs_sgp_0346`, `97%` coverage) and chamfered wedges (`s_sgp_0345`), to dual courtyard wings (`m_bcn_0093`, `2,327 m²` usable), Eixample perimeter courtyards (`l_bcn_0074`, `4,803 m²` usable, `6` cores, `100%` coverage), and multi-core `XL` urban bars (`xl_tokyo_0185`, `10` cores, `96%` coverage).*
+*Selected FAR-compliant designs across parcel scales from the **600-episode shared policy** (`target FAR = 3.0 ± 0.10`, `20F` envelope ceiling): ranging from compact `6F` infill (`xs_tokyo_0133`, `100%` core coverage) and chamfered wedges (`s_sgp_0345`), to stepped twin-core bars (`m_tokyo_0135`, `7F`, `2,259 m²` usable, `96%` coverage), Eixample perimeter courtyards (`l_bcn_0074`, `4,803 m²` usable, `6` cores, `100%` coverage), and multi-core `XL` urban bars (`xl_tokyo_0185`, `10` cores, `96%` coverage).*
 
 ---
 

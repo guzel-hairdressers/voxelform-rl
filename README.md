@@ -28,7 +28,7 @@ Urban building massing provides the concrete constraint structure, proxy physics
 
 ![600-episode tier-adaptive trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL training sites](docs/media/multitier-showcase.png)
 
-*Best FAR-satisfied evaluation rollouts per training plot-size tier from the **600-episode tier-adaptive shared policy** (`XS/S/M`: direct `1×1×1`; `L`: `2×2×1 → 1×1×1`; `XL`: `4×4×1 → 2×2×1 → 1×1×1`; `target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, eval seeds `9001–9010`, matched decoding `temp=1.0, noise=1.0`), spanning `xs_sgp_0346` (`1.105` obj, `97%` core coverage), `l_bcn_0074` (`1.025` obj, `4,803 m²` usable, `100%` coverage), and `xl_tokyo_0185` (`0.738` obj, `10` cores, `96%` coverage).*
+*Selected FAR-satisfied evaluation rollouts per training plot-size tier from the **600-episode tier-adaptive shared policy** (`XS/S/M`: direct `1×1×1`; `L`: `2×2×1 → 1×1×1`; `XL`: `4×4×1 → 2×2×1 → 1×1×1`; `target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, matched decoding `temp=1.0, noise=1.0`), spanning `xs_tokyo_0133` (`6F`, `0.497` obj, `100%` core coverage), `m_tokyo_0135` (`7F`, `1.082` obj, `2,259 m²` usable, `96%` coverage), `l_bcn_0074` (`1.025` obj, `4,803 m²` usable, `100%` coverage), and `xl_tokyo_0185` (`0.738` obj, `10` cores, `96%` coverage).*
 
 ![Paired zero-shot comparison between untrained control and 600-episode tier-adaptive trained policy across unseen Hong Kong, New York, and Paris plots](docs/media/heldout-generalization.png)
 
