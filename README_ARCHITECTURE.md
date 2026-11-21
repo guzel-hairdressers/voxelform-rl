@@ -21,6 +21,14 @@ Each frame exposes three synchronous architectural analyses:
 
 ---
 
+## Procedural Blender Architectural Maquette
+
+![Parallel VoxelForm-RL volumetric lattice and procedural Blender architectural maquette with human-level street views on held-out Paris m_prs_0315](docs/media/blender-maquette-showcase.png)
+
+*Procedurally created in Blender from VoxelForm-RL lattice output + OpenStreetMap (`m_prs_0315`, `seed=9003`) — no AI used for modeling or visualization.*
+
+---
+
 ## Cross-Scale Massing Showcase (`XS` Infill to `XL` Urban Blocks)
 
 Real plots span nearly `40×` in footprint area (`155 m²` Tokyo infill to `5,737 m²` Singapore superblocks). Instead of sculpting giant `XL` parcels solely brick-by-brick at `1 m`, the system adapts its spatial planning granularity to plot area:

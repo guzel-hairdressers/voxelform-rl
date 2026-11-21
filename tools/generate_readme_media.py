@@ -263,8 +263,8 @@ def _setup_3d_axes(
     span = max(x1 - x0, y1 - y0, z1, 10.0)
     cx, cy = 0.5 * (x0 + x1), 0.5 * (y0 + y1)
     if context_pad:
-        half = max(0.66 * span, 0.50 * span + 14.0)
-        z_top = max(z1 + 8.0, 0.44 * (2.0 * half))
+        half = max(0.56 * span, 0.48 * span + 7.0)
+        z_top = max(z1 + 4.0, 0.44 * (2.0 * half))
     else:
         half = 0.48 * span
         z_top = max(z1, 0.42 * span)
@@ -273,7 +273,7 @@ def _setup_3d_axes(
     ax.set_xlim(*xb)
     ax.set_ylim(*yb)
     ax.set_zlim(0.0, z_top)
-    ax.set_box_aspect((1.0, 1.0, z_top / (2.0 * half)))
+    ax.set_box_aspect((1.0, 1.0, z_top / (2.0 * half)), zoom=1.42)
     ax.view_init(elev=elev, azim=azim)
     ax.set_axis_off()
     return xb, yb, z_top
