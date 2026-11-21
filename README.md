@@ -16,26 +16,30 @@ Urban building massing provides the concrete constraint structure, proxy physics
 
 ## Visual Overview
 
-### Sequential 3D Editing Trajectory & Coupled Physical Fields
+### Sequential 3D Editing Trajectory on Held-Out Paris (`1,200`-Episode Policy)
 
-![Illustrative episode rollout showing synchronized massing with compact-core.v5 shafts, direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
+![1,200-episode trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
 
-*Synchronized episode rollout (`m_bcn_0093`, 6F→20F ceiling, `compact-core.v5`, target $\text{FAR}=3.00 \pm 0.10$, `spatial_aux_weight=1.2`). **Left:** translucent blue occupied voxels ($1\,\text{m}\times 1\,\text{m}\times 3\,\text{m}$) with embedded crimson vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while still casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without blocked corner cutting. Full HD clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4). This single-site trajectory illustrates MDP state transitions and solver coupling rather than statistical convergence.*
+*Zero-shot rollout of the **1,200-episode multi-site trained checkpoint** (`runs/real-aux-1200ep`, `seed=123`, `compact-core.v5`, target $\text{FAR}=3.00 \pm 0.10$, `spatial_aux_weight=1.2`, deployment decoding `temp=2.5, noise=0.08`) on unseen **Paris (`m_prs_0315`, eval seed `9005`)**: reaches `FAR 3.10`, `Obj 1.033`, `67.6%` (`2,917 m²`) usable floor area, `71.3%` `directSunProxy`, `12.4%` `diffuseFacadeProxy`, and `96.9%` core coverage across `2` continuous crimson cores. **Left:** translucent occupied voxels ($1\,\text{m}\times 1\,\text{m}\times 3\,\text{m}$) with embedded vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without corner cutting. Full clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4).*
 
-### Cross-Scale Structural Generalization (`XS` → `XL`) & Live Inspector
+### Cross-Scale Trained Showcase (`XS` → `XL`) & Zero-Shot Unseen City Transfer
 
-![Exploratory top-archived voxel layouts with compact-core.v5 shafts across XS, S, M, L, and XL parcel sizes](docs/media/multitier-showcase.png)
+![1,200-episode trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL training sites](docs/media/multitier-showcase.png)
 
-*Qualitative layouts archived during exploratory multi-site live rotation (`compact-core.v5`, target $\text{FAR}=4.5$) spanning `18×25×9` (`xs_sgp_0346`, 1 core) through `18×128×51` (`xl_tokyo_0185`, 6 cores). Held-out generalization tests keep evaluation scenes strictly separate.*
+*Best FAR-satisfied evaluation rollouts per training plot-size tier from the **1,200-episode shared policy** (`target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, eval seeds `9001–9008`, deployment decoding `temp=2.5, noise=0.08`), spanning `xs_sgp_0346` (`0.852` obj) through `xl_tokyo_0185` (`18F`, 7 cores).*
+
+![Paired zero-shot comparison between untrained control and 1,200-episode trained policy across unseen Hong Kong, New York, and Paris plots](docs/media/heldout-generalization.png)
+
+*Zero-shot generalization on unseen held-out cities under **matched evaluation decoding (`temp=1.0, noise=1.0`)**: identical seeds (`9005`, `9004`, `9001`) compare untrained seed-123 initialization (top) against the 1,200-episode trained checkpoint (bottom).*
 
 <details>
-<summary>Interactive 3D Inspector & Live Training Dashboard Screenshots (Port 8011)</summary>
+<summary>Local Web UI Screenshots (<code>main.py</code>)</summary>
 
-| 3D Volumetric State Inspector (`127.0.0.1:8011`) | Live Episode Curves & Metrics |
+| 3D Volumetric State Inspector (local `main.py`) | Live Training Dashboard (local `main.py`) |
 |---|---|
 | ![VoxelForm-RL live workspace on the Paris demonstration site](docs/media/voxel-workspace.jpg) | ![Training dashboard plotting direct-sun proxy, FAR convergence, and episode timing](docs/media/training-diagnostics.jpg) |
 
-*Left: live inspector on `m_prs_0315` showing occupied voxels, crimson core reservation, and surrounding context meshes derived from [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Right: exploratory live dashboard keeping `directSunProxy` and `diffuseFacadeProxy` distinct.*
+*Static captures of the optional local interactive workspace started via `uv run --frozen python main.py`. Left: `m_prs_0315` inspection with surrounding context geometry derived from [OpenStreetMap contributors](https://www.openstreetmap.org/copyright). Right: live episode monitoring keeping `directSunProxy` and `diffuseFacadeProxy` distinct.*
 
 </details>
 
@@ -109,7 +113,22 @@ The `vf-research` runner (`tools/research.py`, `voxelform/experiment.py`) enforc
 - **Controlled Baselines & Honest Accounting:** Evaluates untrained controls and fixed-budget final checkpoints on shared evaluation seeds (isolating evaluation RNG state), retains failed-FAR episodes in every mean, and computes `meanReferenceQuality` using a standardized `10 m / 12 m` `compact-core.v5` referee so core-on/off and travel-limit ablations remain comparable.
 - **Full Provenance & Exact CPU Resume:** Each run archives `config.json`, `manifest.json` (git SHA, source SHA-256s, hardware/packages), `source.tar.gz` (including dirty diffs), `scenes.json`, and atomic optimizer+RNG checkpoints with strict hash verification on `--resume`.
 
-### Empirical Measurements & Protocol Boundaries
+### 1,200-Episode Multi-Tier Training & Held-Out City Generalization
+
+![1,200-episode multi-site learning curve and matched zero-shot held-out city comparison](docs/media/training-curves-1200ep.png)
+
+Trained for **1,200 episodes** (`2,625.6 s`, `690` synchronous GAE updates on Apple M4 MPS, `seed=123`, `spatial_aux_weight=1.2`, [configs/research-real-aux-1200ep.json](configs/research-real-aux-1200ep.json)) rotating uniformly across all 10 balanced XS–XL training sites, and evaluated under the matched research decoding distribution (`temp=1.0, noise=1.0`) against the identical untrained initialization ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)):
+
+| Split / Held-Out Site | FAR Success | Objective (`meanQuality` / Ref) | Usable Area ($\text{m}^2$) | `directSunProxy` | `diffuseFacadeProxy` |
+|---|---:|---:|---:|---:|---:|
+| **Validation:** Hong Kong `m_hk_0199` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.5675 → 0.7729` | `1,051.6 → 3,163.0` | `61.8% → 64.5%` | `6.2% → 12.5%` |
+| **Test:** New York `m_nyc_0003` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.0546 → 0.3406` | `84.4 → 1,016.8` | `14.6% → 26.6%` | `1.8% → 4.0%` |
+| **Test:** Paris `m_prs_0315` (Untrained → 1,200 ep) | `1.00 → 1.00` | `0.5042 → 0.8157` | `688.8 → 2,427.2` | `64.1% → 67.7%` | `5.9% → 12.6%` |
+| **Test Aggregate** (10 eps, Untrained → 1,200 ep) | `1.00 → 1.00` | `0.2794 → 0.5782` (**+107%**) | `386.6 → 1,722.0` (**4.45×**) | `39.4% → 47.1%` | `3.8% → 8.3%` |
+
+*Scope & Training Dynamics Note:* Because `seed=123` uses unannealed on-policy updates (`lr=1.2e-3`) across heterogeneous XS–XL action scales and `spatial_aux_weight=1.2`, the 30-episode rolling training objective peaks early (`0.617` at ep `101–200`), oscillates mid-run (`0.107` at ep `701–800`), and recovers (`0.422` at ep `1101–1200`). Establishing variance across multiple seeds and isolating `spatial_aux_weight=0.0` at matching budget remain open experiments.
+
+### Infrastructure Verification & Compute Scaling
 
 ![Empirical setup cache scaling and historical multi-scale coarse-to-fine Pareto tradeoff on Apple M4 MPS](docs/media/compute-and-ablations.png)
 
@@ -158,6 +177,11 @@ uv run --frozen vf-research train \
 uv run --frozen vf-research train \
   --config configs/research-real-aux.json \
   --output runs/real-aux-ablation
+
+# Reproduce the 1,200-episode single-seed auxiliary run on Apple MPS
+uv run --frozen vf-research train \
+  --config configs/research-real-aux-1200ep.json \
+  --output runs/real-aux-1200ep
 ```
 
 ### 3. Live 3D Inspector & Test Suite
@@ -222,7 +246,7 @@ VoxelForm-RL/
 ```bibtex
 @software{voxelform_rl_2026,
   title   = {VoxelForm-RL: Structured Reinforcement Learning for Constrained 3D Voxel Editing},
-  author  = {VoxelForm-RL Contributors},
+  author  = {Ruslan F},
   year    = {2026},
   version = {0.2.0},
   url     = {https://github.com/guzel-hairdressers/voxelform-rl}

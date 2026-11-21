@@ -1,0 +1,886 @@
+{
+  "config": {
+    "audit_steps": 5,
+    "ceiling_storeys": 20,
+    "checkpoint_interval": 100,
+    "cores_enabled": true,
+    "device": "mps",
+    "episodes": 1200,
+    "evaluation_noise_scale": 1.0,
+    "evaluation_seeds": [
+      9001,
+      9002,
+      9003,
+      9004,
+      9005
+    ],
+    "evaluation_temperature": 1.0,
+    "far_tolerance": 0.1,
+    "initial_storeys": 6,
+    "max_core_dist": 12,
+    "min_core_spacing": 10,
+    "rollout_steps": 16,
+    "seeds": [
+      123
+    ],
+    "spatial_aux_weight": 1.2,
+    "strict_determinism": false,
+    "synthetic_length": 24,
+    "synthetic_width": 24,
+    "target_far": 3.0,
+    "test_sites": [
+      "m_nyc_0003",
+      "m_prs_0315"
+    ],
+    "threads": 1,
+    "train_sites": [
+      "m_bcn_0093",
+      "xs_tokyo_0133",
+      "s_sgp_0345",
+      "l_bcn_0074",
+      "xl_tokyo_0185",
+      "xs_sgp_0346",
+      "s_bcn_0112",
+      "m_tokyo_0135",
+      "l_sgp_0369",
+      "xl_sgp_0386"
+    ],
+    "validation_sites": [
+      "m_hk_0199"
+    ]
+  },
+  "note": "Single model seed (123), spatial_aux_weight=1.2, compact-core.v5, matched evaluation decoding (evaluation_temperature=1.0, evaluation_noise_scale=1.0). All FAR failures retained in training bins and eval means; directSunProxy and diffuseFacadeProxy reported separately. Unannealed on-policy training shows mid-run oscillation across heterogeneous XS-XL sites; multi-seed and spatial_aux_weight=0.0 baselines remain open experiments.",
+  "runtime": {
+    "checkpointSHA256": "1d918fce6dc1361c681c069765938abfeadaf40332e241843da48a13133ddf4f",
+    "configHash": "09a6d0020698bd47a1096275099bf33b8188450dd218f4a5b53a2d6510fa9159",
+    "coreLayoutVersion": "compact-core.v5",
+    "createdAt": "2026-11-21T12:25:31.284410+00:00",
+    "cuda": false,
+    "deterministic": false,
+    "gitCommit": "63822efbb72be5686645401584da2eb824ae2b6f",
+    "machine": "arm64",
+    "mps": true,
+    "packages": {
+      "fastapi": "0.165.0",
+      "numpy": "2.5.5",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "torch": "2.15.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "protocol": "voxelform.research.v1",
+    "python": "3.12.11"
+  },
+  "setup": [
+    {
+      "seconds": 6.100061125005595,
+      "site": "m_bcn_0093"
+    },
+    {
+      "seconds": 0.7409441669879016,
+      "site": "xs_tokyo_0133"
+    },
+    {
+      "seconds": 2.358565208996879,
+      "site": "s_sgp_0345"
+    },
+    {
+      "seconds": 6.98609024999314,
+      "site": "l_bcn_0074"
+    },
+    {
+      "seconds": 5.758618916996056,
+      "site": "xl_tokyo_0185"
+    },
+    {
+      "seconds": 0.46906270799809135,
+      "site": "xs_sgp_0346"
+    },
+    {
+      "seconds": 1.107322291994933,
+      "site": "s_bcn_0112"
+    },
+    {
+      "seconds": 2.4788572910038056,
+      "site": "m_tokyo_0135"
+    },
+    {
+      "seconds": 2.155829833005555,
+      "site": "l_sgp_0369"
+    },
+    {
+      "seconds": 5.627443958001095,
+      "site": "xl_sgp_0386"
+    },
+    {
+      "seconds": 1.205196666996926,
+      "site": "m_hk_0199"
+    },
+    {
+      "seconds": 2.6249877079972066,
+      "site": "m_nyc_0003"
+    },
+    {
+      "seconds": 1.9021761249896372,
+      "site": "m_prs_0315"
+    }
+  ],
+  "test": {
+    "overall": {
+      "bestQuality": 0.8869473695086164,
+      "bestSeed": 9001,
+      "count": 10,
+      "farSuccessRate": 1.0,
+      "meanCoreCount": 2.5,
+      "meanCoreCoverage": 0.8632464452065561,
+      "meanDiffuseSky": 0.08281882554292679,
+      "meanDirectSun": 0.4714703679084778,
+      "meanQuality": 0.5781755267353194,
+      "meanReferenceQuality": 0.5781755267353194,
+      "meanSeconds": 0.3395288665982662,
+      "meanUsableGoodArea": 1722.0,
+      "meanUsableGoodFraction": 0.40452734453796163
+    },
+    "perSite": {
+      "m_nyc_0003": {
+        "bestQuality": 0.5197497482827611,
+        "bestSeed": 9004,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 1.6,
+        "meanCoreCoverage": 0.8596633574237074,
+        "meanDiffuseSky": 0.039721164107322696,
+        "meanDirectSun": 0.26641732454299927,
+        "meanQuality": 0.3406195518042416,
+        "meanReferenceQuality": 0.3406195518042416,
+        "meanSeconds": 0.3999674831982702,
+        "meanUsableGoodArea": 1016.8,
+        "meanUsableGoodFraction": 0.24145652943607065
+      },
+      "m_prs_0315": {
+        "bestQuality": 0.8869473695086164,
+        "bestSeed": 9001,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 3.4,
+        "meanCoreCoverage": 0.8668295329894049,
+        "meanDiffuseSky": 0.1259164869785309,
+        "meanDirectSun": 0.6765234112739563,
+        "meanQuality": 0.8157315016663971,
+        "meanReferenceQuality": 0.8157315016663971,
+        "meanSeconds": 0.27909024999826215,
+        "meanUsableGoodArea": 2427.2,
+        "meanUsableGoodFraction": 0.5675981596398526
+      }
+    }
+  },
+  "training": {
+    "completedEpisodes": 1200,
+    "meanSecondsPerEpisode": 2.188011322743332,
+    "modelSeed": 123,
+    "perSiteTraining": {
+      "l_bcn_0074": {
+        "episodes": 120,
+        "first20MeanQuality": 0.7506642171506884,
+        "last20DiffuseSky": 0.11878562681376933,
+        "last20DirectSun": 0.6145546555519104,
+        "last20FarSuccessRate": 0.9,
+        "last20MeanQuality": 0.499549475058763,
+        "maxQuality": 0.9933784579962669,
+        "meanSeconds": 2.865400067733693
+      },
+      "l_sgp_0369": {
+        "episodes": 120,
+        "first20MeanQuality": 0.7032034414984287,
+        "last20DiffuseSky": 0.10310003198683262,
+        "last20DirectSun": 0.6945613563060761,
+        "last20FarSuccessRate": 0.65,
+        "last20MeanQuality": 0.48638268728607303,
+        "maxQuality": 0.9809605897457127,
+        "meanSeconds": 2.714720081242922
+      },
+      "m_bcn_0093": {
+        "episodes": 120,
+        "first20MeanQuality": 0.6620932465760345,
+        "last20DiffuseSky": 0.10957008935511112,
+        "last20DirectSun": 0.555572186410427,
+        "last20FarSuccessRate": 0.8,
+        "last20MeanQuality": 0.5214053145439101,
+        "maxQuality": 0.966020482030066,
+        "meanSeconds": 1.6910648013756144
+      },
+      "m_tokyo_0135": {
+        "episodes": 120,
+        "first20MeanQuality": 0.8069295638526559,
+        "last20DiffuseSky": 0.1409514632076025,
+        "last20DirectSun": 0.6927313476800918,
+        "last20FarSuccessRate": 1.0,
+        "last20MeanQuality": 0.7919925722085445,
+        "maxQuality": 1.1272205403272038,
+        "meanSeconds": 0.5804452565665997
+      },
+      "s_bcn_0112": {
+        "episodes": 120,
+        "first20MeanQuality": 0.36049365712008624,
+        "last20DiffuseSky": 0.08324590455740691,
+        "last20DirectSun": 0.3955892950296402,
+        "last20FarSuccessRate": 1.0,
+        "last20MeanQuality": -0.06546113189637341,
+        "maxQuality": 1.051989787725722,
+        "meanSeconds": 0.2457012645413973
+      },
+      "s_sgp_0345": {
+        "episodes": 120,
+        "first20MeanQuality": 0.7580568303885729,
+        "last20DiffuseSky": 0.12978542372584342,
+        "last20DirectSun": 0.6525022089481354,
+        "last20FarSuccessRate": 1.0,
+        "last20MeanQuality": 0.32016772223089146,
+        "maxQuality": 1.152147950250713,
+        "meanSeconds": 0.3209773978999389
+      },
+      "xl_sgp_0386": {
+        "episodes": 120,
+        "first20MeanQuality": 0.6924710260942731,
+        "last20DiffuseSky": 0.07326663043349982,
+        "last20DirectSun": 0.8211179941892623,
+        "last20FarSuccessRate": 0.05,
+        "last20MeanQuality": 0.7091484493207848,
+        "maxQuality": 0.8086898176202728,
+        "meanSeconds": 7.372099757974138
+      },
+      "xl_tokyo_0185": {
+        "episodes": 120,
+        "first20MeanQuality": 0.6557460782640633,
+        "last20DiffuseSky": 0.08635810483247042,
+        "last20DirectSun": 0.7399013757705688,
+        "last20FarSuccessRate": 0.5,
+        "last20MeanQuality": 0.5431350895466782,
+        "maxQuality": 0.9200231147778452,
+        "meanSeconds": 5.322537437467205
+      },
+      "xs_sgp_0346": {
+        "episodes": 120,
+        "first20MeanQuality": 0.17266356405837627,
+        "last20DiffuseSky": 0.22168580293655396,
+        "last20DirectSun": 0.5257884323596954,
+        "last20FarSuccessRate": 1.0,
+        "last20MeanQuality": 0.2658772942523632,
+        "maxQuality": 0.9575008478879732,
+        "meanSeconds": 0.08582658509961523
+      },
+      "xs_tokyo_0133": {
+        "episodes": 120,
+        "first20MeanQuality": -0.15319180336481167,
+        "last20DiffuseSky": 0.07028593067079783,
+        "last20DirectSun": 0.1867675982415676,
+        "last20FarSuccessRate": 1.0,
+        "last20MeanQuality": -0.6175957262756433,
+        "maxQuality": 0.3971512975211233,
+        "meanSeconds": 0.10923153887451917
+      }
+    },
+    "trainingBinned": [
+      {
+        "episodeEnd": 30,
+        "episodeStart": 1,
+        "farSuccessRate": 0.9,
+        "meanCoreCoverage": 0.8280787033540555,
+        "meanCoreScore": 0.7937367979288293,
+        "meanDiffuseSky": 0.04975621436412136,
+        "meanDirectSun": 0.5002020979921024,
+        "meanEpisodeSeconds": 1.5884503736320768,
+        "meanQuality": 0.38882364818797094,
+        "meanUsableGoodFraction": 0.10058830804289527
+      },
+      {
+        "episodeEnd": 60,
+        "episodeStart": 31,
+        "farSuccessRate": 0.9333333333333333,
+        "meanCoreCoverage": 0.7961706967231313,
+        "meanCoreScore": 0.7636703467332708,
+        "meanDiffuseSky": 0.053420366098483406,
+        "meanDirectSun": 0.4957149570186933,
+        "meanEpisodeSeconds": 1.6739935291004562,
+        "meanQuality": 0.3688926678563092,
+        "meanUsableGoodFraction": 0.11862940092068627
+      },
+      {
+        "episodeEnd": 90,
+        "episodeStart": 61,
+        "farSuccessRate": 1.0,
+        "meanCoreCoverage": 0.8939227636583683,
+        "meanCoreScore": 0.8702041223394361,
+        "meanDiffuseSky": 0.06795219602063299,
+        "meanDirectSun": 0.5036813147366047,
+        "meanEpisodeSeconds": 1.3080744053988989,
+        "meanQuality": 0.5519123907098803,
+        "meanUsableGoodFraction": 0.2243381285114101
+      },
+      {
+        "episodeEnd": 120,
+        "episodeStart": 91,
+        "farSuccessRate": 0.9,
+        "meanCoreCoverage": 0.9308340973126198,
+        "meanCoreScore": 0.9068894464714228,
+        "meanDiffuseSky": 0.10236260239034892,
+        "meanDirectSun": 0.5582850930591424,
+        "meanEpisodeSeconds": 1.1789324069347156,
+        "meanQuality": 0.7349953062396837,
+        "meanUsableGoodFraction": 0.3962450053809226
+      },
+      {
+        "episodeEnd": 150,
+        "episodeStart": 121,
+        "farSuccessRate": 0.8666666666666667,
+        "meanCoreCoverage": 0.778411086012591,
+        "meanCoreScore": 0.7608359784178075,
+        "meanDiffuseSky": 0.11307014543563128,
+        "meanDirectSun": 0.5984631190697353,
+        "meanEpisodeSeconds": 1.3582061667664675,
+        "meanQuality": 0.5843803022184909,
+        "meanUsableGoodFraction": 0.3456609749063847
+      },
+      {
+        "episodeEnd": 180,
+        "episodeStart": 151,
+        "farSuccessRate": 0.8333333333333334,
+        "meanCoreCoverage": 0.7535944559834251,
+        "meanCoreScore": 0.7289542883828487,
+        "meanDiffuseSky": 0.12152440038820107,
+        "meanDirectSun": 0.6165090729792913,
+        "meanEpisodeSeconds": 1.727610195801632,
+        "meanQuality": 0.5831009055015755,
+        "meanUsableGoodFraction": 0.37526520730721447
+      },
+      {
+        "episodeEnd": 210,
+        "episodeStart": 181,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.7584186143763106,
+        "meanCoreScore": 0.7411631493892235,
+        "meanDiffuseSky": 0.11544300243258476,
+        "meanDirectSun": 0.6034466341137886,
+        "meanEpisodeSeconds": 1.892069302733095,
+        "meanQuality": 0.583761233954169,
+        "meanUsableGoodFraction": 0.3714074622277674
+      },
+      {
+        "episodeEnd": 240,
+        "episodeStart": 211,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.706757219351759,
+        "meanCoreScore": 0.6844955726467038,
+        "meanDiffuseSky": 0.12068232384820779,
+        "meanDirectSun": 0.6009440198540688,
+        "meanEpisodeSeconds": 2.288720212466918,
+        "meanQuality": 0.5103546757613181,
+        "meanUsableGoodFraction": 0.3482817944404014
+      },
+      {
+        "episodeEnd": 270,
+        "episodeStart": 241,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.6217869886101792,
+        "meanCoreScore": 0.6021255620953905,
+        "meanDiffuseSky": 0.13495101208488147,
+        "meanDirectSun": 0.6354409207900366,
+        "meanEpisodeSeconds": 2.2371968222330905,
+        "meanQuality": 0.441898623993336,
+        "meanUsableGoodFraction": 0.32039263461741785
+      },
+      {
+        "episodeEnd": 300,
+        "episodeStart": 271,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.6493977907958618,
+        "meanCoreScore": 0.6215448252056189,
+        "meanDiffuseSky": 0.13114169873297216,
+        "meanDirectSun": 0.6275191922982534,
+        "meanEpisodeSeconds": 2.07511349463263,
+        "meanQuality": 0.46087426679681065,
+        "meanUsableGoodFraction": 0.3303596313192875
+      },
+      {
+        "episodeEnd": 330,
+        "episodeStart": 301,
+        "farSuccessRate": 0.7666666666666667,
+        "meanCoreCoverage": 0.4164141701091078,
+        "meanCoreScore": 0.36263158624923986,
+        "meanDiffuseSky": 0.122915909315149,
+        "meanDirectSun": 0.58779652963082,
+        "meanEpisodeSeconds": 2.8120949055669673,
+        "meanQuality": 0.12060579343501322,
+        "meanUsableGoodFraction": 0.24821532304520993
+      },
+      {
+        "episodeEnd": 360,
+        "episodeStart": 331,
+        "farSuccessRate": 0.8333333333333334,
+        "meanCoreCoverage": 0.47439791746776205,
+        "meanCoreScore": 0.4163110425800605,
+        "meanDiffuseSky": 0.12145719962815443,
+        "meanDirectSun": 0.5979617387056351,
+        "meanEpisodeSeconds": 2.1488926320681156,
+        "meanQuality": 0.17427310178142855,
+        "meanUsableGoodFraction": 0.20907274848776045
+      },
+      {
+        "episodeEnd": 390,
+        "episodeStart": 361,
+        "farSuccessRate": 0.8333333333333334,
+        "meanCoreCoverage": 0.6721015334419956,
+        "meanCoreScore": 0.6279310713571444,
+        "meanDiffuseSky": 0.1147647118816773,
+        "meanDirectSun": 0.5851457089185714,
+        "meanEpisodeSeconds": 1.8508070541657313,
+        "meanQuality": 0.4157425770546451,
+        "meanUsableGoodFraction": 0.2891955152823467
+      },
+      {
+        "episodeEnd": 420,
+        "episodeStart": 391,
+        "farSuccessRate": 0.8666666666666667,
+        "meanCoreCoverage": 0.5342309250574413,
+        "meanCoreScore": 0.48968532188897435,
+        "meanDiffuseSky": 0.12290602400898934,
+        "meanDirectSun": 0.5905429527163506,
+        "meanEpisodeSeconds": 2.3333661805663723,
+        "meanQuality": 0.27126422924995963,
+        "meanUsableGoodFraction": 0.2791160247313686
+      },
+      {
+        "episodeEnd": 450,
+        "episodeStart": 421,
+        "farSuccessRate": 0.8,
+        "meanCoreCoverage": 0.44118929467950924,
+        "meanCoreScore": 0.4051342471851459,
+        "meanDiffuseSky": 0.12389600599805514,
+        "meanDirectSun": 0.5972843661904335,
+        "meanEpisodeSeconds": 2.5336477597651537,
+        "meanQuality": 0.16895097283945593,
+        "meanUsableGoodFraction": 0.25753215493536763
+      },
+      {
+        "episodeEnd": 480,
+        "episodeStart": 451,
+        "farSuccessRate": 0.7666666666666667,
+        "meanCoreCoverage": 0.574020876028338,
+        "meanCoreScore": 0.5241442634434279,
+        "meanDiffuseSky": 0.12376771916945775,
+        "meanDirectSun": 0.6227106377482414,
+        "meanEpisodeSeconds": 2.2340342874677543,
+        "meanQuality": 0.3378077579467041,
+        "meanUsableGoodFraction": 0.28342349199878064
+      },
+      {
+        "episodeEnd": 510,
+        "episodeStart": 481,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.6050911167679119,
+        "meanCoreScore": 0.5585590068353538,
+        "meanDiffuseSky": 0.12100447788834572,
+        "meanDirectSun": 0.6107323870062829,
+        "meanEpisodeSeconds": 2.168095109832939,
+        "meanQuality": 0.30593612187633695,
+        "meanUsableGoodFraction": 0.22453208812926556
+      },
+      {
+        "episodeEnd": 540,
+        "episodeStart": 511,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.530760355703368,
+        "meanCoreScore": 0.4927855717496756,
+        "meanDiffuseSky": 0.12296739332377911,
+        "meanDirectSun": 0.6101854647199313,
+        "meanEpisodeSeconds": 2.2399441916000797,
+        "meanQuality": 0.2512577025138439,
+        "meanUsableGoodFraction": 0.24269850184069322
+      },
+      {
+        "episodeEnd": 570,
+        "episodeStart": 541,
+        "farSuccessRate": 0.7666666666666667,
+        "meanCoreCoverage": 0.6103135263029693,
+        "meanCoreScore": 0.5770121192656366,
+        "meanDiffuseSky": 0.12577069314817588,
+        "meanDirectSun": 0.6414410913983981,
+        "meanEpisodeSeconds": 2.056854659667685,
+        "meanQuality": 0.40540099113533035,
+        "meanUsableGoodFraction": 0.29251014621866916
+      },
+      {
+        "episodeEnd": 600,
+        "episodeStart": 571,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.5623920406294278,
+        "meanCoreScore": 0.5266547896023644,
+        "meanDiffuseSky": 0.12238084487617015,
+        "meanDirectSun": 0.6364196976025899,
+        "meanEpisodeSeconds": 2.2351470792016093,
+        "meanQuality": 0.34015335072053987,
+        "meanUsableGoodFraction": 0.27434883119992676
+      },
+      {
+        "episodeEnd": 630,
+        "episodeStart": 601,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.4710125044151921,
+        "meanCoreScore": 0.431410812371617,
+        "meanDiffuseSky": 0.11938505657017232,
+        "meanDirectSun": 0.6194536745548248,
+        "meanEpisodeSeconds": 2.1488344110994757,
+        "meanQuality": 0.17849525674067834,
+        "meanUsableGoodFraction": 0.21160654398994524
+      },
+      {
+        "episodeEnd": 660,
+        "episodeStart": 631,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.4819169906577364,
+        "meanCoreScore": 0.4534873970447293,
+        "meanDiffuseSky": 0.12587191052734853,
+        "meanDirectSun": 0.6311349968115488,
+        "meanEpisodeSeconds": 1.9036370347006595,
+        "meanQuality": 0.20299137210010254,
+        "meanUsableGoodFraction": 0.21239401267756305
+      },
+      {
+        "episodeEnd": 690,
+        "episodeStart": 661,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.5578618130882781,
+        "meanCoreScore": 0.510001861964967,
+        "meanDiffuseSky": 0.12167681828141212,
+        "meanDirectSun": 0.6175414765874545,
+        "meanEpisodeSeconds": 2.961349604165783,
+        "meanQuality": 0.3081272860406352,
+        "meanUsableGoodFraction": 0.2686809341405823
+      },
+      {
+        "episodeEnd": 720,
+        "episodeStart": 691,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.40749994920244786,
+        "meanCoreScore": 0.3741572304715199,
+        "meanDiffuseSky": 0.1253663521260023,
+        "meanDirectSun": 0.6179175237814586,
+        "meanEpisodeSeconds": 2.600791991669394,
+        "meanQuality": 0.09661519426101917,
+        "meanUsableGoodFraction": 0.18271491893746053
+      },
+      {
+        "episodeEnd": 750,
+        "episodeStart": 721,
+        "farSuccessRate": 0.7333333333333333,
+        "meanCoreCoverage": 0.5674729154026652,
+        "meanCoreScore": 0.5005805642433285,
+        "meanDiffuseSky": 0.11440997583170733,
+        "meanDirectSun": 0.5812571699420611,
+        "meanEpisodeSeconds": 2.524488155533618,
+        "meanQuality": 0.25106987391770214,
+        "meanUsableGoodFraction": 0.21550411589920113
+      },
+      {
+        "episodeEnd": 780,
+        "episodeStart": 751,
+        "farSuccessRate": 0.8,
+        "meanCoreCoverage": 0.40023148310216716,
+        "meanCoreScore": 0.3422391803142862,
+        "meanDiffuseSky": 0.11845421306788921,
+        "meanDirectSun": 0.595342314740022,
+        "meanEpisodeSeconds": 2.8888867389333126,
+        "meanQuality": 0.07171261695979864,
+        "meanUsableGoodFraction": 0.17935811626051043
+      },
+      {
+        "episodeEnd": 810,
+        "episodeStart": 781,
+        "farSuccessRate": 0.9666666666666667,
+        "meanCoreCoverage": 0.39998500429546174,
+        "meanCoreScore": 0.33146694821797457,
+        "meanDiffuseSky": 0.1113453410565853,
+        "meanDirectSun": 0.5640946527322134,
+        "meanEpisodeSeconds": 2.202773513868063,
+        "meanQuality": 0.032113026996046845,
+        "meanUsableGoodFraction": 0.17218380037090014
+      },
+      {
+        "episodeEnd": 840,
+        "episodeStart": 811,
+        "farSuccessRate": 0.9,
+        "meanCoreCoverage": 0.5991293832024714,
+        "meanCoreScore": 0.5370952670811423,
+        "meanDiffuseSky": 0.10966326768199602,
+        "meanDirectSun": 0.5767431755860647,
+        "meanEpisodeSeconds": 2.0746959597653283,
+        "meanQuality": 0.31705984117964603,
+        "meanUsableGoodFraction": 0.2668787107485541
+      },
+      {
+        "episodeEnd": 870,
+        "episodeStart": 841,
+        "farSuccessRate": 0.8666666666666667,
+        "meanCoreCoverage": 0.6763483933005305,
+        "meanCoreScore": 0.6310780078817114,
+        "meanDiffuseSky": 0.10671838466078043,
+        "meanDirectSun": 0.5746353661020597,
+        "meanEpisodeSeconds": 2.4287467319338853,
+        "meanQuality": 0.4199324825381272,
+        "meanUsableGoodFraction": 0.29206881650298866
+      },
+      {
+        "episodeEnd": 900,
+        "episodeStart": 871,
+        "farSuccessRate": 0.9,
+        "meanCoreCoverage": 0.6253899075949991,
+        "meanCoreScore": 0.5744932149520193,
+        "meanDiffuseSky": 0.09909406943867603,
+        "meanDirectSun": 0.5695912952224413,
+        "meanEpisodeSeconds": 2.1658442220660317,
+        "meanQuality": 0.3439011699895232,
+        "meanUsableGoodFraction": 0.2670743580132506
+      },
+      {
+        "episodeEnd": 930,
+        "episodeStart": 901,
+        "farSuccessRate": 0.9666666666666667,
+        "meanCoreCoverage": 0.7073664686087864,
+        "meanCoreScore": 0.6661879625666158,
+        "meanDiffuseSky": 0.09320822525769472,
+        "meanDirectSun": 0.5613689621289571,
+        "meanEpisodeSeconds": 1.7323794944003263,
+        "meanQuality": 0.43728773677017774,
+        "meanUsableGoodFraction": 0.29142077918457143
+      },
+      {
+        "episodeEnd": 960,
+        "episodeStart": 931,
+        "farSuccessRate": 0.7,
+        "meanCoreCoverage": 0.581297570528721,
+        "meanCoreScore": 0.5419472533461065,
+        "meanDiffuseSky": 0.11164772647122542,
+        "meanDirectSun": 0.5917861248056094,
+        "meanEpisodeSeconds": 2.8200244902317837,
+        "meanQuality": 0.3366337725836082,
+        "meanUsableGoodFraction": 0.2878390964034752
+      },
+      {
+        "episodeEnd": 990,
+        "episodeStart": 961,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.6092504671036078,
+        "meanCoreScore": 0.5695757963868524,
+        "meanDiffuseSky": 0.11994704231619835,
+        "meanDirectSun": 0.6100348552068074,
+        "meanEpisodeSeconds": 2.2902805681340395,
+        "meanQuality": 0.3107375379283191,
+        "meanUsableGoodFraction": 0.22229452745360626
+      },
+      {
+        "episodeEnd": 1020,
+        "episodeStart": 991,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.5974170920363192,
+        "meanCoreScore": 0.5471906833643124,
+        "meanDiffuseSky": 0.12225544005632401,
+        "meanDirectSun": 0.6048405716816584,
+        "meanEpisodeSeconds": 2.265747504167181,
+        "meanQuality": 0.3062033901325344,
+        "meanUsableGoodFraction": 0.23507096739961858
+      },
+      {
+        "episodeEnd": 1050,
+        "episodeStart": 1021,
+        "farSuccessRate": 0.6666666666666666,
+        "meanCoreCoverage": 0.5308318193005458,
+        "meanCoreScore": 0.4940935619311148,
+        "meanDiffuseSky": 0.12326127576331297,
+        "meanDirectSun": 0.599996795753638,
+        "meanEpisodeSeconds": 2.910968976233077,
+        "meanQuality": 0.2566678112224729,
+        "meanUsableGoodFraction": 0.2547532244504553
+      },
+      {
+        "episodeEnd": 1080,
+        "episodeStart": 1051,
+        "farSuccessRate": 0.7666666666666667,
+        "meanCoreCoverage": 0.5644735667220374,
+        "meanCoreScore": 0.5061843429974064,
+        "meanDiffuseSky": 0.12018410104016462,
+        "meanDirectSun": 0.5908902823925019,
+        "meanEpisodeSeconds": 1.95252889853291,
+        "meanQuality": 0.24580710722176488,
+        "meanUsableGoodFraction": 0.2193228270316355
+      },
+      {
+        "episodeEnd": 1110,
+        "episodeStart": 1081,
+        "farSuccessRate": 0.7666666666666667,
+        "meanCoreCoverage": 0.6673602216700814,
+        "meanCoreScore": 0.6225716855536063,
+        "meanDiffuseSky": 0.11550849763055643,
+        "meanDirectSun": 0.5973610599835714,
+        "meanEpisodeSeconds": 1.7771342527329883,
+        "meanQuality": 0.40790816107996924,
+        "meanUsableGoodFraction": 0.2807513921235317
+      },
+      {
+        "episodeEnd": 1140,
+        "episodeStart": 1111,
+        "farSuccessRate": 0.9333333333333333,
+        "meanCoreCoverage": 0.6823454375432064,
+        "meanCoreScore": 0.6290523256131755,
+        "meanDiffuseSky": 0.10196968490878741,
+        "meanDirectSun": 0.5554624045888583,
+        "meanEpisodeSeconds": 2.0693946819000604,
+        "meanQuality": 0.4348049997113282,
+        "meanUsableGoodFraction": 0.33173450271600224
+      },
+      {
+        "episodeEnd": 1170,
+        "episodeStart": 1141,
+        "farSuccessRate": 0.8,
+        "meanCoreCoverage": 0.6983977250850344,
+        "meanCoreScore": 0.6541368604986347,
+        "meanDiffuseSky": 0.11125540460149447,
+        "meanDirectSun": 0.6000401869416236,
+        "meanEpisodeSeconds": 1.687155322098988,
+        "meanQuality": 0.47850223525283697,
+        "meanUsableGoodFraction": 0.312784927092781
+      },
+      {
+        "episodeEnd": 1200,
+        "episodeStart": 1171,
+        "farSuccessRate": 0.8666666666666667,
+        "meanCoreCoverage": 0.5930286190430749,
+        "meanCoreScore": 0.5488489098446232,
+        "meanDiffuseSky": 0.10504880038400491,
+        "meanDirectSun": 0.5758870775500934,
+        "meanEpisodeSeconds": 1.885103433333279,
+        "meanQuality": 0.2906210705500958,
+        "meanUsableGoodFraction": 0.2631632460586436
+      }
+    ],
+    "trainingSeconds": 2625.6135872919986,
+    "updates": 690
+  },
+  "untrainedTest": {
+    "overall": {
+      "bestQuality": 0.7243879206158341,
+      "bestSeed": 9005,
+      "count": 10,
+      "farSuccessRate": 1.0,
+      "meanCoreCount": 3.0,
+      "meanCoreCoverage": 0.8120013386884641,
+      "meanDiffuseSky": 0.038291079178452495,
+      "meanDirectSun": 0.39354097098112106,
+      "meanQuality": 0.27944432795547447,
+      "meanReferenceQuality": 0.27944432795547447,
+      "meanSeconds": 0.5267980620992603,
+      "meanUsableGoodArea": 386.6,
+      "meanUsableGoodFraction": 0.09402764717528286
+    },
+    "perSite": {
+      "m_nyc_0003": {
+        "bestQuality": 0.1891480540187535,
+        "bestSeed": 9001,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 2.8,
+        "meanCoreCoverage": 0.7896256196482175,
+        "meanDiffuseSky": 0.017959873378276824,
+        "meanDirectSun": 0.14594880044460296,
+        "meanQuality": 0.05464381963251973,
+        "meanReferenceQuality": 0.05464381963251973,
+        "meanSeconds": 0.49576265779905954,
+        "meanUsableGoodArea": 84.4,
+        "meanUsableGoodFraction": 0.02058679262682004
+      },
+      "m_prs_0315": {
+        "bestQuality": 0.7243879206158341,
+        "bestSeed": 9005,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 3.2,
+        "meanCoreCoverage": 0.8343770577287107,
+        "meanDiffuseSky": 0.05862228497862816,
+        "meanDirectSun": 0.6411331415176391,
+        "meanQuality": 0.5042448362784292,
+        "meanReferenceQuality": 0.5042448362784292,
+        "meanSeconds": 0.5578334663994611,
+        "meanUsableGoodArea": 688.8,
+        "meanUsableGoodFraction": 0.1674685017237457
+      }
+    }
+  },
+  "untrainedValidation": {
+    "overall": {
+      "bestQuality": 0.639900741557236,
+      "bestSeed": 9002,
+      "count": 5,
+      "farSuccessRate": 1.0,
+      "meanCoreCount": 4.0,
+      "meanCoreCoverage": 0.8715323061790348,
+      "meanDiffuseSky": 0.062011923640966415,
+      "meanDirectSun": 0.61844402551651,
+      "meanQuality": 0.5675011246367879,
+      "meanReferenceQuality": 0.5675011246367879,
+      "meanSeconds": 0.41388485839997885,
+      "meanUsableGoodArea": 1051.6,
+      "meanUsableGoodFraction": 0.15350383642008625
+    },
+    "perSite": {
+      "m_hk_0199": {
+        "bestQuality": 0.639900741557236,
+        "bestSeed": 9002,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 4.0,
+        "meanCoreCoverage": 0.8715323061790348,
+        "meanDiffuseSky": 0.062011923640966415,
+        "meanDirectSun": 0.61844402551651,
+        "meanQuality": 0.5675011246367879,
+        "meanReferenceQuality": 0.5675011246367879,
+        "meanSeconds": 0.41388485839997885,
+        "meanUsableGoodArea": 1051.6,
+        "meanUsableGoodFraction": 0.15350383642008625
+      }
+    }
+  },
+  "validation": {
+    "overall": {
+      "bestQuality": 0.9004313406021679,
+      "bestSeed": 9005,
+      "count": 5,
+      "farSuccessRate": 1.0,
+      "meanCoreCount": 4.2,
+      "meanCoreCoverage": 0.8660591410038881,
+      "meanDiffuseSky": 0.12535067051649093,
+      "meanDirectSun": 0.6446638941764832,
+      "meanQuality": 0.772930618510533,
+      "meanReferenceQuality": 0.772930618510533,
+      "meanSeconds": 0.5519874746009009,
+      "meanUsableGoodArea": 3163.0,
+      "meanUsableGoodFraction": 0.453799904105448
+    },
+    "perSite": {
+      "m_hk_0199": {
+        "bestQuality": 0.9004313406021679,
+        "bestSeed": 9005,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanCoreCount": 4.2,
+        "meanCoreCoverage": 0.8660591410038881,
+        "meanDiffuseSky": 0.12535067051649093,
+        "meanDirectSun": 0.6446638941764832,
+        "meanQuality": 0.772930618510533,
+        "meanReferenceQuality": 0.772930618510533,
+        "meanSeconds": 0.5519874746009009,
+        "meanUsableGoodArea": 3163.0,
+        "meanUsableGoodFraction": 0.453799904105448
+      }
+    }
+  }
+}

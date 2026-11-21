@@ -1,7 +1,8 @@
 # Results and evidence
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
-New verification: [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
+- **1,200-episode multi-site run (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`):** [1,200-ep summary](real-aux-1200ep-mps-2026-11-21.json) (`configs/research-real-aux-1200ep.json`; 10 balanced XS–XL sites, zero-shot held-out eval on HK + NYC/Paris, matched decoding `1.0/1.0`, full `1200`-episode traces aggregated in 30-ep bins).
+- **Pipeline & compact-core verification:** [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
 [compact cores](core-layout-v2-check-2026-11-20.json). Historical raw files are
 preserved and [indexed by hash](historical-experiment-index-2026-11-20.json);
 their older reward/core semantics must not be conflated with current experiments.
