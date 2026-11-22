@@ -20,8 +20,8 @@ jobs:
         run: |
           node --check public/app.js public/viewer.js public/devox-viewer.js public/viewer-data.js public/voxel-contours.js public/context-trees.js
           node --test tests/*.test.mjs
-      - name: New research code static checks
-        run: uv run --frozen --extra dev ruff check voxelform/core_plans.py voxelform/experiment.py voxelform/objectives.py voxelform/layout_archive.py tools/research.py tools/render_core_plans.py tools/generate_readme_media.py tests/test_core_plans.py tests/test_experiment.py
+      - name: Repo-wide Python static checks
+        run: uv run --frozen --extra dev ruff check .
       - name: Headless pipeline smoke test (no Module Lab data or UI)
         run: uv run --frozen --extra dev vf-research train --config configs/research-smoke.json --output runs/ci-smoke
       - uses: actions/upload-artifact@v4

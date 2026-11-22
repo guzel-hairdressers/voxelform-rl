@@ -32,78 +32,110 @@ class CoreTests(unittest.TestCase):
         self.assertIsNone(template_for_height(61))
         # Metric zones exactly cover the enclosure; grid rounding is explicit.
         for tmpl in CORE_TEMPLATES:
-            plan=tmpl.metric_plan
-            self.assertGreaterEqual(tmpl.width,plan['metricWidth'])
-            self.assertGreaterEqual(tmpl.length,plan['metricLength'])
-            self.assertAlmostEqual(sum(z['w']*z['h'] for z in tmpl.zones),plan['metricArea'],places=4)
-            self.assertEqual(sum(z['type']=='lift' for z in tmpl.zones),plan['liftCount'])
-            self.assertEqual(sum(c['type']=='landing' for c in plan['components']),2*plan['stairCount'])
-            self.assertEqual(sum(c['type']=='flight' for c in plan['components']),2*plan['stairCount'])
-            for i,a in enumerate(tmpl.zones):
-                for b in tmpl.zones[i+1:]:
-                    overlap=max(0,min(a['x']+a['w'],b['x']+b['w'])-max(a['x'],b['x']))*max(0,min(a['y']+a['h'],b['y']+b['h'])-max(a['y'],b['y']))
-                    self.assertLess(overlap,1e-8)
-        self.assertEqual(CORE_TEMPLATES[0].metric_plan['liftCount'],0)
-        self.assertLess(CORE_TEMPLATES[1].area,36)
+            plan = tmpl.metric_plan
+            self.assertGreaterEqual(tmpl.width, plan["metricWidth"])
+            self.assertGreaterEqual(tmpl.length, plan["metricLength"])
+            self.assertAlmostEqual(
+                sum(z["w"] * z["h"] for z in tmpl.zones), plan["metricArea"], places=4
+            )
+            self.assertEqual(
+                sum(z["type"] == "lift" for z in tmpl.zones), plan["liftCount"]
+            )
+            self.assertEqual(
+                sum(c["type"] == "landing" for c in plan["components"]),
+                2 * plan["stairCount"],
+            )
+            self.assertEqual(
+                sum(c["type"] == "flight" for c in plan["components"]),
+                2 * plan["stairCount"],
+            )
+            for i, a in enumerate(tmpl.zones):
+                for b in tmpl.zones[i + 1 :]:
+                    overlap = max(
+                        0, min(a["x"] + a["w"], b["x"] + b["w"]) - max(a["x"], b["x"])
+                    ) * max(
+                        0, min(a["y"] + a["h"], b["y"] + b["h"]) - max(a["y"], b["y"])
+                    )
+                    self.assertLess(overlap, 1e-8)
+        self.assertEqual(CORE_TEMPLATES[0].metric_plan["liftCount"], 0)
+        self.assertLess(CORE_TEMPLATES[1].area, 36)
 
     def test_scissor_layout_used_across_both_height_bands(self):
-        for floors, tier in ((19, 'T4'), (30, 'T4'), (31, 'T5'), (60, 'T5')):
+        for floors, tier in ((19, "T4"), (30, "T4"), (31, "T5"), (60, "T5")):
             with self.subTest(floors=floors):
                 occupied = torch.zeros((floors, 16, 16), dtype=torch.bool)
                 occupied[:, 1:15, 1:15] = True
                 result = solve_cores(occupied, min_core_spacing=10, max_core_dist=12)
                 self.assertEqual(len(result.cores), 1)
                 core = result.cores[0]
-                self.assertEqual((core.tier, core.floors, core.footprint_area), (tier, floors, 63))
+                self.assertEqual(
+                    (core.tier, core.floors, core.footprint_area), (tier, floors, 63)
+                )
                 self.assertEqual(sorted((core.size_x, core.size_y)), [7, 9])
                 self.assertEqual(int(result.core_mask.sum()), floors * 63)
                 metadata = core.to_dict()
-                self.assertEqual(metadata['stairLayout'], 'scissor')
-                self.assertEqual(metadata['liftCount'], 4)
-                self.assertEqual(metadata['layoutVersion'], 'compact-core.v5')
+                self.assertEqual(metadata["stairLayout"], "scissor")
+                self.assertEqual(metadata["liftCount"], 4)
+                self.assertEqual(metadata["layoutVersion"], "compact-core.v5")
 
     def test_active_environment_and_actor_use_four_lift_scissor_core(self):
-        cfg=PatchConfig(eligibility='depth',facade_layers=2)
-        env=Environment((40,16,16),sun_count=2,device='cpu',cores_enabled=True,
-            frontier_factory=functools.partial(PatchFacades,config=cfg,depth_device='cpu'))
-        env.organic_3d_growth=True
-        learner=UnifiedLearner('cpu',123,cfg,organic_3d=True,net_guided=True)
+        cfg = PatchConfig(eligibility="depth", facade_layers=2)
+        env = Environment(
+            (40, 16, 16),
+            sun_count=2,
+            device="cpu",
+            cores_enabled=True,
+            frontier_factory=functools.partial(
+                PatchFacades, config=cfg, depth_device="cpu"
+            ),
+        )
+        env.organic_3d_growth = True
+        learner = UnifiedLearner("cpu", 123, cfg, organic_3d=True, net_guided=True)
         self.assertTrue(env.cores)
-        self.assertTrue(all(c.tier=='T5' and c.to_dict()['liftCount']==4 for c in env.cores))
-        obs=learner.observation(env)
-        self.assertEqual(obs.shape[1],14)
-        torch.testing.assert_close(obs[:,12],env.core_mask[:obs.shape[0]].float())
-        torch.testing.assert_close(obs[:,13],env.core_dist_badness[:obs.shape[0]])
-        self.assertEqual(env.metrics()['coreVoxels'],len(env.cores)*40*63)
+        self.assertTrue(
+            all(c.tier == "T5" and c.to_dict()["liftCount"] == 4 for c in env.cores)
+        )
+        obs = learner.observation(env)
+        self.assertEqual(obs.shape[1], 14)
+        torch.testing.assert_close(obs[:, 12], env.core_mask[: obs.shape[0]].float())
+        torch.testing.assert_close(obs[:, 13], env.core_dist_badness[: obs.shape[0]])
+        self.assertEqual(env.metrics()["coreVoxels"], len(env.cores) * 40 * 63)
 
     def test_daylight_metrics_exclude_core_faces_from_both_sides_of_average(self):
         shape = (1, 1, 2)
         lateral = torch.zeros((4, *shape), dtype=torch.bool)
         lateral[0] = True
         facade_light = torch.zeros((4, *shape))
-        facade_light[0, 0, 0] = torch.tensor([.2, .8])
+        facade_light[0, 0, 0] = torch.tensor([0.2, 0.8])
         audit = SimpleNamespace(
-            suns=torch.tensor([[1., 0., 0.]]),
+            suns=torch.tensor([[1.0, 0.0, 0.0]]),
             visible=torch.tensor([[False, True]]),
-            receiver_data=(None, None, torch.tensor([[1., 0., 0.]] * 2),
-                           torch.tensor([0, 1]), torch.tensor([0, 0])),
+            receiver_data=(
+                None,
+                None,
+                torch.tensor([[1.0, 0.0, 0.0]] * 2),
+                torch.tensor([0, 1]),
+                torch.tensor([0, 0]),
+            ),
             facade_light_faces=facade_light,
         )
         core = torch.tensor([[[True, False]]])
         torch.testing.assert_close(
             torch.stack(Environment.daylight_proxies(audit, None, lateral)),
-            torch.tensor([.5, .5]),
+            torch.tensor([0.5, 0.5]),
         )
         torch.testing.assert_close(
             torch.stack(Environment.daylight_proxies(audit, core, lateral)),
-            torch.tensor([1., .8]),
+            torch.tensor([1.0, 0.8]),
         )
         torch.testing.assert_close(
             torch.stack(Environment.daylight_proxies(audit, ~core, lateral)),
-            torch.tensor([0., .2]),
+            torch.tensor([0.0, 0.2]),
         )
         torch.testing.assert_close(
-            torch.stack(Environment.daylight_proxies(audit, torch.ones_like(core), lateral)),
+            torch.stack(
+                Environment.daylight_proxies(audit, torch.ones_like(core), lateral)
+            ),
             torch.zeros(2),
         )
 
@@ -114,18 +146,25 @@ class CoreTests(unittest.TestCase):
         core_mask = torch.zeros_like(occupied)
         core_mask[0, 0, 1] = True
         env = SimpleNamespace(
-            occupied=occupied, core_mask=core_mask, cores_enabled=True, max_core_dist=12,
-            core_distance=torch.zeros(shape), core_dist_badness=torch.zeros(shape),
-            external_potential=torch.zeros(shape), facade_light=torch.zeros(shape),
-            light=torch.zeros(shape), usable=occupied, depth_badness=torch.zeros(shape),
+            occupied=occupied,
+            core_mask=core_mask,
+            cores_enabled=True,
+            max_core_dist=12,
+            core_distance=torch.zeros(shape),
+            core_dist_badness=torch.zeros(shape),
+            external_potential=torch.zeros(shape),
+            facade_light=torch.zeros(shape),
+            light=torch.zeros(shape),
+            usable=occupied,
+            depth_badness=torch.zeros(shape),
         )
         args = (occupied, ~occupied, torch.zeros(shape), (0, 1), (1, 1, 1), (1, 1, 1))
         before = compute_spatial_desirability(env, *args)
-        env.external_potential[:, 0, 1] = 1.
-        env.facade_light[0, 0, 1] = 1.
-        env.light[1, 0, 1] = 1.
+        env.external_potential[:, 0, 1] = 1.0
+        env.facade_light[0, 0, 1] = 1.0
+        env.light[1, 0, 1] = 1.0
         torch.testing.assert_close(compute_spatial_desirability(env, *args), before)
-        env.external_potential[:, 0, 0] = 1.
+        env.external_potential[:, 0, 0] = 1.0
         self.assertFalse(torch.equal(compute_spatial_desirability(env, *args), before))
 
     def test_tall_tower_cannot_cheat_with_low_rise_core(self):
@@ -134,7 +173,9 @@ class CoreTests(unittest.TestCase):
         narrow[:12, 2:7, 2:8] = True
         res_narrow = solve_cores(narrow, min_core_spacing=10, max_core_dist=12)
         self.assertEqual(len(res_narrow.cores), 0)
-        self.assertAlmostEqual(res_narrow.metrics["coreUnreachableFraction"], 1.0, places=5)
+        self.assertAlmostEqual(
+            res_narrow.metrics["coreUnreachableFraction"], 1.0, places=5
+        )
 
         # 12F tower 12x12 fits a T3 (7x5x12F) core cleanly with surrounding floorplate attachment
         tower = torch.zeros((14, 16, 16), dtype=torch.bool)
@@ -145,7 +186,9 @@ class CoreTests(unittest.TestCase):
         self.assertEqual(c.tier, "T3")
         self.assertEqual(sorted((c.size_y, c.size_x)), [5, 7])
         self.assertEqual(c.floors, 12)
-        self.assertAlmostEqual(res_tower.metrics["coreUncoveredFraction"], 0.0, places=5)
+        self.assertAlmostEqual(
+            res_tower.metrics["coreUncoveredFraction"], 0.0, places=5
+        )
 
     def test_grounded_shaft_cantilever_reach_and_attachment(self):
         # Floating overhang without z=0 cannot hold a core; core sits on grounded wing and serves bridge
@@ -157,7 +200,9 @@ class CoreTests(unittest.TestCase):
         c = res.cores[0]
         self.assertEqual(c.tier, "T1")
         self.assertLessEqual(c.x0 + c.size_x, 9)
-        self.assertTrue(bool(occ[0, c.y0 : c.y0 + c.size_y, c.x0 : c.x0 + c.size_x].all()))
+        self.assertTrue(
+            bool(occ[0, c.y0 : c.y0 + c.size_y, c.x0 : c.x0 + c.size_x].all())
+        )
         # Floors 2..3 reach out onto the cantilever bridge (finite distance)
         self.assertTrue(bool((res.core_distance[2:4, 3:7, 9:17] < 20.0).all()))
 
@@ -176,7 +221,9 @@ class CoreTests(unittest.TestCase):
             self.assertEqual(c.tier, "T2")
         for i in range(len(res.cores)):
             for j in range(i + 1, len(res.cores)):
-                self.assertGreaterEqual(core_edge_gap(res.cores[i], res.cores[j]), 10.0 - 1e-6)
+                self.assertGreaterEqual(
+                    core_edge_gap(res.cores[i], res.cores[j]), 10.0 - 1e-6
+                )
         self.assertLess(res.metrics["coreUncoveredFraction"], 0.10)
 
         # Very strict spacing allows only 1 core
@@ -204,17 +251,46 @@ class CoreTests(unittest.TestCase):
         self.assertLess(float(bad[0, 5, 5].item()), float(bad[0, 11, 13].item()))
 
     def test_environment_and_14ch_observation_integration(self):
-        cfg = PatchConfig(mode="combined", allocation="feedback", eligibility="depth", facade_layers=2, minimum_patch=4, maximum_patches=4)
-        env_off = Environment((6, 16, 18), sun_count=4, device="cpu", far_tolerance=0.1, frontier_factory=functools.partial(PatchFacades, config=cfg, depth_device="cpu"), cores_enabled=False)
+        cfg = PatchConfig(
+            mode="combined",
+            allocation="feedback",
+            eligibility="depth",
+            facade_layers=2,
+            minimum_patch=4,
+            maximum_patches=4,
+        )
+        env_off = Environment(
+            (6, 16, 18),
+            sun_count=4,
+            device="cpu",
+            far_tolerance=0.1,
+            frontier_factory=functools.partial(
+                PatchFacades, config=cfg, depth_device="cpu"
+            ),
+            cores_enabled=False,
+        )
         env_off.precompute_external()
         env_off.organic_3d_growth = True
-        learner = UnifiedLearner("cpu", 123, cfg, amount_feedback=True, net_guided=True, organic_3d=True)
+        learner = UnifiedLearner(
+            "cpu", 123, cfg, amount_feedback=True, net_guided=True, organic_3d=True
+        )
         obs_off = learner.observation(env_off)
         self.assertEqual(obs_off.shape[1], 14)
         self.assertEqual(float(obs_off[:, 12:14].abs().sum().item()), 0.0)
         self.assertEqual(env_off.metrics()["coreCount"], 0)
 
-        env_on = Environment((6, 16, 24), sun_count=4, device="cpu", far_tolerance=0.1, frontier_factory=functools.partial(PatchFacades, config=cfg, depth_device="cpu"), cores_enabled=True, min_core_spacing=10, max_core_dist=12)
+        env_on = Environment(
+            (6, 16, 24),
+            sun_count=4,
+            device="cpu",
+            far_tolerance=0.1,
+            frontier_factory=functools.partial(
+                PatchFacades, config=cfg, depth_device="cpu"
+            ),
+            cores_enabled=True,
+            min_core_spacing=10,
+            max_core_dist=12,
+        )
         env_on.precompute_external()
         env_on.organic_3d_growth = True
         m_on = env_on.metrics()

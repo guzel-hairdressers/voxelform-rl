@@ -2,20 +2,27 @@
 
 Occupancy, FAR and training metrics always remain voxel-based.
 """
+
 import hashlib, heapq, math, threading, time
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from shapely import Polygon, constrained_delaunay_triangles
-from shapely.geometry import LineString, MultiPolygon, box
+from shapely.geometry import LineString, box
 from shapely.ops import unary_union
 
 _DEVOX_CACHE: dict[tuple, dict] = {}
 _DEVOX_LOCK = threading.Lock()
 
 
-def _collapse_collinear(coords: list[tuple[float, float]], eps: float = 1e-6) -> list[tuple[float, float]]:
+def _collapse_collinear(
+    coords: list[tuple[float, float]], eps: float = 1e-6
+) -> list[tuple[float, float]]:
     """Remove redundant collinear vertices from a closed 2D ring."""
-    pts = list(coords[:-1]) if len(coords) > 1 and np.allclose(coords[0], coords[-1]) else list(coords)
+    pts = (
+        list(coords[:-1])
+        if len(coords) > 1 and np.allclose(coords[0], coords[-1])
+        else list(coords)
+    )
     if len(pts) < 3:
         return pts
     out = []
@@ -34,7 +41,9 @@ def _collapse_collinear(coords: list[tuple[float, float]], eps: float = 1e-6) ->
     return out if len(out) >= 3 else pts
 
 
-def _fit_line_2d(points: np.ndarray, snap_deg: float = 4.5) -> tuple[float, float, float]:
+def _fit_line_2d(
+    points: np.ndarray, snap_deg: float = 4.5
+) -> tuple[float, float, float]:
     """Fit unit-normal 2D line (nx, ny, d) with right-hand outward orientation."""
     p0, p1 = points[0], points[-1]
     base_dir = p1 - p0
@@ -62,7 +71,11 @@ def _fit_line_2d(points: np.ndarray, snap_deg: float = 4.5) -> tuple[float, floa
     return nx, ny, d
 
 
-def _intersect_lines(l0: tuple[float, float, float], l1: tuple[float, float, float], fallback: tuple[float, float]) -> tuple[float, float]:
+def _intersect_lines(
+    l0: tuple[float, float, float],
+    l1: tuple[float, float, float],
+    fallback: tuple[float, float],
+) -> tuple[float, float]:
     """Intersect two 2D lines (nx, ny, d)."""
     nx0, ny0, d0 = l0
     nx1, ny1, d1 = l1
@@ -83,7 +96,10 @@ def _regularize_ring(coords: list[tuple[float, float]]) -> list[tuple[float, flo
     if n < 4:
         return pts
 
-    lengths = [math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1]) for i in range(n)]
+    lengths = [
+        math.hypot(pts[(i + 1) % n][0] - pts[i][0], pts[(i + 1) % n][1] - pts[i][1])
+        for i in range(n)
+    ]
     is_anchor = []
     for i in range(n):
         L = lengths[i]
@@ -102,7 +118,9 @@ def _regularize_ring(coords: list[tuple[float, float]]) -> list[tuple[float, flo
         return sc if len(sc) >= 3 else pts
 
     ordered_edges = [(start_idx + k) % n for k in range(n)]
-    lines_with_pts: list[tuple[tuple[float, float, float], tuple[float, float], tuple[float, float]]] = []
+    lines_with_pts: list[
+        tuple[tuple[float, float, float], tuple[float, float], tuple[float, float]]
+    ] = []
     k = 0
     while k < n:
         ei = ordered_edges[k]
@@ -122,15 +140,19 @@ def _regularize_ring(coords: list[tuple[float, float]]) -> list[tuple[float, flo
 
         if len(chain_pts) <= 2:
             arr = np.array(chain_pts, dtype=np.float64)
-            lines_with_pts.append((_fit_line_2d(arr, snap_deg=4.5), chain_pts[0], chain_pts[-1]))
+            lines_with_pts.append(
+                (_fit_line_2d(arr, snap_deg=4.5), chain_pts[0], chain_pts[-1])
+            )
         else:
             # Midpoint staircase smoothing + RDP breakpoint splitting
             mids = [chain_pts[0]]
             for j in range(1, len(chain_pts) - 1):
-                mids.append((
-                    0.5 * (chain_pts[j][0] + chain_pts[j + 1][0]),
-                    0.5 * (chain_pts[j][1] + chain_pts[j + 1][1]),
-                ))
+                mids.append(
+                    (
+                        0.5 * (chain_pts[j][0] + chain_pts[j + 1][0]),
+                        0.5 * (chain_pts[j][1] + chain_pts[j + 1][1]),
+                    )
+                )
             mids.append(chain_pts[-1])
             simp = list(LineString(mids).simplify(0.85).coords)
             # Split chain vertices at simplified corner indices
@@ -143,7 +165,7 @@ def _regularize_ring(coords: list[tuple[float, float]]) -> list[tuple[float, flo
             split_idx.append(len(chain_pts) - 1)
             for si in range(len(split_idx) - 1):
                 a_i, b_i = split_idx[si], split_idx[si + 1]
-                sub = np.array(chain_pts[a_i:b_i + 1], dtype=np.float64)
+                sub = np.array(chain_pts[a_i : b_i + 1], dtype=np.float64)
                 if len(sub) >= 3:
                     # Drop the extreme corners when they belong to orthogonal anchor turns
                     core = sub[1:-1] if len(sub) >= 4 else sub
@@ -165,7 +187,11 @@ def _regularize_ring(coords: list[tuple[float, float]]) -> list[tuple[float, flo
 
 def _ensure_ccw(coords: list[tuple[float, float]]) -> list[tuple[float, float]]:
     """Return closed/open 2D ring ordered strictly counter-clockwise (positive signed area)."""
-    pts = list(coords[:-1]) if len(coords) > 1 and np.allclose(coords[0], coords[-1]) else list(coords)
+    pts = (
+        list(coords[:-1])
+        if len(coords) > 1 and np.allclose(coords[0], coords[-1])
+        else list(coords)
+    )
     if len(pts) < 3:
         return pts
     area2 = 0.0
@@ -183,7 +209,11 @@ def _regularize_polygon(raw_geom) -> list[Polygon]:
     """Convert raw Shapely union geometry into cleaned list of strictly CCW-exterior Polygons."""
     if raw_geom is None or raw_geom.is_empty:
         return []
-    polys = [raw_geom] if raw_geom.geom_type == 'Polygon' else [g for g in raw_geom.geoms if g.geom_type == 'Polygon']
+    polys = (
+        [raw_geom]
+        if raw_geom.geom_type == "Polygon"
+        else [g for g in raw_geom.geoms if g.geom_type == "Polygon"]
+    )
     out = []
     for poly in polys:
         if poly.area < 0.5:
@@ -199,16 +229,18 @@ def _regularize_polygon(raw_geom) -> list[Polygon]:
             cand = cand.buffer(0)
         if cand.is_empty:
             out.append(poly)
-        elif cand.geom_type == 'Polygon':
+        elif cand.geom_type == "Polygon":
             out.append(cand)
         else:
             for g in cand.geoms:
-                if g.geom_type == 'Polygon' and g.area >= 0.5:
+                if g.geom_type == "Polygon" and g.area >= 0.5:
                     out.append(g)
     return out
 
 
-def _align_vertical_support_planes(floor_polys: list, tol_d: float = 0.35, cos_tol: float = 0.996) -> list:
+def _align_vertical_support_planes(
+    floor_polys: list, tol_d: float = 0.35, cos_tol: float = 0.996
+) -> list:
     """Snap near-coplanar walls across storeys so shared facades sit on exact common planes."""
     # Only operate cleanly when each non-empty floor is a single simple Polygon with exterior ring
     edge_records = []
@@ -252,9 +284,9 @@ def _align_vertical_support_planes(floor_polys: list, tol_d: float = 0.35, cos_t
                 if used[j]:
                     continue
                 if any(
-                    abs(cand['z'] - c['z']) <= 2
-                    and (cand['nx'] * c['nx'] + cand['ny'] * c['ny']) >= cos_tol
-                    and abs(cand['d'] - c['d']) <= tol_d
+                    abs(cand["z"] - c["z"]) <= 2
+                    and (cand["nx"] * c["nx"] + cand["ny"] * c["ny"]) >= cos_tol
+                    and abs(cand["d"] - c["d"]) <= tol_d
                     for c in cluster
                 ):
                     used[j] = True
@@ -262,16 +294,16 @@ def _align_vertical_support_planes(floor_polys: list, tol_d: float = 0.35, cos_t
                     changed = True
 
         # Choose longest/median support plane within cluster
-        best = max(cluster, key=lambda c: c['length'])
-        nx_c, ny_c = best['nx'], best['ny']
+        best = max(cluster, key=lambda c: c["length"])
+        nx_c, ny_c = best["nx"], best["ny"]
         if len(cluster) >= 2:
-            ds = sorted(c['d'] for c in cluster)
+            ds = sorted(c["d"] for c in cluster)
             # Prefer exact half/integer grid plane if close to longest anchor wall
-            d_rep = best['d'] if best['length'] >= 3.0 else ds[len(ds) // 2]
+            d_rep = best["d"] if best["length"] >= 3.0 else ds[len(ds) // 2]
         else:
-            d_rep = best['d']
+            d_rep = best["d"]
         for c in cluster:
-            snapped_lines[(c['z'], c['ei'])] = (nx_c, ny_c, d_rep)
+            snapped_lines[(c["z"], c["ei"])] = (nx_c, ny_c, d_rep)
 
     aligned = list(floor_polys)
     for z, pts in rings_by_z.items():
@@ -286,12 +318,18 @@ def _align_vertical_support_planes(floor_polys: list, tol_d: float = 0.35, cos_t
                 L = math.hypot(dx, dy) or 1.0
                 nx, ny = dy / L, -dx / L
                 lines.append((nx, ny, nx * p0[0] + ny * p0[1]))
-        new_pts = [_intersect_lines(lines[(i - 1) % m], lines[i], pts[i]) for i in range(m)]
+        new_pts = [
+            _intersect_lines(lines[(i - 1) % m], lines[i], pts[i]) for i in range(m)
+        ]
         cand = Polygon(new_pts, holes_by_z[z])
         if not cand.is_valid:
             cand = cand.buffer(0)
         orig_area = floor_polys[z][0].area
-        if not cand.is_empty and cand.geom_type == 'Polygon' and abs(cand.area - orig_area) <= max(2.0, 0.08 * orig_area):
+        if (
+            not cand.is_empty
+            and cand.geom_type == "Polygon"
+            and abs(cand.area - orig_area) <= max(2.0, 0.08 * orig_area)
+        ):
             aligned[z] = [cand]
     return aligned
 
@@ -300,7 +338,11 @@ def _triangulate_cap(geom, z_val: float, upward: bool, add_tri_fn) -> None:
     """Triangulate any 2D Shapely Polygon/MultiPolygon cleanly via constrained Delaunay."""
     if geom is None or geom.is_empty:
         return
-    polys = [geom] if geom.geom_type == 'Polygon' else [g for g in geom.geoms if g.geom_type == 'Polygon']
+    polys = (
+        [geom]
+        if geom.geom_type == "Polygon"
+        else [g for g in geom.geoms if g.geom_type == "Polygon"]
+    )
     for poly in polys:
         if poly.area < 1e-4:
             continue
@@ -332,33 +374,65 @@ def _conform_edges(verts, faces):
     added to training; this runs only for the final display reconstruction.
     """
     from collections import Counter
-    v=np.asarray(verts,dtype=np.float64);f=np.asarray(faces,dtype=np.int32)
-    edges=Counter(tuple(sorted((int(u),int(w)))) for face in f for u,w in zip(face,np.roll(face,-1)))
-    splits={}
-    for (u,w),n in edges.items():
-        if n==2:continue
-        delta=v[w]-v[u];length2=float(delta@delta)
-        if length2<1e-12:continue
-        t=((v-v[u])@delta)/length2
-        near=np.linalg.norm(v-(v[u]+t[:,None]*delta),axis=1)<1e-4
-        ids=np.flatnonzero(near&(t>1e-6)&(t<1-1e-6))
-        if len(ids):splits[u,w]=ids[np.argsort(t[ids])].tolist()
-    newv=v.tolist();newf=[]
+
+    v = np.asarray(verts, dtype=np.float64)
+    f = np.asarray(faces, dtype=np.int32)
+    edges = Counter(
+        tuple(sorted((int(u), int(w))))
+        for face in f
+        for u, w in zip(face, np.roll(face, -1))
+    )
+    splits = {}
+    for (u, w), n in edges.items():
+        if n == 2:
+            continue
+        delta = v[w] - v[u]
+        length2 = float(delta @ delta)
+        if length2 < 1e-12:
+            continue
+        t = ((v - v[u]) @ delta) / length2
+        near = np.linalg.norm(v - (v[u] + t[:, None] * delta), axis=1) < 1e-4
+        ids = np.flatnonzero(near & (t > 1e-6) & (t < 1 - 1e-6))
+        if len(ids):
+            splits[u, w] = ids[np.argsort(t[ids])].tolist()
+    newv = v.tolist()
+    newf = []
     for face in f:
-        boundary=[]
-        for u,w in zip(face,np.roll(face,-1)):
-            boundary.append(int(u));key=tuple(sorted((int(u),int(w))))
-            ids=splits.get(key,[]);boundary.extend(ids if u<w else ids[::-1])
-        if len(boundary)==3:newf.append(face.tolist());continue
-        center=len(newv);newv.append(v[face].mean(0).tolist())
-        for u,w in zip(boundary,boundary[1:]+boundary[:1]):newf.append([u,w,center])
-    return np.asarray(newv),np.asarray(newf,dtype=np.int32)
+        boundary = []
+        for u, w in zip(face, np.roll(face, -1)):
+            boundary.append(int(u))
+            key = tuple(sorted((int(u), int(w))))
+            ids = splits.get(key, [])
+            boundary.extend(ids if u < w else ids[::-1])
+        if len(boundary) == 3:
+            newf.append(face.tolist())
+            continue
+        center = len(newv)
+        newv.append(v[face].mean(0).tolist())
+        for u, w in zip(boundary, boundary[1:] + boundary[:1]):
+            newf.append([u, w, center])
+    return np.asarray(newv), np.asarray(newf, dtype=np.int32)
 
 
-def _finalize_mesh(verts: list[tuple[float, float, float]], faces: list[list[int]], crease_deg: float, non_flat: bool, method: str, start_time: float) -> dict:
+def _finalize_mesh(
+    verts: list[tuple[float, float, float]],
+    faces: list[list[int]],
+    crease_deg: float,
+    non_flat: bool,
+    method: str,
+    start_time: float,
+) -> dict:
     """Compute crease edges, clean topology, and package grid-unit mesh JSON."""
     if not faces:
-        return dict(vertices=[], faces=[], creases=[], nonFlat=non_flat, stats=dict(method=method, vertices=0, triangles=0, volume_m3=0.0, elapsed_ms=0.0))
+        return dict(
+            vertices=[],
+            faces=[],
+            creases=[],
+            nonFlat=non_flat,
+            stats=dict(
+                method=method, vertices=0, triangles=0, volume_m3=0.0, elapsed_ms=0.0
+            ),
+        )
 
     v_arr, f_arr = _conform_edges(verts, faces)
 
@@ -369,12 +443,21 @@ def _finalize_mesh(verts: list[tuple[float, float, float]], faces: list[list[int
     e2 = p2 - p0
     fn = np.cross(e1, e2)
     lens = np.linalg.norm(fn, axis=1, keepdims=True)
-    valid = (lens[:, 0] > 1e-8)
+    valid = lens[:, 0] > 1e-8
     f_arr = f_arr[valid]
     fn = fn[valid] / lens[valid]
 
     # Signed volume in world m³ (x: 1m, y: 1m, z_floor: 3m -> *3.0)
-    vol_grid = float(np.sum(np.einsum('ij,ij->i', v_arr[f_arr[:, 0]], np.cross(v_arr[f_arr[:, 1]], v_arr[f_arr[:, 2]]))) / 6.0)
+    vol_grid = float(
+        np.sum(
+            np.einsum(
+                "ij,ij->i",
+                v_arr[f_arr[:, 0]],
+                np.cross(v_arr[f_arr[:, 1]], v_arr[f_arr[:, 2]]),
+            )
+        )
+        / 6.0
+    )
     vol_m3 = round(abs(vol_grid) * 3.0, 1)
 
     cos_thr = math.cos(math.radians(crease_deg))
@@ -405,8 +488,8 @@ def _finalize_mesh(verts: list[tuple[float, float, float]], faces: list[list[int
             triangles=int(len(f_arr)),
             creaseEdges=int(len(creases)),
             volume_m3=vol_m3,
-            boundaryEdges=sum(len(adj)==1 for adj in edge_map.values()),
-            nonmanifoldEdges=sum(len(adj)>2 for adj in edge_map.values()),
+            boundaryEdges=sum(len(adj) == 1 for adj in edge_map.values()),
+            nonmanifoldEdges=sum(len(adj) > 2 for adj in edge_map.values()),
             elapsed_ms=elapsed_ms,
         ),
     )
@@ -421,19 +504,25 @@ def _extract_floor_polygons(occ_np: np.ndarray) -> list[list[Polygon]]:
         if len(pts) == 0:
             raw_by_z.append([])
             continue
-        raw_geom = unary_union([box(float(x), float(y), float(x + 1), float(y + 1)) for y, x in pts])
+        raw_geom = unary_union(
+            [box(float(x), float(y), float(x + 1), float(y + 1)) for y, x in pts]
+        )
         raw_by_z.append(_regularize_polygon(raw_geom))
     return _align_vertical_support_planes(raw_by_z)
 
 
-def _match_loft_pair(pts_a: list[tuple[float, float]], pts_b: list[tuple[float, float]], max_shift: float = 2.6) -> list[tuple[float, float]] | None:
+def _match_loft_pair(
+    pts_a: list[tuple[float, float]],
+    pts_b: list[tuple[float, float]],
+    max_shift: float = 2.6,
+) -> list[tuple[float, float]] | None:
     """Align same-count CCW vertex rings between consecutive floors if drift is gradual."""
     n = len(pts_a)
     if len(pts_b) != n or n < 3:
         return None
     best_shift = None
-    best_rms = float('inf')
-    best_max = float('inf')
+    best_rms = float("inf")
+    best_max = float("inf")
     for shift in range(n):
         sq = 0.0
         mx = 0.0
@@ -454,7 +543,9 @@ def _match_loft_pair(pts_a: list[tuple[float, float]], pts_b: list[tuple[float, 
     return [pts_b[(i + best_shift) % n] for i in range(n)]
 
 
-def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: float) -> dict:
+def _build_live_25d(
+    occ_np: np.ndarray, loft_slopes: bool, method: str, t0: float
+) -> dict:
     """2.5D display shell; topology diagnostics are reported with the mesh."""
     nz = occ_np.shape[0]
     floor_polys = _extract_floor_polygons(occ_np)
@@ -479,9 +570,19 @@ def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: floa
 
     def emit_ring_quad(p0, p1, z0, q0, q1, z1, is_hole: bool):
         if is_hole:
-            a, b, c, d = (p1[0], p1[1], z0), (p0[0], p0[1], z0), (q0[0], q0[1], z1), (q1[0], q1[1], z1)
+            a, b, c, d = (
+                (p1[0], p1[1], z0),
+                (p0[0], p0[1], z0),
+                (q0[0], q0[1], z1),
+                (q1[0], q1[1], z1),
+            )
         else:
-            a, b, c, d = (p0[0], p0[1], z0), (p1[0], p1[1], z0), (q1[0], q1[1], z1), (q0[0], q0[1], z1)
+            a, b, c, d = (
+                (p0[0], p0[1], z0),
+                (p1[0], p1[1], z0),
+                (q1[0], q1[1], z1),
+                (q0[0], q0[1], z1),
+            )
         add_tri(a, b, c)
         add_tri(a, c, d)
 
@@ -489,7 +590,15 @@ def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: floa
         pts = _ensure_ccw(_collapse_collinear(list(ring_pts)))
         m = len(pts)
         for i in range(m):
-            emit_ring_quad(pts[i], pts[(i + 1) % m], z_bot, pts[i], pts[(i + 1) % m], z_top, is_hole)
+            emit_ring_quad(
+                pts[i],
+                pts[(i + 1) % m],
+                z_bot,
+                pts[i],
+                pts[(i + 1) % m],
+                z_top,
+                is_hole,
+            )
 
     union_by_z = [unary_union(geoms) if geoms else None for geoms in floor_polys]
 
@@ -507,16 +616,22 @@ def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: floa
 
         for z in range(nz):
             for poly in floor_polys[z]:
-                emit_vertical_ring(list(poly.exterior.coords), float(z), float(z + 1), False)
+                emit_vertical_ring(
+                    list(poly.exterior.coords), float(z), float(z + 1), False
+                )
                 for hole in poly.interiors:
                     emit_vertical_ring(list(hole.coords), float(z), float(z + 1), True)
-        return _finalize_mesh(verts, faces, crease_deg=3.5, non_flat=False, method=method, start_time=t0)
+        return _finalize_mesh(
+            verts, faces, crease_deg=3.5, non_flat=False, method=method, start_time=t0
+        )
 
     # Correlated Support-Plane Loft: smoothly connect gradual multi-floor slopes + cap setbacks
     # Identify loftable floor interfaces z (where floor z-1 top blends smoothly to floor z top)
     active_zs = [z for z in range(nz) if floor_polys[z]]
     if not active_zs:
-        return _finalize_mesh([], [], crease_deg=3.5, non_flat=False, method=method, start_time=t0)
+        return _finalize_mesh(
+            [], [], crease_deg=3.5, non_flat=False, method=method, start_time=t0
+        )
 
     # Group contiguous simple floors into correlated runs when topology matches smoothly
     # Each storey z spans [z, z+1]; if storey z+1 has matching ring & gradual shift, linearly blend z+0.5..z+1.5
@@ -562,26 +677,71 @@ def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: floa
             z_low = float(z)
             z_high = float(z + 1)
             if (z - 1) in matched_to_next:
-                prev_b = _ensure_ccw(_collapse_collinear(list(floor_polys[z - 1][0].exterior.coords)))
+                prev_b = _ensure_ccw(
+                    _collapse_collinear(list(floor_polys[z - 1][0].exterior.coords))
+                )
                 prev_aligned = _match_loft_pair(ra, prev_b, max_shift=2.6)
-                pts_bot = [((ra[i][0] + prev_aligned[i][0]) * 0.5, (ra[i][1] + prev_aligned[i][1]) * 0.5) for i in range(len(ra))] if prev_aligned else ra
+                pts_bot = (
+                    [
+                        (
+                            (ra[i][0] + prev_aligned[i][0]) * 0.5,
+                            (ra[i][1] + prev_aligned[i][1]) * 0.5,
+                        )
+                        for i in range(len(ra))
+                    ]
+                    if prev_aligned
+                    else ra
+                )
             else:
                 pts_bot = ra
-            pts_top = [((ra[i][0] + rb[i][0]) * 0.5, (ra[i][1] + rb[i][1]) * 0.5) for i in range(len(ra))]
+            pts_top = [
+                ((ra[i][0] + rb[i][0]) * 0.5, (ra[i][1] + rb[i][1]) * 0.5)
+                for i in range(len(ra))
+            ]
             m = len(ra)
             for i in range(m):
-                emit_ring_quad(pts_bot[i], pts_bot[(i + 1) % m], z_low, pts_top[i], pts_top[(i + 1) % m], z_high, False)
+                emit_ring_quad(
+                    pts_bot[i],
+                    pts_bot[(i + 1) % m],
+                    z_low,
+                    pts_top[i],
+                    pts_top[(i + 1) % m],
+                    z_high,
+                    False,
+                )
         elif (z - 1) in matched_to_next and poly_z is not None:
             ra = _ensure_ccw(_collapse_collinear(list(poly_z.exterior.coords)))
-            prev_b = _ensure_ccw(_collapse_collinear(list(floor_polys[z - 1][0].exterior.coords)))
+            prev_b = _ensure_ccw(
+                _collapse_collinear(list(floor_polys[z - 1][0].exterior.coords))
+            )
             prev_aligned = _match_loft_pair(ra, prev_b, max_shift=2.6)
-            pts_bot = [((ra[i][0] + prev_aligned[i][0]) * 0.5, (ra[i][1] + prev_aligned[i][1]) * 0.5) for i in range(len(ra))] if prev_aligned else ra
+            pts_bot = (
+                [
+                    (
+                        (ra[i][0] + prev_aligned[i][0]) * 0.5,
+                        (ra[i][1] + prev_aligned[i][1]) * 0.5,
+                    )
+                    for i in range(len(ra))
+                ]
+                if prev_aligned
+                else ra
+            )
             m = len(ra)
             for i in range(m):
-                emit_ring_quad(pts_bot[i], pts_bot[(i + 1) % m], float(z), ra[i], ra[(i + 1) % m], float(z + 1), False)
+                emit_ring_quad(
+                    pts_bot[i],
+                    pts_bot[(i + 1) % m],
+                    float(z),
+                    ra[i],
+                    ra[(i + 1) % m],
+                    float(z + 1),
+                    False,
+                )
         else:
             for poly in floor_polys[z]:
-                emit_vertical_ring(list(poly.exterior.coords), float(z), float(z + 1), False)
+                emit_vertical_ring(
+                    list(poly.exterior.coords), float(z), float(z + 1), False
+                )
                 for hole in poly.interiors:
                     emit_vertical_ring(list(hole.coords), float(z), float(z + 1), True)
 
@@ -590,7 +750,9 @@ def _build_live_25d(occ_np: np.ndarray, loft_slopes: bool, method: str, t0: floa
     for z_val, geom in top_caps:
         _triangulate_cap(geom, float(z_val), True, add_tri)
 
-    return _finalize_mesh(verts, faces, crease_deg=3.5, non_flat=False, method=method, start_time=t0)
+    return _finalize_mesh(
+        verts, faces, crease_deg=3.5, non_flat=False, method=method, start_time=t0
+    )
 
 
 def _extract_exposed_iso_mesh(occ_iso: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
@@ -611,12 +773,24 @@ def _extract_exposed_iso_mesh(occ_iso: np.ndarray) -> tuple[np.ndarray, np.ndarr
         tris_v.append(q[:, [0, 1, 2], :])
         tris_v.append(q[:, [0, 2, 3], :])
 
-    add_face_dir(c & ~padded[:-2, 1:-1, 1:-1], [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0)])
-    add_face_dir(c & ~padded[2:, 1:-1, 1:-1], [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)])
-    add_face_dir(c & ~padded[1:-1, :-2, 1:-1], [(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)])
-    add_face_dir(c & ~padded[1:-1, 2:, 1:-1], [(0, 1, 0), (0, 1, 1), (1, 1, 1), (1, 1, 0)])
-    add_face_dir(c & ~padded[1:-1, 1:-1, :-2], [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)])
-    add_face_dir(c & ~padded[1:-1, 1:-1, 2:], [(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)])
+    add_face_dir(
+        c & ~padded[:-2, 1:-1, 1:-1], [(0, 0, 0), (0, 1, 0), (1, 1, 0), (1, 0, 0)]
+    )
+    add_face_dir(
+        c & ~padded[2:, 1:-1, 1:-1], [(0, 0, 1), (1, 0, 1), (1, 1, 1), (0, 1, 1)]
+    )
+    add_face_dir(
+        c & ~padded[1:-1, :-2, 1:-1], [(0, 0, 0), (1, 0, 0), (1, 0, 1), (0, 0, 1)]
+    )
+    add_face_dir(
+        c & ~padded[1:-1, 2:, 1:-1], [(0, 1, 0), (0, 1, 1), (1, 1, 1), (1, 1, 0)]
+    )
+    add_face_dir(
+        c & ~padded[1:-1, 1:-1, :-2], [(0, 0, 0), (0, 0, 1), (0, 1, 1), (0, 1, 0)]
+    )
+    add_face_dir(
+        c & ~padded[1:-1, 1:-1, 2:], [(1, 0, 0), (1, 1, 0), (1, 1, 1), (1, 0, 1)]
+    )
 
     if not tris_v:
         return np.zeros((0, 3), dtype=np.float64), np.zeros((0, 3), dtype=np.int32)
@@ -635,7 +809,14 @@ def _build_live_taubin(occ_np: np.ndarray, t0: float) -> dict:
     iso = np.repeat(occ_np, 3, axis=0)
     verts, faces = _extract_exposed_iso_mesh(iso)
     if len(verts) == 0:
-        return _finalize_mesh([], [], crease_deg=22.0, non_flat=True, method='taubin_curved', start_time=t0)
+        return _finalize_mesh(
+            [],
+            [],
+            crease_deg=22.0,
+            non_flat=True,
+            method="taubin_curved",
+            start_time=t0,
+        )
 
     # Undirected mesh edges for Laplacian smoothing
     e0 = faces[:, [0, 1]]
@@ -667,10 +848,19 @@ def _build_live_taubin(occ_np: np.ndarray, t0: float) -> dict:
 
     # Convert isotropic 1m Z back to VoxelForm floor units (3m/storey)
     verts[:, 2] /= 3.0
-    return _finalize_mesh(verts.tolist(), faces.tolist(), crease_deg=22.0, non_flat=True, method='taubin_curved', start_time=t0)
+    return _finalize_mesh(
+        verts.tolist(),
+        faces.tolist(),
+        crease_deg=22.0,
+        non_flat=True,
+        method="taubin_curved",
+        start_time=t0,
+    )
 
 
-def _qem_simplify(verts: np.ndarray, faces: np.ndarray, target_faces: int) -> tuple[np.ndarray, np.ndarray]:
+def _qem_simplify(
+    verts: np.ndarray, faces: np.ndarray, target_faces: int
+) -> tuple[np.ndarray, np.ndarray]:
     """Compact pure-Python/NumPy Quadric Error Metric mesh decimation."""
     n_v = len(verts)
     if len(faces) <= target_faces:
@@ -707,12 +897,15 @@ def _qem_simplify(verts: np.ndarray, faces: np.ndarray, target_faces: int) -> tu
 
     def eval_pair(u: int, v: int) -> tuple[float, np.ndarray]:
         Qs = Q[u] + Q[v]
-        A = np.array([
-            [Qs[0, 0], Qs[0, 1], Qs[0, 2], Qs[0, 3]],
-            [Qs[0, 1], Qs[1, 1], Qs[1, 2], Qs[1, 3]],
-            [Qs[0, 2], Qs[1, 2], Qs[2, 2], Qs[2, 3]],
-            [0.0, 0.0, 0.0, 1.0],
-        ], dtype=np.float64)
+        A = np.array(
+            [
+                [Qs[0, 0], Qs[0, 1], Qs[0, 2], Qs[0, 3]],
+                [Qs[0, 1], Qs[1, 1], Qs[1, 2], Qs[1, 3]],
+                [Qs[0, 2], Qs[1, 2], Qs[2, 2], Qs[2, 3]],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+            dtype=np.float64,
+        )
         pos = None
         if abs(np.linalg.det(A)) > 1e-8:
             try:
@@ -732,7 +925,9 @@ def _qem_simplify(verts: np.ndarray, faces: np.ndarray, target_faces: int) -> tu
     heap = []
     for u, v in edges_set:
         c, pos = eval_pair(u, v)
-        heapq.heappush(heap, (c, u, v, ver[u], ver[v], float(pos[0]), float(pos[1]), float(pos[2])))
+        heapq.heappush(
+            heap, (c, u, v, ver[u], ver[v], float(pos[0]), float(pos[1]), float(pos[2]))
+        )
 
     rem_faces = int(len(f_arr))
     pos_arr = verts.copy()
@@ -776,7 +971,19 @@ def _qem_simplify(verts: np.ndarray, faces: np.ndarray, target_faces: int) -> tu
         for w in nbrs:
             a, b = (u, w) if u < w else (w, u)
             c, npos = eval_pair(a, b)
-            heapq.heappush(heap, (c, a, b, ver[a], ver[b], float(npos[0]), float(npos[1]), float(npos[2])))
+            heapq.heappush(
+                heap,
+                (
+                    c,
+                    a,
+                    b,
+                    ver[a],
+                    ver[b],
+                    float(npos[0]),
+                    float(npos[1]),
+                    float(npos[2]),
+                ),
+            )
 
     kept_f = f_arr[active_f]
     used_ids, inv = np.unique(kept_f.reshape(-1), return_inverse=True)
@@ -795,20 +1002,30 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
 
     # Active cells touching any sign-changing corner
     active_c = (
-        (sdf[:-1, :-1, :-1] > 0) | (sdf[:-1, :-1, 1:] > 0) |
-        (sdf[:-1, 1:, :-1] > 0) | (sdf[:-1, 1:, 1:] > 0) |
-        (sdf[1:, :-1, :-1] > 0) | (sdf[1:, :-1, 1:] > 0) |
-        (sdf[1:, 1:, :-1] > 0) | (sdf[1:, 1:, 1:] > 0)
+        (sdf[:-1, :-1, :-1] > 0)
+        | (sdf[:-1, :-1, 1:] > 0)
+        | (sdf[:-1, 1:, :-1] > 0)
+        | (sdf[:-1, 1:, 1:] > 0)
+        | (sdf[1:, :-1, :-1] > 0)
+        | (sdf[1:, :-1, 1:] > 0)
+        | (sdf[1:, 1:, :-1] > 0)
+        | (sdf[1:, 1:, 1:] > 0)
     ) & (
-        (sdf[:-1, :-1, :-1] <= 0) | (sdf[:-1, :-1, 1:] <= 0) |
-        (sdf[:-1, 1:, :-1] <= 0) | (sdf[:-1, 1:, 1:] <= 0) |
-        (sdf[1:, :-1, :-1] <= 0) | (sdf[1:, :-1, 1:] <= 0) |
-        (sdf[1:, 1:, :-1] <= 0) | (sdf[1:, 1:, 1:] <= 0)
+        (sdf[:-1, :-1, :-1] <= 0)
+        | (sdf[:-1, :-1, 1:] <= 0)
+        | (sdf[:-1, 1:, :-1] <= 0)
+        | (sdf[:-1, 1:, 1:] <= 0)
+        | (sdf[1:, :-1, :-1] <= 0)
+        | (sdf[1:, :-1, 1:] <= 0)
+        | (sdf[1:, 1:, :-1] <= 0)
+        | (sdf[1:, 1:, 1:] <= 0)
     )
 
     czs, cys, cxs = np.nonzero(active_c)
     if len(czs) == 0:
-        return _finalize_mesh([], [], crease_deg=3.5, non_flat=False, method='dc_qem', start_time=t0)
+        return _finalize_mesh(
+            [], [], crease_deg=3.5, non_flat=False, method="dc_qem", start_time=t0
+        )
 
     cell_id = np.full(active_c.shape, -1, dtype=np.int32)
     cell_id[czs, cys, cxs] = np.arange(len(czs), dtype=np.int32)
@@ -817,9 +1034,18 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
     acc = np.zeros((len(czs), 3), dtype=np.float64)
     cnt = np.zeros(len(czs), dtype=np.float64)
     corners = [
-        ((0, 0, 0), (0, 0, 1)), ((0, 1, 0), (0, 1, 1)), ((1, 0, 0), (1, 0, 1)), ((1, 1, 0), (1, 1, 1)),
-        ((0, 0, 0), (0, 1, 0)), ((0, 0, 1), (0, 1, 1)), ((1, 0, 0), (1, 1, 0)), ((1, 0, 1), (1, 1, 1)),
-        ((0, 0, 0), (1, 0, 0)), ((0, 0, 1), (1, 0, 1)), ((0, 1, 0), (1, 1, 0)), ((0, 1, 1), (1, 1, 1)),
+        ((0, 0, 0), (0, 0, 1)),
+        ((0, 1, 0), (0, 1, 1)),
+        ((1, 0, 0), (1, 0, 1)),
+        ((1, 1, 0), (1, 1, 1)),
+        ((0, 0, 0), (0, 1, 0)),
+        ((0, 0, 1), (0, 1, 1)),
+        ((1, 0, 0), (1, 1, 0)),
+        ((1, 0, 1), (1, 1, 1)),
+        ((0, 0, 0), (1, 0, 0)),
+        ((0, 0, 1), (1, 0, 1)),
+        ((0, 1, 0), (1, 1, 0)),
+        ((0, 1, 1), (1, 1, 1)),
     ]
     for (dz0, dy0, dx0), (dz1, dy1, dx1) in corners:
         va = sdf[czs + dz0, cys + dy0, cxs + dx0]
@@ -840,13 +1066,25 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
     tris = []
     # Emit quads for sign-changing grid edges along X, Y, Z
     # X-edge between (z, y, x) and (z, y, x+1) shared by 4 cells (z-1..z, y-1..y, x)
-    ex = ((sdf[1:-1, 1:-1, :-1] > 0) != (sdf[1:-1, 1:-1, 1:] > 0))
+    ex = (sdf[1:-1, 1:-1, :-1] > 0) != (sdf[1:-1, 1:-1, 1:] > 0)
     ezs, eys, exs = np.nonzero(ex)
-    ezs += 1; eys += 1
+    ezs += 1
+    eys += 1
     for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
-        if z - 1 < 0 or y - 1 < 0 or z >= cell_id.shape[0] or y >= cell_id.shape[1] or x >= cell_id.shape[2]:
+        if (
+            z - 1 < 0
+            or y - 1 < 0
+            or z >= cell_id.shape[0]
+            or y >= cell_id.shape[1]
+            or x >= cell_id.shape[2]
+        ):
             continue
-        c00, c10, c11, c01 = int(cell_id[z-1, y-1, x]), int(cell_id[z-1, y, x]), int(cell_id[z, y, x]), int(cell_id[z, y-1, x])
+        c00, c10, c11, c01 = (
+            int(cell_id[z - 1, y - 1, x]),
+            int(cell_id[z - 1, y, x]),
+            int(cell_id[z, y, x]),
+            int(cell_id[z, y - 1, x]),
+        )
         if min(c00, c10, c11, c01) < 0:
             continue
         if sdf[z, y, x] > 0:
@@ -854,13 +1092,25 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
         else:
             tris.extend([[c00, c11, c10], [c00, c01, c11]])
 
-    ey = ((sdf[1:-1, :-1, 1:-1] > 0) != (sdf[1:-1, 1:, 1:-1] > 0))
+    ey = (sdf[1:-1, :-1, 1:-1] > 0) != (sdf[1:-1, 1:, 1:-1] > 0)
     ezs, eys, exs = np.nonzero(ey)
-    ezs += 1; exs += 1
+    ezs += 1
+    exs += 1
     for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
-        if z - 1 < 0 or x - 1 < 0 or z >= cell_id.shape[0] or x >= cell_id.shape[2] or y >= cell_id.shape[1]:
+        if (
+            z - 1 < 0
+            or x - 1 < 0
+            or z >= cell_id.shape[0]
+            or x >= cell_id.shape[2]
+            or y >= cell_id.shape[1]
+        ):
             continue
-        c00, c10, c11, c01 = int(cell_id[z-1, y, x-1]), int(cell_id[z, y, x-1]), int(cell_id[z, y, x]), int(cell_id[z-1, y, x])
+        c00, c10, c11, c01 = (
+            int(cell_id[z - 1, y, x - 1]),
+            int(cell_id[z, y, x - 1]),
+            int(cell_id[z, y, x]),
+            int(cell_id[z - 1, y, x]),
+        )
         if min(c00, c10, c11, c01) < 0:
             continue
         if sdf[z, y, x] > 0:
@@ -868,13 +1118,25 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
         else:
             tris.extend([[c00, c11, c10], [c00, c01, c11]])
 
-    ez = ((sdf[:-1, 1:-1, 1:-1] > 0) != (sdf[1:, 1:-1, 1:-1] > 0))
+    ez = (sdf[:-1, 1:-1, 1:-1] > 0) != (sdf[1:, 1:-1, 1:-1] > 0)
     ezs, eys, exs = np.nonzero(ez)
-    eys += 1; exs += 1
+    eys += 1
+    exs += 1
     for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
-        if y - 1 < 0 or x - 1 < 0 or y >= cell_id.shape[1] or x >= cell_id.shape[2] or z >= cell_id.shape[0]:
+        if (
+            y - 1 < 0
+            or x - 1 < 0
+            or y >= cell_id.shape[1]
+            or x >= cell_id.shape[2]
+            or z >= cell_id.shape[0]
+        ):
             continue
-        c00, c10, c11, c01 = int(cell_id[z, y-1, x-1]), int(cell_id[z, y-1, x]), int(cell_id[z, y, x]), int(cell_id[z, y, x-1])
+        c00, c10, c11, c01 = (
+            int(cell_id[z, y - 1, x - 1]),
+            int(cell_id[z, y - 1, x]),
+            int(cell_id[z, y, x]),
+            int(cell_id[z, y, x - 1]),
+        )
         if min(c00, c10, c11, c01) < 0:
             continue
         if sdf[z, y, x] > 0:
@@ -883,17 +1145,28 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
             tris.extend([[c00, c11, c10], [c00, c01, c11]])
 
     if not tris:
-        return _finalize_mesh([], [], crease_deg=3.5, non_flat=False, method='dc_qem', start_time=t0)
+        return _finalize_mesh(
+            [], [], crease_deg=3.5, non_flat=False, method="dc_qem", start_time=t0
+        )
 
     faces = np.asarray(tris, dtype=np.int32)
     target = min(360, max(120, len(faces) // 8))
     verts_s, faces_s = _qem_simplify(verts, faces, target_faces=target)
     verts_s[verts_s[:, 2] <= 0.15, 2] = 0.0
     verts_s[:, 2] /= 3.0
-    return _finalize_mesh(verts_s.tolist(), faces_s.tolist(), crease_deg=3.5, non_flat=False, method='dc_qem', start_time=t0)
+    return _finalize_mesh(
+        verts_s.tolist(),
+        faces_s.tolist(),
+        crease_deg=3.5,
+        non_flat=False,
+        method="dc_qem",
+        start_time=t0,
+    )
 
 
-def _fit_tier_vsa_planes(rings: list[list[tuple[float, float]]], z_start: int, z_end: int) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
+def _fit_tier_vsa_planes(
+    rings: list[list[tuple[float, float]]], z_start: int, z_end: int
+) -> tuple[list[tuple[float, float]], list[tuple[float, float]]]:
     """Fit global 3D plane equations across multi-storey tier rings and evaluate at tier ends."""
     k_cnt = len(rings)
     if k_cnt <= 1:
@@ -932,8 +1205,18 @@ def _fit_tier_vsa_planes(rings: list[list[tuple[float, float]]], z_start: int, z
             lines_bot.append((nx, ny, float(d0 + alpha * z_start)))
             lines_top.append((nx, ny, float(d0 + alpha * z_end)))
 
-    ring_bot = _ensure_ccw([_intersect_lines(lines_bot[(i - 1) % m], lines_bot[i], rings[0][i]) for i in range(m)])
-    ring_top = _ensure_ccw([_intersect_lines(lines_top[(i - 1) % m], lines_top[i], rings[-1][i]) for i in range(m)])
+    ring_bot = _ensure_ccw(
+        [
+            _intersect_lines(lines_bot[(i - 1) % m], lines_bot[i], rings[0][i])
+            for i in range(m)
+        ]
+    )
+    ring_top = _ensure_ccw(
+        [
+            _intersect_lines(lines_top[(i - 1) % m], lines_top[i], rings[-1][i])
+            for i in range(m)
+        ]
+    )
 
     pb = Polygon(ring_bot)
     pt = Polygon(ring_top)
@@ -971,9 +1254,19 @@ def _build_live_vsa_planes(occ_np: np.ndarray, t0: float) -> dict:
 
     def emit_ring_quad(p0, p1, z0, q0, q1, z1, is_hole: bool):
         if is_hole:
-            a, b, c, d = (p1[0], p1[1], z0), (p0[0], p0[1], z0), (q0[0], q0[1], z1), (q1[0], q1[1], z1)
+            a, b, c, d = (
+                (p1[0], p1[1], z0),
+                (p0[0], p0[1], z0),
+                (q0[0], q0[1], z1),
+                (q1[0], q1[1], z1),
+            )
         else:
-            a, b, c, d = (p0[0], p0[1], z0), (p1[0], p1[1], z0), (q1[0], q1[1], z1), (q0[0], q0[1], z1)
+            a, b, c, d = (
+                (p0[0], p0[1], z0),
+                (p1[0], p1[1], z0),
+                (q1[0], q1[1], z1),
+                (q0[0], q0[1], z1),
+            )
         add_tri(a, b, c)
         add_tri(a, c, d)
 
@@ -995,8 +1288,14 @@ def _build_live_vsa_planes(occ_np: np.ndarray, t0: float) -> dict:
         r0 = _ensure_ccw(_collapse_collinear(list(geoms[0].exterior.coords)))
         aligned_rings = [r0]
         z_end = z + 1
-        while z_end < nz and len(floor_polys[z_end]) == 1 and not floor_polys[z_end][0].interiors:
-            rc = _ensure_ccw(_collapse_collinear(list(floor_polys[z_end][0].exterior.coords)))
+        while (
+            z_end < nz
+            and len(floor_polys[z_end]) == 1
+            and not floor_polys[z_end][0].interiors
+        ):
+            rc = _ensure_ccw(
+                _collapse_collinear(list(floor_polys[z_end][0].exterior.coords))
+            )
             matched = _match_loft_pair(aligned_rings[-1], rc, max_shift=2.6)
             if matched is None:
                 break
@@ -1019,22 +1318,54 @@ def _build_live_vsa_planes(occ_np: np.ndarray, t0: float) -> dict:
         if len(rb) == len(rt):
             m = len(rb)
             for i in range(m):
-                emit_ring_quad(rb[i], rb[(i + 1) % m], float(z0), rt[i], rt[(i + 1) % m], float(z1), False)
+                emit_ring_quad(
+                    rb[i],
+                    rb[(i + 1) % m],
+                    float(z0),
+                    rt[i],
+                    rt[(i + 1) % m],
+                    float(z1),
+                    False,
+                )
         else:
             # Fallback vertical extrusions per edge if polygon sanitization altered vertex count
             for i in range(len(rb)):
-                emit_ring_quad(rb[i], rb[(i + 1) % len(rb)], float(z0), rb[i], rb[(i + 1) % len(rb)], float(z1), False)
+                emit_ring_quad(
+                    rb[i],
+                    rb[(i + 1) % len(rb)],
+                    float(z0),
+                    rb[i],
+                    rb[(i + 1) % len(rb)],
+                    float(z1),
+                    False,
+                )
 
     for z_s, g in extra_slabs:
         above_bot.setdefault(z_s, []).append(g)
         below_top.setdefault(z_s + 1, []).append(g)
         ext = _ensure_ccw(list(g.exterior.coords))
         for i in range(len(ext)):
-            emit_ring_quad(ext[i], ext[(i + 1) % len(ext)], float(z_s), ext[i], ext[(i + 1) % len(ext)], float(z_s + 1), False)
+            emit_ring_quad(
+                ext[i],
+                ext[(i + 1) % len(ext)],
+                float(z_s),
+                ext[i],
+                ext[(i + 1) % len(ext)],
+                float(z_s + 1),
+                False,
+            )
         for hole in g.interiors:
             hr = _ensure_ccw(list(hole.coords))
             for i in range(len(hr)):
-                emit_ring_quad(hr[i], hr[(i + 1) % len(hr)], float(z_s), hr[i], hr[(i + 1) % len(hr)], float(z_s + 1), True)
+                emit_ring_quad(
+                    hr[i],
+                    hr[(i + 1) % len(hr)],
+                    float(z_s),
+                    hr[i],
+                    hr[(i + 1) % len(hr)],
+                    float(z_s + 1),
+                    True,
+                )
 
     all_zs = sorted(set(below_top.keys()) | set(above_bot.keys()))
     for zv in all_zs:
@@ -1047,25 +1378,33 @@ def _build_live_vsa_planes(occ_np: np.ndarray, t0: float) -> dict:
             diff_dn = a_geom if b_geom is None else a_geom.difference(b_geom)
             _triangulate_cap(diff_dn, float(zv), False, add_tri)
 
-    return _finalize_mesh(verts, faces, crease_deg=3.5, non_flat=False, method='vsa_planes', start_time=t0)
+    return _finalize_mesh(
+        verts, faces, crease_deg=3.5, non_flat=False, method="vsa_planes", start_time=t0
+    )
 
 
-def devoxelize_occupancy(occ_np: np.ndarray, revision: int, method: str = 'correlated_loft') -> dict:
+def devoxelize_occupancy(
+    occ_np: np.ndarray, revision: int, method: str = "correlated_loft"
+) -> dict:
     """Devoxelize binary occupancy (NZ, NY, NX) for modes 1, 2, 3 with caching."""
-    valid_methods = {'correlated_loft', 'extruded_slabs', 'vsa_planes'}
+    valid_methods = {"correlated_loft", "extruded_slabs", "vsa_planes"}
     if method not in valid_methods:
-        raise ValueError('Unknown devoxelization method')
+        raise ValueError("Unknown devoxelization method")
 
-    cache_key = (occ_np.shape, hashlib.blake2b(np.packbits(occ_np).tobytes(), digest_size=16).digest(), method)
+    cache_key = (
+        occ_np.shape,
+        hashlib.blake2b(np.packbits(occ_np).tobytes(), digest_size=16).digest(),
+        method,
+    )
     with _DEVOX_LOCK:
         cached = _DEVOX_CACHE.get(cache_key)
         if cached is not None:
             return cached
 
     t0 = time.perf_counter()
-    if method == 'correlated_loft':
+    if method == "correlated_loft":
         res = _build_live_25d(occ_np, loft_slopes=True, method=method, t0=t0)
-    elif method == 'extruded_slabs':
+    elif method == "extruded_slabs":
         res = _build_live_25d(occ_np, loft_slopes=False, method=method, t0=t0)
     else:
         res = _build_live_vsa_planes(occ_np, t0=t0)

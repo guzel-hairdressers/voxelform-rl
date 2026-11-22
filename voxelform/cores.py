@@ -53,12 +53,21 @@ class CoreTemplate:
 # One-metre reservations are rounded OUT from the metric component plans.
 # The height schedule is a configurable research prior, never a code assertion.
 CORE_TEMPLATES: tuple[CoreTemplate, ...] = tuple(
-    CoreTemplate(tier=p['tier'],label=f"{p['minHeight']}-{p['maxHeight']}F ({p['width']}x{p['length']} m grid · {p['stairCount']} stair + {p['liftCount']} lift)",
-        min_height=p['minHeight'],max_height=p['maxHeight'],width=p['width'],length=p['length'],
+    CoreTemplate(
+        tier=p["tier"],
+        label=f"{p['minHeight']}-{p['maxHeight']}F ({p['width']}x{p['length']} m grid · {p['stairCount']} stair + {p['liftCount']} lift)",
+        min_height=p["minHeight"],
+        max_height=p["maxHeight"],
+        width=p["width"],
+        length=p["length"],
         program=f"{p['stairCount']} {p['stairLayout']} stair route(s), {p['liftCount']} lift(s); {p['metricWidth']:.2f}x{p['metricLength']:.2f} m metric enclosure",
-        zones=tuple(p['zones']),attachment_sides=('S',),metric_plan=p)
+        zones=tuple(p["zones"]),
+        attachment_sides=("S",),
+        metric_plan=p,
+    )
     for p in plan_library()
 )
+
 
 @dataclass(frozen=True)
 class PlacedCore:
@@ -80,11 +89,11 @@ class PlacedCore:
         plan = template.metric_plan
         return {
             "layoutVersion": CORE_LAYOUT_VERSION,
-            "stairLayout": plan['stairLayout'],
-            "stairCount": plan['stairCount'],
-            "liftCount": plan['liftCount'],
-            "metricWidth": plan['metricWidth'],
-            "metricLength": plan['metricLength'],
+            "stairLayout": plan["stairLayout"],
+            "stairCount": plan["stairCount"],
+            "liftCount": plan["liftCount"],
+            "metricWidth": plan["metricWidth"],
+            "metricLength": plan["metricLength"],
             "id": self.id,
             "tier": self.tier,
             "label": self.label,
@@ -145,7 +154,9 @@ def compute_core_distance(
     Default convergence is exact for this 8-neighbour graph (no corner cutting).
     An explicit max_iters bounds screening work and may leave distant cells unresolved.
     """
-    out_device = occupied.device if return_device is None else torch.device(return_device)
+    out_device = (
+        occupied.device if return_device is None else torch.device(return_device)
+    )
     occ_cpu = occupied.detach().to("cpu", torch.bool)
     batched = core_mask.dim() == 4
     core_cpu = core_mask.detach().to("cpu", torch.bool)
@@ -174,7 +185,9 @@ def compute_core_distance(
     core_flat = core_sub.reshape(N, Y, X)
     sub_out = torch.where(occ_flat, UNREACHABLE_DIST, 0.0)
 
-    active_idx = torch.nonzero(core_flat.any(dim=(1, 2)) & occ_flat.any(dim=(1, 2)), as_tuple=False).flatten()
+    active_idx = torch.nonzero(
+        core_flat.any(dim=(1, 2)) & occ_flat.any(dim=(1, 2)), as_tuple=False
+    ).flatten()
     if active_idx.numel() == 0:
         out[:, :z_top] = sub_out.view(B, z_top, Y, X)
         res = out if batched else out.squeeze(0)
@@ -184,10 +197,18 @@ def compute_core_distance(
     core_a = core_flat[active_idx].numpy()
     if len(active_idx) > 1:
         packed = np.packbits(
-            np.concatenate([occ_a.reshape(len(active_idx), -1), core_a.reshape(len(active_idx), -1)], axis=1),
+            np.concatenate(
+                [
+                    occ_a.reshape(len(active_idx), -1),
+                    core_a.reshape(len(active_idx), -1),
+                ],
+                axis=1,
+            ),
             axis=1,
         )
-        _, uniq_first, inv = np.unique(packed, axis=0, return_index=True, return_inverse=True)
+        _, uniq_first, inv = np.unique(
+            packed, axis=0, return_index=True, return_inverse=True
+        )
         occ_u = torch.from_numpy(occ_a[uniq_first])
         core_u = torch.from_numpy(core_a[uniq_first])
     else:
@@ -197,13 +218,17 @@ def compute_core_distance(
 
     dist = torch.where(core_u, 0.0, UNREACHABLE_DIST)
     if max_iters is None:
-        max_iters = Y * X  # A simple occupied path can exceed the bounding-box diameter.
+        max_iters = (
+            Y * X
+        )  # A simple occupied path can exceed the bounding-box diameter.
 
     # Diagonal moves cannot squeeze through two blocked orthogonal neighbours.
-    padded_occ=F.pad(occ_u,(1,1,1,1),value=False)
-    on=padded_occ[:, :-2, 1:-1];os=padded_occ[:, 2:, 1:-1]
-    ow=padded_occ[:, 1:-1, :-2];oe=padded_occ[:, 1:-1, 2:]
-    diag_legal=(on&ow,on&oe,os&ow,os&oe)
+    padded_occ = F.pad(occ_u, (1, 1, 1, 1), value=False)
+    on = padded_occ[:, :-2, 1:-1]
+    os = padded_occ[:, 2:, 1:-1]
+    ow = padded_occ[:, 1:-1, :-2]
+    oe = padded_occ[:, 1:-1, 2:]
+    diag_legal = (on & ow, on & oe, os & ow, os & oe)
     check_every = 6
     inf_val = UNREACHABLE_DIST
     for step in range(max_iters):
@@ -218,8 +243,16 @@ def compute_core_distance(
         ne = p[:, :-2, 2:]
         sw = p[:, 2:, :-2]
         se = p[:, 2:, 2:]
-        diags=[torch.where(ok,value,inf_val) for ok,value in zip(diag_legal,(nw,ne,sw,se))]
-        diag = torch.minimum(torch.minimum(diags[0], diags[1]), torch.minimum(diags[2], diags[3])) + SQRT2
+        diags = [
+            torch.where(ok, value, inf_val)
+            for ok, value in zip(diag_legal, (nw, ne, sw, se))
+        ]
+        diag = (
+            torch.minimum(
+                torch.minimum(diags[0], diags[1]), torch.minimum(diags[2], diags[3])
+            )
+            + SQRT2
+        )
 
         cand = torch.minimum(dist, torch.minimum(ortho, diag))
         nxt = torch.where(occ_u, cand, inf_val)
@@ -291,8 +324,16 @@ def summarize_core_metrics(
     reachable_occ = occ & (core_distance < (UNREACHABLE_DIST - 1.0))
     noncore_reachable = reachable_occ & ~core_b
 
-    dist_mean = float(core_distance[noncore_reachable].mean().item()) if bool(noncore_reachable.any().item()) else 0.0
-    dist_max = float(core_distance[reachable_occ].max().item()) if bool(reachable_occ.any().item()) else 0.0
+    dist_mean = (
+        float(core_distance[noncore_reachable].mean().item())
+        if bool(noncore_reachable.any().item())
+        else 0.0
+    )
+    dist_max = (
+        float(core_distance[reachable_occ].max().item())
+        if bool(reachable_occ.any().item())
+        else 0.0
+    )
     uncovered = occ & (core_distance > limit)
     unreachable = occ & (core_distance >= (UNREACHABLE_DIST - 1.0))
 
@@ -325,7 +366,9 @@ def _integral_2d(arr: np.ndarray) -> np.ndarray:
     return ii
 
 
-def _box_sum_centered(ii: np.ndarray, cy: np.ndarray, cx: np.ndarray, radius: int) -> np.ndarray:
+def _box_sum_centered(
+    ii: np.ndarray, cy: np.ndarray, cx: np.ndarray, radius: int
+) -> np.ndarray:
     H = ii.shape[0] - 1
     W = ii.shape[1] - 1
     y0 = np.clip(cy - radius, 0, H)
@@ -335,7 +378,9 @@ def _box_sum_centered(ii: np.ndarray, cy: np.ndarray, cx: np.ndarray, radius: in
     return ii[y1, x1] - ii[y0, x1] - ii[y1, x0] + ii[y0, x0]
 
 
-def _pick_spaced_indices(scores: np.ndarray, cy: np.ndarray, cx: np.ndarray, k: int, min_sep: float = 3.0) -> list[int]:
+def _pick_spaced_indices(
+    scores: np.ndarray, cy: np.ndarray, cx: np.ndarray, k: int, min_sep: float = 3.0
+) -> list[int]:
     order = np.argsort(-scores)
     chosen: list[int] = []
     for idx in order:
@@ -372,8 +417,16 @@ def solve_cores(
     if occ_count == 0:
         empty_b = torch.zeros((Z, Y, X), dtype=torch.bool, device=device)
         empty_f = torch.zeros((Z, Y, X), dtype=torch.float32, device=device)
-        metrics = summarize_core_metrics(occ_cpu, empty_b.cpu(), empty_f.cpu(), empty_f.cpu(), (), max_core_dist)
-        return CoreResult(cores=(), core_mask=empty_b, core_distance=empty_f, core_dist_badness=empty_f, metrics=metrics)
+        metrics = summarize_core_metrics(
+            occ_cpu, empty_b.cpu(), empty_f.cpu(), empty_f.cpu(), (), max_core_dist
+        )
+        return CoreResult(
+            cores=(),
+            core_mask=empty_b,
+            core_distance=empty_f,
+            core_dist_badness=empty_f,
+            metrics=metrics,
+        )
 
     # Continuous vertical column height anchored at ground z=0
     occ_np = occ_cpu.numpy()
@@ -384,7 +437,9 @@ def solve_cores(
         core_mask_c = torch.zeros_like(occ_cpu, dtype=torch.bool)
         dist_c = compute_core_distance(occ_cpu, core_mask_c, return_device="cpu")
         bad_c = core_distance_badness(dist_c, occ_cpu, max_core_dist, core_mask_c)
-        metrics = summarize_core_metrics(occ_cpu, core_mask_c, dist_c, bad_c, (), max_core_dist)
+        metrics = summarize_core_metrics(
+            occ_cpu, core_mask_c, dist_c, bad_c, (), max_core_dist
+        )
         return CoreResult(
             cores=(),
             core_mask=core_mask_c.to(device),
@@ -421,10 +476,10 @@ def solve_cores(
             over_cnt = (win > foot_min[..., None, None]).sum(axis=(-2, -1))
             max_over_cells = (rh * rw) // 3
 
-            tier_match = (foot_min >= tmpl.min_height) & (
-                (foot_min <= tmpl.max_height)
+            tier_match = (foot_min >= tmpl.min_height) & (foot_min <= tmpl.max_height)
+            step_ok = (over_cnt == 0) | (
+                (over_cnt <= max_over_cells) & ((foot_max - foot_min) <= 2)
             )
-            step_ok = (over_cnt == 0) | ((over_cnt <= max_over_cells) & ((foot_max - foot_min) <= 2))
 
             vy_len, vx_len = foot_min.shape
             yy, xx = np.meshgrid(np.arange(vy_len), np.arange(vx_len), indexing="ij")
@@ -458,7 +513,9 @@ def solve_cores(
         core_mask_c = torch.zeros_like(occ_cpu, dtype=torch.bool)
         dist_c = compute_core_distance(occ_cpu, core_mask_c, return_device="cpu")
         bad_c = core_distance_badness(dist_c, occ_cpu, max_core_dist, core_mask_c)
-        metrics = summarize_core_metrics(occ_cpu, core_mask_c, dist_c, bad_c, (), max_core_dist)
+        metrics = summarize_core_metrics(
+            occ_cpu, core_mask_c, dist_c, bad_c, (), max_core_dist
+        )
         return CoreResult(
             cores=(),
             core_mask=core_mask_c.to(device),
@@ -485,7 +542,9 @@ def solve_cores(
 
     spacing_req = float(max(0, int(min_core_spacing)))
     spacing_sq = spacing_req * spacing_req - 1e-9
-    floor_weights = (1.0 + 1.5 * np.arange(Z, dtype=np.float64) / max(1, Z - 1))[:, None, None]
+    floor_weights = (1.0 + 1.5 * np.arange(Z, dtype=np.float64) / max(1, Z - 1))[
+        :, None, None
+    ]
     screen_iters = int(max_core_dist) + 3
     eligible = np.ones(len(cand_tmpl), dtype=bool)
 
@@ -496,8 +555,18 @@ def solve_cores(
 
         if placed and spacing_req > 0.0:
             prev = placed[-1]
-            dy = np.maximum(0, np.maximum(prev.y0 - (y0_arr + sy_arr), y0_arr - (prev.y0 + prev.size_y)))
-            dx = np.maximum(0, np.maximum(prev.x0 - (x0_arr + sx_arr), x0_arr - (prev.x0 + prev.size_x)))
+            dy = np.maximum(
+                0,
+                np.maximum(
+                    prev.y0 - (y0_arr + sy_arr), y0_arr - (prev.y0 + prev.size_y)
+                ),
+            )
+            dx = np.maximum(
+                0,
+                np.maximum(
+                    prev.x0 - (x0_arr + sx_arr), x0_arr - (prev.x0 + prev.size_x)
+                ),
+            )
             eligible &= (dx * dx + dy * dy) >= spacing_sq
         if not bool(eligible.any()):
             break
@@ -505,7 +574,9 @@ def solve_cores(
         need_cols = need.sum(axis=0).astype(np.float64)
         high_need_cols = (need * floor_weights).sum(axis=0)
         unw_score = _box_sum_centered(_integral_2d(need_cols), cy_arr, cx_arr, radius)
-        hi_score = _box_sum_centered(_integral_2d(high_need_cols), cy_arr, cx_arr, radius)
+        hi_score = _box_sum_centered(
+            _integral_2d(high_need_cols), cy_arr, cx_arr, radius
+        )
 
         base_bonus = 2.0 * flush_arr + 0.25 * np.minimum(att_arr, 12.0) + 0.05 * h_arr
         s_unw = np.where(eligible, unw_score + base_bonus, -1e18)
@@ -514,7 +585,9 @@ def solve_cores(
         shortlist_idx: list[int] = []
         seen_idx: set[int] = set()
         for pool_scores in (s_unw, s_hi):
-            for idx in _pick_spaced_indices(pool_scores, cy_arr, cx_arr, k=2, min_sep=4.0):
+            for idx in _pick_spaced_indices(
+                pool_scores, cy_arr, cx_arr, k=2, min_sep=4.0
+            ):
                 if idx not in seen_idx:
                     seen_idx.add(idx)
                     shortlist_idx.append(idx)
@@ -537,10 +610,14 @@ def solve_cores(
             ch = int(h_arr[ci])
             cand_only_masks[bi, :ch, yy0 : yy0 + ssy, xx0 : xx0 + ssx] = True
 
-        new_dists = compute_core_distance(occ_cpu, cand_only_masks, max_iters=screen_iters, return_device="cpu")
+        new_dists = compute_core_distance(
+            occ_cpu, cand_only_masks, max_iters=screen_iters, return_device="cpu"
+        )
         cand_dists = torch.minimum(cur_dist.unsqueeze(0), new_dists)
         cand_full_masks = cur_core_mask.unsqueeze(0) | cand_only_masks
-        new_uncov_b = (occ_cpu.unsqueeze(0) & (cand_dists > float(max_core_dist))).sum(dim=(1, 2, 3))
+        new_uncov_b = (occ_cpu.unsqueeze(0) & (cand_dists > float(max_core_dist))).sum(
+            dim=(1, 2, 3)
+        )
 
         best_key: tuple[int, float, float, float, float, int] | None = None
         best_bi = -1
@@ -561,7 +638,11 @@ def solve_cores(
             bad_bi = core_distance_badness(dist_bi, occ_cpu, max_core_dist, mask_bi)
             bad_sum = float(bad_bi[occ_cpu].sum().item())
             reach_noncore = occ_cpu & ~mask_bi & (dist_bi < (UNREACHABLE_DIST - 1.0))
-            mean_d = float(dist_bi[reach_noncore].mean().item()) if bool(reach_noncore.any().item()) else 0.0
+            mean_d = (
+                float(dist_bi[reach_noncore].mean().item())
+                if bool(reach_noncore.any().item())
+                else 0.0
+            )
 
             key = (
                 uncov,
@@ -611,7 +692,9 @@ def solve_cores(
     if placed:
         cur_dist = compute_core_distance(occ_cpu, cur_core_mask, return_device="cpu")
     cur_bad = core_distance_badness(cur_dist, occ_cpu, max_core_dist, cur_core_mask)
-    metrics = summarize_core_metrics(occ_cpu, cur_core_mask, cur_dist, cur_bad, placed, max_core_dist)
+    metrics = summarize_core_metrics(
+        occ_cpu, cur_core_mask, cur_dist, cur_bad, placed, max_core_dist
+    )
     return CoreResult(
         cores=tuple(placed),
         core_mask=cur_core_mask.to(device),

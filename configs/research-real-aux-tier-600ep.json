@@ -1,5 +1,5 @@
 {
-  "seeds": [123],
+  "seeds": [123, 456, 789],
   "train_sites": [
     "m_bcn_0093",
     "xs_tokyo_0133",

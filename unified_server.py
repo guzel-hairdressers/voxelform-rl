@@ -4,6 +4,7 @@ Runs the organic 3D volumetric action space (neural remove / grow / exchange / f
 with vertical headroom (10 storeys envelope, 6 storeys initial mass)
 as the active VoxelForm application.
 """
+
 import functools
 import io
 import json
@@ -29,7 +30,11 @@ from fastapi.responses import HTMLResponse, Response, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from voxelform.context import ContextLibrary, public_scene
-from voxelform.cores import DEFAULT_MAX_CORE_DIST, DEFAULT_MIN_CORE_SPACING, core_templates_summary
+from voxelform.cores import (
+    DEFAULT_MAX_CORE_DIST,
+    DEFAULT_MIN_CORE_SPACING,
+    core_templates_summary,
+)
 from voxelform.core_plans import plan_library, render_plan_svg, CORE_LAYOUT_VERSION
 from voxelform.environment import Environment
 from voxelform.layout_archive import LayoutArchive, layout_scope
@@ -40,22 +45,23 @@ from voxelform.training import depth_potential
 from voxelform.unified import (
     OPERATIONS,
     UnifiedLearner,
-    _allowed_long_narrow,
-    clean_floor_tensor,
     commit,
-    long_narrow_mask,
-    min_room_width,
 )
 
 
-from voxelform.objectives import organic_objective, organic_step_reward, organic_terminal_reward
+from voxelform.objectives import (
+    organic_objective,
+    organic_step_reward,
+    organic_terminal_reward,
+)
+
 
 def derive_site_storeys(record=None, buildings=None):
     """Derive default initial and ceiling storeys from surrounding context height."""
-    avg_h = record.get('avg_height_m') if record else None
-    max_h = record.get('max_height_m') if record else None
+    avg_h = record.get("avg_height_m") if record else None
+    max_h = record.get("max_height_m") if record else None
     if (avg_h is None or max_h is None) and buildings:
-        hs = [max(v[2] for v in b['vertices']) for b in buildings if b.get('vertices')]
+        hs = [max(v[2] for v in b["vertices"]) for b in buildings if b.get("vertices")]
         if hs:
             if avg_h is None:
                 avg_h = float(np.median(hs))
@@ -67,11 +73,22 @@ def derive_site_storeys(record=None, buildings=None):
     ceiling = max(initial + 10, min(40, int(math.ceil(max_h / 3.0)) + 6))
     return initial, ceiling
 
-torch.set_num_threads(max(1, int(os.getenv('VOXELFORM_THREADS', '1'))))
+
+torch.set_num_threads(max(1, int(os.getenv("VOXELFORM_THREADS", "1"))))
+
 
 class UnifiedSession:
-    def __init__(self, library=None, device=None, initial_storeys=None, ceiling_storeys=None,
-                 autostart=True, archive_dir=None, training_sites=(), episodes_per_site=3):
+    def __init__(
+        self,
+        library=None,
+        device=None,
+        initial_storeys=None,
+        ceiling_storeys=None,
+        autostart=True,
+        archive_dir=None,
+        training_sites=(),
+        episodes_per_site=3,
+    ):
         self.library = library or ContextLibrary()
         self.lock = threading.RLock()
         self.running = False
@@ -79,10 +96,16 @@ class UnifiedSession:
         self.training = False
         self.ready = False
         self.error = None
-        self._fixed_initial = int(initial_storeys) if initial_storeys is not None else None
-        self._fixed_ceiling = int(ceiling_storeys) if ceiling_storeys is not None else None
+        self._fixed_initial = (
+            int(initial_storeys) if initial_storeys is not None else None
+        )
+        self._fixed_ceiling = (
+            int(ceiling_storeys) if ceiling_storeys is not None else None
+        )
         self.initial_storeys = 6 if self._fixed_initial is None else self._fixed_initial
-        self.ceiling_storeys = 10 if self._fixed_ceiling is None else self._fixed_ceiling
+        self.ceiling_storeys = (
+            10 if self._fixed_ceiling is None else self._fixed_ceiling
+        )
 
         self.active = 0.0
         self.started = None
@@ -90,15 +113,21 @@ class UnifiedSession:
         self.steps = 0
         self.revision = 0
         self.pending_seed = 123
-        self.plan = 'rectangle'
+        self.plan = "rectangle"
         self.site_id = None
         self.recent = []
         self.edit_trace = []
-        self.stats = dict(updates=0, directMaskUpdates=0, importedUpdates=0, loss=0.0, gradientNorm=0.0)
+        self.stats = dict(
+            updates=0,
+            directMaskUpdates=0,
+            importedUpdates=0,
+            loss=0.0,
+            gradientNorm=0.0,
+        )
         self.rollout_steps = 16
         self.audit_steps = 5
         self.force_operation = None
-        self.scene_cache_dir = VOXELFORM_ROOT / 'results' / 'scene_cache'
+        self.scene_cache_dir = VOXELFORM_ROOT / "results" / "scene_cache"
         self._ctx_cache = {}
         self._init_snap = None
         self._state_cache = {}
@@ -108,10 +137,10 @@ class UnifiedSession:
         self.last_objective = 0.0
         self.last_diag = {}
 
-        chosen_device = device or os.getenv('VOXELFORM_DEVICE', 'auto')
+        chosen_device = device or os.getenv("VOXELFORM_DEVICE", "auto")
         self.device = device_name(chosen_device)
         self.target_far = 3.0
-        self.density_preset = 'medium'
+        self.density_preset = "medium"
         self.cores_enabled = True
         self.min_core_spacing = DEFAULT_MIN_CORE_SPACING
         self.max_core_dist = DEFAULT_MAX_CORE_DIST
@@ -127,10 +156,13 @@ class UnifiedSession:
         self.rotation_error = None
 
         self.worker = threading.Thread(target=self.loop, daemon=True)
-        if autostart:self.worker.start()
+        if autostart:
+            self.worker.start()
 
     def clock(self):
-        return self.active + (time.perf_counter() - self.started if self.started is not None else 0.0)
+        return self.active + (
+            time.perf_counter() - self.started if self.started is not None else 0.0
+        )
 
     def pause(self):
         if self.started is not None:
@@ -140,10 +172,14 @@ class UnifiedSession:
         self.single = False
         self.force_operation = None
 
-    def _load_context(self, site_id, grid_alignment='auto_fit', ceiling_storeys=None):
-        ceil_s = int(self.ceiling_storeys if ceiling_storeys is None else ceiling_storeys)
+    def _load_context(self, site_id, grid_alignment="auto_fit", ceiling_storeys=None):
+        ceil_s = int(
+            self.ceiling_storeys if ceiling_storeys is None else ceiling_storeys
+        )
         key = (str(site_id), ceil_s, str(grid_alignment))
-        record = next((r for r in self.library.catalog() if r['site_id'] == site_id), None)
+        record = next(
+            (r for r in self.library.catalog() if r["site_id"] == site_id), None
+        )
         src_path = self.library._scene_path(record) if record is not None else None
         sig = None
         if src_path is not None and src_path.is_file():
@@ -152,11 +188,11 @@ class UnifiedSession:
         cached = self._ctx_cache.get(key)
         if cached is not None and cached[0] == sig:
             return cached[1]
-        safe_align = str(grid_alignment).replace(':', '_')
-        cache_file = self.scene_cache_dir / f'ctx_{site_id}_{ceil_s}_{safe_align}.pkl'
+        safe_align = str(grid_alignment).replace(":", "_")
+        cache_file = self.scene_cache_dir / f"ctx_{site_id}_{ceil_s}_{safe_align}.pkl"
         if sig is not None and cache_file.is_file():
             try:
-                with cache_file.open('rb') as fh:
+                with cache_file.open("rb") as fh:
                     disk_sig, ctx = pickle.load(fh)
                 if disk_sig == sig and isinstance(ctx, dict):
                     self._ctx_cache[key] = (sig, ctx)
@@ -168,8 +204,8 @@ class UnifiedSession:
         if sig is not None:
             try:
                 self.scene_cache_dir.mkdir(parents=True, exist_ok=True)
-                tmp = cache_file.with_name(f'{cache_file.name}.{os.getpid()}.tmp')
-                with tmp.open('wb') as fh:
+                tmp = cache_file.with_name(f"{cache_file.name}.{os.getpid()}.tmp")
+                with tmp.open("wb") as fh:
                     pickle.dump((sig, ctx), fh, protocol=pickle.HIGHEST_PROTOCOL)
                 os.replace(tmp, cache_file)
             except Exception:
@@ -177,14 +213,26 @@ class UnifiedSession:
         return ctx
 
     def _install_env(self, context, seed, plan, far_tolerance=0.1, target_far=None):
-        factory = functools.partial(PatchFacades, config=self.config, depth_device=self.device if self.device != 'cpu' else None)
-        shape = context['shape'] if context is not None else (int(self.ceiling_storeys), 24, 32)
+        factory = functools.partial(
+            PatchFacades,
+            config=self.config,
+            depth_device=self.device if self.device != "cpu" else None,
+        )
+        shape = (
+            context["shape"]
+            if context is not None
+            else (int(self.ceiling_storeys), 24, 32)
+        )
         desired_far = float(self.target_far if target_far is None else target_far)
         if context is not None:
-            max_far = int(context['allowed'].sum()) * int(shape[0]) / float(context['siteArea'])
+            max_far = (
+                int(context["allowed"].sum())
+                * int(shape[0])
+                / float(context["siteArea"])
+            )
             if desired_far > max_far:
                 desired_far = max(0.1, math.floor(max_far * 100.0) / 100.0)
-                self.density_preset = 'custom'
+                self.density_preset = "custom"
         try:
             replacement = Environment(
                 shape=shape,
@@ -204,7 +252,7 @@ class UnifiedSession:
             )
         except ValueError:
             desired_far = max(0.1, float(shape[0]) * 0.5)
-            self.density_preset = 'custom'
+            self.density_preset = "custom"
             replacement = Environment(
                 shape=shape,
                 seed=seed,
@@ -223,16 +271,16 @@ class UnifiedSession:
             )
         replacement.precompute_external()
         solid = replacement.allowed.clone()
-        solid[int(self.initial_storeys):] = False
+        solid[int(self.initial_storeys) :] = False
         replacement.restore_occupancy(solid)
         replacement.copy_labels = np.zeros(replacement.shape, dtype=np.int64)
         replacement._ln6_cache = None
         replacement.unified_limit = max(8, replacement.workload.limit + 8)
         replacement.unified_actions = 0
         replacement.termination = None
-        policy = getattr(self, 'policy', None)
-        replacement.organic_3d_growth = getattr(policy, 'organic_3d', True)
-        replacement.floor_copy_growth = getattr(policy, 'floor_copy', False)
+        policy = getattr(self, "policy", None)
+        replacement.organic_3d_growth = getattr(policy, "organic_3d", True)
+        replacement.floor_copy_growth = getattr(policy, "floor_copy", False)
         self.last_objective, self.last_diag = organic_objective(replacement)
         self.env = replacement
         self.target_far = replacement.target_far
@@ -240,21 +288,27 @@ class UnifiedSession:
     def build(self):
         catalog = self.library.catalog()
         if not catalog:
-            raise ValueError('No cached urban scenes found. Ensure Module-Lab is accessible.')
-        initial_id = os.getenv('VOXELFORM_SITE_ID', 'm_bcn_0093')
-        initial = next((r for r in catalog if r['site_id'] == initial_id), catalog[0])
-        self.site_id = initial['site_id']
+            raise ValueError(
+                "No cached urban scenes found. Ensure Module-Lab is accessible."
+            )
+        initial_id = os.getenv("VOXELFORM_SITE_ID", "m_bcn_0093")
+        initial = next((r for r in catalog if r["site_id"] == initial_id), catalog[0])
+        self.site_id = initial["site_id"]
         d_init, d_ceil = derive_site_storeys(initial)
         if self._fixed_initial is None:
             self.initial_storeys = d_init
         if self._fixed_ceiling is None:
             self.ceiling_storeys = d_ceil
 
-        context = self._load_context(self.site_id, grid_alignment='auto_fit', ceiling_storeys=self.ceiling_storeys)
+        context = self._load_context(
+            self.site_id,
+            grid_alignment="auto_fit",
+            ceiling_storeys=self.ceiling_storeys,
+        )
         self.config = PatchConfig(
-            mode='combined',
-            allocation='feedback',
-            eligibility='depth',
+            mode="combined",
+            allocation="feedback",
+            eligibility="depth",
             facade_layers=2,
             minimum_patch=4,
             maximum_patches=4,
@@ -273,7 +327,9 @@ class UnifiedSession:
             floor_copy=False,
             organic_3d=True,
         )
-        self._install_env(context, seed=self.pending_seed, plan=self.plan, far_tolerance=0.1)
+        self._install_env(
+            context, seed=self.pending_seed, plan=self.plan, far_tolerance=0.1
+        )
 
         # New action semantics start fresh. Explicit imports must match them.
         self.stats = dict(
@@ -307,8 +363,9 @@ class UnifiedSession:
         )
 
     def _capture_initial_snapshot(self):
-        e = self.env; f = e.frontier
-        if e.edits != 0 or not hasattr(f, 'facade_band'):
+        e = self.env
+        f = e.frontier
+        if e.edits != 0 or not hasattr(f, "facade_band"):
             self._init_snap = None
             return
         self._init_snap = (
@@ -348,11 +405,22 @@ class UnifiedSession:
                     add_skin=f.add_skin.copy(),
                     components=int(f.components),
                     count=int(f.count),
-                    depth_tensor=f.depth_tensor.clone() if f.depth_tensor is not None else None,
-                    depth_numpy=f.depth_numpy.copy() if f.depth_numpy is not None else None,
-                    old_voids=[(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in f.old_voids] if f.old_voids is not None else None,
+                    depth_tensor=f.depth_tensor.clone()
+                    if f.depth_tensor is not None
+                    else None,
+                    depth_numpy=f.depth_numpy.copy()
+                    if f.depth_numpy is not None
+                    else None,
+                    old_voids=[
+                        (lab.copy(), list(ids), sz.copy())
+                        for lab, ids, sz in f.old_voids
+                    ]
+                    if f.old_voids is not None
+                    else None,
                     facade_band=f.facade_band.copy(),
-                    remove_weights=f.remove_weights.copy() if f.remove_weights is not None else None,
+                    remove_weights=f.remove_weights.copy()
+                    if f.remove_weights is not None
+                    else None,
                     _remove_eligible=f._remove_eligible.copy(),
                     facade_seconds=float(f.facade_seconds),
                 ),
@@ -363,54 +431,75 @@ class UnifiedSession:
         if self._init_snap is None or self._init_snap[0] != self._snap_key():
             return False
         from voxelform.workload import reset_budget
+
         snap = self._init_snap[1]
-        e = self.env; f = e.frontier; fs = snap['frontier']
-        e.occupied = snap['occupied'].clone()
-        e.count = snap['count']; e.start_count = snap['start_count']
-        e.edits = 0; e.voxels_edited = 0; e.last_changed_voxels = 0; e.last_operation = None
-        e.light = snap['light'].clone()
-        e.facade_light_faces = snap['facade_light_faces'].clone()
-        e.facade_light = snap['facade_light'].clone()
-        e.usable = snap['usable'].clone()
-        e.visible = snap['visible'].clone()
-        e.receiver_data = snap['receiver_data']
-        e.quality = snap['quality'].clone()
-        e.values = {k: v.clone() for k, v in snap['values'].items()}
-        e.depth = snap['depth'].clone()
-        e.depth_badness = snap['depth_badness'].clone()
-        e.cores = tuple(snap['cores'])
-        e.core_mask = snap['core_mask'].clone()
-        e.core_distance = snap['core_distance'].clone()
-        e.core_dist_badness = snap['core_dist_badness'].clone()
-        e.core_metrics = dict(snap['core_metrics'])
-        e.core_seconds = float(snap['core_seconds'])
-        e.depth_edit = 0; e.last_audit_edit = 0
-        e.last_receiver_count = snap['last_receiver_count']
-        e.last_new_receivers = snap['last_new_receivers']
-        e.last_eval_seconds = snap['last_eval_seconds']
-        e.depth_seconds = snap['depth_seconds']
-        f.occupied = fs['occupied'].copy()
-        f.exterior_air = fs['exterior_air'].copy()
-        f.remove_faces = fs['remove_faces'].copy()
-        f.add_faces = fs['add_faces'].copy()
-        f.remove_skin = fs['remove_skin'].copy()
-        f.add_skin = fs['add_skin'].copy()
-        f.components = fs['components']; f.count = fs['count']
-        f.depth_tensor = fs['depth_tensor'].clone() if fs['depth_tensor'] is not None else None
-        f.depth_numpy = fs['depth_numpy'].copy() if fs['depth_numpy'] is not None else None
-        f.old_voids = [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fs['old_voids']] if fs['old_voids'] is not None else None
-        f.facade_band = fs['facade_band'].copy()
-        f.remove_weights = fs['remove_weights'].copy() if fs['remove_weights'] is not None else None
-        f._remove_eligible = fs['_remove_eligible'].copy()
+        e = self.env
+        f = e.frontier
+        fs = snap["frontier"]
+        e.occupied = snap["occupied"].clone()
+        e.count = snap["count"]
+        e.start_count = snap["start_count"]
+        e.edits = 0
+        e.voxels_edited = 0
+        e.last_changed_voxels = 0
+        e.last_operation = None
+        e.light = snap["light"].clone()
+        e.facade_light_faces = snap["facade_light_faces"].clone()
+        e.facade_light = snap["facade_light"].clone()
+        e.usable = snap["usable"].clone()
+        e.visible = snap["visible"].clone()
+        e.receiver_data = snap["receiver_data"]
+        e.quality = snap["quality"].clone()
+        e.values = {k: v.clone() for k, v in snap["values"].items()}
+        e.depth = snap["depth"].clone()
+        e.depth_badness = snap["depth_badness"].clone()
+        e.cores = tuple(snap["cores"])
+        e.core_mask = snap["core_mask"].clone()
+        e.core_distance = snap["core_distance"].clone()
+        e.core_dist_badness = snap["core_dist_badness"].clone()
+        e.core_metrics = dict(snap["core_metrics"])
+        e.core_seconds = float(snap["core_seconds"])
+        e.depth_edit = 0
+        e.last_audit_edit = 0
+        e.last_receiver_count = snap["last_receiver_count"]
+        e.last_new_receivers = snap["last_new_receivers"]
+        e.last_eval_seconds = snap["last_eval_seconds"]
+        e.depth_seconds = snap["depth_seconds"]
+        f.occupied = fs["occupied"].copy()
+        f.exterior_air = fs["exterior_air"].copy()
+        f.remove_faces = fs["remove_faces"].copy()
+        f.add_faces = fs["add_faces"].copy()
+        f.remove_skin = fs["remove_skin"].copy()
+        f.add_skin = fs["add_skin"].copy()
+        f.components = fs["components"]
+        f.count = fs["count"]
+        f.depth_tensor = (
+            fs["depth_tensor"].clone() if fs["depth_tensor"] is not None else None
+        )
+        f.depth_numpy = (
+            fs["depth_numpy"].copy() if fs["depth_numpy"] is not None else None
+        )
+        f.old_voids = (
+            [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fs["old_voids"]]
+            if fs["old_voids"] is not None
+            else None
+        )
+        f.facade_band = fs["facade_band"].copy()
+        f.remove_weights = (
+            fs["remove_weights"].copy() if fs["remove_weights"] is not None else None
+        )
+        f._remove_eligible = fs["_remove_eligible"].copy()
         f._weight_tensors = {}
-        if hasattr(f, '_prev_occ'):
+        if hasattr(f, "_prev_occ"):
             f._prev_occ = f.occupied.copy()
             f._prev_air = f.exterior_air.copy()
         f.version += 1
-        f.facade_seconds = fs['facade_seconds']; f.projection_seconds = 0.; f.commit_seconds = 0.
+        f.facade_seconds = fs["facade_seconds"]
+        f.projection_seconds = 0.0
+        f.commit_seconds = 0.0
         reset_budget(e)
-        self.last_objective = snap['last_objective']
-        self.last_diag = dict(snap['last_diag'])
+        self.last_objective = snap["last_objective"]
+        self.last_diag = dict(snap["last_diag"])
         return True
 
     def configure_cores(self, enabled=None, min_spacing=None, max_dist=None):
@@ -419,12 +508,12 @@ class UnifiedSession:
         if min_spacing is not None:
             val_s = int(min_spacing)
             if val_s < 0 or val_s > 60:
-                raise ValueError('minCoreSpacing must be between 0 and 60')
+                raise ValueError("minCoreSpacing must be between 0 and 60")
             self.min_core_spacing = val_s
         if max_dist is not None:
             val_d = int(max_dist)
             if val_d < 2 or val_d > 80:
-                raise ValueError('maxCoreDist must be between 2 and 80')
+                raise ValueError("maxCoreDist must be between 2 and 80")
             self.max_core_dist = val_d
         if self.env is not None:
             self.env.configure_cores(
@@ -432,7 +521,7 @@ class UnifiedSession:
                 min_core_spacing=self.min_core_spacing,
                 max_core_dist=self.max_core_dist,
             )
-            if getattr(self.policy, 'organic_3d', False):
+            if getattr(self.policy, "organic_3d", False):
                 self.last_objective, self.last_diag = organic_objective(self.env)
         self._init_snap = None
         self._capture_initial_snapshot()
@@ -442,15 +531,19 @@ class UnifiedSession:
     def next_episode(self, clear_tape=True):
         if not self._restore_initial_snapshot():
             solid = self.env.allowed.clone()
-            solid[self.initial_storeys:] = False
+            solid[self.initial_storeys :] = False
             self.env.restore_occupancy(solid)
-        self.env.copy_labels=np.zeros(self.env.shape,dtype=np.int64)
+        self.env.copy_labels = np.zeros(self.env.shape, dtype=np.int64)
         self.env._ln6_cache = None
         self.env.unified_limit = max(8, self.env.workload.limit + 8)
         self.env.unified_actions = 0
         self.env.termination = None
-        self.env.organic_3d_growth = getattr(getattr(self, 'policy', None), 'organic_3d', False)
-        self.env.floor_copy_growth = getattr(getattr(self, 'policy', None), 'floor_copy', False)
+        self.env.organic_3d_growth = getattr(
+            getattr(self, "policy", None), "organic_3d", False
+        )
+        self.env.floor_copy_growth = getattr(
+            getattr(self, "policy", None), "floor_copy", False
+        )
         if self._init_snap is None or self._init_snap[0] != self._snap_key():
             self.last_objective, self.last_diag = organic_objective(self.env)
             self._capture_initial_snapshot()
@@ -465,10 +558,12 @@ class UnifiedSession:
 
     def start_run(self, training, across_sites):
         if training and across_sites:
-            available = {record['site_id'] for record in self.library.catalog()}
+            available = {record["site_id"] for record in self.library.catalog()}
             missing = [site for site in self.training_sites if site not in available]
             if len(self.training_sites) < 2 or missing:
-                raise ValueError('Training rotation needs at least two sites and a complete local cache for the configured pool')
+                raise ValueError(
+                    "Training rotation needs at least two sites and a complete local cache for the configured pool"
+                )
             if self.site_id not in self.training_sites:
                 self.learn_rollout()
                 self.switch_training_site(self.training_sites[0])
@@ -484,22 +579,30 @@ class UnifiedSession:
     def switch_training_site(self, site_id):
         """Same FAR, envelope, policy and rollout across an episode boundary."""
         e = self.env
-        align = (e.context or {}).get('gridAlignment', 'auto_fit')
-        context = self._load_context(site_id, grid_alignment=align, ceiling_storeys=self.ceiling_storeys)
-        maximum = int(context['allowed'].sum()) * self.ceiling_storeys / float(context['siteArea'])
-        minimum = 0.5 / float(context['siteArea'])
+        align = (e.context or {}).get("gridAlignment", "auto_fit")
+        context = self._load_context(
+            site_id, grid_alignment=align, ceiling_storeys=self.ceiling_storeys
+        )
+        maximum = (
+            int(context["allowed"].sum())
+            * self.ceiling_storeys
+            / float(context["siteArea"])
+        )
+        minimum = 0.5 / float(context["siteArea"])
         if not minimum <= self.target_far <= maximum:
-            raise ValueError(f'Target FAR {self.target_far:g} does not fit {site_id}')
+            raise ValueError(f"Target FAR {self.target_far:g} does not fit {site_id}")
         previous_target, previous_preset = self.target_far, self.density_preset
         seed = self.pending_seed + 1
         try:
-            self._install_env(context, seed=seed, plan='rectangle', far_tolerance=e.far_tolerance)
+            self._install_env(
+                context, seed=seed, plan="rectangle", far_tolerance=e.far_tolerance
+            )
         except (ValueError, RuntimeError, OSError):
             self.target_far, self.density_preset = previous_target, previous_preset
             raise
         self.pending_seed = seed
         self.site_id = site_id
-        self.plan = 'rectangle'
+        self.plan = "rectangle"
         self.steps = 0
         self.rotation_episodes = 0
         self.episode_started = time.perf_counter()
@@ -514,7 +617,9 @@ class UnifiedSession:
     def remember_layout(self, row):
         if self.archive is None:
             return
-        scope, settings = layout_scope(self.env, self.site_id, self.plan, self.policy.organic_3d)
+        scope, settings = layout_scope(
+            self.env, self.site_id, self.plan, self.policy.organic_3d
+        )
         try:
             self.archive.record_episodes(scope, (row,))
         except (sqlite3.Error, OSError, ValueError, TypeError) as exc:
@@ -526,18 +631,34 @@ class UnifiedSession:
 
     def start(self, training=True, single=False, force_operation=None):
         if force_operation is not None:
-            if force_operation not in ('remove','grow','exchange'):raise ValueError('Unknown probe action')
-            if not bool(self.policy.legal_operations(self.env,net_guided=False)[OPERATIONS.index(force_operation)]):raise ValueError('That action is unavailable for the current mass or height ceiling')
+            if force_operation not in ("remove", "grow", "exchange"):
+                raise ValueError("Unknown probe action")
+            if not bool(
+                self.policy.legal_operations(self.env, net_guided=False)[
+                    OPERATIONS.index(force_operation)
+                ]
+            ):
+                raise ValueError(
+                    "That action is unavailable for the current mass or height ceiling"
+                )
         new_training = bool(training)
         if new_training != self.training:
             self.policy.clear()
         self.training = new_training
-        self.force_operation = force_operation if force_operation in ('remove', 'grow', 'exchange') else None
-        if self.steps == 0 and getattr(self.env, 'unified_actions', 0) == 0:
+        self.force_operation = (
+            force_operation
+            if force_operation in ("remove", "grow", "exchange")
+            else None
+        )
+        if self.steps == 0 and getattr(self.env, "unified_actions", 0) == 0:
             self.episode_started = time.perf_counter()
         if single:
             self.pause()
-            self.force_operation = force_operation if force_operation in ('remove', 'grow', 'exchange') else None
+            self.force_operation = (
+                force_operation
+                if force_operation in ("remove", "grow", "exchange")
+                else None
+            )
             self.single = True
         else:
             self.running = True
@@ -545,13 +666,17 @@ class UnifiedSession:
                 self.started = time.perf_counter()
         self._state_cache.clear()
 
-    def configure_far(self, target, preset='custom', tolerance=None):
+    def configure_far(self, target, preset="custom", tolerance=None):
         self.env.validate_far(target)
-        if preset not in (*DENSITY_PRESETS, 'custom'):
-            raise ValueError('Unknown density preset')
-        if preset != 'custom' and float(target) != DENSITY_PRESETS[preset]:
-            raise ValueError('Density preset does not match target FAR')
-        tolerance = self.env.far_tolerance if tolerance is None else self.env.validate_tolerance(tolerance)
+        if preset not in (*DENSITY_PRESETS, "custom"):
+            raise ValueError("Unknown density preset")
+        if preset != "custom" and float(target) != DENSITY_PRESETS[preset]:
+            raise ValueError("Density preset does not match target FAR")
+        tolerance = (
+            self.env.far_tolerance
+            if tolerance is None
+            else self.env.validate_tolerance(tolerance)
+        )
         self.pause()
         self.env.configure_far(target, tolerance)
         self.target_far = self.env.target_far
@@ -570,24 +695,32 @@ class UnifiedSession:
         self.policy.clear()
         self.revision += 1
 
-    def change_site(self, source, site_id=None, plan='rectangle'):
-        if source not in ('cached_osm', 'synthetic'):
-            raise ValueError('Unknown context source')
-        if plan not in ('rectangle', 'triangle', 'courtyard', 'branch'):
-            raise ValueError('Unknown synthetic plot')
+    def change_site(self, source, site_id=None, plan="rectangle"):
+        if source not in ("cached_osm", "synthetic"):
+            raise ValueError("Unknown context source")
+        if plan not in ("rectangle", "triangle", "courtyard", "branch"):
+            raise ValueError("Unknown synthetic plot")
         self.pause()
         self.rotate_sites = False
         self.rotation_episodes = 0
         self.rotation_error = None
-        if source == 'cached_osm':
+        if source == "cached_osm":
             target_id = site_id or self.site_id
-            record = next((r for r in self.library.catalog() if r['site_id'] == target_id), None)
+            record = next(
+                (r for r in self.library.catalog() if r["site_id"] == target_id), None
+            )
             d_init, d_ceil = derive_site_storeys(record)
             if self._fixed_initial is None:
                 self.initial_storeys = d_init
             if self._fixed_ceiling is None:
                 self.ceiling_storeys = d_ceil
-            context = self._load_context(target_id, grid_alignment=(self.env.context or {}).get('gridAlignment', 'auto_fit'), ceiling_storeys=self.ceiling_storeys)
+            context = self._load_context(
+                target_id,
+                grid_alignment=(self.env.context or {}).get(
+                    "gridAlignment", "auto_fit"
+                ),
+                ceiling_storeys=self.ceiling_storeys,
+            )
         else:
             if self._fixed_initial is None:
                 self.initial_storeys = 6
@@ -597,8 +730,13 @@ class UnifiedSession:
 
         self.pending_seed += 1
         self.plan = plan
-        self.site_id = context['site_id'] if context else None
-        self._install_env(context, seed=self.pending_seed, plan=plan, far_tolerance=self.env.far_tolerance)
+        self.site_id = context["site_id"] if context else None
+        self._install_env(
+            context,
+            seed=self.pending_seed,
+            plan=plan,
+            far_tolerance=self.env.far_tolerance,
+        )
 
         self.steps = 0
         self.episode_started = time.perf_counter()
@@ -614,12 +752,19 @@ class UnifiedSession:
 
     def configure_grid(self, alignment):
         if self.env.context is None:
-            raise ValueError('Grid alignment requires a fetched plot')
-        context = self._load_context(self.site_id, grid_alignment=alignment, ceiling_storeys=self.ceiling_storeys)
-        if context['gridAlignment'] == self.env.context.get('gridAlignment', 'world'):
+            raise ValueError("Grid alignment requires a fetched plot")
+        context = self._load_context(
+            self.site_id, grid_alignment=alignment, ceiling_storeys=self.ceiling_storeys
+        )
+        if context["gridAlignment"] == self.env.context.get("gridAlignment", "world"):
             return
         self.pause()
-        self._install_env(context, seed=self.pending_seed, plan=self.plan, far_tolerance=self.env.far_tolerance)
+        self._install_env(
+            context,
+            seed=self.pending_seed,
+            plan=self.plan,
+            far_tolerance=self.env.far_tolerance,
+        )
 
         self.steps = 0
         self.episode_started = time.perf_counter()
@@ -633,12 +778,19 @@ class UnifiedSession:
         self.policy.clear()
         self.revision += 1
 
-    def configure_envelope(self, initial_storeys=None, ceiling_storeys=None, auto=False):
+    def configure_envelope(
+        self, initial_storeys=None, ceiling_storeys=None, auto=False
+    ):
         self.pause()
         if auto:
             if self.env.context is not None:
-                record = next((r for r in self.library.catalog() if r['site_id'] == self.site_id), None)
-                d_init, d_ceil = derive_site_storeys(record, self.env.context.get('buildings'))
+                record = next(
+                    (r for r in self.library.catalog() if r["site_id"] == self.site_id),
+                    None,
+                )
+                d_init, d_ceil = derive_site_storeys(
+                    record, self.env.context.get("buildings")
+                )
             else:
                 d_init, d_ceil = 6, 10
             self._fixed_initial = None
@@ -646,21 +798,40 @@ class UnifiedSession:
             self.initial_storeys = d_init
             self.ceiling_storeys = d_ceil
         else:
-            if initial_storeys is None or ceiling_storeys is None or isinstance(initial_storeys, bool) or isinstance(ceiling_storeys, bool):
-                raise ValueError('Initial and ceiling storeys must be integers')
+            if (
+                initial_storeys is None
+                or ceiling_storeys is None
+                or isinstance(initial_storeys, bool)
+                or isinstance(ceiling_storeys, bool)
+            ):
+                raise ValueError("Initial and ceiling storeys must be integers")
             init_s = int(initial_storeys)
             ceil_s = int(ceiling_storeys)
             if init_s < 1 or ceil_s < 2 or ceil_s > 60 or init_s > ceil_s:
-                raise ValueError('Require 1 <= initialStoreys <= ceilingStoreys <= 60 (minimum ceiling 2)')
+                raise ValueError(
+                    "Require 1 <= initialStoreys <= ceilingStoreys <= 60 (minimum ceiling 2)"
+                )
             self._fixed_initial = init_s
             self._fixed_ceiling = ceil_s
             self.initial_storeys = init_s
             self.ceiling_storeys = ceil_s
         context = (
-            self._load_context(self.site_id, grid_alignment=(self.env.context or {}).get('gridAlignment', 'auto_fit'), ceiling_storeys=self.ceiling_storeys)
-            if self.env.context is not None else None
+            self._load_context(
+                self.site_id,
+                grid_alignment=(self.env.context or {}).get(
+                    "gridAlignment", "auto_fit"
+                ),
+                ceiling_storeys=self.ceiling_storeys,
+            )
+            if self.env.context is not None
+            else None
         )
-        self._install_env(context, seed=self.pending_seed, plan=self.plan, far_tolerance=self.env.far_tolerance)
+        self._install_env(
+            context,
+            seed=self.pending_seed,
+            plan=self.plan,
+            far_tolerance=self.env.far_tolerance,
+        )
         self.steps = 0
         self.episode_started = time.perf_counter()
         self.episode_recorded = False
@@ -681,11 +852,11 @@ class UnifiedSession:
             device=self.device,
             seed=self.pending_seed,
             config=self.config,
-            amount_feedback=getattr(old, 'amount_feedback', True),
-            repair_remove=getattr(old, 'repair_remove', True),
-            net_guided=getattr(old, 'net_guided', True),
-            floor_copy=getattr(old, 'floor_copy', False),
-            organic_3d=getattr(old, 'organic_3d', True),
+            amount_feedback=getattr(old, "amount_feedback", True),
+            repair_remove=getattr(old, "repair_remove", True),
+            net_guided=getattr(old, "net_guided", True),
+            floor_copy=getattr(old, "floor_copy", False),
+            organic_3d=getattr(old, "organic_3d", True),
         )
         self.stats = dict(
             updates=0,
@@ -704,22 +875,38 @@ class UnifiedSession:
         self.next_episode(clear_tape=True)
         self.revision += 1
 
-    def configure_masks(self,mode,deep,voids,cap,allocation):
+    def configure_masks(self, mode, deep, voids, cap, allocation):
         from dataclasses import replace
-        if mode not in ('combined','correlated'):raise ValueError('Growing preview uses correlated fields')
-        if allocation!='feedback':raise ValueError('Growing preview uses workload feedback')
-        if int(voids)<0 or int(cap)<0:raise ValueError('Limits must be nonnegative')
-        config=replace(self.config,mode=mode,eligibility='depth' if deep else 'facade',maximum_voids=int(voids),maximum_edit_voxels=int(cap))
-        self.pause();self.policy.clear()
-        self.config=self.policy.config=config
-        self.env.frontier.config=config;self.env.frontier.refresh()
-        self.env.termination=None;self.env.unified_actions=0
-        self.env.unified_limit=max(8,self.env.workload.limit+8)
-        self._init_snap=None;self._capture_initial_snapshot();self._state_cache.clear()
-        self.episode_recorded=False;self.revision+=1
+
+        if mode not in ("combined", "correlated"):
+            raise ValueError("Growing preview uses correlated fields")
+        if allocation != "feedback":
+            raise ValueError("Growing preview uses workload feedback")
+        if int(voids) < 0 or int(cap) < 0:
+            raise ValueError("Limits must be nonnegative")
+        config = replace(
+            self.config,
+            mode=mode,
+            eligibility="depth" if deep else "facade",
+            maximum_voids=int(voids),
+            maximum_edit_voxels=int(cap),
+        )
+        self.pause()
+        self.policy.clear()
+        self.config = self.policy.config = config
+        self.env.frontier.config = config
+        self.env.frontier.refresh()
+        self.env.termination = None
+        self.env.unified_actions = 0
+        self.env.unified_limit = max(8, self.env.workload.limit + 8)
+        self._init_snap = None
+        self._capture_initial_snapshot()
+        self._state_cache.clear()
+        self.episode_recorded = False
+        self.revision += 1
 
     def audit_environment(self):
-        if getattr(self.policy, 'organic_3d', False):
+        if getattr(self.policy, "organic_3d", False):
             if self.env.last_audit_edit != self.env.edits:
                 self.env.evaluate()
             self.last_objective, self.last_diag = organic_objective(self.env)
@@ -734,24 +921,36 @@ class UnifiedSession:
     def learn_rollout(self):
         if self.training and self.policy.tape:
             stamp = time.perf_counter()
-            self.stats = self.policy.finish(0. if self.env.terminal else self.policy.fields(self.env)[1].detach())
+            self.stats = self.policy.finish(
+                0.0 if self.env.terminal else self.policy.fields(self.env)[1].detach()
+            )
             sync(self.device)
             self.learning_seconds = time.perf_counter() - stamp
 
     def finish_episode(self):
         if self.episode_recorded:
             return
-        is_organic = getattr(self.policy, 'organic_3d', False)
+        is_organic = getattr(self.policy, "organic_3d", False)
         if is_organic:
             self.audit_environment()
             if self.training and self.policy.tape:
-                self.policy.add_reward(organic_terminal_reward(self.env,self.last_objective))
+                self.policy.add_reward(
+                    organic_terminal_reward(self.env, self.last_objective)
+                )
                 self.policy.mark_done()
                 if len(self.policy.tape) >= self.rollout_steps:
                     self.learn_rollout()
         else:
-            if self.training and self.policy.tape and self.env.termination != 'far_reached':
-                self.policy.add_reward(-0.5 * abs(self.env.count - self.env.goal_count) / max(1, abs(self.env.start_count - self.env.goal_count)))
+            if (
+                self.training
+                and self.policy.tape
+                and self.env.termination != "far_reached"
+            ):
+                self.policy.add_reward(
+                    -0.5
+                    * abs(self.env.count - self.env.goal_count)
+                    / max(1, abs(self.env.start_count - self.env.goal_count))
+                )
             self.audit_environment()
             self.learn_rollout()
         self.episodes += 1
@@ -763,8 +962,12 @@ class UnifiedSession:
             seed=self.pending_seed,
             training=self.training,
             densityPreset=self.density_preset,
-            success=self.env.termination == 'far_reached',
-            episodeSeconds=max(0.001, time.perf_counter() - getattr(self, 'episode_started', time.perf_counter())),
+            success=self.env.termination == "far_reached",
+            episodeSeconds=max(
+                0.001,
+                time.perf_counter()
+                - getattr(self, "episode_started", time.perf_counter()),
+            ),
             **self.env.metrics(),
         )
         if is_organic and self.last_diag:
@@ -786,8 +989,15 @@ class UnifiedSession:
                 self.single = False
                 self.revision += 1
                 return
-            if self.running and self.training and self.rotate_sites and self.rotation_episodes >= self.episodes_per_site:
-                next_index = (self.training_sites.index(self.site_id) + 1) % len(self.training_sites)
+            if (
+                self.running
+                and self.training
+                and self.rotate_sites
+                and self.rotation_episodes >= self.episodes_per_site
+            ):
+                next_index = (self.training_sites.index(self.site_id) + 1) % len(
+                    self.training_sites
+                )
                 try:
                     self.switch_training_site(self.training_sites[next_index])
                 except (ValueError, OSError, RuntimeError) as exc:
@@ -804,18 +1014,20 @@ class UnifiedSession:
 
         stamp = time.perf_counter()
         force_op = self.force_operation if not self.training else None
-        move = self.policy.choose(self.env, training=self.training, force_operation=force_op)
+        move = self.policy.choose(
+            self.env, training=self.training, force_operation=force_op
+        )
         self.env.unified_actions += 1
         if not self.training:
             sync(self.device)
         self.action_seconds = time.perf_counter() - stamp
 
-        is_organic = getattr(self.policy, 'organic_3d', False)
-        operation = getattr(self.policy, 'last_operation', None)
+        is_organic = getattr(self.policy, "organic_3d", False)
+        operation = getattr(self.policy, "last_operation", None)
         if operation in self.op_counts:
             self.op_counts[operation] += 1
-        if operation == 'finish':
-            self.env.termination = 'far_reached'
+        if operation == "finish":
+            self.env.termination = "far_reached"
             if self.training and self.policy.tape:
                 self.policy.record(0.0 if is_organic else 0.1)
             self.finish_episode()
@@ -829,9 +1041,15 @@ class UnifiedSession:
             if self.training and self.policy.tape:
                 self.policy.record(-0.02 if is_organic else -0.03)
             if self.env.unified_actions >= self.env.unified_limit:
-                self.env.termination = 'far_reached' if self.env.far_satisfied else 'step_budget_exhausted'
+                self.env.termination = (
+                    "far_reached" if self.env.far_satisfied else "step_budget_exhausted"
+                )
                 self.finish_episode()
-            elif not is_organic and self.training and len(self.policy.tape) >= self.rollout_steps:
+            elif (
+                not is_organic
+                and self.training
+                and len(self.policy.tape) >= self.rollout_steps
+            ):
                 self.learn_rollout()
             self.single = False
             self.revision += 1
@@ -840,8 +1058,12 @@ class UnifiedSession:
         before = abs(self.env.count - self.env.goal_count)
         depth = depth_potential(self.env)
         far_before = self.env.far
-        core_shaping = bool(is_organic and self.training and getattr(self.env, 'cores_enabled', False))
-        prev_core_score = float(self.last_diag.get('coreScore') or 0.0) if core_shaping else 0.0
+        core_shaping = bool(
+            is_organic and self.training and getattr(self.env, "cores_enabled", False)
+        )
+        prev_core_score = (
+            float(self.last_diag.get("coreScore") or 0.0) if core_shaping else 0.0
+        )
 
         commit(self.env, move, validated=True)
         self.steps = self.env.edits
@@ -855,26 +1077,40 @@ class UnifiedSession:
         core_delta = 0.0
         if core_shaping:
             self.env.update_cores()
-            cur_cov = max(0.0, 1.0 - float(self.env.core_metrics.get('coreUncoveredFraction', 0.0)))
-            cur_bad = float(self.env.core_metrics.get('coreDistBadness', 0.0))
+            cur_cov = max(
+                0.0,
+                1.0 - float(self.env.core_metrics.get("coreUncoveredFraction", 0.0)),
+            )
+            cur_bad = float(self.env.core_metrics.get("coreDistBadness", 0.0))
             cur_core_score = max(0.0, cur_cov * (1.0 - 0.5 * cur_bad))
             core_delta = cur_core_score - prev_core_score
-            self.last_diag['coreScore'] = cur_core_score
+            self.last_diag["coreScore"] = cur_core_score
 
         if self.training:
             initial = max(1, abs(self.env.start_count - self.env.goal_count))
-            limit = getattr(self.env, 'unified_limit', 16)
+            limit = getattr(self.env, "unified_limit", 16)
             if is_organic:
-                reward = organic_step_reward(self.env,core_delta)
+                reward = organic_step_reward(self.env, core_delta)
             else:
-                reward = 0.2 * (before - abs(self.env.count - self.env.goal_count)) / initial + depth_potential(self.env) - depth - 0.01 / limit
+                reward = (
+                    0.2 * (before - abs(self.env.count - self.env.goal_count)) / initial
+                    + depth_potential(self.env)
+                    - depth
+                    - 0.01 / limit
+                )
             self.policy.record(reward)
 
         cells = np.argwhere(move.remove | move.add)
         if len(cells) > 0:
             low = cells.min(axis=0)
             high = cells.max(axis=0)
-            op_label = 'exchange' if (move.remove.any() and move.add.any()) else 'grow' if move.add.any() else 'subtract'
+            op_label = (
+                "exchange"
+                if (move.remove.any() and move.add.any())
+                else "grow"
+                if move.add.any()
+                else "subtract"
+            )
             self.edit_trace.append(
                 dict(
                     step=self.steps,
@@ -882,7 +1118,7 @@ class UnifiedSession:
                     operation=op_label,
                     changedVoxels=int(move.remove.sum() + move.add.sum()),
                     facadeSnapshot=move.version,
-                    maskSource='unified_' + str(operation),
+                    maskSource="unified_" + str(operation),
                     generatedVoxels=self.policy.last_generated_count,
                     projectionRounds=1,
                     bounds=[low[::-1].tolist(), high[::-1].tolist()],
@@ -897,9 +1133,11 @@ class UnifiedSession:
             )
             self.edit_trace = self.edit_trace[-64:]
 
-        limit = getattr(self.env, 'unified_limit', 16)
+        limit = getattr(self.env, "unified_limit", 16)
         if self.env.unified_actions >= limit:
-            self.env.termination = 'far_reached' if self.env.far_satisfied else 'step_budget_exhausted'
+            self.env.termination = (
+                "far_reached" if self.env.far_satisfied else "step_budget_exhausted"
+            )
 
         if self.env.terminal:
             self.finish_episode()
@@ -910,7 +1148,11 @@ class UnifiedSession:
                 self.env.update_cores()
                 if is_organic:
                     self.last_objective, self.last_diag = organic_objective(self.env)
-            if not is_organic and self.training and len(self.policy.tape) >= self.rollout_steps:
+            if (
+                not is_organic
+                and self.training
+                and len(self.policy.tape) >= self.rollout_steps
+            ):
                 self.learn_rollout()
 
         self.single = False
@@ -929,7 +1171,9 @@ class UnifiedSession:
                             break
                         before_ep = self.episodes
                         self.advance_one()
-                        if self.episodes != before_ep or not (self.running and self.training):
+                        if self.episodes != before_ep or not (
+                            self.running and self.training
+                        ):
                             break
                 time.sleep(0.001 if self.running else 0.01)
         except Exception:
@@ -938,54 +1182,117 @@ class UnifiedSession:
                 self.pause()
 
     def _dashboard_summary(self):
-        rows = [r for r in self.recent if r.get('siteId') == self.site_id and r.get('plan', self.plan) == self.plan] if self.recent else []
+        rows = (
+            [
+                r
+                for r in self.recent
+                if r.get("siteId") == self.site_id
+                and r.get("plan", self.plan) == self.plan
+            ]
+            if self.recent
+            else []
+        )
         if not rows:
             rows = list(self.recent)
-        objs = [r['organicObjective'] for r in rows if r.get('organicObjective') is not None]
-        ep_secs = [r['episodeSeconds'] for r in rows[-10:] if r.get('episodeSeconds')]
+        objs = [
+            r["organicObjective"] for r in rows if r.get("organicObjective") is not None
+        ]
+        ep_secs = [r["episodeSeconds"] for r in rows[-10:] if r.get("episodeSeconds")]
         mean_sec = float(np.mean(ep_secs)) if ep_secs else None
-        best_row = max(rows, key=lambda r: r.get('organicObjective', -1e9)) if objs else None
+        best_row = (
+            max(rows, key=lambda r: r.get("organicObjective", -1e9)) if objs else None
+        )
         return dict(
-            baselineObjective=float(np.mean(objs[:5])) if objs else float(self.last_objective),
-            recentObjective=float(np.mean(objs[-5:])) if objs else float(self.last_objective),
-            bestObjective=float(best_row['organicObjective']) if best_row else float(self.last_objective),
-            bestEpisode=int(best_row['episode']) if best_row else None,
-            bestUsableGoodArea=float(best_row.get('usableGoodArea', 0.0)) if best_row else float(self.last_diag.get('usableGoodArea', 0.0)),
-            bestDirectSun=float(best_row.get('directSunProxy', 0.0)) if best_row else None,
+            baselineObjective=float(np.mean(objs[:5]))
+            if objs
+            else float(self.last_objective),
+            recentObjective=float(np.mean(objs[-5:]))
+            if objs
+            else float(self.last_objective),
+            bestObjective=float(best_row["organicObjective"])
+            if best_row
+            else float(self.last_objective),
+            bestEpisode=int(best_row["episode"]) if best_row else None,
+            bestUsableGoodArea=float(best_row.get("usableGoodArea", 0.0))
+            if best_row
+            else float(self.last_diag.get("usableGoodArea", 0.0)),
+            bestDirectSun=float(best_row.get("directSunProxy", 0.0))
+            if best_row
+            else None,
             meanEpisodeSeconds=mean_sec,
-            episodesPerMinute=(60.0 / mean_sec) if (mean_sec and mean_sec > 0) else None,
+            episodesPerMinute=(60.0 / mean_sec)
+            if (mean_sec and mean_sec > 0)
+            else None,
             opCounts=dict(self.op_counts),
         )
 
-    def state_json(self, view='all'):
+    def state_json(self, view="all"):
         with self.lock:
             if not self.ready:
-                return json.dumps(dict(ready=False, error=self.error, device=self.device), separators=(',', ':')).encode('utf-8')
-            req_view = view if view in ('all', 'solid', 'usable', 'light', 'depthBadness', 'noise', 'coreDistance') else 'all'
-            key = (self.revision, self.running, self.training, self.episodes, int(self.stats.get('updates', 0)), req_view)
+                return json.dumps(
+                    dict(ready=False, error=self.error, device=self.device),
+                    separators=(",", ":"),
+                ).encode("utf-8")
+            req_view = (
+                view
+                if view
+                in (
+                    "all",
+                    "solid",
+                    "usable",
+                    "light",
+                    "depthBadness",
+                    "noise",
+                    "coreDistance",
+                )
+                else "all"
+            )
+            key = (
+                self.revision,
+                self.running,
+                self.training,
+                self.episodes,
+                int(self.stats.get("updates", 0)),
+                req_view,
+            )
             cached = self._state_cache.get(req_view)
             if cached is not None and cached[0] == key:
                 return cached[1]
-            encoded = json.dumps(self.state(view=req_view), separators=(',', ':')).encode('utf-8')
+            encoded = json.dumps(
+                self.state(view=req_view), separators=(",", ":")
+            ).encode("utf-8")
             self._state_cache[req_view] = (key, encoded)
             return encoded
 
-    def state(self, view='all'):
+    def state(self, view="all"):
         with self.lock:
             if not self.ready:
                 return dict(ready=False, error=self.error, device=self.device)
             e = self.env
             metrics = e.metrics()
             metrics.update(stepBudget=e.unified_limit, attempts=e.unified_actions)
-            is_organic = getattr(self.policy, 'organic_3d', False)
+            is_organic = getattr(self.policy, "organic_3d", False)
             if is_organic and self.last_diag:
                 metrics.update(self.last_diag)
-            req_view = view if view in ('all', 'solid', 'usable', 'light', 'depthBadness', 'noise', 'coreDistance') else 'all'
+            req_view = (
+                view
+                if view
+                in (
+                    "all",
+                    "solid",
+                    "usable",
+                    "light",
+                    "depthBadness",
+                    "noise",
+                    "coreDistance",
+                )
+                else "all"
+            )
             static = self._env_static_cache
             if static is None or static[0] != id(e):
                 static = (
                     id(e),
-                    e.allowed.to('cpu', torch.uint8).flatten().tolist(),
+                    e.allowed.to("cpu", torch.uint8).flatten().tolist(),
                     e.boxes.tolist(),
                     public_scene(e.context) if e.context is not None else None,
                 )
@@ -994,9 +1301,13 @@ class UnifiedSession:
             payload = dict(
                 ready=True,
                 coreLayoutVersion=CORE_LAYOUT_VERSION,
-                siteRotation=dict(enabled=self.rotate_sites, sites=self.training_sites,
-                                  completed=self.rotation_episodes, block=self.episodes_per_site,
-                                  error=self.rotation_error),
+                siteRotation=dict(
+                    enabled=self.rotate_sites,
+                    sites=self.training_sites,
+                    completed=self.rotation_episodes,
+                    block=self.episodes_per_site,
+                    error=self.rotation_error,
+                ),
                 error=self.error,
                 running=self.running,
                 training=self.training,
@@ -1005,7 +1316,7 @@ class UnifiedSession:
                 step=self.steps,
                 attempts=e.unified_actions,
                 lastRejection=self.policy.last_rejection,
-                maxSteps=getattr(e, 'unified_limit', 16),
+                maxSteps=getattr(e, "unified_limit", 16),
                 rolloutSteps=self.rollout_steps,
                 environmentAuditSteps=self.audit_steps,
                 episodeComplete=e.terminal,
@@ -1014,17 +1325,20 @@ class UnifiedSession:
                 settings=dict(
                     targetFar=self.target_far,
                     farTolerance=e.far_tolerance,
-                    gridAlignment=(e.context or {}).get('gridAlignment', 'auto_fit'),
+                    gridAlignment=(e.context or {}).get("gridAlignment", "auto_fit"),
                     densityPreset=self.density_preset,
-                    program='residential',
-                    growthMode='organic_3d' if is_organic else 'copy_top_floor',
+                    program="residential",
+                    growthMode="organic_3d" if is_organic else "copy_top_floor",
                     initialStoreys=self.initial_storeys,
                     ceilingStoreys=self.ceiling_storeys,
-                    contextStoreys=dict(avg=max(1, int(round(e.context_avg_height / 3.0))), max=max(1, int(math.ceil(e.context_max_height / 3.0)))),
+                    contextStoreys=dict(
+                        avg=max(1, int(round(e.context_avg_height / 3.0))),
+                        max=max(1, int(math.ceil(e.context_max_height / 3.0))),
+                    ),
                     densityPresets=DENSITY_PRESETS,
                     maximumFar=e.capacity / e.plot_area,
-                    maskMode='combined',
-                    deepInterior=self.config.eligibility=='depth',
+                    maskMode="combined",
+                    deepInterior=self.config.eligibility == "depth",
                     minimumPatch=self.policy.config.minimum_patch,
                     maximumInteriorVoids=self.policy.config.maximum_voids,
                     minimumVoidArea=self.policy.config.minimum_void_area,
@@ -1041,25 +1355,31 @@ class UnifiedSession:
                 revision=self.revision,
                 metrics=metrics,
                 learning=self.stats,
-                policyMigration='Organic 3D volumetric editing · cantilevers unrestricted · vectorized floor usability guard' if is_organic else 'Whole-floor growth · paired carving/growth available from the first edit · column support enforced',
-                maskGenerator='unified_organic_3d' if is_organic else 'unified_floor_copy',
-                maskStructure=dict(lastOperation=getattr(self.policy, 'last_operation', None)),
+                policyMigration="Organic 3D volumetric editing · cantilevers unrestricted · vectorized floor usability guard"
+                if is_organic
+                else "Whole-floor growth · paired carving/growth available from the first edit · column support enforced",
+                maskGenerator="unified_organic_3d"
+                if is_organic
+                else "unified_floor_copy",
+                maskStructure=dict(
+                    lastOperation=getattr(self.policy, "last_operation", None)
+                ),
                 maskProfile=dict(
                     samplingSeconds=0.0,
                     transferSeconds=0.0,
-                    geometrySeconds=getattr(self.policy, 'generation_seconds', 0.0),
+                    geometrySeconds=getattr(self.policy, "generation_seconds", 0.0),
                 ),
                 autosave=dict(lastSaved=None, error=None),
-                neuralGenerationSeconds=getattr(self.policy, 'generation_seconds', 0.0),
+                neuralGenerationSeconds=getattr(self.policy, "generation_seconds", 0.0),
                 maskGenerationAttempts=1,
                 editTrace=list(self.edit_trace),
                 context=ctx_pub,
                 actionSeconds=self.action_seconds,
                 learningSeconds=self.learning_seconds,
                 shape=list(e.shape),
-                occupied=e.occupied.to('cpu', torch.uint8).flatten().tolist(),
+                occupied=e.occupied.to("cpu", torch.uint8).flatten().tolist(),
                 cores=[c.to_dict() for c in e.cores],
-                coreMask=e.core_mask.to('cpu', torch.uint8).flatten().tolist(),
+                coreMask=e.core_mask.to("cpu", torch.uint8).flatten().tolist(),
                 allowed=allowed_list,
                 boxes=boxes_list,
                 recent=self.recent,
@@ -1067,27 +1387,40 @@ class UnifiedSession:
             )
             if self.archive is not None:
                 scope, _ = layout_scope(e, self.site_id, self.plan, is_organic)
-                payload['layoutMemory'] = self.archive.summary(scope)
-            if req_view == 'all':
-                payload['facadeDepth'] = e.depth.detach().cpu().flatten().tolist()
-                payload['depthBadness'] = e.depth_badness.detach().cpu().flatten().tolist()
-                payload['light'] = e.light.detach().cpu().flatten().tolist()
-                payload['noise'] = e.noise.detach().cpu().flatten().tolist()
-                payload['usable'] = e.usable.to('cpu', torch.uint8).flatten().tolist()
-                payload['coreDistance'] = e.core_distance.detach().cpu().flatten().tolist()
-                payload['coreDistBadness'] = e.core_dist_badness.detach().cpu().flatten().tolist()
-            elif req_view == 'usable':
-                payload['usable'] = e.usable.to('cpu', torch.uint8).flatten().tolist()
-            elif req_view == 'light':
-                payload['light'] = e.light.detach().cpu().flatten().tolist()
-            elif req_view == 'depthBadness':
-                payload['depthBadness'] = e.depth_badness.detach().cpu().flatten().tolist()
-            elif req_view == 'noise':
-                payload['noise'] = e.noise.detach().cpu().flatten().tolist()
-            elif req_view == 'coreDistance':
-                payload['coreDistance'] = e.core_distance.detach().cpu().flatten().tolist()
-                payload['coreDistBadness'] = e.core_dist_badness.detach().cpu().flatten().tolist()
+                payload["layoutMemory"] = self.archive.summary(scope)
+            if req_view == "all":
+                payload["facadeDepth"] = e.depth.detach().cpu().flatten().tolist()
+                payload["depthBadness"] = (
+                    e.depth_badness.detach().cpu().flatten().tolist()
+                )
+                payload["light"] = e.light.detach().cpu().flatten().tolist()
+                payload["noise"] = e.noise.detach().cpu().flatten().tolist()
+                payload["usable"] = e.usable.to("cpu", torch.uint8).flatten().tolist()
+                payload["coreDistance"] = (
+                    e.core_distance.detach().cpu().flatten().tolist()
+                )
+                payload["coreDistBadness"] = (
+                    e.core_dist_badness.detach().cpu().flatten().tolist()
+                )
+            elif req_view == "usable":
+                payload["usable"] = e.usable.to("cpu", torch.uint8).flatten().tolist()
+            elif req_view == "light":
+                payload["light"] = e.light.detach().cpu().flatten().tolist()
+            elif req_view == "depthBadness":
+                payload["depthBadness"] = (
+                    e.depth_badness.detach().cpu().flatten().tolist()
+                )
+            elif req_view == "noise":
+                payload["noise"] = e.noise.detach().cpu().flatten().tolist()
+            elif req_view == "coreDistance":
+                payload["coreDistance"] = (
+                    e.core_distance.detach().cpu().flatten().tolist()
+                )
+                payload["coreDistBadness"] = (
+                    e.core_dist_badness.detach().cpu().flatten().tolist()
+                )
             return payload
+
 
 # =============================================================================
 # General-Purpose Live Devoxelizer (Coplanar 2.5D + Non-Flat Taubin / DC+QEM)
@@ -1098,40 +1431,61 @@ from voxelform.devoxelize import devoxelize_occupancy
 # Create FastAPI app
 library = ContextLibrary()
 # Reuse the declared training split and keep validation/test sites out of rotation.
-training_config = json.loads((VOXELFORM_ROOT / 'configs/research-real.json').read_text())
-session = UnifiedSession(library=library, autostart=False,
-                         training_sites=training_config['train_sites'],
-                         archive_dir=VOXELFORM_ROOT / 'runs/layouts')
+training_config = json.loads(
+    (VOXELFORM_ROOT / "configs/research-real.json").read_text()
+)
+session = UnifiedSession(
+    library=library,
+    autostart=False,
+    training_sites=training_config["train_sites"],
+    archive_dir=VOXELFORM_ROOT / "runs/layouts",
+)
 from contextlib import asynccontextmanager
+
+
 @asynccontextmanager
 async def lifespan(app):
     session.worker.start()
     yield
-app = FastAPI(lifespan=lifespan, title='VoxelForm RL Unified')
 
 
-@app.get('/assets/viewer.js')
+app = FastAPI(lifespan=lifespan, title="VoxelForm RL Unified")
+
+
+@app.get("/assets/viewer.js")
 def custom_viewer_js():
-    base_js = (VOXELFORM_ROOT / 'public/viewer.js').read_text()
-    return Response(base_js + '\n' + (VOXELFORM_ROOT / 'public/devox-viewer.js').read_text(), media_type='application/javascript')
+    base_js = (VOXELFORM_ROOT / "public/viewer.js").read_text()
+    return Response(
+        base_js + "\n" + (VOXELFORM_ROOT / "public/devox-viewer.js").read_text(),
+        media_type="application/javascript",
+    )
 
-app.mount('/assets', StaticFiles(directory=VOXELFORM_ROOT / 'public'), name='assets')
 
-viewer_public = library.root / 'frontend/public'
-if not (viewer_public / 'scripts/urban_viewer.js').is_file():
-    viewer_public = library.root / 'public'
-for directory in ('scripts', 'styles', 'vendor'):
-    app.mount(f'/shared-viewer/{directory}', StaticFiles(directory=viewer_public / directory, check_dir=False), name=f'shared-viewer-{directory}')
+app.mount("/assets", StaticFiles(directory=VOXELFORM_ROOT / "public"), name="assets")
 
-@app.get('/')
+viewer_public = library.root / "frontend/public"
+if not (viewer_public / "scripts/urban_viewer.js").is_file():
+    viewer_public = library.root / "public"
+for directory in ("scripts", "styles", "vendor"):
+    app.mount(
+        f"/shared-viewer/{directory}",
+        StaticFiles(directory=viewer_public / directory, check_dir=False),
+        name=f"shared-viewer-{directory}",
+    )
+
+
+@app.get("/")
 def home():
-    html_path = VOXELFORM_ROOT / 'public/index.html'
+    html_path = VOXELFORM_ROOT / "public/index.html"
     content = html_path.read_text()
-    
+
     # Inject indicator and unified action selector without touching the repository file
     badge = '<span class="badge" style="background:#5e35b1;color:#fff;margin-left:6px;font-size:11px;">Organic 3D</span>'
-    content = content.replace('<span class="badge">Experimental proxies</span>', '<span class="badge">Experimental proxies</span>' + badge)
-    
+    content = content.replace(
+        '<span class="badge">Experimental proxies</span>',
+        '<span class="badge">Experimental proxies</span>' + badge,
+    )
+
     # Inject Operation dropdown next to One Mask button
     op_select = (
         '<button id="step">One mask</button>'
@@ -1140,7 +1494,7 @@ def home():
         '<option value="exchange">Grow + carve (exchange)</option>'
         '<option value="grow">Grow 3D · probe</option>'
         '<option value="remove">Carve · probe</option>'
-        '</select>'
+        "</select>"
     )
     content = content.replace('<button id="step">One mask</button>', op_select)
 
@@ -1149,20 +1503,20 @@ def home():
         '<div style="margin:10px 0 6px;padding:8px 10px;border:1px solid #dbe4f4;border-radius:6px;background:#f4f7ff;">'
         '<label class="checkbox" style="margin-bottom:6px;display:flex;align-items:center;gap:6px;">'
         '<input id="devoxToggle" type="checkbox" />'
-        '<span>Devoxelize after single generation</span>'
-        '</label>'
+        "<span>Devoxelize after single generation</span>"
+        "</label>"
         '<label for="devoxAlgo" style="display:block;font-size:11px;opacity:0.8;margin-bottom:4px;">Devoxelization mode (0–3)</label>'
         '<select id="devoxAlgo" style="width:100%;background:#fff;color:#18315a;border:1px solid #cbd6e8;border-radius:4px;padding:4px 6px;font-size:12px;cursor:pointer;">'
         '<option value="off">0. Raw Voxel Grid (Devox Off)</option>'
         '<option value="correlated_loft" selected>1. Correlated Support-Plane Loft (Default)</option>'
         '<option value="extruded_slabs">2. 2.5D Extruded Floor Slabs</option>'
         '<option value="vsa_planes">3. 3D Plane Arrangement (VSA)</option>'
-        '</select>'
+        "</select>"
         '<div id="devoxMeta" style="margin-top:6px;font-size:11px;color:#63718b;display:flex;justify-content:space-between;align-items:center;gap:6px;">'
-        '<span>0. Devox OFF (raw voxels)</span>'
+        "<span>0. Devox OFF (raw voxels)</span>"
         '<a href="/devoxelize" target="_blank" style="color:#1645ff;text-decoration:none;">Compare 0–3 Lab ↗</a>'
-        '</div>'
-        '</div>'
+        "</div>"
+        "</div>"
         '<div id="layerLegend"'
     )
     content = content.replace('<div id="layerLegend"', devox_controls)
@@ -1298,170 +1652,259 @@ def home():
     </script>
     </body>
     """
-    content = content.replace('</body>', inject_script)
+    content = content.replace("</body>", inject_script)
     return HTMLResponse(content)
 
-@app.get('/api/devoxelize_live')
-def devoxelize_live(method: str = 'correlated_loft', revision: int | None = None):
+
+@app.get("/api/devoxelize_live")
+def devoxelize_live(method: str = "correlated_loft", revision: int | None = None):
     with session.lock:
         if not session.ready or session.env is None:
-            raise HTTPException(409, 'Environment is still preparing')
+            raise HTTPException(409, "Environment is still preparing")
         if session.running or session.training or not session.env.terminal:
-            raise HTTPException(409, 'Devoxelization only runs at the end of a single generation')
-        if revision is not None and revision != session.revision:raise HTTPException(409, 'Preview changed')
-        if method not in ('correlated_loft','extruded_slabs','vsa_planes'):raise HTTPException(400, 'Unknown devoxelization method')
-        occ_np = session.env.occupied.to('cpu', torch.bool).numpy().copy()
+            raise HTTPException(
+                409, "Devoxelization only runs at the end of a single generation"
+            )
+        if revision is not None and revision != session.revision:
+            raise HTTPException(409, "Preview changed")
+        if method not in ("correlated_loft", "extruded_slabs", "vsa_planes"):
+            raise HTTPException(400, "Unknown devoxelization method")
+        occ_np = session.env.occupied.to("cpu", torch.bool).numpy().copy()
         rev = int(session.revision)
     res = devoxelize_occupancy(occ_np, rev, method=method)
     with session.lock:
-        if session.revision != rev or session.running or session.training:raise HTTPException(409, 'Preview changed during reconstruction')
+        if session.revision != rev or session.running or session.training:
+            raise HTTPException(409, "Preview changed during reconstruction")
     return dict(revision=rev, **res)
 
-@app.get('/devoxelize')
+
+@app.get("/devoxelize")
 def devoxelize():
-    html_file = VOXELFORM_ROOT / 'public/devoxelize.html'
+    html_file = VOXELFORM_ROOT / "public/devoxelize.html"
     return FileResponse(html_file)
 
 
-@app.get('/api/core-plans')
+@app.get("/api/core-plans")
 def core_plan_data():
-    return JSONResponse(dict(version=CORE_LAYOUT_VERSION,plans=plan_library()),headers={'Cache-Control':'no-store'})
+    return JSONResponse(
+        dict(version=CORE_LAYOUT_VERSION, plans=plan_library()),
+        headers={"Cache-Control": "no-store"},
+    )
 
-@app.get('/api/core-plans/{tier}.svg')
+
+@app.get("/api/core-plans/{tier}.svg")
 def core_plan_svg(tier: str):
-    plan=next((p for p in plan_library() if p['tier']==tier),None)
-    if plan is None:raise HTTPException(404,'Unknown core tier')
-    return Response(render_plan_svg(plan),media_type='image/svg+xml',headers={'Cache-Control':'no-store'})
+    plan = next((p for p in plan_library() if p["tier"] == tier), None)
+    if plan is None:
+        raise HTTPException(404, "Unknown core tier")
+    return Response(
+        render_plan_svg(plan),
+        media_type="image/svg+xml",
+        headers={"Cache-Control": "no-store"},
+    )
 
-@app.get('/core-plans')
+
+@app.get("/core-plans")
 def core_plans():
-    html_file = VOXELFORM_ROOT / 'public/core-plans.html'
-    return FileResponse(html_file,headers={'Cache-Control':'no-store'})
+    html_file = VOXELFORM_ROOT / "public/core-plans.html"
+    return FileResponse(html_file, headers={"Cache-Control": "no-store"})
 
-@app.get('/api/state')
-def state(view: str = 'all'):
-    return Response(content=session.state_json(view=view), media_type='application/json')
 
-@app.get('/api/layouts/{scope}/{layout_id}')
+@app.get("/api/state")
+def state(view: str = "all"):
+    return Response(
+        content=session.state_json(view=view), media_type="application/json"
+    )
+
+
+@app.get("/api/layouts/{scope}/{layout_id}")
 def saved_layout(scope: str, layout_id: str):
     with session.lock:
         if not session.ready or session.archive is None:
-            raise HTTPException(409, 'The layout archive is unavailable')
-        current_scope, _ = layout_scope(session.env, session.site_id, session.plan, session.policy.organic_3d)
+            raise HTTPException(409, "The layout archive is unavailable")
+        current_scope, _ = layout_scope(
+            session.env, session.site_id, session.plan, session.policy.organic_3d
+        )
         if scope != current_scope:
-            raise HTTPException(409, 'The active site or settings changed')
+            raise HTTPException(409, "The active site or settings changed")
         try:
             return session.archive.preview(scope, layout_id, session.env.shape)
         except KeyError as exc:
-            raise HTTPException(404, 'Layout unavailable in the current top five') from exc
+            raise HTTPException(
+                404, "Layout unavailable in the current top five"
+            ) from exc
         except (OSError, ValueError, TypeError) as exc:
-            raise HTTPException(409, 'Could not read the saved layout') from exc
+            raise HTTPException(409, "Could not read the saved layout") from exc
 
 
-@app.get('/api/episodes/{scope}')
+@app.get("/api/episodes/{scope}")
 def episode_history(scope: str, after: int = 0):
     with session.lock:
         if not session.ready or session.archive is None:
-            raise HTTPException(409, 'The episode history is unavailable')
-        current_scope, _ = layout_scope(session.env, session.site_id, session.plan, session.policy.organic_3d)
+            raise HTTPException(409, "The episode history is unavailable")
+        current_scope, _ = layout_scope(
+            session.env, session.site_id, session.plan, session.policy.organic_3d
+        )
         if scope != current_scope:
-            raise HTTPException(409, 'The active site or settings changed')
+            raise HTTPException(409, "The active site or settings changed")
         archive = session.archive
     try:
-        return {'rows': archive.chart_history(scope, after=max(0, after))}
+        return {"rows": archive.chart_history(scope, after=max(0, after))}
     except (sqlite3.Error, OSError, ValueError, TypeError) as exc:
-        raise HTTPException(409, 'Could not read saved episode statistics') from exc
+        raise HTTPException(409, "Could not read saved episode statistics") from exc
 
 
-@app.get('/api/sites')
+@app.get("/api/sites")
 def sites():
     return [
         dict(
-            siteId=r['site_id'],
-            city=r.get('city_name', 'Urban site'),
-            cityCode=r.get('city_code', ''),
-            tier=r.get('area_tier', ''),
-            area=r.get('site_area_m2'),
+            siteId=r["site_id"],
+            city=r.get("city_name", "Urban site"),
+            cityCode=r.get("city_code", ""),
+            tier=r.get("area_tier", ""),
+            area=r.get("site_area_m2"),
         )
         for r in library.catalog()
     ]
 
-@app.post('/api/control')
+
+@app.post("/api/control")
 async def control(request: Request):
     data = await request.json()
-    command = data.get('command')
-    force_op = data.get('forceOperation')
+    command = data.get("command")
+    force_op = data.get("forceOperation")
     with session.lock:
         if not session.ready:
-            raise HTTPException(409, 'Environment is still preparing')
+            raise HTTPException(409, "Environment is still preparing")
         try:
-            if command == 'run':
-                session.start_run(training=bool(data.get('training', True)),
-                                  across_sites=bool(data.get('acrossSites', session.rotate_sites)))
-            elif command == 'pause':
+            if command == "run":
+                session.start_run(
+                    training=bool(data.get("training", True)),
+                    across_sites=bool(data.get("acrossSites", session.rotate_sites)),
+                )
+            elif command == "pause":
                 session.pause()
-            elif command == 'step':
-                session.start(training=bool(data.get('training', False)), single=True, force_operation=force_op)
-            elif command == 'masks':
-                session.configure_masks(data.get('mode','combined'), data.get('deepInterior',True), data.get('maximumInteriorVoids',1), data.get('maximumEditVoxels',0), data.get('editAllocation','feedback'))
-            elif command == 'grid':
-                session.configure_grid(data.get('alignment', 'world'))
-            elif command == 'reset':
+            elif command == "step":
+                session.start(
+                    training=bool(data.get("training", False)),
+                    single=True,
+                    force_operation=force_op,
+                )
+            elif command == "masks":
+                session.configure_masks(
+                    data.get("mode", "combined"),
+                    data.get("deepInterior", True),
+                    data.get("maximumInteriorVoids", 1),
+                    data.get("maximumEditVoxels", 0),
+                    data.get("editAllocation", "feedback"),
+                )
+            elif command == "grid":
+                session.configure_grid(data.get("alignment", "world"))
+            elif command == "reset":
                 session.pause()
                 session.next_episode()
-            elif command == 'reset_weights':
+            elif command == "reset_weights":
                 session.reset_weights()
-            elif command == 'envelope':
-                session.configure_envelope(data.get('initialStoreys'), data.get('ceilingStoreys'), auto=bool(data.get('auto', False)))
-            elif command == 'cores':
-                session.configure_cores(enabled=data.get('coresEnabled'), min_spacing=data.get('minCoreSpacing'), max_dist=data.get('maxCoreDist'))
-            elif command == 'settings':
-                session.configure_far(data.get('targetFar'), data.get('densityPreset', 'custom'), data.get('farTolerance'))
-            elif command == 'site':
-                session.change_site(data.get('source', 'cached_osm'), data.get('siteId'), data.get('plan', 'rectangle'))
+            elif command == "envelope":
+                session.configure_envelope(
+                    data.get("initialStoreys"),
+                    data.get("ceilingStoreys"),
+                    auto=bool(data.get("auto", False)),
+                )
+            elif command == "cores":
+                session.configure_cores(
+                    enabled=data.get("coresEnabled"),
+                    min_spacing=data.get("minCoreSpacing"),
+                    max_dist=data.get("maxCoreDist"),
+                )
+            elif command == "settings":
+                session.configure_far(
+                    data.get("targetFar"),
+                    data.get("densityPreset", "custom"),
+                    data.get("farTolerance"),
+                )
+            elif command == "site":
+                session.change_site(
+                    data.get("source", "cached_osm"),
+                    data.get("siteId"),
+                    data.get("plan", "rectangle"),
+                )
             else:
-                raise ValueError('Unknown command')
+                raise ValueError("Unknown command")
         except (ValueError, TypeError, KeyError) as exc:
             raise HTTPException(400, str(exc)) from exc
     return dict(ok=True)
 
-@app.post('/api/policy')
+
+@app.post("/api/policy")
 async def load_policy(request: Request):
-    payload=await request.body()
+    payload = await request.body()
     with session.lock:
-        if not session.ready:raise HTTPException(409,'Not ready')
+        if not session.ready:
+            raise HTTPException(409, "Not ready")
         try:
-            try:saved=torch.load(io.BytesIO(payload),map_location=session.device,weights_only=True)
-            except Exception as exc:raise ValueError('Could not read this policy file') from exc
-            if not isinstance(saved,dict):raise ValueError('Invalid policy file')
-            if not (saved.get('organic3d') or saved.get('floorCopy')) or not saved.get('netGuided'):raise ValueError('Import an organic 3D or whole-floor unified policy saved from this preview')
-            replacement=UnifiedLearner(session.device)
+            try:
+                saved = torch.load(
+                    io.BytesIO(payload), map_location=session.device, weights_only=True
+                )
+            except Exception as exc:
+                raise ValueError("Could not read this policy file") from exc
+            if not isinstance(saved, dict):
+                raise ValueError("Invalid policy file")
+            if not (saved.get("organic3d") or saved.get("floorCopy")) or not saved.get(
+                "netGuided"
+            ):
+                raise ValueError(
+                    "Import an organic 3D or whole-floor unified policy saved from this preview"
+                )
+            replacement = UnifiedLearner(session.device)
             replacement.load(saved)
-            session.pause();session.policy=replacement;session.config=replacement.config
-            session.env.organic_3d_growth=replacement.organic_3d
-            session.env.floor_copy_growth=replacement.floor_copy
-            session.env.frontier.config=replacement.config;session.env.frontier.refresh()
-            session._init_snap=None;session._capture_initial_snapshot();session._state_cache.clear()
-            session.policy.clear();session.revision+=1
-            session.stats.update(updates=replacement.updates,directMaskUpdates=replacement.direct_updates)
-        except (ValueError,KeyError,RuntimeError,TypeError,pickle.UnpicklingError,EOFError) as exc:raise HTTPException(400,str(exc)) from exc
+            session.pause()
+            session.policy = replacement
+            session.config = replacement.config
+            session.env.organic_3d_growth = replacement.organic_3d
+            session.env.floor_copy_growth = replacement.floor_copy
+            session.env.frontier.config = replacement.config
+            session.env.frontier.refresh()
+            session._init_snap = None
+            session._capture_initial_snapshot()
+            session._state_cache.clear()
+            session.policy.clear()
+            session.revision += 1
+            session.stats.update(
+                updates=replacement.updates,
+                directMaskUpdates=replacement.direct_updates,
+            )
+        except (
+            ValueError,
+            KeyError,
+            RuntimeError,
+            TypeError,
+            pickle.UnpicklingError,
+            EOFError,
+        ) as exc:
+            raise HTTPException(400, str(exc)) from exc
     return dict(ok=True)
 
-@app.get('/api/policy')
+
+@app.get("/api/policy")
 def save_policy():
     with session.lock:
         if not session.ready:
-            raise HTTPException(409, 'Not ready')
+            raise HTTPException(409, "Not ready")
         # Include learning from a paused partial rollout in a manual export.
         session.learn_rollout()
         buffer = io.BytesIO()
         torch.save(session.policy.state(), buffer)
     return Response(
         buffer.getvalue(),
-        media_type='application/octet-stream',
-        headers={'Content-Disposition': 'attachment; filename="voxelform-unified-policy.pt"'},
+        media_type="application/octet-stream",
+        headers={
+            "Content-Disposition": 'attachment; filename="voxelform-unified-policy.pt"'
+        },
     )
 
-if __name__ == '__main__':
-    port = int(os.getenv('VOXELFORM_PORT', '8011'))
-    uvicorn.run(app, host='127.0.0.1', port=port, log_level='info')
+
+if __name__ == "__main__":
+    port = int(os.getenv("VOXELFORM_PORT", "8011"))
+    uvicorn.run(app, host="127.0.0.1", port=port, log_level="info")

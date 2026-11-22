@@ -1,4 +1,5 @@
 """Additive N-stage coarse-to-fine policy (4x4x1 / 2x2x1 -> 1x1x3 m fine) with 14-ch compact cores."""
+
 from dataclasses import asdict
 import math
 import time
@@ -31,7 +32,7 @@ from .workload import WorkloadBudget
 
 def tier_cascade_blocks(env):
     """Select progressive coarse-to-fine block schedule by parcel area tier."""
-    area = float(getattr(env, 'plot_area', 0.0))
+    area = float(getattr(env, "plot_area", 0.0))
     if area < 2500.0:
         return ()
     if area < 3800.0:
@@ -46,7 +47,7 @@ def _pool_boundary_2d(arr, kz, kx_y):
     pw = (kx_y - w % kx_y) % kx_y
     x = arr[None, None].float()
     if ph or pw:
-        x = F.pad(x, (0, pw, 0, ph), mode='replicate')
+        x = F.pad(x, (0, pw, 0, ph), mode="replicate")
     return F.avg_pool2d(x, (kz, kx_y), stride=(kz, kx_y))[0, 0]
 
 
@@ -56,13 +57,19 @@ class CoarseEnv:
     def __init__(self, fine_env, block=(2, 2, 2), handoff_tol=None):
         bz, by, bx = (int(v) for v in block)
         if by != bx or by not in (2, 4, 8) or bz not in (1, 2, 3):
-            raise ValueError('CoarseEnv supports block=(1|2|3, 2|4|8, 2|4|8) with equal XY')
+            raise ValueError(
+                "CoarseEnv supports block=(1|2|3, 2|4|8, 2|4|8) with equal XY"
+            )
         self.env = fine_env
         self.block = (bz, by, bx)
         self.bz = bz
         self.bxy = by
         self.device = fine_env.device
-        default_tol = (0.45 if bz == 1 else 0.60) if by == 2 else ((0.90 if bz == 1 else 1.15) if by == 4 else 1.50)
+        default_tol = (
+            (0.45 if bz == 1 else 0.60)
+            if by == 2
+            else ((0.90 if bz == 1 else 1.15) if by == 4 else 1.50)
+        )
         self.handoff_tol = float(default_tol if handoff_tol is None else handoff_tol)
 
         Z, Y, X = fine_env.shape
@@ -80,19 +87,31 @@ class CoarseEnv:
         px = Xc * by - X
         pad3 = (0, px, 0, py, 0, pz)
         self.pad3 = pad3
-        self.cores_enabled = bool(getattr(fine_env, 'cores_enabled', False))
-        self.min_core_spacing = int(getattr(fine_env, 'min_core_spacing', DEFAULT_MIN_CORE_SPACING))
-        self.max_core_dist = int(getattr(fine_env, 'max_core_dist', DEFAULT_MAX_CORE_DIST))
+        self.cores_enabled = bool(getattr(fine_env, "cores_enabled", False))
+        self.min_core_spacing = int(
+            getattr(fine_env, "min_core_spacing", DEFAULT_MIN_CORE_SPACING)
+        )
+        self.max_core_dist = int(
+            getattr(fine_env, "max_core_dist", DEFAULT_MAX_CORE_DIST)
+        )
         self.core_mask = torch.zeros(self.shape, dtype=torch.bool, device=self.device)
-        self.core_dist_badness = torch.zeros(self.shape, dtype=torch.float32, device=self.device)
+        self.core_dist_badness = torch.zeros(
+            self.shape, dtype=torch.float32, device=self.device
+        )
         self.core_score = 0.0
 
-        if not hasattr(fine_env, 'external_potential'):
+        if not hasattr(fine_env, "external_potential"):
             fine_env.precompute_external()
-            normals = fine_env.suns.new_tensor(((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)))
-            w = (fine_env.suns @ normals.T).clamp_min(0) * fine_env.suns.new_tensor((3., 3., 3., 3., 1., 1.))[None]
+            normals = fine_env.suns.new_tensor(
+                ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))
+            )
+            w = (fine_env.suns @ normals.T).clamp_min(0) * fine_env.suns.new_tensor(
+                (3.0, 3.0, 3.0, 3.0, 1.0, 1.0)
+            )[None]
             fine_env.external_potential = (
-                fine_env.static_receivers.values.reshape(len(fine_env.suns), 6, *fine_env.shape).float()
+                fine_env.static_receivers.values.reshape(
+                    len(fine_env.suns), 6, *fine_env.shape
+                ).float()
                 * w[:, :, None, None, None]
             ).sum((0, 1)) / w.sum().clamp_min(1)
 
@@ -108,15 +127,23 @@ class CoarseEnv:
         self.capacity = int(fine_env.capacity)
 
         den = al_blk.clamp_min(1.0)
-        self.external_potential = (ep_p * al_p).view(Zc, bz, Yc, by, Xc, by).sum(dim=(1, 3, 5)) / den
+        self.external_potential = (ep_p * al_p).view(Zc, bz, Yc, by, Xc, by).sum(
+            dim=(1, 3, 5)
+        ) / den
         self.noise = (ns_p * al_p).view(Zc, bz, Yc, by, Xc, by).sum(dim=(1, 3, 5)) / den
 
-        zc_m = ((torch.arange(Zc, device=self.device, dtype=torch.float32) + 0.5) * 3.0 * bz)
-        self.rel_z = torch.tanh(zc_m / 36.0)[:, None, None].expand(self.shape).contiguous()
+        zc_m = (
+            (torch.arange(Zc, device=self.device, dtype=torch.float32) + 0.5) * 3.0 * bz
+        )
+        self.rel_z = (
+            torch.tanh(zc_m / 36.0)[:, None, None].expand(self.shape).contiguous()
+        )
 
         # Pool external sky openness onto coarse boundaries (ground face 0 stays 0)
         sb = fine_env.sky_boundary
-        sky_c = torch.zeros((Zc + 2, Yc + 2, Xc + 2), device=self.device, dtype=torch.float32)
+        sky_c = torch.zeros(
+            (Zc + 2, Yc + 2, Xc + 2), device=self.device, dtype=torch.float32
+        )
         sky_c[-1, 1:-1, 1:-1] = _pool_boundary_2d(sb[-1, 1:-1, 1:-1], by, by)
         sky_c[1:-1, 0, 1:-1] = _pool_boundary_2d(sb[1:-1, 0, 1:-1], bz, by)
         sky_c[1:-1, -1, 1:-1] = _pool_boundary_2d(sb[1:-1, -1, 1:-1], bz, by)
@@ -125,9 +152,9 @@ class CoarseEnv:
         self.sky_boundary = sky_c
 
         self.config = PatchConfig(
-            mode='combined',
-            allocation='feedback',
-            eligibility='depth',
+            mode="combined",
+            allocation="feedback",
+            eligibility="depth",
             facade_layers=2 if by == 2 else 1,
             minimum_patch=2 if by == 2 else 1,
             maximum_patches=4,
@@ -140,7 +167,9 @@ class CoarseEnv:
             budget_reserve_fraction=0.2,
         )
         self.avg_vol = float(self.capacity) / max(1, self.capacity_coarse)
-        self.target_coarse = max(1, int(round(self.target_count_fine / max(1e-6, self.avg_vol))))
+        self.target_coarse = max(
+            1, int(round(self.target_count_fine / max(1e-6, self.avg_vol)))
+        )
         self._init_cache = None
 
     @property
@@ -153,16 +182,39 @@ class CoarseEnv:
 
     @property
     def acceptable_fine_counts(self):
-        low = max(1, math.floor((self.target_far - self.handoff_tol) * self.plot_area + 0.5))
-        high = min(self.capacity, math.floor((self.target_far + self.handoff_tol) * self.plot_area + 0.5))
+        low = max(
+            1, math.floor((self.target_far - self.handoff_tol) * self.plot_area + 0.5)
+        )
+        high = min(
+            self.capacity,
+            math.floor((self.target_far + self.handoff_tol) * self.plot_area + 0.5),
+        )
         return (low, min(self.capacity, max(low, high)))
 
     @property
     def acceptable_counts(self):
         # Workload/choose helper operates cleanly in coarse cell counts; exact fine
         # volume bounds live in acceptable_fine_counts.
-        low = max(1, int(math.floor((self.target_far - self.handoff_tol) * self.plot_area / max(1e-6, self.avg_vol))))
-        high = min(self.capacity_coarse, int(math.ceil((self.target_far + self.handoff_tol) * self.plot_area / max(1e-6, self.avg_vol))))
+        low = max(
+            1,
+            int(
+                math.floor(
+                    (self.target_far - self.handoff_tol)
+                    * self.plot_area
+                    / max(1e-6, self.avg_vol)
+                )
+            ),
+        )
+        high = min(
+            self.capacity_coarse,
+            int(
+                math.ceil(
+                    (self.target_far + self.handoff_tol)
+                    * self.plot_area
+                    / max(1e-6, self.avg_vol)
+                )
+            ),
+        )
         return (low, max(low, high))
 
     @property
@@ -189,18 +241,26 @@ class CoarseEnv:
         return self.termination is not None
 
     def _update_depth(self):
-        dt = getattr(self.frontier, 'depth_tensor', None)
+        dt = getattr(self.frontier, "depth_tensor", None)
         if dt is not None:
             self.depth = dt * float(self.bxy)
         else:
-            self.depth = torch.as_tensor(self.frontier.depth_numpy * float(self.bxy), device=self.device)
+            self.depth = torch.as_tensor(
+                self.frontier.depth_numpy * float(self.bxy), device=self.device
+            )
         self.depth_badness = depth_badness(self.depth)
 
     def _update_cores(self):
         if not self.cores_enabled:
-            self.core_mask = torch.zeros(self.shape, dtype=torch.bool, device=self.device)
-            self.core_distance = torch.zeros(self.shape, dtype=torch.float32, device=self.device)
-            self.core_dist_badness = torch.zeros(self.shape, dtype=torch.float32, device=self.device)
+            self.core_mask = torch.zeros(
+                self.shape, dtype=torch.bool, device=self.device
+            )
+            self.core_distance = torch.zeros(
+                self.shape, dtype=torch.float32, device=self.device
+            )
+            self.core_dist_badness = torch.zeros(
+                self.shape, dtype=torch.float32, device=self.device
+            )
             self.core_score = 0.0
             return
         Z, Y, X = self.env.shape
@@ -211,48 +271,105 @@ class CoarseEnv:
             .repeat_interleave(self.bxy, dim=2)[:Z, :Y, :X]
             & self.env.allowed
         )
-        res = solve_cores(occ_fine, min_core_spacing=self.min_core_spacing, max_core_dist=self.max_core_dist)
+        res = solve_cores(
+            occ_fine,
+            min_core_spacing=self.min_core_spacing,
+            max_core_dist=self.max_core_dist,
+        )
         cm_f = F.pad((res.core_mask & occ_fine).float(), self.pad3, value=0.0)
-        cd_f = F.pad(torch.where(occ_fine, res.core_distance, 0.0), self.pad3, value=0.0)
-        cb_f = F.pad(torch.where(occ_fine, res.core_dist_badness, 0.0), self.pad3, value=0.0)
+        cd_f = F.pad(
+            torch.where(occ_fine, res.core_distance, 0.0), self.pad3, value=0.0
+        )
+        cb_f = F.pad(
+            torch.where(occ_fine, res.core_dist_badness, 0.0), self.pad3, value=0.0
+        )
         occ_f = F.pad(occ_fine.float(), self.pad3, value=0.0)
-        den = occ_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)).clamp_min(1.0)
-        cm_p = cm_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
-        cd_p = cd_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
-        cb_p = cb_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
+        den = (
+            occ_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy)
+            .sum(dim=(1, 3, 5))
+            .clamp_min(1.0)
+        )
+        cm_p = (
+            cm_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
+        )
+        cd_p = (
+            cd_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
+        )
+        cb_p = (
+            cb_f.view(Zc, self.bz, Yc, self.bxy, Xc, self.bxy).sum(dim=(1, 3, 5)) / den
+        )
         self.core_mask = (cm_p > 0.25) & self.occupied
         self.core_distance = torch.where(self.occupied, cd_p, 0.0)
         self.core_dist_badness = torch.where(self.occupied, cb_p, 0.0)
         m = res.metrics
-        self.core_score = max(0.0, (1.0 - float(m['coreUncoveredFraction'])) * (1.0 - 0.5 * float(m['coreDistBadness'])))
+        self.core_score = max(
+            0.0,
+            (1.0 - float(m["coreUncoveredFraction"]))
+            * (1.0 - 0.5 * float(m["coreDistBadness"])),
+        )
 
     def evaluate_fast(self):
         occ_z = self.occupied.any(dim=(1, 2)).nonzero(as_tuple=False)
         z_top = int(occ_z[-1].item()) + 1 if len(occ_z) else 1
         z_hi = min(self.nz, z_top + 2)
         sp = (float(self.bxy), float(self.bxy), 3.0 * self.bz)
-        init_f = self.light if (getattr(self, 'light', None) is not None and self.light.shape == self.shape) else None
+        init_f = (
+            self.light
+            if (
+                getattr(self, "light", None) is not None
+                and self.light.shape == self.shape
+            )
+            else None
+        )
         if z_hi < self.nz:
-            bnd = self.sky_boundary[:z_hi + 2].clone()
-            bnd[-1, 1:-1, 1:-1] = init_f[z_hi] if init_f is not None else self.sky_boundary[-1, 1:-1, 1:-1]
-            sub = diffuse_access(self.occupied[:z_hi], bnd, iterations=14, spacing=sp, init=None if init_f is None else init_f[:z_hi])
+            bnd = self.sky_boundary[: z_hi + 2].clone()
+            bnd[-1, 1:-1, 1:-1] = (
+                init_f[z_hi]
+                if init_f is not None
+                else self.sky_boundary[-1, 1:-1, 1:-1]
+            )
+            sub = diffuse_access(
+                self.occupied[:z_hi],
+                bnd,
+                iterations=14,
+                spacing=sp,
+                init=None if init_f is None else init_f[:z_hi],
+            )
             if init_f is not None:
                 lnew = init_f.clone()
                 lnew[:z_hi] = sub
                 self.light = lnew
             else:
-                self.light = torch.zeros(self.shape, device=self.device, dtype=torch.float32)
+                self.light = torch.zeros(
+                    self.shape, device=self.device, dtype=torch.float32
+                )
                 self.light[:z_hi] = sub
-                self.light[z_hi:] = self.sky_boundary[1 + z_hi:-1, 1:-1, 1:-1]
+                self.light[z_hi:] = self.sky_boundary[1 + z_hi : -1, 1:-1, 1:-1]
         else:
-            self.light = diffuse_access(self.occupied, self.sky_boundary, iterations=14, spacing=sp, init=init_f)
-        lateral = torch.as_tensor(self.frontier.remove_faces[[1, 0, 3, 2]], device=self.device)
-        _, self.facade_light = facade_sky_access(self.occupied, self.light, self.sky_boundary, lateral)
-        self.usable = usable_depth_proxy(self.occupied, self.light, depth=max(2, 8 // self.bxy), boundary=self.sky_boundary)
+            self.light = diffuse_access(
+                self.occupied, self.sky_boundary, iterations=14, spacing=sp, init=init_f
+            )
+        lateral = torch.as_tensor(
+            self.frontier.remove_faces[[1, 0, 3, 2]], device=self.device
+        )
+        _, self.facade_light = facade_sky_access(
+            self.occupied, self.light, self.sky_boundary, lateral
+        )
+        self.usable = usable_depth_proxy(
+            self.occupied,
+            self.light,
+            depth=max(2, 8 // self.bxy),
+            boundary=self.sky_boundary,
+        )
         self._update_cores()
 
     def restore_occupancy(self, occ_arr):
-        occ = torch.as_tensor(occ_arr, dtype=torch.bool, device=self.device).reshape(self.shape) & self.allowed
+        occ = (
+            torch.as_tensor(occ_arr, dtype=torch.bool, device=self.device).reshape(
+                self.shape
+            )
+            & self.allowed
+        )
         self.occupied = occ
         self.count = int(occ.sum().detach().cpu())
         self.count_fine = int((occ * self.cell_vol).sum().detach().cpu())
@@ -263,7 +380,13 @@ class CoarseEnv:
         self.termination = None
         self.organic_3d_growth = True
         self.light = None
-        self.frontier = PatchFacades(occ.detach().cpu().numpy(), self.allowed_np, self.env.seed, config=self.config, depth_device=self.device)
+        self.frontier = PatchFacades(
+            occ.detach().cpu().numpy(),
+            self.allowed_np,
+            self.env.seed,
+            config=self.config,
+            depth_device=self.device,
+        )
         self._update_depth()
         self.evaluate_fast()
         self.workload = WorkloadBudget.create(self, self.config)
@@ -274,41 +397,45 @@ class CoarseEnv:
         init_c = min(self.nz, max(1, int(round(initial_storeys / self.bz))))
         if self._init_cache is not None and self._init_cache[0] == init_c:
             c = self._init_cache[1]
-            self.occupied = c['occupied'].clone()
-            self.count = c['count']
-            self.count_fine = c['count_fine']
-            self.start_count = c['start_count']
-            self.start_count_fine = c['start_count_fine']
+            self.occupied = c["occupied"].clone()
+            self.count = c["count"]
+            self.count_fine = c["count_fine"]
+            self.start_count = c["start_count"]
+            self.start_count_fine = c["start_count_fine"]
             self.edits = 0
             self.unified_actions = 0
             self.termination = None
             f = self.frontier
-            fc = c['frontier']
-            f.occupied = fc['occupied'].copy()
-            f.exterior_air = fc['exterior_air'].copy()
-            f.remove_faces = fc['remove_faces'].copy()
-            f.add_faces = fc['add_faces'].copy()
-            f.remove_skin = fc['remove_skin'].copy()
-            f.add_skin = fc['add_skin'].copy()
-            f.components = fc['components']
-            f.count = fc['count']
-            f.depth_tensor = fc['depth_tensor'].clone()
-            f.old_voids = [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fc['old_voids']] if fc['old_voids'] is not None else None
-            f.facade_band = fc['facade_band'].copy()
-            f._remove_eligible = fc['_remove_eligible'].copy()
+            fc = c["frontier"]
+            f.occupied = fc["occupied"].copy()
+            f.exterior_air = fc["exterior_air"].copy()
+            f.remove_faces = fc["remove_faces"].copy()
+            f.add_faces = fc["add_faces"].copy()
+            f.remove_skin = fc["remove_skin"].copy()
+            f.add_skin = fc["add_skin"].copy()
+            f.components = fc["components"]
+            f.count = fc["count"]
+            f.depth_tensor = fc["depth_tensor"].clone()
+            f.old_voids = (
+                [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fc["old_voids"]]
+                if fc["old_voids"] is not None
+                else None
+            )
+            f.facade_band = fc["facade_band"].copy()
+            f._remove_eligible = fc["_remove_eligible"].copy()
             f._prev_occ = f.occupied.copy()
             f._prev_air = f.exterior_air.copy()
             f._weight_tensors = {}
             f.version += 1
-            self.depth = c['depth'].clone()
-            self.depth_badness = c['depth_badness'].clone()
-            self.light = c['light'].clone()
-            self.facade_light = c['facade_light'].clone()
-            self.usable = c['usable'].clone()
-            self.core_mask = c['core_mask'].clone()
-            self.core_distance = c['core_distance'].clone()
-            self.core_dist_badness = c['core_dist_badness'].clone()
-            self.core_score = float(c['core_score'])
+            self.depth = c["depth"].clone()
+            self.depth_badness = c["depth_badness"].clone()
+            self.light = c["light"].clone()
+            self.facade_light = c["facade_light"].clone()
+            self.usable = c["usable"].clone()
+            self.core_mask = c["core_mask"].clone()
+            self.core_distance = c["core_distance"].clone()
+            self.core_dist_badness = c["core_dist_badness"].clone()
+            self.core_score = float(c["core_score"])
             self.workload = WorkloadBudget.create(self, self.config)
             self.unified_limit = max(6, self.workload.limit + 4)
             self._ln_cache = None
@@ -327,7 +454,13 @@ class CoarseEnv:
         self.termination = None
         self.organic_3d_growth = True
         self.light = None
-        self.frontier = PatchFacades(occ.detach().cpu().numpy(), self.allowed_np, self.env.seed, config=self.config, depth_device=self.device)
+        self.frontier = PatchFacades(
+            occ.detach().cpu().numpy(),
+            self.allowed_np,
+            self.env.seed,
+            config=self.config,
+            depth_device=self.device,
+        )
         self._update_depth()
         self.evaluate_fast()
         self.workload = WorkloadBudget.create(self, self.config)
@@ -361,7 +494,12 @@ class CoarseEnv:
                     components=int(f.components),
                     count=int(f.count),
                     depth_tensor=f.depth_tensor.clone(),
-                    old_voids=[(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in f.old_voids] if f.old_voids is not None else None,
+                    old_voids=[
+                        (lab.copy(), list(ids), sz.copy())
+                        for lab, ids, sz in f.old_voids
+                    ]
+                    if f.old_voids is not None
+                    else None,
                     facade_band=f.facade_band.copy(),
                     _remove_eligible=f._remove_eligible.copy(),
                 ),
@@ -387,7 +525,9 @@ class CoarseEnv:
     def observation(self, z_slice=None, include_cores=False):
         occ = self.occupied[:z_slice] if z_slice is not None else self.occupied
         remove = self.frontier.weights_tensor(-1, self.device)
-        grow = torch.as_tensor(growth_mask(self), device=self.device, dtype=torch.float32)
+        grow = torch.as_tensor(
+            growth_mask(self), device=self.device, dtype=torch.float32
+        )
         ep = self.external_potential
         fl = self.facade_light
         light = self.light
@@ -414,19 +554,44 @@ class CoarseEnv:
             if cache is not None and cache[0] == c_key:
                 ln_bool = cache[1]
             else:
-                if not hasattr(self, '_allowed_ln3'):
+                if not hasattr(self, "_allowed_ln3"):
                     self._allowed_ln3 = long_narrow_mask(self.allowed, width=3, stub=1)
-                aln = self._allowed_ln3[:z_slice] if z_slice is not None else self._allowed_ln3
+                aln = (
+                    self._allowed_ln3[:z_slice]
+                    if z_slice is not None
+                    else self._allowed_ln3
+                )
                 ln_bool = long_narrow_mask(occ, width=3, stub=1) & ~aln
                 self._ln_cache = (c_key, ln_bool)
         else:
             ln_bool = torch.zeros_like(occ, dtype=torch.bool)
 
-        chans = [occ.float(), light, noise, allowed, rel_z, depth_b, remove, grow, ep, fl, ln_bool.float(), usable.float()]
+        chans = [
+            occ.float(),
+            light,
+            noise,
+            allowed,
+            rel_z,
+            depth_b,
+            remove,
+            grow,
+            ep,
+            fl,
+            ln_bool.float(),
+            usable.float(),
+        ]
         if include_cores:
             if self.cores_enabled:
-                cm = (self.core_mask[:z_slice] if z_slice is not None else self.core_mask) & occ
-                cb = torch.where(occ, self.core_dist_badness[:z_slice] if z_slice is not None else self.core_dist_badness, 0.0)
+                cm = (
+                    self.core_mask[:z_slice] if z_slice is not None else self.core_mask
+                ) & occ
+                cb = torch.where(
+                    occ,
+                    self.core_dist_badness[:z_slice]
+                    if z_slice is not None
+                    else self.core_dist_badness,
+                    0.0,
+                )
                 chans.extend((cm.float(), cb))
             else:
                 zeros = torch.zeros_like(light)
@@ -437,14 +602,20 @@ class CoarseEnv:
         rz = max(1, self.bz // target_cenv.bz)
         rxy = max(1, self.bxy // target_cenv.bxy)
         Zt, Yt, Xt = target_cenv.shape
-        exp = self.occupied.repeat_interleave(rz, dim=0).repeat_interleave(rxy, dim=1).repeat_interleave(rxy, dim=2)
+        exp = (
+            self.occupied.repeat_interleave(rz, dim=0)
+            .repeat_interleave(rxy, dim=1)
+            .repeat_interleave(rxy, dim=2)
+        )
         occ_t = (exp[:Zt, :Yt, :Xt] & target_cenv.allowed).detach().cpu().numpy()
         labels, n = ndi.label(occ_t, STRUCTURE)
         grounded = np.unique(labels[0])
         grounded = grounded[grounded != 0]
         if n == 0 or len(grounded) == 0:
             occ_t = target_cenv.allowed_np.copy()
-            occ_t[min(Zt, max(1, int(round(self.target_far / target_cenv.bz)))):] = False
+            occ_t[min(Zt, max(1, int(round(self.target_far / target_cenv.bz)))) :] = (
+                False
+            )
         elif len(grounded) != n or n > 2:
             sizes = np.bincount(labels.ravel())
             keep_ids = grounded[np.argsort(-sizes[grounded])[:2]]
@@ -453,7 +624,11 @@ class CoarseEnv:
 
     def upsample_to_fine(self):
         Z, Y, X = self.env.shape
-        exp = self.occupied.repeat_interleave(self.bz, dim=0).repeat_interleave(self.bxy, dim=1).repeat_interleave(self.bxy, dim=2)
+        exp = (
+            self.occupied.repeat_interleave(self.bz, dim=0)
+            .repeat_interleave(self.bxy, dim=1)
+            .repeat_interleave(self.bxy, dim=2)
+        )
         occ_fine = exp[:Z, :Y, :X] & self.env.allowed
         occ_np = occ_fine.detach().cpu().numpy()
         mw = min_room_width(self.env)
@@ -466,7 +641,7 @@ class CoarseEnv:
         grounded = grounded[grounded != 0]
         if n == 0 or len(grounded) == 0:
             fallback = self.env.allowed.detach().cpu().numpy().copy()
-            fallback[min(Z, max(1, int(round(self.target_far)))):] = False
+            fallback[min(Z, max(1, int(round(self.target_far)))) :] = False
             occ_np = fallback
         elif len(grounded) != n or n > 2:
             sizes = np.bincount(labels.ravel())
@@ -495,7 +670,12 @@ def _project_coarse_valid(cenv, f, r, a, changed, air_after, mw, clean_old, rem_
         labels, n = ndi.label(mask, np.ones((3, 3, 3), bool))
         if f.config.maximum_patches and n > f.config.maximum_patches:
             return False
-        minimum = 1 if int(mask.sum()) <= f.config.minimum_patch * max(1, f.config.maximum_patches) else f.config.minimum_patch
+        minimum = (
+            1
+            if int(mask.sum())
+            <= f.config.minimum_patch * max(1, f.config.maximum_patches)
+            else f.config.minimum_patch
+        )
         if (np.bincount(labels.ravel())[1:] < minimum).any():
             return False
     if mw > 1:
@@ -510,16 +690,22 @@ def _project_coarse_valid(cenv, f, r, a, changed, air_after, mw, clean_old, rem_
                 continue
             lab, ids, sizes = f._floor_voids(changed[z], z)
             oldlab, oldids, oldsizes = f.old_voids[z]
-            if f.config.maximum_voids and len(ids) > max(f.config.maximum_voids, len(oldids)):
+            if f.config.maximum_voids and len(ids) > max(
+                f.config.maximum_voids, len(oldids)
+            ):
                 return False
             for i in ids:
-                prior = [oldsizes[j] for j in np.unique(oldlab[lab == i]) if j in oldids]
+                prior = [
+                    oldsizes[j] for j in np.unique(oldlab[lab == i]) if j in oldids
+                ]
                 if sizes[i] < min([f.config.minimum_void_area, *prior]):
                     return False
     return True
 
 
-def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_buildings=2):
+def project_coarse_3d(
+    cenv, masks, scores, operation, net_guided=True, maximum_buildings=2
+):
     """Project coarse stage masks with cell_vol-exact FAR progress & stem preservation."""
     f = cenv.frontier
     mw = (2 if cenv.bxy == 2 else 1) if cenv.plot_area >= 400 else 1
@@ -548,7 +734,9 @@ def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_b
                     slim_r = (after_r & ~clean_floor_numpy(after_r, mw)) & clean_old
                     if not slim_r.any():
                         break
-                    zone = ndi.binary_dilation(slim_r, structure=np.ones((1, 3, 3), bool))
+                    zone = ndi.binary_dilation(
+                        slim_r, structure=np.ones((1, 3, 3), bool)
+                    )
                     if not (r & zone).any():
                         break
                     r &= ~zone
@@ -559,12 +747,16 @@ def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_b
                 cand = (occ_s & ~r) | a
                 cleaned = a & clean_floor_numpy(cand, mw)
                 if not np.array_equal(cleaned, a):
-                    a = f._patch_filter(cleaned, int(cleaned.sum())) if cleaned.any() else cleaned
-        if operation == 'remove' and not r.any():
+                    a = (
+                        f._patch_filter(cleaned, int(cleaned.sum()))
+                        if cleaned.any()
+                        else cleaned
+                    )
+        if operation == "remove" and not r.any():
             return None
-        if operation == 'grow' and not a.any():
+        if operation == "grow" and not a.any():
             return None
-        if operation == 'exchange' and (not r.any() or not a.any()):
+        if operation == "exchange" and (not r.any() or not a.any()):
             return None
         changed = (occ_s & ~r) | a
         labels, n = ndi.label(changed, STRUCTURE)
@@ -577,16 +769,32 @@ def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_b
             continue
         if len(grounded) != n or n > maximum_buildings:
             sizes = np.bincount(labels.ravel())
-            keep_ids = grounded[np.argsort(-sizes[grounded])[:maximum_buildings]] if len(grounded) else np.empty(0, int)
+            keep_ids = (
+                grounded[np.argsort(-sizes[grounded])[:maximum_buildings]]
+                if len(grounded)
+                else np.empty(0, int)
+            )
             keep_mask = np.isin(labels, keep_ids)
             bad_solid = changed & ~keep_mask
             if bad_solid.any():
                 bad_nbr = ndi.binary_dilation(bad_solid, structure=STRUCTURE)
                 repaired = False
                 if r.any() and (r & bad_nbr).any():
-                    bridge = r & ndi.binary_dilation(keep_mask, structure=STRUCTURE) & bad_nbr if keep_mask.any() else np.zeros_like(r)
+                    bridge = (
+                        r
+                        & ndi.binary_dilation(keep_mask, structure=STRUCTURE)
+                        & bad_nbr
+                        if keep_mask.any()
+                        else np.zeros_like(r)
+                    )
                     if not bridge.any() and keep_mask.any():
-                        bridge = r & ndi.binary_dilation(keep_mask, structure=STRUCTURE, iterations=2) & bad_nbr
+                        bridge = (
+                            r
+                            & ndi.binary_dilation(
+                                keep_mask, structure=STRUCTURE, iterations=2
+                            )
+                            & bad_nbr
+                        )
                     r &= ~(bridge if bridge.any() else (r & bad_nbr))
                     repaired = True
                 if a.any() and (a & bad_solid).any():
@@ -616,10 +824,10 @@ def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_b
                 ids = np.flatnonzero(r)
                 if not len(ids):
                     return None
-                order = ids[np.argsort(s0.ravel()[ids], kind='stable')]
+                order = ids[np.argsort(s0.ravel()[ids], kind="stable")]
                 vs = vol_s.ravel()[order]
                 csum = np.cumsum(vs)
-                stop = int(np.searchsorted(csum, need_drop, side='left')) + 1
+                stop = int(np.searchsorted(csum, need_drop, side="left")) + 1
                 if stop >= len(order):
                     return None
                 r.ravel()[order[:stop]] = False
@@ -629,15 +837,17 @@ def project_coarse_3d(cenv, masks, scores, operation, net_guided=True, maximum_b
                 ids = np.flatnonzero(a)
                 if not len(ids):
                     return None
-                order = ids[np.argsort(s1.ravel()[ids], kind='stable')]
+                order = ids[np.argsort(s1.ravel()[ids], kind="stable")]
                 vs = vol_s.ravel()[order]
                 csum = np.cumsum(vs)
-                stop = int(np.searchsorted(csum, need_drop, side='left')) + 1
+                stop = int(np.searchsorted(csum, need_drop, side="left")) + 1
                 if stop >= len(order):
                     return None
                 a.ravel()[order[:stop]] = False
                 continue
-        if not _project_coarse_valid(cenv, f, r, a, changed, air_after, mw, clean_old, rem_s, g_s):
+        if not _project_coarse_valid(
+            cenv, f, r, a, changed, air_after, mw, clean_old, rem_s, g_s
+        ):
             return None
         if zs == cenv.nz:
             return Exchange(r.copy(), a.copy(), f.version)
@@ -654,8 +864,12 @@ class CoarseToFineNetwork(Organic3DNetwork):
 
     def __init__(self, input_channels=12):
         super().__init__(input_channels)
-        self.macro_stem = nn.Sequential(nn.Conv2d(input_channels, 32, 3, stride=1, padding=1), nn.SiLU())
-        self.coarse_stem = nn.Sequential(nn.Conv2d(input_channels, 32, 3, stride=2, padding=1), nn.SiLU())
+        self.macro_stem = nn.Sequential(
+            nn.Conv2d(input_channels, 32, 3, stride=1, padding=1), nn.SiLU()
+        )
+        self.coarse_stem = nn.Sequential(
+            nn.Conv2d(input_channels, 32, 3, stride=2, padding=1), nn.SiLU()
+        )
         self.goal_encoder = nn.Linear(6, 32)
         self.critic = nn.Sequential(nn.Linear(70, 32), nn.SiLU(), nn.Linear(32, 1))
         self.operation_head = nn.Linear(70, 4)
@@ -664,15 +878,15 @@ class CoarseToFineNetwork(Organic3DNetwork):
         nn.init.zeros_(self.operation_head.weight)
         nn.init.zeros_(self.operation_head.bias)
         with torch.no_grad():
-            self.operation_head.weight[0, 64:66] = torch.tensor([3., -3.])
-            self.operation_head.weight[1, 64:66] = torch.tensor([-3., 3.])
+            self.operation_head.weight[0, 64:66] = torch.tensor([3.0, -3.0])
+            self.operation_head.weight[1, 64:66] = torch.tensor([-3.0, 3.0])
             self.operation_head.bias[2] = 0.6
 
     def _encode_stage_window(self, obs_w, scale):
         B, Zw, C, H, W = obs_w.shape
         flat = obs_w.reshape(B * Zw, C, H, W)
         if scale == 8:
-            x = self.macro_stem(F.interpolate(flat, scale_factor=2, mode='nearest'))
+            x = self.macro_stem(F.interpolate(flat, scale_factor=2, mode="nearest"))
         elif scale == 4:
             x = self.macro_stem(flat)
         elif scale == 2:
@@ -694,15 +908,35 @@ class CoarseToFineNetwork(Organic3DNetwork):
         else:
             s = 2 if scale == 2 else 4
             ky, kx = min(s, H), min(s, W)
-            oc = F.avg_pool2d(flat_k, kernel_size=(ky, kx), stride=s, ceil_mode=True, count_include_pad=False)
+            oc = F.avg_pool2d(
+                flat_k,
+                kernel_size=(ky, kx),
+                stride=s,
+                ceil_mode=True,
+                count_include_pad=False,
+            )
         if oc.shape[-2:] != vk.shape[-2:]:
-            oc = F.interpolate(oc, size=vk.shape[-2:], mode='bilinear', align_corners=False)
+            oc = F.interpolate(
+                oc, size=vk.shape[-2:], mode="bilinear", align_corners=False
+            )
         loc = F.silu(self.local_skip(oc))
         gk = goal_exp.expand(-1, Zk, -1, -1, -1).reshape(B * Zk, 32, 1, 1)
         cond = torch.cat((vk + gk, loc), dim=1)
-        return self.head(cond).view(B, Zk, 2, vk.shape[-2], vk.shape[-1]).permute(0, 2, 1, 3, 4)
+        return (
+            self.head(cond)
+            .view(B, Zk, 2, vk.shape[-2], vk.shape[-1])
+            .permute(0, 2, 1, 3, 4)
+        )
 
-    def forward_stage_batch(self, obs_b, goal_b, is_coarse=False, stride=(2, 4, 4), window_floors=16, scale=None):
+    def forward_stage_batch(
+        self,
+        obs_b,
+        goal_b,
+        is_coarse=False,
+        stride=(2, 4, 4),
+        window_floors=16,
+        scale=None,
+    ):
         st_scale = (2 if is_coarse else 1) if scale is None else int(scale)
         B, Z, C, H, W = obs_b.shape
         win = max(6, int(window_floors))
@@ -730,23 +964,37 @@ class CoarseToFineNetwork(Organic3DNetwork):
                 f_sum = fl.sum(1)
                 f_max = fl.amax(1)
                 floor_sum = f_sum if floor_sum is None else (floor_sum + f_sum)
-                floor_max = f_max if floor_max is None else torch.maximum(floor_max, f_max)
-                cz_parts.append(self._head_stage_slice(v_keep, obs_b[:, k0:k1], goal_exp, st_scale))
+                floor_max = (
+                    f_max if floor_max is None else torch.maximum(floor_max, f_max)
+                )
+                cz_parts.append(
+                    self._head_stage_slice(v_keep, obs_b[:, k0:k1], goal_exp, st_scale)
+                )
                 k0 = k1
             coarse_z = torch.cat(cz_parts, dim=2)
             context = torch.cat((floor_sum / Z, floor_max, goal_b), dim=-1)
 
-        target = (max(1, math.ceil(Z / stride[0])), max(1, math.ceil(H / stride[1])), max(1, math.ceil(W / stride[2])))
+        target = (
+            max(1, math.ceil(Z / stride[0])),
+            max(1, math.ceil(H / stride[1])),
+            max(1, math.ceil(W / stride[2])),
+        )
         if stride[0] == 1 and coarse_z.shape[2:] == target:
             coarse = coarse_z
         elif stride[0] == 2 and coarse_z.shape[-2:] == target[1:]:
             kz = min(2, coarse_z.shape[2])
-            coarse = F.avg_pool3d(coarse_z, (kz, 1, 1), stride=(2, 1, 1), ceil_mode=True, count_include_pad=False)
+            coarse = F.avg_pool3d(
+                coarse_z,
+                (kz, 1, 1),
+                stride=(2, 1, 1),
+                ceil_mode=True,
+                count_include_pad=False,
+            )
         else:
             coarse = F.interpolate(
                 coarse_z.reshape(B * 2, 1, Z, coarse_z.shape[-2], coarse_z.shape[-1]),
                 size=target,
-                mode='trilinear',
+                mode="trilinear",
                 align_corners=False,
             ).reshape(B, 2, *target)
         coarse = 3.0 * torch.tanh(coarse / 3.0)
@@ -758,7 +1006,7 @@ class CoarseToFineLearner:
 
     def __init__(
         self,
-        device='cpu',
+        device="cpu",
         seed=123,
         block=(2, 2, 2),
         fine_config=None,
@@ -767,6 +1015,7 @@ class CoarseToFineLearner:
         evaluation_temperature=2.5,
         evaluation_noise_scale=0.08,
         lr=1.2e-3,
+        heuristic_only=False,
     ):
         self.device = torch.device(device)
         self.seed = int(seed)
@@ -777,12 +1026,13 @@ class CoarseToFineLearner:
         self.evaluation_temperature = float(evaluation_temperature)
         self.evaluation_noise_scale = float(evaluation_noise_scale)
         self.lr = float(lr)
+        self.heuristic_only = bool(heuristic_only)
         if not math.isfinite(self.spatial_aux_weight) or self.spatial_aux_weight < 0.0:
-            raise ValueError('Invalid auxiliary weight')
+            raise ValueError("Invalid auxiliary weight")
         self.fine_config = fine_config or PatchConfig(
-            mode='combined',
-            allocation='feedback',
-            eligibility='depth',
+            mode="combined",
+            allocation="feedback",
+            eligibility="depth",
             facade_layers=2,
             minimum_patch=4,
             maximum_patches=4,
@@ -795,7 +1045,9 @@ class CoarseToFineLearner:
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(self.seed)
             self.model = CoarseToFineNetwork(self.input_channels).to(self.device)
-        self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=1e-4)
+        self.optimizer = torch.optim.Adam(
+            self.model.parameters(), lr=self.lr, weight_decay=1e-4
+        )
         self.tape = []
         self.updates = 0
         self.direct_updates = 0
@@ -808,8 +1060,8 @@ class CoarseToFineLearner:
         self.tape = []
 
     def _goal_vec(self, env_or_cenv, scale):
-        limit = getattr(env_or_cenv, 'unified_limit', 1)
-        spent = getattr(env_or_cenv, 'unified_actions', env_or_cenv.edits)
+        limit = getattr(env_or_cenv, "unified_limit", 1)
+        spent = getattr(env_or_cenv, "unified_actions", env_or_cenv.edits)
         g_scale = max(10.0, 3.0 * float(env_or_cenv.target_far))
         stage_feat = 1.0 if scale >= 4 else (0.5 if scale == 2 else 0.0)
         return torch.tensor(
@@ -827,12 +1079,17 @@ class CoarseToFineLearner:
 
     def _fine_obs(self, e, z_slice=None):
         e.organic_3d_growth = True
-        if not hasattr(e, 'external_potential'):
+        if not hasattr(e, "external_potential"):
             e.precompute_external()
-            normals = e.suns.new_tensor(((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1)))
-            w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor((3., 3., 3., 3., 1., 1.))[None]
+            normals = e.suns.new_tensor(
+                ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))
+            )
+            w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor(
+                (3.0, 3.0, 3.0, 3.0, 1.0, 1.0)
+            )[None]
             e.external_potential = (
-                e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float() * w[:, :, None, None, None]
+                e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float()
+                * w[:, :, None, None, None]
             ).sum((0, 1)) / w.sum().clamp_min(1)
         remove = e.frontier.weights_tensor(-1, self.device)
         grow = torch.as_tensor(growth_mask(e), device=self.device, dtype=torch.float32)
@@ -849,13 +1106,17 @@ class CoarseToFineLearner:
             usb_sub = usb_sub[:z_slice]
         if e.plot_area >= 400 and e.ny >= 6 and e.nx >= 6:
             c_key = (e.frontier.version, z_slice)
-            cache = getattr(e, '_ln6_cache', None)
+            cache = getattr(e, "_ln6_cache", None)
             if cache is not None and cache[0] == c_key:
                 ln6 = cache[1]
             else:
-                if not hasattr(e, '_allowed_ln6_t'):
+                if not hasattr(e, "_allowed_ln6_t"):
                     e._allowed_ln6_t = long_narrow_mask(e.allowed, 6, 2)
-                aln = e._allowed_ln6_t[:z_slice] if z_slice is not None else e._allowed_ln6_t
+                aln = (
+                    e._allowed_ln6_t[:z_slice]
+                    if z_slice is not None
+                    else e._allowed_ln6_t
+                )
                 ln6 = long_narrow_mask(occ_sub, 6, 2) & ~aln
                 e._ln6_cache = (c_key, ln6)
         else:
@@ -870,9 +1131,17 @@ class CoarseToFineLearner:
             usb_sub.float()[:, None],
         ]
         if self.input_channels == 14:
-            if getattr(e, 'cores_enabled', False) and hasattr(e, 'core_mask'):
-                cm_sub = (e.core_mask[:z_slice] if z_slice is not None else e.core_mask) & occ_sub
-                cb_sub = torch.where(occ_sub, e.core_dist_badness[:z_slice] if z_slice is not None else e.core_dist_badness, 0.0)
+            if getattr(e, "cores_enabled", False) and hasattr(e, "core_mask"):
+                cm_sub = (
+                    e.core_mask[:z_slice] if z_slice is not None else e.core_mask
+                ) & occ_sub
+                cb_sub = torch.where(
+                    occ_sub,
+                    e.core_dist_badness[:z_slice]
+                    if z_slice is not None
+                    else e.core_dist_badness,
+                    0.0,
+                )
                 channels.extend((cm_sub.float()[:, None], cb_sub[:, None]))
             else:
                 z_zero = torch.zeros_like(occ_sub, dtype=torch.float32)[:, None]
@@ -888,23 +1157,46 @@ class CoarseToFineLearner:
         stride = cfg.stride
         scale = int(env_or_cenv.bxy) if is_coarse else 1
         bz = int(env_or_cenv.bz) if is_coarse else 1
-        mw = ((2 if scale == 2 else 1) if env_or_cenv.plot_area >= 400 else 1) if is_coarse else min_room_width(env_or_cenv)
+        mw = (
+            ((2 if scale == 2 else 1) if env_or_cenv.plot_area >= 400 else 1)
+            if is_coarse
+            else min_room_width(env_or_cenv)
+        )
         ln_w, ln_stub = (3, 1) if scale == 2 else ((1, 0) if scale >= 4 else (6, 2))
-        z_floor_min = ((6 if bz == 1 else 4) if is_coarse else 10)
+        z_floor_min = (6 if bz == 1 else 4) if is_coarse else 10
 
         with torch.no_grad():
             occ_z = env_or_cenv.occupied.any(dim=(1, 2)).nonzero(as_tuple=False)
             z_top = int(occ_z[-1].item()) + 1 if len(occ_z) else 0
             z_step = 4 if (not is_coarse or bz == 1) else 2
-            z_act = min(env_or_cenv.nz, max(min(env_or_cenv.nz, z_floor_min), ((z_top + z_step) // z_step) * z_step))
+            z_act = min(
+                env_or_cenv.nz,
+                max(
+                    min(env_or_cenv.nz, z_floor_min),
+                    ((z_top + z_step) // z_step) * z_step,
+                ),
+            )
             obs = (
-                env_or_cenv.observation(z_slice=z_act, include_cores=(self.input_channels == 14))
+                env_or_cenv.observation(
+                    z_slice=z_act, include_cores=(self.input_channels == 14)
+                )
                 if is_coarse
                 else self._fine_obs(env_or_cenv, z_slice=z_act)
             )
             goal = self._goal_vec(env_or_cenv, scale)
-            mean_all, value, logits = self.model.forward_stage_batch(obs[None], goal[None], is_coarse=is_coarse, stride=stride, scale=scale)
-            mean_all, value, logits = mean_all[0], value[0], logits[0]
+            if self.heuristic_only:
+                mean_all = None
+                value = torch.zeros((), device=self.device, dtype=torch.float32)
+                logits = torch.zeros(4, device=self.device, dtype=torch.float32)
+            else:
+                mean_all, value, logits = self.model.forward_stage_batch(
+                    obs[None],
+                    goal[None],
+                    is_coarse=is_coarse,
+                    stride=stride,
+                    scale=scale,
+                )
+                mean_all, value, logits = mean_all[0], value[0], logits[0]
 
             r_avail = bool(env_or_cenv.frontier.eligible(-1).any())
             a_avail = bool(growth_mask(env_or_cenv).any())
@@ -919,17 +1211,40 @@ class CoarseToFineLearner:
                 grow = a_avail and env_or_cenv.count < high_f
                 can_finish = bool(env_or_cenv.far_satisfied)
 
-            legal = torch.tensor([remove, grow, r_avail and a_avail, can_finish], device=self.device, dtype=torch.bool)
+            legal = torch.tensor(
+                [remove, grow, r_avail and a_avail, can_finish],
+                device=self.device,
+                dtype=torch.bool,
+            )
             if training and env_or_cenv.edits == 0 and bool(legal[:3].any()):
                 legal = legal.clone()
                 legal[3] = False
             if not bool(legal.any()):
-                self.last_rejection = 'no_admissible_edits'
+                self.last_rejection = "no_admissible_edits"
                 return None
 
-            eff_logits = logits if training else (logits * self.evaluation_temperature)
-            dist_op = Categorical(logits=eff_logits.masked_fill(~legal, float('-inf')))
-            op = dist_op.sample()
+            if self.heuristic_only:
+                cur_vol = env_or_cenv.count_fine if is_coarse else env_or_cenv.count
+                mid_vol = 0.5 * (low_f + high_f)
+                if can_finish and env_or_cenv.edits >= 1:
+                    op_idx = 3
+                elif remove and (not grow or cur_vol > mid_vol):
+                    op_idx = 0
+                elif grow and (not remove or cur_vol < mid_vol):
+                    op_idx = 1
+                elif bool(legal[2]):
+                    op_idx = 2
+                else:
+                    op_idx = int(legal.nonzero(as_tuple=False)[0].item())
+                op = torch.tensor(op_idx, device=self.device, dtype=torch.long)
+            else:
+                eff_logits = (
+                    logits if training else (logits * self.evaluation_temperature)
+                )
+                dist_op = Categorical(
+                    logits=eff_logits.masked_fill(~legal, float("-inf"))
+                )
+                op = dist_op.sample()
             operation = OPERATIONS[int(op.cpu())]
             self.last_operation = operation
 
@@ -939,7 +1254,7 @@ class CoarseToFineLearner:
             consumed = None
             elig_c = None
             local_adv = None
-            if operation != 'finish':
+            if operation != "finish":
                 w_rem = env_or_cenv.frontier.weights_tensor(-1, self.device)[:z_act]
                 add_np = growth_mask(env_or_cenv)[:z_act]
                 w_add = torch.as_tensor(add_np, device=self.device, dtype=torch.float32)
@@ -947,87 +1262,208 @@ class CoarseToFineLearner:
                 avail_add = int(add_np.sum())
                 occ_s = env_or_cenv.occupied[:z_act]
                 kernel = tuple(min(n, s) for n, s in zip(occ_s.shape, stride))
-                consumed = [0] if operation == 'remove' else [1] if operation == 'grow' else [0, 1]
-                mean = mean_all[consumed]
-                std = self.model.patch_log_std[consumed].clamp(-1.4, -0.3).exp()[:, None, None, None]
-                dist = Normal(mean, std, validate_args=False)
+                consumed = (
+                    [0]
+                    if operation == "remove"
+                    else [1]
+                    if operation == "grow"
+                    else [0, 1]
+                )
+                std = (
+                    self.model.patch_log_std[consumed]
+                    .clamp(-1.4, -0.3)
+                    .exp()[:, None, None, None]
+                )
+                if not self.heuristic_only:
+                    mean = mean_all[consumed]
+                    dist = Normal(mean, std, validate_args=False)
 
                 if is_coarse:
                     avg_v = max(1e-6, env_or_cenv.avg_vol)
                     c_low = max(1, int(round(low_f / avg_v)))
-                    c_high = min(env_or_cenv.capacity_coarse, int(round(high_f / avg_v)))
+                    c_high = min(
+                        env_or_cenv.capacity_coarse, int(round(high_f / avg_v))
+                    )
                     c_goal = min(c_high, max(c_low, env_or_cenv.count))
-                    remaining = max(0, abs(env_or_cenv.count_fine - env_or_cenv.goal_count_fine))
+                    remaining = max(
+                        0, abs(env_or_cenv.count_fine - env_or_cenv.goal_count_fine)
+                    )
                     rem_c = max(0, int(round(remaining / avg_v)))
-                    productive = max(1, env_or_cenv.workload.limit - env_or_cenv.workload.margin - env_or_cenv.unified_actions)
+                    productive = max(
+                        1,
+                        env_or_cenv.workload.limit
+                        - env_or_cenv.workload.margin
+                        - env_or_cenv.unified_actions,
+                    )
                     ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
                     min_step = 1 if scale == 4 else 2
-                    step_net = max(min_step, math.ceil(rem_c / productive / ret)) if rem_c else 0
-                    reloc = max(min_step, min(int(round((env_or_cenv.plot_area / float(scale * scale)) * 0.35)), max(min_step, round(env_or_cenv.target_coarse * 0.10))))
+                    step_net = (
+                        max(min_step, math.ceil(rem_c / productive / ret))
+                        if rem_c
+                        else 0
+                    )
+                    reloc = max(
+                        min_step,
+                        min(
+                            int(
+                                round(
+                                    (env_or_cenv.plot_area / float(scale * scale))
+                                    * 0.35
+                                )
+                            ),
+                            max(min_step, round(env_or_cenv.target_coarse * 0.10)),
+                        ),
+                    )
                 else:
                     c_low, c_high = low_f, high_f
                     c_goal = env_or_cenv.goal_count
                     remaining = abs(env_or_cenv.count - c_goal)
                     rem_c = remaining
-                    productive = max(1, env_or_cenv.workload.limit - env_or_cenv.workload.margin - env_or_cenv.unified_actions)
+                    productive = max(
+                        1,
+                        env_or_cenv.workload.limit
+                        - env_or_cenv.workload.margin
+                        - env_or_cenv.unified_actions,
+                    )
                     ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
-                    step_net = max(4, math.ceil(rem_c / productive / ret)) if rem_c else 0
-                    reloc = max(16, min(int(round(env_or_cenv.plot_area * 0.35)), max(16, round(env_or_cenv.target_count * 0.08))))
+                    step_net = (
+                        max(4, math.ceil(rem_c / productive / ret)) if rem_c else 0
+                    )
+                    reloc = max(
+                        16,
+                        min(
+                            int(round(env_or_cenv.plot_area * 0.35)),
+                            max(16, round(env_or_cenv.target_count * 0.08)),
+                        ),
+                    )
                     min_step = 4
 
                 base_rem = 0
                 base_add = 0
                 cur_c = env_or_cenv.count
-                if operation == 'remove':
+                if operation == "remove":
                     if cur_c > c_goal:
                         base_rem = min(max(1, cur_c - c_low), step_net)
                     else:
-                        base_rem = min(max(1, cur_c - c_low), max(min_step, round(c_goal * 0.04)))
+                        base_rem = min(
+                            max(1, cur_c - c_low), max(min_step, round(c_goal * 0.04))
+                        )
                     base_rem = min(avail_rem, max(0, base_rem))
-                elif operation == 'grow':
+                elif operation == "grow":
                     if cur_c < c_goal:
                         base_add = min(max(1, c_high - cur_c), step_net)
                     else:
-                        base_add = min(max(1, c_high - cur_c), max(min_step, round(c_goal * 0.05)))
+                        base_add = min(
+                            max(1, c_high - cur_c), max(min_step, round(c_goal * 0.05))
+                        )
                     base_add = min(avail_add, max(0, base_add))
                 else:
                     if cur_c > c_goal:
                         base_add = min(avail_add, reloc)
-                        base_rem = min(avail_rem, base_add + min(max(1, cur_c - c_low), max(min_step, step_net)))
+                        base_rem = min(
+                            avail_rem,
+                            base_add
+                            + min(max(1, cur_c - c_low), max(min_step, step_net)),
+                        )
                     elif cur_c < c_goal:
                         base_rem = min(avail_rem, reloc)
-                        base_add = min(avail_add, base_rem + min(max(1, c_high - cur_c), max(min_step, step_net)))
+                        base_add = min(
+                            avail_add,
+                            base_rem
+                            + min(max(1, c_high - cur_c), max(min_step, step_net)),
+                        )
                     else:
                         both = min(reloc, avail_rem, avail_add)
                         base_rem = both
                         base_add = both
 
                 clean_occ = clean_floor_tensor(occ_s, mw) if mw > 1 else None
-                skin = torch.as_tensor(env_or_cenv.frontier.remove_skin[:z_act], device=self.device) if mw > 1 else None
+                skin = (
+                    torch.as_tensor(
+                        env_or_cenv.frontier.remove_skin[:z_act], device=self.device
+                    )
+                    if mw > 1
+                    else None
+                )
                 ln_before = None
                 allowed_ln = None
-                if env_or_cenv.plot_area >= 400 and ln_w > 1 and env_or_cenv.ny >= ln_w and env_or_cenv.nx >= ln_w:
-                    allowed_ln = long_narrow_mask(env_or_cenv.allowed, ln_w, ln_stub)[:z_act]
+                if (
+                    env_or_cenv.plot_area >= 400
+                    and ln_w > 1
+                    and env_or_cenv.ny >= ln_w
+                    and env_or_cenv.nx >= ln_w
+                ):
+                    allowed_ln = long_narrow_mask(env_or_cenv.allowed, ln_w, ln_stub)[
+                        :z_act
+                    ]
                     ln_before = long_narrow_mask(occ_s, ln_w, ln_stub) & ~allowed_ln
-                ln_f = ln_before.float() if ln_before is not None else torch.zeros_like(env_or_cenv.facade_light[:z_act])
-                has_core_guard = (not is_coarse) and bool(getattr(env_or_cenv, 'cores_enabled', False) and getattr(env_or_cenv, 'cores', ()))
-                core_m_sub = env_or_cenv.core_mask[:z_act] if (has_core_guard and hasattr(env_or_cenv, 'core_mask')) else None
+                ln_f = (
+                    ln_before.float()
+                    if ln_before is not None
+                    else torch.zeros_like(env_or_cenv.facade_light[:z_act])
+                )
+                if self.heuristic_only:
+                    des_c = compute_spatial_desirability(
+                        env_or_cenv,
+                        w_rem,
+                        w_add,
+                        ln_f,
+                        consumed,
+                        kernel,
+                        stride,
+                        z_slice=z_act,
+                    )
+                    mean = (2.0 * des_c).clamp(-2.8, 2.8)
+                    dist = Normal(mean, std, validate_args=False)
+                has_core_guard = (not is_coarse) and bool(
+                    getattr(env_or_cenv, "cores_enabled", False)
+                    and getattr(env_or_cenv, "cores", ())
+                )
+                core_m_sub = (
+                    env_or_cenv.core_mask[:z_act]
+                    if (has_core_guard and hasattr(env_or_cenv, "core_mask"))
+                    else None
+                )
                 active_cores = (
-                    [c for c in env_or_cenv.cores if int(c.floors) > 0 and env_or_cenv.target_count > c.size_y * c.size_x * int(c.floors) * 1.5]
+                    [
+                        c
+                        for c in env_or_cenv.cores
+                        if int(c.floors) > 0
+                        and env_or_cenv.target_count
+                        > c.size_y * c.size_x * int(c.floors) * 1.5
+                    ]
                     if has_core_guard
                     else ()
                 )
 
                 for attempt in range(retries):
-                    latent = dist.sample() if (training or attempt > 0) else (mean + self.evaluation_noise_scale * std * torch.randn_like(mean))
+                    latent = (
+                        dist.sample()
+                        if (training or attempt > 0)
+                        else (
+                            mean
+                            + self.evaluation_noise_scale * std * torch.randn_like(mean)
+                        )
+                    )
                     if training:
                         latent_draws.append(latent.detach())
-                    decoded = F.interpolate(latent[:, None], size=occ_s.shape, mode='trilinear', align_corners=False)[:, 0]
-                    if cfg.mode == 'combined':
+                    decoded = F.interpolate(
+                        latent[:, None],
+                        size=occ_s.shape,
+                        mode="trilinear",
+                        align_corners=False,
+                    )[:, 0]
+                    if cfg.mode == "combined":
                         decoded = gaussian_field(decoded, cfg.sigma)
-                    sc = (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)[min(attempt, 7)]
-                    scores = torch.zeros((2, *occ_s.shape), device=self.device, dtype=torch.float32)
-                    masks = torch.zeros((2, *occ_s.shape), device=self.device, dtype=torch.bool)
+                    sc = (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)[
+                        min(attempt, 7)
+                    ]
+                    scores = torch.zeros(
+                        (2, *occ_s.shape), device=self.device, dtype=torch.float32
+                    )
+                    masks = torch.zeros(
+                        (2, *occ_s.shape), device=self.device, dtype=torch.bool
+                    )
                     if 0 in consumed and avail_rem > 0 and base_rem > 0:
                         n_r = min(avail_rem, max(1, round(base_rem * sc)))
                         s0 = decoded[consumed.index(0)].sigmoid() * w_rem
@@ -1037,8 +1473,15 @@ class CoarseToFineLearner:
                             bound = torch.where(skin, s0, torch.zeros_like(s0))
                             near = skin
                             for _ in range(max(1, cfg.facade_layers)):
-                                nbr_b = F.max_pool2d(bound[:, None], 3, stride=1, padding=1)[:, 0]
-                                nbr_n = F.max_pool2d(near.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                nbr_b = F.max_pool2d(
+                                    bound[:, None], 3, stride=1, padding=1
+                                )[:, 0]
+                                nbr_n = (
+                                    F.max_pool2d(
+                                        near.float()[:, None], 3, stride=1, padding=1
+                                    )[:, 0]
+                                    > 0.5
+                                )
                                 bound = torch.where(near, bound, nbr_b * 0.999)
                                 near = near | nbr_n
                             inner = (w_rem > 0) & ~skin & near
@@ -1050,34 +1493,66 @@ class CoarseToFineLearner:
                         if mw > 1:
                             if ln_before is not None and attempt < 3:
                                 after_t = occ_s & ~r_t
-                                new_ln = long_narrow_mask(after_t, ln_w, ln_stub) & ~ln_before & ~allowed_ln
-                                zone_ln = F.max_pool2d(new_ln.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                new_ln = (
+                                    long_narrow_mask(after_t, ln_w, ln_stub)
+                                    & ~ln_before
+                                    & ~allowed_ln
+                                )
+                                zone_ln = (
+                                    F.max_pool2d(
+                                        new_ln.float()[:, None], 3, stride=1, padding=1
+                                    )[:, 0]
+                                    > 0.5
+                                )
                                 r_t = r_t & ~zone_ln
                             after_t = occ_s & ~r_t
-                            slim_t = (after_t & ~clean_floor_tensor(after_t, mw)) & clean_occ
+                            slim_t = (
+                                after_t & ~clean_floor_tensor(after_t, mw)
+                            ) & clean_occ
                             r_t = r_t | (slim_t & (w_rem > 0))
                             for _ in range(2):
                                 after_t = occ_s & ~r_t
-                                slim_t = (after_t & ~clean_floor_tensor(after_t, mw)) & clean_occ
-                                zone = F.max_pool2d(slim_t.float()[:, None], 3, stride=1, padding=1)[:, 0] > 0.5
+                                slim_t = (
+                                    after_t & ~clean_floor_tensor(after_t, mw)
+                                ) & clean_occ
+                                zone = (
+                                    F.max_pool2d(
+                                        slim_t.float()[:, None], 3, stride=1, padding=1
+                                    )[:, 0]
+                                    > 0.5
+                                )
                                 r_t = r_t & ~zone
                         if active_cores and bool(r_t.any()):
                             hits = []
                             best_keep = None
-                            best_keep_sc = float('inf')
+                            best_keep_sc = float("inf")
                             for kc in active_cores:
                                 kcz = min(z_act, int(kc.floors))
-                                sl = r_t[:kcz, kc.y0:kc.y0 + kc.size_y, kc.x0:kc.x0 + kc.size_x]
+                                sl = r_t[
+                                    :kcz,
+                                    kc.y0 : kc.y0 + kc.size_y,
+                                    kc.x0 : kc.x0 + kc.size_x,
+                                ]
                                 hit = bool(sl.any())
                                 hits.append(hit)
                                 if hit:
-                                    sc_val = float(s0[:kcz, kc.y0:kc.y0 + kc.size_y, kc.x0:kc.x0 + kc.size_x].mean())
+                                    sc_val = float(
+                                        s0[
+                                            :kcz,
+                                            kc.y0 : kc.y0 + kc.size_y,
+                                            kc.x0 : kc.x0 + kc.size_x,
+                                        ].mean()
+                                    )
                                     if sc_val < best_keep_sc:
                                         best_keep_sc = sc_val
                                         best_keep = (kc, kcz)
                             if all(hits) and best_keep is not None:
                                 kc, kcz = best_keep
-                                r_t[:kcz, kc.y0:kc.y0 + kc.size_y, kc.x0:kc.x0 + kc.size_x] = False
+                                r_t[
+                                    :kcz,
+                                    kc.y0 : kc.y0 + kc.size_y,
+                                    kc.x0 : kc.x0 + kc.size_x,
+                                ] = False
                         masks[0] = r_t
                     if 1 in consumed and avail_add > 0 and base_add > 0:
                         n_a = min(avail_add, max(1, round(base_add * sc)))
@@ -1091,8 +1566,16 @@ class CoarseToFineLearner:
                             a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
                             if ln_before is not None:
                                 cand = base_occ | a_t
-                                has_core = (F.avg_pool2d(cand.float()[:, None], ln_w, stride=1) > 1.0 - 1e-4).amax((-1, -2, -3))
-                                new_ln = long_narrow_mask(cand, ln_w, ln_stub) & ~long_narrow_mask(base_occ, ln_w, ln_stub) & ~allowed_ln & has_core[:, None, None]
+                                has_core = (
+                                    F.avg_pool2d(cand.float()[:, None], ln_w, stride=1)
+                                    > 1.0 - 1e-4
+                                ).amax((-1, -2, -3))
+                                new_ln = (
+                                    long_narrow_mask(cand, ln_w, ln_stub)
+                                    & ~long_narrow_mask(base_occ, ln_w, ln_stub)
+                                    & ~allowed_ln
+                                    & has_core[:, None, None]
+                                )
                                 a_t = a_t & ~new_ln
                                 a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
                         masks[1] = a_t
@@ -1107,25 +1590,57 @@ class CoarseToFineLearner:
                         scores_np[:, :z_act] = scores.cpu().numpy()
                     self.last_generated_count = int(masks_np.sum())
                     if is_coarse:
-                        move = project_coarse_3d(env_or_cenv, masks_np, scores_np, operation, True)
+                        move = project_coarse_3d(
+                            env_or_cenv, masks_np, scores_np, operation, True
+                        )
                     else:
                         from .unified import project_organic_3d
-                        move = project_organic_3d(env_or_cenv, masks_np, scores_np, operation, True)
+
+                        move = project_organic_3d(
+                            env_or_cenv, masks_np, scores_np, operation, True
+                        )
                     if move is not None:
                         if training and self.spatial_aux_weight > 0.0:
-                            elig_full = torch.stack(((w_rem > 0).float(), (w_add > 0).float()))[consumed]
-                            elig_c = (F.max_pool3d(elig_full[:, None], kernel, stride=stride, ceil_mode=True)[:, 0] > 0.5).float()
-                            des_c = compute_spatial_desirability(env_or_cenv, w_rem, w_add, ln_f, consumed, kernel, stride, z_slice=z_act)
-                            la_raw = (latent.sigmoid() - mean.detach().sigmoid()) * des_c * elig_c
+                            elig_full = torch.stack(
+                                ((w_rem > 0).float(), (w_add > 0).float())
+                            )[consumed]
+                            elig_c = (
+                                F.max_pool3d(
+                                    elig_full[:, None],
+                                    kernel,
+                                    stride=stride,
+                                    ceil_mode=True,
+                                )[:, 0]
+                                > 0.5
+                            ).float()
+                            des_c = compute_spatial_desirability(
+                                env_or_cenv,
+                                w_rem,
+                                w_add,
+                                ln_f,
+                                consumed,
+                                kernel,
+                                stride,
+                                z_slice=z_act,
+                            )
+                            la_raw = (
+                                (latent.sigmoid() - mean.detach().sigmoid())
+                                * des_c
+                                * elig_c
+                            )
                             local_adv = torch.zeros_like(la_raw)
                             for c in range(la_raw.shape[0]):
                                 w_c = elig_c[c]
                                 n_c = w_c.sum().clamp_min(1.0)
-                                sd_c = (la_raw[c].square().sum() / n_c).sqrt().clamp_min(1e-4)
+                                sd_c = (
+                                    (la_raw[c].square().sum() / n_c)
+                                    .sqrt()
+                                    .clamp_min(1e-4)
+                                )
                                 local_adv[c] = la_raw[c] / sd_c
                         break
                 if move is None:
-                    self.last_rejection = 'mask_generation_failed'
+                    self.last_rejection = "mask_generation_failed"
 
             if training:
                 self.tape.append(
@@ -1154,18 +1669,20 @@ class CoarseToFineLearner:
     def record(self, reward):
         if not self.tape:
             return
-        self.tape[-1]['reward'] = torch.as_tensor(reward, dtype=torch.float32, device=self.device).detach()
+        self.tape[-1]["reward"] = torch.as_tensor(
+            reward, dtype=torch.float32, device=self.device
+        ).detach()
 
     def add_reward(self, reward):
         if not self.tape:
             return
         r = torch.as_tensor(reward, dtype=torch.float32, device=self.device).detach()
         last = self.tape[-1]
-        last['reward'] = r if last['reward'] is None else (last['reward'] + r)
+        last["reward"] = r if last["reward"] is None else (last["reward"] + r)
 
     def mark_done(self):
         if self.tape:
-            self.tape[-1]['done'] = True
+            self.tape[-1]["done"] = True
 
     def finish(self, bootstrap=0.0):
         if not self.tape:
@@ -1175,12 +1692,14 @@ class CoarseToFineLearner:
         val_old = []
         zero_r = torch.zeros((), dtype=torch.float32, device=self.device)
         for entry in self.tape:
-            val_old.append(entry['value'])
-            rew = entry['reward']
+            val_old.append(entry["value"])
+            rew = entry["reward"]
             rewards.append(zero_r if rew is None else rew)
-            dones.append(bool(entry['done']))
+            dones.append(bool(entry["done"]))
         val_old_t = torch.stack(val_old)
-        next_val = torch.as_tensor(bootstrap, dtype=torch.float32, device=self.device).detach()
+        next_val = torch.as_tensor(
+            bootstrap, dtype=torch.float32, device=self.device
+        ).detach()
         gamma, lam = 0.99, 0.95
         gae = torch.zeros((), dtype=torch.float32, device=self.device)
         advs = []
@@ -1197,7 +1716,12 @@ class CoarseToFineLearner:
 
         groups = {}
         for t, entry in enumerate(self.tape):
-            key = (entry['is_coarse'], entry.get('scale', 2 if entry['is_coarse'] else 1), entry['stride'], tuple(entry['obs'].shape))
+            key = (
+                entry["is_coarse"],
+                entry.get("scale", 2 if entry["is_coarse"] else 1),
+                entry["stride"],
+                tuple(entry["obs"].shape),
+            )
             groups.setdefault(key, []).append(t)
 
         values_out = [None] * len(self.tape)
@@ -1205,32 +1729,46 @@ class CoarseToFineLearner:
         actor_terms = []
         stds = self.model.patch_log_std.clamp(-1.4, -0.3).exp()
         for (is_c, st_scale, stride, _shape), idxs in groups.items():
-            obs_b = torch.stack([self.tape[t]['obs'] for t in idxs], dim=0)
-            goal_b = torch.stack([self.tape[t]['goal'] for t in idxs], dim=0)
-            mean_b, val_b, logits_b = self.model.forward_stage_batch(obs_b, goal_b, is_coarse=is_c, stride=stride, scale=st_scale)
+            obs_b = torch.stack([self.tape[t]["obs"] for t in idxs], dim=0)
+            goal_b = torch.stack([self.tape[t]["goal"] for t in idxs], dim=0)
+            mean_b, val_b, logits_b = self.model.forward_stage_batch(
+                obs_b, goal_b, is_coarse=is_c, stride=stride, scale=st_scale
+            )
             for k, t in enumerate(idxs):
                 entry = self.tape[t]
                 values_out[t] = val_b[k]
-                dist_op = Categorical(logits=logits_b[k].masked_fill(~entry['legal'], float('-inf')))
-                logp = dist_op.log_prob(entry['op'])
+                dist_op = Categorical(
+                    logits=logits_b[k].masked_fill(~entry["legal"], float("-inf"))
+                )
+                logp = dist_op.log_prob(entry["op"])
                 ent_terms.append(dist_op.entropy())
                 a_ep = adv[t].detach()
                 term = -(logp * a_ep)
-                draws = entry.get('latents') or ([entry['latent']] if entry['latent'] is not None else [])
+                draws = entry.get("latents") or (
+                    [entry["latent"]] if entry["latent"] is not None else []
+                )
                 if draws:
-                    consumed = entry.get('drawn_channels') or entry['consumed']
+                    consumed = entry.get("drawn_channels") or entry["consumed"]
                     mean = mean_b[k, consumed]
                     std = stds[consumed][:, None, None, None]
                     dist_s = Normal(mean, std, validate_args=False)
                     # Scale-normalize path log-prob so XS/S/M/L/XL keep balanced gradients.
                     scale_norm = math.sqrt(max(1, draws[0].numel()))
-                    path_logp = torch.stack([dist_s.log_prob(draw).sum() / scale_norm for draw in draws]).sum()
+                    path_logp = torch.stack(
+                        [dist_s.log_prob(draw).sum() / scale_norm for draw in draws]
+                    ).sum()
                     term = term - path_logp * a_ep
-                    if entry['latent'] is not None and self.spatial_aux_weight > 0.0 and entry['elig_c'] is not None:
-                        elig_c = entry['elig_c']
+                    if (
+                        entry["latent"] is not None
+                        and self.spatial_aux_weight > 0.0
+                        and entry["elig_c"] is not None
+                    ):
+                        elig_c = entry["elig_c"]
                         ecnt = elig_c.sum().clamp_min(1.0)
-                        sp_lp = dist_s.log_prob(entry['latent']) * elig_c
-                        term = term - self.spatial_aux_weight * ((sp_lp * entry['local_adv']).sum() / ecnt.sqrt())
+                        sp_lp = dist_s.log_prob(entry["latent"]) * elig_c
+                        term = term - self.spatial_aux_weight * (
+                            (sp_lp * entry["local_adv"]).sum() / ecnt.sqrt()
+                        )
                 actor_terms.append(term)
         values_t = torch.stack(values_out)
         actor = torch.stack(actor_terms).mean()
@@ -1238,7 +1776,9 @@ class CoarseToFineLearner:
         loss = actor + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
-        norm = nn.utils.clip_grad_norm_(self.model.parameters(), 2.0, error_if_nonfinite=True)
+        norm = nn.utils.clip_grad_norm_(
+            self.model.parameters(), 2.0, error_if_nonfinite=True
+        )
         self.optimizer.step()
         self.updates += 1
         self.direct_updates += 1
@@ -1253,8 +1793,8 @@ class CoarseToFineLearner:
 
     def state(self):
         return dict(
-            format='voxelform.multiscale.v1',
-            samplingSemantics='gaussian-retry-path-normalized.v1',
+            format="voxelform.multiscale.v1",
+            samplingSemantics="gaussian-retry-path-normalized.v1",
             fineConfig=asdict(self.fine_config),
             block=list(self.block),
             inputChannels=self.input_channels,
@@ -1269,20 +1809,30 @@ class CoarseToFineLearner:
         )
 
     def load(self, state):
-        if state.get('format') != 'voxelform.multiscale.v1':
-            raise ValueError('Multiscale checkpoint required')
-        ch = int(state.get('inputChannels', 12))
+        if state.get("format") != "voxelform.multiscale.v1":
+            raise ValueError("Multiscale checkpoint required")
+        ch = int(state.get("inputChannels", 12))
         if ch != self.input_channels:
             self.input_channels = ch
             self.model = CoarseToFineNetwork(ch).to(self.device)
-            self.optimizer = torch.optim.Adam(self.model.parameters(), lr=float(state.get('lr', self.lr)), weight_decay=1e-4)
-        self.spatial_aux_weight = float(state.get('spatialAuxWeight', self.spatial_aux_weight))
-        self.evaluation_temperature = float(state.get('evaluationTemperature', self.evaluation_temperature))
-        self.evaluation_noise_scale = float(state.get('evaluationNoiseScale', self.evaluation_noise_scale))
-        self.model.load_state_dict(state['model'])
-        self.optimizer.load_state_dict(state['optimizer'])
-        self.updates = int(state.get('updates', 0))
-        self.direct_updates = int(state.get('directMaskUpdates', 0))
+            self.optimizer = torch.optim.Adam(
+                self.model.parameters(),
+                lr=float(state.get("lr", self.lr)),
+                weight_decay=1e-4,
+            )
+        self.spatial_aux_weight = float(
+            state.get("spatialAuxWeight", self.spatial_aux_weight)
+        )
+        self.evaluation_temperature = float(
+            state.get("evaluationTemperature", self.evaluation_temperature)
+        )
+        self.evaluation_noise_scale = float(
+            state.get("evaluationNoiseScale", self.evaluation_noise_scale)
+        )
+        self.model.load_state_dict(state["model"])
+        self.optimizer.load_state_dict(state["optimizer"])
+        self.updates = int(state.get("updates", 0))
+        self.direct_updates = int(state.get("directMaskUpdates", 0))
         self.clear()
 
 
@@ -1313,40 +1863,73 @@ def run_cascade_episode(
         for idx, ce in enumerate(coarse_envs):
             budget_total += ce.unified_limit
             c_steps = 0
-            prev_core = float(getattr(ce, 'core_score', 0.0))
+            prev_core = float(getattr(ce, "core_score", 0.0))
             while not ce.near_far and ce.unified_actions < ce.unified_limit:
                 move = learner.choose_stage(ce, is_coarse=True, training=training)
                 ce.unified_actions += 1
                 attempt_idx += 1
-                op = learner.last_operation or 'none'
-                if op == 'finish':
+                op = learner.last_operation or "none"
+                if op == "finish":
                     rew = 0.0
                     if training and learner.last_attempt_recorded:
                         learner.record(rew)
                     reward_sum += rew
-                    trace.append(dict(attempt=attempt_idx, stage=f'coarse_{ce.bxy}x{ce.bz}', operation=op, accepted=True, removed=0, added=0, far=ce.far))
+                    trace.append(
+                        dict(
+                            attempt=attempt_idx,
+                            stage=f"coarse_{ce.bxy}x{ce.bz}",
+                            operation=op,
+                            accepted=True,
+                            removed=0,
+                            added=0,
+                            far=ce.far,
+                        )
+                    )
                     break
                 if move is None:
                     rew = -0.02
                     if training and learner.last_attempt_recorded:
                         learner.record(rew)
                     reward_sum += rew
-                    trace.append(dict(attempt=attempt_idx, stage=f'coarse_{ce.bxy}x{ce.bz}', operation=op, accepted=False, removed=0, added=0, far=ce.far))
+                    trace.append(
+                        dict(
+                            attempt=attempt_idx,
+                            stage=f"coarse_{ce.bxy}x{ce.bz}",
+                            operation=op,
+                            accepted=False,
+                            removed=0,
+                            added=0,
+                            far=ce.far,
+                        )
+                    )
                     continue
                 ce.apply_move(move)
                 c_steps += 1
-                if learner.fine_config.allocation == 'feedback':
-                    ce.workload.observe(int(move.remove.sum() + move.add.sum()), int(move.remove.sum() + move.add.sum()))
+                if learner.fine_config.allocation == "feedback":
+                    ce.workload.observe(
+                        int(move.remove.sum() + move.add.sum()),
+                        int(move.remove.sum() + move.add.sum()),
+                    )
                 delta = 0.0
-                if training and getattr(ce, 'cores_enabled', False):
-                    cur_core = float(getattr(ce, 'core_score', 0.0))
+                if training and getattr(ce, "cores_enabled", False):
+                    cur_core = float(getattr(ce, "core_score", 0.0))
                     delta = cur_core - prev_core
                     prev_core = cur_core
                 rew = 0.35 * delta - 0.002 if step_reward_fn is not None else -0.002
                 if training and learner.last_attempt_recorded:
                     learner.record(rew)
                 reward_sum += rew
-                trace.append(dict(attempt=attempt_idx, stage=f'coarse_{ce.bxy}x{ce.bz}', operation=op, accepted=True, removed=int(move.remove.sum()), added=int(move.add.sum()), far=ce.far))
+                trace.append(
+                    dict(
+                        attempt=attempt_idx,
+                        stage=f"coarse_{ce.bxy}x{ce.bz}",
+                        operation=op,
+                        accepted=True,
+                        removed=int(move.remove.sum()),
+                        added=int(move.add.sum()),
+                        far=ce.far,
+                    )
+                )
             stage_steps.append(c_steps)
             if idx + 1 < len(coarse_envs):
                 ce.upsample_to_coarse(coarse_envs[idx + 1])
@@ -1368,54 +1951,105 @@ def run_cascade_episode(
     budget_total += env.unified_limit
     fine_steps = 0
     _, d0 = objective_fn(env)
-    prev_core_fine = float(d0.get('coreScore') or 0.0)
+    prev_core_fine = float(d0.get("coreScore") or 0.0)
     while not env.terminal:
         move = learner.choose_stage(env, is_coarse=False, training=training)
         env.unified_actions += 1
         attempt_idx += 1
-        op = learner.last_operation or 'none'
-        if op == 'finish':
-            env.termination = 'far_reached'
+        op = learner.last_operation or "none"
+        if op == "finish":
+            env.termination = "far_reached"
             rew = 0.0
             if training and learner.last_attempt_recorded:
                 learner.record(rew)
             reward_sum += rew
-            trace.append(dict(attempt=attempt_idx, stage='fine', operation=op, accepted=True, removed=0, added=0, far=env.far))
+            trace.append(
+                dict(
+                    attempt=attempt_idx,
+                    stage="fine",
+                    operation=op,
+                    accepted=True,
+                    removed=0,
+                    added=0,
+                    far=env.far,
+                )
+            )
             break
         if move is None:
             rew = -0.01 if step_reward_fn is not None else -0.02
             if training and learner.last_attempt_recorded:
                 learner.record(rew)
             reward_sum += rew
-            trace.append(dict(attempt=attempt_idx, stage='fine', operation=op, accepted=False, removed=0, added=0, far=env.far))
+            trace.append(
+                dict(
+                    attempt=attempt_idx,
+                    stage="fine",
+                    operation=op,
+                    accepted=False,
+                    removed=0,
+                    added=0,
+                    far=env.far,
+                )
+            )
             if env.unified_actions >= env.unified_limit:
-                env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+                env.termination = (
+                    "far_reached" if env.far_satisfied else "step_budget_exhausted"
+                )
                 break
             continue
         commit_fine(env, move, validated=True)
         fine_steps += 1
-        if learner.fine_config.allocation == 'feedback':
-            env.workload.observe(int(move.remove.sum() + move.add.sum()), int(move.remove.sum() + move.add.sum()))
+        if learner.fine_config.allocation == "feedback":
+            env.workload.observe(
+                int(move.remove.sum() + move.add.sum()),
+                int(move.remove.sum() + move.add.sum()),
+            )
         delta = 0.0
-        if training and getattr(env, 'cores_enabled', False) and step_reward_fn is not None:
+        if (
+            training
+            and getattr(env, "cores_enabled", False)
+            and step_reward_fn is not None
+        ):
             env.update_cores()
             cm = env.core_metrics
-            c_sc = max(0.0, (1.0 - float(cm['coreUncoveredFraction'])) * (1.0 - 0.5 * float(cm['coreDistBadness'])))
+            c_sc = max(
+                0.0,
+                (1.0 - float(cm["coreUncoveredFraction"]))
+                * (1.0 - 0.5 * float(cm["coreDistBadness"])),
+            )
             delta = c_sc - prev_core_fine
             prev_core_fine = c_sc
-        rew = step_reward_fn(env, delta) if step_reward_fn is not None else (-0.005 if env.far_satisfied else 0.0)
+        rew = (
+            step_reward_fn(env, delta)
+            if step_reward_fn is not None
+            else (-0.005 if env.far_satisfied else 0.0)
+        )
         if training and learner.last_attempt_recorded:
             learner.record(rew)
         reward_sum += rew
-        trace.append(dict(attempt=attempt_idx, stage='fine', operation=op, accepted=True, removed=int(move.remove.sum()), added=int(move.add.sum()), far=env.far))
+        trace.append(
+            dict(
+                attempt=attempt_idx,
+                stage="fine",
+                operation=op,
+                accepted=True,
+                removed=int(move.remove.sum()),
+                added=int(move.add.sum()),
+                far=env.far,
+            )
+        )
         if env.unified_actions >= env.unified_limit:
-            env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+            env.termination = (
+                "far_reached" if env.far_satisfied else "step_budget_exhausted"
+            )
             break
         if env.edits % audit_steps == 0:
             env.evaluate()
 
     if not env.terminal:
-        env.termination = 'far_reached' if env.far_satisfied else 'step_budget_exhausted'
+        env.termination = (
+            "far_reached" if env.far_satisfied else "step_budget_exhausted"
+        )
     if env.last_audit_edit != env.edits:
         env.evaluate()
     obj, diag = objective_fn(env)
@@ -1423,8 +2057,15 @@ def run_cascade_episode(
     if terminal_reward_fn is not None:
         term_rew = terminal_reward_fn(env, obj)
     else:
-        far_pen = 0.0 if env.far_satisfied else -(
-            0.35 + 0.85 * abs(env.count - env.goal_count) / max(1, abs(start_fine - env.goal_count))
+        far_pen = (
+            0.0
+            if env.far_satisfied
+            else -(
+                0.35
+                + 0.85
+                * abs(env.count - env.goal_count)
+                / max(1, abs(start_fine - env.goal_count))
+            )
         )
         term_rew = 5.0 * (obj + far_pen)
     reward_sum += term_rew
@@ -1447,18 +2088,18 @@ def run_cascade_episode(
         attempts=attempt_idx,
         budget=budget_total,
         reward=reward_sum,
-        success=bool(env.termination == 'far_reached'),
+        success=bool(env.termination == "far_reached"),
         termination=env.termination,
-        far=round(float(m['far']), 4),
+        far=round(float(m["far"]), 4),
         farError=float(env.far_error),
         organicObjective=round(float(obj), 4),
         rawObjective=float(obj),
-        usableGoodArea=round(float(diag['usableGoodArea']), 1),
-        directSunProxy=round(float(m['directSunProxy']), 4),
-        diffuseFacadeProxy=round(float(m['diffuseFacadeProxy']), 4),
-        longNarrowFraction=round(float(diag['longNarrowFraction']), 4),
-        slimVoxels=int(diag['slimVoxels']),
-        cantileverVoxels=int(diag['cantileverVoxels']),
+        usableGoodArea=round(float(diag["usableGoodArea"]), 1),
+        directSunProxy=round(float(m["directSunProxy"]), 4),
+        diffuseFacadeProxy=round(float(m["diffuseFacadeProxy"]), 4),
+        longNarrowFraction=round(float(diag["longNarrowFraction"]), 4),
+        slimVoxels=int(diag["slimVoxels"]),
+        cantileverVoxels=int(diag["cantileverVoxels"]),
         topFloor=max((i + 1 for i, v in enumerate(fa) if v > 0), default=0),
         floorAreas=fa,
         diagnostics=diag,
@@ -1467,6 +2108,24 @@ def run_cascade_episode(
     )
 
 
-def run_episode(env, cenv, learner, initial_storeys, objective_fn, training=True, rollout_steps=16, audit_steps=5):
+def run_episode(
+    env,
+    cenv,
+    learner,
+    initial_storeys,
+    objective_fn,
+    training=True,
+    rollout_steps=16,
+    audit_steps=5,
+):
     """Run one two-stage coarse-to-fine episode."""
-    return run_cascade_episode(env, [cenv], learner, initial_storeys, objective_fn, training=training, rollout_steps=rollout_steps, audit_steps=audit_steps)
+    return run_cascade_episode(
+        env,
+        [cenv],
+        learner,
+        initial_storeys,
+        objective_fn,
+        training=training,
+        rollout_steps=rollout_steps,
+        audit_steps=audit_steps,
+    )
