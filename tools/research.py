@@ -493,7 +493,29 @@ def train(args):
 
     seed_everything(config.seeds[0], config.strict_determinism)
     manifest_path = out / "manifest.json"
-    if only_seed is not None and manifest_path.is_file():
+    if (
+        only_seed is not None
+        and manifest_path.is_file()
+        and (out / "config.json").is_file()
+    ):
+        prev_cfg = json.loads((out / "config.json").read_text())
+        curr_cfg = json.loads(json.dumps(config.to_dict()))
+        if {k: v for k, v in prev_cfg.items() if k != "seeds"} != {
+            k: v for k, v in curr_cfg.items() if k != "seeds"
+        }:
+            raise ValueError(
+                "Existing run directory config does not match hyperparameters"
+            )
+        manifest = json.loads(manifest_path.read_text())
+        if manifest.get("configHash") != config.fingerprint:
+            prev_resume = manifest.get("resumeFrom")
+            manifest = runtime_manifest()
+            manifest["configHash"] = config.fingerprint
+            manifest["resumeFrom"] = prev_resume
+            write_json(out / "config.json", curr_cfg)
+            write_json(manifest_path, manifest)
+            archive_source(out / "source.tar.gz", manifest)
+    elif only_seed is not None and manifest_path.is_file():
         manifest = json.loads(manifest_path.read_text())
         if manifest.get("configHash") != config.fingerprint:
             raise ValueError("Existing run directory configHash does not match config")
