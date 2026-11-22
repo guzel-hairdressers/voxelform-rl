@@ -1645,17 +1645,16 @@ def generate_training_curves(
         )
     if pure_rl_summary is not None:
         series.append(("Pure-RL (aux=0)", pure_rl_summary, "std", "#14b8a6", "#0f766e"))
-    series.append(
-        (
+    tier_tag = (
+        f"Tier-Adaptive ({n_seeds} seeds, best.pt)"
+        if n_seeds > 1 and "bestValidationEpisodes" in summary
+        else (
             f"Tier-Adaptive ({n_seeds} seeds)"
             if n_seeds > 1
-            else f"Tier-Adaptive ({total_eps} ep)",
-            summary,
-            "std",
-            "#1d4ed8",
-            "#1e3a8a",
+            else f"Tier-Adaptive ({total_eps} ep)"
         )
     )
+    series.append((tier_tag, summary, "std", "#1d4ed8", "#1e3a8a"))
 
     def _extract(src, mode, split, site_key):
         if mode == "untrained":
@@ -1722,7 +1721,7 @@ def generate_training_curves(
                 color=ec if idx_s > 0 else "#475569",
             )
 
-    ax2.set_ylim(0.0, 1.44)
+    ax2.set_ylim(0.0, 1.54)
     ax2.set_xticks(x)
     ax2.set_xticklabels([s[0] for s in sites], fontsize=9.4)
     ax2.set_ylabel(
@@ -1735,8 +1734,17 @@ def generate_training_curves(
         color="#0f172a",
     )
     ax2.grid(axis="y", linestyle="--", alpha=0.45)
-    ax2.legend(loc="upper left", fontsize=7.4, ncol=2, frameon=True)
+    ax2.legend(loc="upper center", fontsize=7.2, ncol=3, frameon=True)
 
+    cfg_seeds = summary.get("config", {}).get("seeds") or [
+        p.parent.name.split("-", 1)[1] for p in seed_files
+    ]
+    seed_ids_txt = "/".join(str(s) for s in cfg_seeds)
+    ckpt_note = (
+        "; best.pt selected every 50 ep on Val m_hk_0199"
+        if "bestValidationEpisodes" in summary
+        else ""
+    )
     fig.suptitle(
         f"{total_eps}-Episode Multi-Seed Tier-Adaptive Training & Controls (Apple M4 MPS, compact-core.v5)",
         fontsize=12.4,
@@ -1747,9 +1755,9 @@ def generate_training_curves(
     fig.text(
         0.5,
         0.015,
-        f"Training seeds: {n_seeds} (123/456/789 when multi-seed), matched eval decoding (temp=1.0, noise=1.0), error bars = +/-1 SD across training seeds.",
+        f"Training seeds: {n_seeds} ({seed_ids_txt}), matched eval decoding (temp=1.0, noise=1.0){ckpt_note}, error bars = +/-1 SD across seeds.",
         ha="center",
-        fontsize=8.3,
+        fontsize=8.2,
         color="#475569",
     )
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 0.93))

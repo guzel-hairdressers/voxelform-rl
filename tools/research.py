@@ -459,6 +459,26 @@ def aggregate(summaries):
     return out
 
 
+def _sync_seed_list_manifest(out, config):
+    manifest_path = out / "manifest.json"
+    prev_cfg = json.loads((out / "config.json").read_text())
+    curr_cfg = json.loads(json.dumps(config.to_dict()))
+    if {k: v for k, v in prev_cfg.items() if k != "seeds"} != {
+        k: v for k, v in curr_cfg.items() if k != "seeds"
+    }:
+        raise ValueError("Existing run directory config does not match hyperparameters")
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("configHash") != config.fingerprint:
+        prev_resume = manifest.get("resumeFrom")
+        manifest = runtime_manifest()
+        manifest["configHash"] = config.fingerprint
+        manifest["resumeFrom"] = prev_resume
+        write_json(out / "config.json", config.to_dict())
+        write_json(manifest_path, manifest)
+        archive_source(out / "source.tar.gz", manifest)
+    return manifest
+
+
 def train(args):
     config = ExperimentConfig.read(args.config)
     torch.set_num_threads(config.threads)
@@ -467,6 +487,8 @@ def train(args):
     finalize_only = bool(getattr(args, "finalize_only", False))
 
     if finalize_only:
+        if (out / "config.json").is_file() and (out / "manifest.json").is_file():
+            _sync_seed_list_manifest(out, config)
         summaries = []
         for s in config.seeds:
             sp = out / f"seed-{s}" / "summary.json"
@@ -498,23 +520,7 @@ def train(args):
         and manifest_path.is_file()
         and (out / "config.json").is_file()
     ):
-        prev_cfg = json.loads((out / "config.json").read_text())
-        curr_cfg = json.loads(json.dumps(config.to_dict()))
-        if {k: v for k, v in prev_cfg.items() if k != "seeds"} != {
-            k: v for k, v in curr_cfg.items() if k != "seeds"
-        }:
-            raise ValueError(
-                "Existing run directory config does not match hyperparameters"
-            )
-        manifest = json.loads(manifest_path.read_text())
-        if manifest.get("configHash") != config.fingerprint:
-            prev_resume = manifest.get("resumeFrom")
-            manifest = runtime_manifest()
-            manifest["configHash"] = config.fingerprint
-            manifest["resumeFrom"] = prev_resume
-            write_json(out / "config.json", curr_cfg)
-            write_json(manifest_path, manifest)
-            archive_source(out / "source.tar.gz", manifest)
+        manifest = _sync_seed_list_manifest(out, config)
     elif only_seed is not None and manifest_path.is_file():
         manifest = json.loads(manifest_path.read_text())
         if manifest.get("configHash") != config.fingerprint:
