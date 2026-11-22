@@ -299,7 +299,8 @@ Original project code is available under the MIT License. Three.js and OpenStree
 
 ```bibtex
 @software{voxelform_rl_2026,
-  title   = {VoxelForm-RL: Structured Reinforcement Learning for Constrained 3D Voxel Editing},
+  title   = {VoxelForm-RL: Structured Reinforcement Learning
+             for Constrained 3D Voxel Editing},
   author  = {Fazulzianov, Ruslan},
   year    = {2026},
   version = {0.2.0},
