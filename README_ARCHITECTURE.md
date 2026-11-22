@@ -30,6 +30,11 @@ As FAR fell from **5.82 to 2.90**, the share of floor area within **8 m of a fa�
 
 The **3,845 m²** parcel reaches **FAR 2.90** with a broad upper plate and stepped wings. The axonometrics show how the setbacks change across the block. Continuous slabs and vertical louvers give those steps a legible façade rhythm.
 
+## Architectural precedents
+
+- **Daylight as Form.** Daniel Koehler’s lab-eds catalogue reads courts, stepped sections, and other light-shaping devices across precedents in the dense city. It provides a typological reference for the Barcelona court and the Singapore terraces. [View the Daylight as Form gallery](https://lab-eds.org/work/daylight-as-form)
+- **Maison Partino.** Rasa Navasaityte used reinforcement learning to assemble prefabricated housing components and evaluate the voids between them. It provides a precedent for treating the space created by sequential operations as part of the design objective. [View the Maison Partino gallery](https://lab-eds.org/work/maison-partino)
+
 ## From the voxel grid to the architectural model
 
 A floor area target leaves the shape of a building open. VoxelForm-RL uses reinforcement learning to test how courts, stepped wings, and breaks in street frontage emerge from successive edits that account for density, daylight, and circulation.
@@ -41,11 +46,6 @@ Each voxel is **1 × 1 × 3 m** and contributes **1 m²** of gross floor area. F
 ![Sequential editing loop and coarse-to-fine network architecture](docs/media/mdp-architecture.png)
 
 The evaluation keeps three design questions distinct. **Plan depth** measures horizontal distance to the nearest exterior wall on the same storey. **Direct sun and diffuse sky access** are separate exposure estimates that account for self-shading and neighbors. **Circulation** is represented by height-graded stair and lift reservations and a same-floor walking-distance check. These are schematic design measures. Detailed daylight, structure, and egress require separate studies. [Core layout library](docs/CORE_LAYOUTS.md)
-
-## Architectural precedents
-
-- **Daylight as Form.** Daniel Koehler’s lab-eds catalogue reads courts, stepped sections, and other light-shaping devices across precedents in the dense city. It provides a typological reference for the Barcelona court and the Singapore terraces. [Lab-eds project](https://lab-eds.org/work/daylight-as-form)
-- **Maison Partino.** Rasa Navasaityte used reinforcement learning to assemble prefabricated housing components and evaluate the voids between them. It provides a precedent for treating the space created by sequential operations as part of the design objective. [Lab-eds project](https://lab-eds.org/work/maison-partino)
 
 ## What transfers across sites
 
