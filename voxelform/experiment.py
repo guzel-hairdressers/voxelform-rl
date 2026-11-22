@@ -4,25 +4,27 @@ No server, renderer or external dataset is required for synthetic experiments.
 """
 
 from __future__ import annotations
-from dataclasses import asdict, dataclass, fields
-from datetime import datetime, timezone
+
 import hashlib
 import importlib.metadata
 import json
 import os
-from pathlib import Path
 import platform
 import random
 import subprocess
 import tarfile
 import tempfile
+from dataclasses import asdict, dataclass, fields
+from datetime import datetime, timezone
+from pathlib import Path
 
 import numpy as np
 import torch
+
 from .core_plans import CORE_LAYOUT_VERSION
 
 ROOT = Path(__file__).resolve().parents[1]
-PROTOCOL = "voxelform.research.v1"
+PROTOCOL = "voxelform.research.v2"
 
 
 @dataclass(frozen=True)
@@ -53,6 +55,10 @@ class ExperimentConfig:
     evaluation_noise_scale: float = 1.0
     multiscale_schedule: str = "none"
     lr_schedule: str = "constant"
+    training_objective: str = "actor_critic"
+    spatial_aux_schedule: str = "constant"
+    decoder_retry_schedule: str = "legacy"
+    reward_profile: str = "default"
 
     def __post_init__(self):
         for key in (
@@ -63,7 +69,7 @@ class ExperimentConfig:
             "test_sites",
         ):
             v = getattr(self, key)
-            if not isinstance(v, (list, tuple)) or not v:
+            if not isinstance(v, (list, tuple)) or (not v and key != "test_sites"):
                 raise ValueError(f"{key} must be a nonempty sequence")
             object.__setattr__(self, key, tuple(v))
             if len(set(v)) != len(v):
@@ -140,6 +146,24 @@ class ExperimentConfig:
             raise ValueError("Unknown multiscale schedule")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("Unknown learning-rate schedule")
+        if self.training_objective not in ("actor_critic", "imitation"):
+            raise ValueError("Unknown training objective")
+        if self.spatial_aux_schedule not in ("constant", "annealed"):
+            raise ValueError("Unknown spatial auxiliary schedule")
+        if self.decoder_retry_schedule not in ("legacy", "adaptive"):
+            raise ValueError("Unknown decoder retry schedule")
+        if self.reward_profile not in ("default", "coverage_only", "daylight_low"):
+            raise ValueError("Unknown reward profile")
+        if self.training_objective == "imitation" and self.spatial_aux_weight:
+            raise ValueError("Imitation uses its own supervised loss")
+        if self.multiscale_schedule != "tier_adaptive" and (
+            self.training_objective == "imitation"
+            or self.decoder_retry_schedule != "legacy"
+            or self.spatial_aux_schedule != "constant"
+        ):
+            raise ValueError(
+                "Imitation, adaptive retries and annealing require tier_adaptive"
+            )
 
     @classmethod
     def read(cls, path):
@@ -217,8 +241,8 @@ def restore_rng(state):
         torch.cuda.set_rng_state_all([s.cpu() for s in state["cuda"]])
 
 
-def source_manifest(root=ROOT):
-    paths = []
+def source_manifest(root: Path = ROOT) -> dict[str, str]:
+    paths: list[Path] = []
     for folder in ("voxelform", "tools", "configs"):
         paths.extend(
             p for p in (root / folder).rglob("*") if p.suffix in (".py", ".json")
@@ -244,7 +268,7 @@ def runtime_manifest():
         except (subprocess.CalledProcessError, FileNotFoundError):
             return None
 
-    packages = {}
+    packages: dict[str, str | None] = {}
     for pkg in ("torch", "numpy", "scipy", "shapely", "fastapi", "uvicorn"):
         try:
             packages[pkg] = importlib.metadata.version(pkg)
@@ -273,11 +297,43 @@ def archive_source(path, manifest):
             tar.add(ROOT / name, arcname=name)
 
 
-def save_checkpoint(path, policy, config, seed, next_episode, scene_manifest):
-    if policy.tape:
+def _move_rollout(value, device):
+    if isinstance(value, torch.Tensor):
+        if value.requires_grad:
+            raise ValueError("Research rollouts must store detached tensors")
+        return value.to(device)
+    if isinstance(value, dict):
+        return {key: _move_rollout(item, device) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return tuple(_move_rollout(item, device) for item in value)
+    if isinstance(value, list):
+        return [_move_rollout(item, device) for item in value]
+    if value is None or type(value) in (int, float, bool, str):
+        return value
+    raise TypeError(f"Unsupported rollout value: {type(value).__name__}")
+
+
+def _validate_episode_boundary(tape):
+    if tape and (
+        not all(isinstance(entry, dict) and "done" in entry for entry in tape)
+        or tape[-1]["done"] is not True
+    ):
         raise ValueError(
-            "Flush the rollout at an episode boundary before checkpointing"
+            "Save pending rollout transitions at a completed episode boundary"
         )
+
+
+def restore_training_checkpoint(policy, saved):
+    """Restore optimizer and completed-episode transitions without taking an update."""
+    tape = saved["pendingRollout"]
+    _validate_episode_boundary(tape)
+    policy.load(saved["policy"])
+    policy.tape = _move_rollout(tape, policy.device)
+    restore_rng(saved["rng"])
+
+
+def save_checkpoint(path, policy, config, seed, next_episode, scene_manifest):
+    _validate_episode_boundary(policy.tape)
     saved = dict(
         format=PROTOCOL,
         coreLayoutVersion=CORE_LAYOUT_VERSION,
@@ -286,6 +342,7 @@ def save_checkpoint(path, policy, config, seed, next_episode, scene_manifest):
         seed=seed,
         nextEpisode=next_episode,
         policy=policy.state(),
+        pendingRollout=_move_rollout(policy.tape, "cpu"),
         rng=rng_state(),
         scenes=scene_manifest,
         source=source_manifest(),
@@ -303,7 +360,9 @@ def save_checkpoint(path, policy, config, seed, next_episode, scene_manifest):
 def read_checkpoint(path, config=None):
     saved = torch.load(path, map_location="cpu", weights_only=True)
     if saved.get("format") != PROTOCOL:
-        raise ValueError("A research-run checkpoint is required")
+        raise ValueError(
+            "This runner requires a research v2 checkpoint. Use the recorded source revision for earlier checkpoints."
+        )
     if saved["coreLayoutVersion"] != CORE_LAYOUT_VERSION:
         raise ValueError(
             "Core library changed; this is a transfer experiment, not an exact resume"

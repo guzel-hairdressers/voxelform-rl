@@ -14,7 +14,7 @@
    Add independent numerical references or invariant tests for meaningful changes.
 6. Commit only reviewable source, configs, documentation and compact evidence.
    `runs/`, `.venv/`, caches and private weights stay local. Publish external data
-   only with its provenance/licensing accounted for. The project's own license
-   still requires an explicit owner decision.
+   only with its provenance and licensing accounted for. Original project code
+   is covered by the MIT License. [License](LICENSE)
 
 See `docs/EXPERIMENT_PROTOCOL.md` for artifacts, resume guarantees and known gaps.

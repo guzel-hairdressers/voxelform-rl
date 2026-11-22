@@ -1,0 +1,4411 @@
+{
+  "confirmation": {
+    "fixed": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          60,
+          60,
+          60,
+          60,
+          60
+        ],
+        "finalTest": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                0.93,
+                1.0
+              ],
+              "mean": 0.97,
+              "stdAcrossModelSeeds": 0.04472135954999579
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.06832407895475627,
+                0.07611427178606392
+              ],
+              "mean": 0.07319564919918777,
+              "stdAcrossModelSeeds": 0.005410611172994726
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.49174776941537857,
+                0.5217109110951423
+              ],
+              "mean": 0.5068273106217385,
+              "stdAcrossModelSeeds": 0.019666459873361308
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.443187236596372,
+                0.5575528337982412
+              ],
+              "mean": 0.5010386638974325,
+              "stdAcrossModelSeeds": 0.07489778628165061
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.443187236596372,
+                0.5575528337982412
+              ],
+              "mean": 0.5010386638974325,
+              "stdAcrossModelSeeds": 0.07489778628165061
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                1609.2,
+                1930.03
+              ],
+              "mean": 1798.51,
+              "stdAcrossModelSeeds": 212.67201096994404
+            }
+          },
+          "modelSeeds": 5
+        },
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                0.9066666666666666,
+                1.0
+              ],
+              "mean": 0.96,
+              "stdAcrossModelSeeds": 0.059628479399994376
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.07899650613466899,
+                0.08448979770143827
+              ],
+              "mean": 0.08216701480249564,
+              "stdAcrossModelSeeds": 0.0035950840406423434
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2489797445138296,
+                0.27079090575377146
+              ],
+              "mean": 0.2605588221549988,
+              "stdAcrossModelSeeds": 0.013956418111531841
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.32051147137003844,
+                0.46814138914662884
+              ],
+              "mean": 0.39432643025833364,
+              "stdAcrossModelSeeds": 0.09954716217926753
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.32051147137003844,
+                0.46814138914662884
+              ],
+              "mean": 0.39432643025833364,
+              "stdAcrossModelSeeds": 0.09954716217926753
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                1903.0533333333333,
+                2210.293333333333
+              ],
+              "mean": 2063.4133333333334,
+              "stdAcrossModelSeeds": 195.6237283948731
+            }
+          },
+          "modelSeeds": 5
+        },
+        "test": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                0.93,
+                1.0
+              ],
+              "mean": 0.97,
+              "stdAcrossModelSeeds": 0.04472135954999579
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.06832407895475627,
+                0.07611427178606392
+              ],
+              "mean": 0.07319564919918777,
+              "stdAcrossModelSeeds": 0.005410611172994726
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.49174776941537857,
+                0.5217109110951423
+              ],
+              "mean": 0.5068273106217385,
+              "stdAcrossModelSeeds": 0.019666459873361308
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.443187236596372,
+                0.5575528337982412
+              ],
+              "mean": 0.5010386638974325,
+              "stdAcrossModelSeeds": 0.07489778628165061
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.443187236596372,
+                0.5575528337982412
+              ],
+              "mean": 0.5010386638974325,
+              "stdAcrossModelSeeds": 0.07489778628165061
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                1609.2,
+                1930.03
+              ],
+              "mean": 1798.51,
+              "stdAcrossModelSeeds": 212.67201096994404
+            }
+          },
+          "modelSeeds": 5
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                0.9066666666666666,
+                1.0
+              ],
+              "mean": 0.96,
+              "stdAcrossModelSeeds": 0.059628479399994376
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.07899650613466899,
+                0.08448979770143827
+              ],
+              "mean": 0.08216701480249564,
+              "stdAcrossModelSeeds": 0.0035950840406423434
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2489797445138296,
+                0.27079090575377146
+              ],
+              "mean": 0.2605588221549988,
+              "stdAcrossModelSeeds": 0.013956418111531841
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.32051147137003844,
+                0.46814138914662884
+              ],
+              "mean": 0.39432643025833364,
+              "stdAcrossModelSeeds": 0.09954716217926753
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.32051147137003844,
+                0.46814138914662884
+              ],
+              "mean": 0.39432643025833364,
+              "stdAcrossModelSeeds": 0.09954716217926753
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                1903.0533333333333,
+                2210.293333333333
+              ],
+              "mean": 2063.4133333333334,
+              "stdAcrossModelSeeds": 195.6237283948731
+            }
+          },
+          "modelSeeds": 5
+        }
+      },
+      "meanTrainingSeconds": 66.91911635019933,
+      "pairedBootstrap95AcrossModelSeeds": [
+        -0.2378928427399633,
+        -0.1235272455380941
+      ],
+      "pairedMeanDeltaVsGreedy": -0.18004141543890287,
+      "perSiteTest": {
+        "l_sgp_0327": {
+          "meanAttempts": 10.24,
+          "meanCoreCoverage": 0.8156055536841743,
+          "meanDepthBadFraction": 0.0261996345682778,
+          "meanEdits": 9.32,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 0.96,
+            "meanDiffuseSky": 0.14142187386751176,
+            "meanDirectSun": 0.5901065373420715,
+            "meanQuality": 0.622312151998553,
+            "meanReferenceQuality": 0.622312151998553,
+            "meanSeconds": 1.216016,
+            "meanUsableGoodArea": 3822.7599999999998
+          },
+          "referenceStdAcrossModelSeeds": 0.09099532442913877
+        },
+        "l_sgp_0367": {
+          "meanAttempts": 11.04,
+          "meanCoreCoverage": 0.8998968787717645,
+          "meanDepthBadFraction": 0.05689742189271644,
+          "meanEdits": 10.12,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 0.92,
+            "meanDiffuseSky": 0.05287109658122063,
+            "meanDirectSun": 0.3818231129646301,
+            "meanQuality": 0.3941603725414742,
+            "meanReferenceQuality": 0.3941603725414742,
+            "meanSeconds": 1.2393,
+            "meanUsableGoodArea": 1187.6399999999999
+          },
+          "referenceStdAcrossModelSeeds": 0.06333090289136413
+        },
+        "l_sgp_0379": {
+          "meanAttempts": 12.24,
+          "meanCoreCoverage": 0.9165456266855481,
+          "meanDepthBadFraction": 0.09958079818865952,
+          "meanEdits": 11.2,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.041582156866788865,
+            "meanDirectSun": 0.5786318159103394,
+            "meanQuality": 0.5127993350176565,
+            "meanReferenceQuality": 0.5127993350176565,
+            "meanSeconds": 1.216056,
+            "meanUsableGoodArea": 972.8
+          },
+          "referenceStdAcrossModelSeeds": 0.05293169628931318
+        },
+        "m_prs_0320": {
+          "meanAttempts": 12.68,
+          "meanCoreCoverage": 0.8763200116619567,
+          "meanDepthBadFraction": 0.006195167290584179,
+          "meanEdits": 11.72,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05690746948122978,
+            "meanDirectSun": 0.4767477762699127,
+            "meanQuality": 0.4748827960320461,
+            "meanReferenceQuality": 0.4748827960320461,
+            "meanSeconds": 0.458828,
+            "meanUsableGoodArea": 1210.84
+          },
+          "referenceStdAcrossModelSeeds": 0.11625907752382864
+        }
+      },
+      "seeds": [
+        {
+          "checkpointSHA256": "4011cd13c6402c1485f1ad16ac1919c4e6ac9c54e550ecc3b2a4e5fad637df6f",
+          "modelSeed": 4211,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.3453667585115437,
+            "l_sgp_0367": -0.20097995255680623,
+            "l_sgp_0379": -0.21486622579511044,
+            "m_prs_0320": -0.3285458324763975
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06362387202680111,
+            "meanDirectSun": 0.4824481025338173,
+            "meanQuality": 0.40864038700137084,
+            "meanReferenceQuality": 0.40864038700137084,
+            "meanSeconds": 0.99208,
+            "meanUsableGoodArea": 1435.95
+          },
+          "trainAttempts": 701,
+          "trainEdits": 644,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "fe5f2dc403ff3d2ec248bf9860bf4dcfab66f745b76eb430ffe6ee6da62c551e",
+          "modelSeed": 4212,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.15775266129613777,
+            "l_sgp_0367": -0.06518602601511174,
+            "l_sgp_0379": -0.09253730550684791,
+            "m_prs_0320": -0.1552160663366732
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 0.9,
+            "meanDiffuseSky": 0.07632192121818662,
+            "meanDirectSun": 0.5227564617991447,
+            "meanQuality": 0.5634070645476427,
+            "meanReferenceQuality": 0.5634070645476427,
+            "meanSeconds": 1.076175,
+            "meanUsableGoodArea": 1954.65
+          },
+          "trainAttempts": 665,
+          "trainEdits": 611,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "4dd51b7a28e9be1ab7dff6fc085dcc43fb5ef5d4029986326a4118f9199a5f3a",
+          "modelSeed": 4213,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.13436807272490572,
+            "l_sgp_0367": -0.16675121303230675,
+            "l_sgp_0379": -0.15289640321081882,
+            "m_prs_0320": -0.09778124453570505
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 0.95,
+            "meanDiffuseSky": 0.07442685747519136,
+            "meanDirectSun": 0.5175374493002891,
+            "meanQuality": 0.5431308459604013,
+            "meanReferenceQuality": 0.5431308459604013,
+            "meanSeconds": 1.17524,
+            "meanUsableGoodArea": 1896.05
+          },
+          "trainAttempts": 713,
+          "trainEdits": 662,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "966451d94609bb44e12e5d0f4a1c14f68b89fcc384c4baf522ae2fd52cecb9b2",
+          "modelSeed": 4214,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.2687430658496934,
+            "l_sgp_0367": -0.18791257268429243,
+            "l_sgp_0379": -0.187176645175594,
+            "m_prs_0320": -0.3560663335958106
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07634870894253254,
+            "meanDirectSun": 0.4886424481868744,
+            "meanQuality": 0.4311054250099877,
+            "meanReferenceQuality": 0.4311054250099877,
+            "meanSeconds": 1.01844,
+            "meanUsableGoodArea": 1783.5
+          },
+          "trainAttempts": 690,
+          "trainEdits": 632,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "c14467b9f82a2e1b583a5022abf06cecd4babb1be9f6958956bcf618bf562ea5",
+          "modelSeed": 4215,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.15591471649425387,
+            "l_sgp_0367": -0.0790386255796542,
+            "l_sgp_0379": -0.1019683551986291,
+            "m_prs_0320": -0.15176023220176524
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07525688633322716,
+            "meanDirectSun": 0.5227520912885666,
+            "meanQuality": 0.5589095969677598,
+            "meanReferenceQuality": 0.5589095969677598,
+            "meanSeconds": 0.900815,
+            "meanUsableGoodArea": 1922.4
+          },
+          "trainAttempts": 662,
+          "trainEdits": 607,
+          "trainFARFailures": 0
+        }
+      ]
+    },
+    "imitation": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          60,
+          60,
+          60,
+          60,
+          60
+        ],
+        "finalTest": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                1.0,
+                1.0
+              ],
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.031043079802766445,
+                0.03244658585637807
+              ],
+              "mean": 0.03173372347839177,
+              "stdAcrossModelSeeds": 0.0008605166724722768
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.4535622385144234,
+                0.4592046090960503
+              ],
+              "mean": 0.45638342380523683,
+              "stdAcrossModelSeeds": 0.0035413149846859593
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.34417594359949083,
+                0.3575491828074125
+              ],
+              "mean": 0.35086256320345166,
+              "stdAcrossModelSeeds": 0.008677901714974427
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.34417594359949083,
+                0.3575491828074125
+              ],
+              "mean": 0.35086256320345166,
+              "stdAcrossModelSeeds": 0.008677901714974427
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                573.6600000000001,
+                609.9
+              ],
+              "mean": 591.78,
+              "stdAcrossModelSeeds": 23.681152843558962
+            }
+          },
+          "modelSeeds": 5
+        },
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                1.0,
+                1.0
+              ],
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.040473300814628604,
+                0.04340510179599126
+              ],
+              "mean": 0.04214207032074531,
+              "stdAcrossModelSeeds": 0.0018443829329701305
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.23102516770362852,
+                0.23465830107529956
+              ],
+              "mean": 0.232678129474322,
+              "stdAcrossModelSeeds": 0.0024647889773777186
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2241095713635283,
+                0.2510145445947293
+              ],
+              "mean": 0.2375620579791288,
+              "stdAcrossModelSeeds": 0.0172699127175023
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2241095713635283,
+                0.2510145445947293
+              ],
+              "mean": 0.2375620579791288,
+              "stdAcrossModelSeeds": 0.0172699127175023
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                721.8799999999999,
+                774.5866666666667
+              ],
+              "mean": 754.3466666666667,
+              "stdAcrossModelSeeds": 36.13632828916387
+            }
+          },
+          "modelSeeds": 5
+        },
+        "test": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                1.0,
+                1.0
+              ],
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.031043079802766445,
+                0.03244658585637807
+              ],
+              "mean": 0.03173372347839177,
+              "stdAcrossModelSeeds": 0.0008605166724722768
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.4535622385144234,
+                0.4592046090960503
+              ],
+              "mean": 0.45638342380523683,
+              "stdAcrossModelSeeds": 0.0035413149846859593
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.34417594359949083,
+                0.3575491828074125
+              ],
+              "mean": 0.35086256320345166,
+              "stdAcrossModelSeeds": 0.008677901714974427
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.34417594359949083,
+                0.3575491828074125
+              ],
+              "mean": 0.35086256320345166,
+              "stdAcrossModelSeeds": 0.008677901714974427
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                573.6600000000001,
+                609.9
+              ],
+              "mean": 591.78,
+              "stdAcrossModelSeeds": 23.681152843558962
+            }
+          },
+          "modelSeeds": 5
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": [
+                1.0,
+                1.0
+              ],
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": [
+                0.040473300814628604,
+                0.04340510179599126
+              ],
+              "mean": 0.04214207032074531,
+              "stdAcrossModelSeeds": 0.0018443829329701305
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": [
+                0.23102516770362852,
+                0.23465830107529956
+              ],
+              "mean": 0.232678129474322,
+              "stdAcrossModelSeeds": 0.0024647889773777186
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2241095713635283,
+                0.2510145445947293
+              ],
+              "mean": 0.2375620579791288,
+              "stdAcrossModelSeeds": 0.0172699127175023
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": [
+                0.2241095713635283,
+                0.2510145445947293
+              ],
+              "mean": 0.2375620579791288,
+              "stdAcrossModelSeeds": 0.0172699127175023
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": [
+                721.8799999999999,
+                774.5866666666667
+              ],
+              "mean": 754.3466666666667,
+              "stdAcrossModelSeeds": 36.13632828916387
+            }
+          },
+          "modelSeeds": 5
+        }
+      },
+      "meanTrainingSeconds": 40.74111365000135,
+      "pairedBootstrap95AcrossModelSeeds": [
+        -0.3369041357368444,
+        -0.32353089652892286
+      ],
+      "pairedMeanDeltaVsGreedy": -0.3302175161328837,
+      "perSiteTest": {
+        "l_sgp_0327": {
+          "meanAttempts": 13.56,
+          "meanCoreCoverage": 0.7899712599606487,
+          "meanDepthBadFraction": 0.00529335941755159,
+          "meanEdits": 12.6,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05847157552838325,
+            "meanDirectSun": 0.503892900943756,
+            "meanQuality": 0.37638866064144016,
+            "meanReferenceQuality": 0.37638866064144016,
+            "meanSeconds": 1.320184,
+            "meanUsableGoodArea": 1488.96
+          },
+          "referenceStdAcrossModelSeeds": 0.034378542725517325
+        },
+        "l_sgp_0367": {
+          "meanAttempts": 11.64,
+          "meanCoreCoverage": 0.8624963985882458,
+          "meanDepthBadFraction": 0.034803410984811975,
+          "meanEdits": 10.84,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.022815435342490673,
+            "meanDirectSun": 0.37433295011520384,
+            "meanQuality": 0.29288950062854374,
+            "meanReferenceQuality": 0.29288950062854374,
+            "meanSeconds": 1.075396,
+            "meanUsableGoodArea": 213.36
+          },
+          "referenceStdAcrossModelSeeds": 0.02925197516353051
+        },
+        "l_sgp_0379": {
+          "meanAttempts": 13.56,
+          "meanCoreCoverage": 0.8578462742389609,
+          "meanDepthBadFraction": 0.03295521588547882,
+          "meanEdits": 12.72,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.022391089722514152,
+            "meanDirectSun": 0.525819890499115,
+            "meanQuality": 0.38304201555464357,
+            "meanReferenceQuality": 0.38304201555464357,
+            "meanSeconds": 1.1788,
+            "meanUsableGoodArea": 299.48
+          },
+          "referenceStdAcrossModelSeeds": 0.03202554838335365
+        },
+        "m_prs_0320": {
+          "meanAttempts": 13.68,
+          "meanCoreCoverage": 0.884634094855385,
+          "meanDepthBadFraction": 0.0,
+          "meanEdits": 12.72,
+          "pooled": {
+            "count": 25,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.023256793320178985,
+            "meanDirectSun": 0.42148795366287234,
+            "meanQuality": 0.3511300759891791,
+            "meanReferenceQuality": 0.3511300759891791,
+            "meanSeconds": 0.438556,
+            "meanUsableGoodArea": 365.32
+          },
+          "referenceStdAcrossModelSeeds": 0.007789057811075918
+        }
+      },
+      "seeds": [
+        {
+          "checkpointSHA256": "cce658e6af3691e65cdc3c919c9f0cbe4223df48d4869981dd3c3e25e58c9299",
+          "modelSeed": 4211,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.4426619670519965,
+            "l_sgp_0367": -0.2570062135371186,
+            "l_sgp_0379": -0.29642929353206604,
+            "m_prs_0320": -0.35143824312324023
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.030568946478888394,
+            "meanDirectSun": 0.45264884531497956,
+            "meanQuality": 0.34419615002522996,
+            "meanReferenceQuality": 0.34419615002522996,
+            "meanSeconds": 1.0409,
+            "meanUsableGoodArea": 599.3000000000001
+          },
+          "trainAttempts": 456,
+          "trainEdits": 396,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "1001809dc90c971098c46b59bfc47190a20fb9e5313fb0d9acdcb8269aad8023",
+          "modelSeed": 4212,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.46364257233899114,
+            "l_sgp_0367": -0.2352864702278743,
+            "l_sgp_0379": -0.2992393757026456,
+            "m_prs_0320": -0.33889045939715373
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.031437703687697646,
+            "meanDirectSun": 0.45599997192621233,
+            "meanQuality": 0.34681535991966916,
+            "meanReferenceQuality": 0.34681535991966916,
+            "meanSeconds": 1.04049,
+            "meanUsableGoodArea": 574.2
+          },
+          "trainAttempts": 456,
+          "trainEdits": 396,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "d35cbd77225a910ad64f03e2593fa67f16a62c5631506012d8b2c69fd6a342d3",
+          "modelSeed": 4213,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.41755586794382743,
+            "l_sgp_0367": -0.2782988268812177,
+            "l_sgp_0379": -0.2420132032704048,
+            "m_prs_0320": -0.34377573961538554
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.031754279788583514,
+            "meanDirectSun": 0.4601651102304459,
+            "meanQuality": 0.36066916990862646,
+            "meanReferenceQuality": 0.36066916990862646,
+            "meanSeconds": 1.02199,
+            "meanUsableGoodArea": 616.0
+          },
+          "trainAttempts": 456,
+          "trainEdits": 396,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "57e6b6f6739160b6a676a4fa31e7b56d06b51d3136788266d70a0f8d17a20250",
+          "modelSeed": 4214,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.45676282905986154,
+            "l_sgp_0367": -0.2360903894042587,
+            "l_sgp_0379": -0.2484947618763049,
+            "m_prs_0320": -0.3437879084046357
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03196391835808754,
+            "meanDirectSun": 0.45984642654657365,
+            "meanQuality": 0.3597961071500701,
+            "meanReferenceQuality": 0.3597961071500701,
+            "meanSeconds": 0.929185,
+            "meanUsableGoodArea": 560.3
+          },
+          "trainAttempts": 456,
+          "trainEdits": 396,
+          "trainFARFailures": 0
+        },
+        {
+          "checkpointSHA256": "10b8c981bf4a230e11eb5b657571875e4465cfcc6f0736899597fa1db42a79d8",
+          "modelSeed": 4215,
+          "pairedDeltaVsGreedy": {
+            "l_sgp_0327": -0.5111394952674219,
+            "l_sgp_0367": -0.1995408493823541,
+            "l_sgp_0379": -0.31205489782064383,
+            "m_prs_0320": -0.3302409588202714
+          },
+          "test": {
+            "count": 20,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03294376907870174,
+            "meanDirectSun": 0.45325676500797274,
+            "meanQuality": 0.3428360290136625,
+            "meanReferenceQuality": 0.3428360290136625,
+            "meanSeconds": 0.9836050000000001,
+            "meanUsableGoodArea": 609.1
+          },
+          "trainAttempts": 456,
+          "trainEdits": 396,
+          "trainFARFailures": 0
+        }
+      ]
+    }
+  },
+  "decoder": {
+    "metrics": {
+      "adaptive": {
+        "count": 9,
+        "draws": 87,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.0892684083018038,
+        "meanDirectSun": 0.26486316157711876,
+        "meanProjectionMs": 1.5441345284430674,
+        "meanProposalMs": 2.6965047347883897,
+        "meanQuality": 0.6039666438497716,
+        "meanReferenceQuality": 0.6039666438497716,
+        "meanSeconds": 0.6159555555555556,
+        "meanUsableGoodArea": 3252.8888888888887,
+        "rejectedDraws": 13,
+        "rejectionsPerCommittedEdit": 0.17567567567567569
+      },
+      "legacy": {
+        "count": 9,
+        "draws": 96,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.09095444861385557,
+        "meanDirectSun": 0.25901152524683213,
+        "meanProjectionMs": 1.8864491582159342,
+        "meanProposalMs": 4.1319887183514465,
+        "meanQuality": 0.597618463672026,
+        "meanReferenceQuality": 0.597618463672026,
+        "meanSeconds": 0.7571666666666667,
+        "meanUsableGoodArea": 3364.0,
+        "rejectedDraws": 18,
+        "rejectionsPerCommittedEdit": 0.23076923076923078
+      }
+    },
+    "selected": "adaptive"
+  },
+  "greedy": {
+    "test": {
+      "perSite": {
+        "l_sgp_0327": {
+          "meanAttempts": 10.8,
+          "meanCoreCoverage": 0.9375795365622444,
+          "meanDepthBadFraction": 0.012945599486328722,
+          "meanEdits": 9.8,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12068949192762375,
+            "meanDirectSun": 0.6543131589889526,
+            "meanQuality": 0.8347412069738599,
+            "meanReferenceQuality": 0.8347412069738599,
+            "meanSeconds": 0.88562,
+            "meanUsableGoodArea": 4023.0
+          },
+          "referenceStdAcrossModelSeeds": null
+        },
+        "l_sgp_0367": {
+          "meanAttempts": 6,
+          "meanCoreCoverage": 0.9872542485838054,
+          "meanDepthBadFraction": 0.11191505704153303,
+          "meanEdits": 5,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04842308536171913,
+            "meanDirectSun": 0.44759032130241394,
+            "meanQuality": 0.5341340505151084,
+            "meanReferenceQuality": 0.5341340505151084,
+            "meanSeconds": 0.7227,
+            "meanUsableGoodArea": 1269.0
+          },
+          "referenceStdAcrossModelSeeds": null
+        },
+        "l_sgp_0379": {
+          "meanAttempts": 9,
+          "meanCoreCoverage": 0.9849668262366675,
+          "meanDepthBadFraction": 0.018385001871601265,
+          "meanEdits": 8,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04311426356434822,
+            "meanDirectSun": 0.6005362272262573,
+            "meanQuality": 0.6626883219950566,
+            "meanReferenceQuality": 0.6626883219950566,
+            "meanSeconds": 0.87482,
+            "meanUsableGoodArea": 1709.0
+          },
+          "referenceStdAcrossModelSeeds": null
+        },
+        "m_prs_0320": {
+          "meanAttempts": 11,
+          "meanCoreCoverage": 0.984161387129043,
+          "meanDepthBadFraction": 0.003849391104102572,
+          "meanEdits": 10,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05227313190698624,
+            "meanDirectSun": 0.5913921594619751,
+            "meanQuality": 0.6927567378613164,
+            "meanReferenceQuality": 0.6927567378613164,
+            "meanSeconds": 0.29841999999999996,
+            "meanUsableGoodArea": 1270.0
+          },
+          "referenceStdAcrossModelSeeds": null
+        }
+      },
+      "summary": {
+        "count": 20,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.06612499319016933,
+        "meanDirectSun": 0.5734579667448998,
+        "meanQuality": 0.6810800793363353,
+        "meanReferenceQuality": 0.6810800793363353,
+        "meanSeconds": 0.69539,
+        "meanUsableGoodArea": 2067.75
+      }
+    },
+    "validation": {
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 17,
+          "meanCoreCoverage": 0.9774495961797057,
+          "meanDepthBadFraction": 0.003945820557233522,
+          "meanEdits": 16.2,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 0.8,
+            "meanDiffuseSky": 0.08731311112642288,
+            "meanDirectSun": 0.4688951075077057,
+            "meanQuality": 0.7687378052797323,
+            "meanReferenceQuality": 0.7687378052797323,
+            "meanSeconds": 0.85782,
+            "meanUsableGoodArea": 3529.6
+          },
+          "referenceStdAcrossModelSeeds": null
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 10,
+          "meanCoreCoverage": 0.9592760180995475,
+          "meanDepthBadFraction": 8.687564270648602e-06,
+          "meanEdits": 9,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08031774312257767,
+            "meanDirectSun": 0.25104817748069763,
+            "meanQuality": 0.6219518184669357,
+            "meanReferenceQuality": 0.6219518184669357,
+            "meanSeconds": 0.19716,
+            "meanUsableGoodArea": 1749.0
+          },
+          "referenceStdAcrossModelSeeds": null
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 13.6,
+          "meanCoreCoverage": 0.9738488106332485,
+          "meanDepthBadFraction": 0.13605014044364552,
+          "meanEdits": 12.6,
+          "pooled": {
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04037420004606247,
+            "meanDirectSun": 0.1729681074619293,
+            "meanQuality": 0.3396746021948033,
+            "meanReferenceQuality": 0.3396746021948033,
+            "meanSeconds": 1.36436,
+            "meanUsableGoodArea": 1671.2
+          },
+          "referenceStdAcrossModelSeeds": null
+        }
+      },
+      "summary": {
+        "count": 15,
+        "farSuccessRate": 0.9333333333333333,
+        "meanDiffuseSky": 0.06933501809835434,
+        "meanDirectSun": 0.29763713081677756,
+        "meanQuality": 0.5767880753138237,
+        "meanReferenceQuality": 0.5767880753138237,
+        "meanSeconds": 0.8064466666666666,
+        "meanUsableGoodArea": 2316.6
+      }
+    }
+  },
+  "lookahead": {
+    "fixture": "Exploratory synthetic witness chosen in development. Cores are disabled to isolate mass redistribution.",
+    "greedy": [
+      {
+        "committedEdits": 1,
+        "decisions": [
+          {
+            "accepted": true,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "exchange",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          },
+          {
+            "accepted": false,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "finish",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          }
+        ],
+        "evaluationSeed": 9301
+      },
+      {
+        "committedEdits": 1,
+        "decisions": [
+          {
+            "accepted": true,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "exchange",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          },
+          {
+            "accepted": false,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "finish",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          }
+        ],
+        "evaluationSeed": 9302
+      },
+      {
+        "committedEdits": 1,
+        "decisions": [
+          {
+            "accepted": true,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "exchange",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          },
+          {
+            "accepted": false,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "finish",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          }
+        ],
+        "evaluationSeed": 9303
+      },
+      {
+        "committedEdits": 1,
+        "decisions": [
+          {
+            "accepted": true,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "exchange",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          },
+          {
+            "accepted": false,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "finish",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          }
+        ],
+        "evaluationSeed": 9304
+      },
+      {
+        "committedEdits": 1,
+        "decisions": [
+          {
+            "accepted": true,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "exchange",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          },
+          {
+            "accepted": false,
+            "far": 3.0,
+            "occupied": 1056,
+            "operation": "finish",
+            "quality": 1.119416599553643,
+            "storeys": 5
+          }
+        ],
+        "evaluationSeed": 9305
+      }
+    ],
+    "learned": {
+      "confirm-fixed": [
+        {
+          "checkpointSHA256": "4011cd13c6402c1485f1ad16ac1919c4e6ac9c54e550ecc3b2a4e5fad637df6f",
+          "episodes": [
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0841628736799414,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.997159090909091,
+                  "occupied": 1055,
+                  "operation": "exchange",
+                  "quality": 0.97716664382773,
+                  "storeys": 6
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.09375,
+                  "occupied": 1089,
+                  "operation": "grow",
+                  "quality": 1.127631774883789,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "exchange",
+                  "quality": 1.079006919998242,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.90625,
+                  "occupied": 1023,
+                  "operation": "remove",
+                  "quality": 1.0884723938618472,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0482954545454546,
+                  "occupied": 1073,
+                  "operation": "grow",
+                  "quality": 1.0830639950349192,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4211
+        },
+        {
+          "checkpointSHA256": "fe5f2dc403ff3d2ec248bf9860bf4dcfab66f745b76eb430ffe6ee6da62c551e",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.991477272727273,
+                  "occupied": 1053,
+                  "operation": "exchange",
+                  "quality": 1.1136332141727578,
+                  "storeys": 4
+                },
+                {
+                  "accepted": false,
+                  "far": 2.991477272727273,
+                  "occupied": 1053,
+                  "operation": "finish",
+                  "quality": 1.1136332141727578,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.090909090909091,
+                  "occupied": 1088,
+                  "operation": "grow",
+                  "quality": 1.1414819426396314,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0823863636363638,
+                  "occupied": 1085,
+                  "operation": "exchange",
+                  "quality": 1.1083444514142755,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.008522727272727,
+                  "occupied": 1059,
+                  "operation": "exchange",
+                  "quality": 1.0782035037362991,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 3.008522727272727,
+                  "occupied": 1059,
+                  "operation": "finish",
+                  "quality": 1.0782035037362991,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1283474459026983,
+                  "storeys": 4
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0369318181818183,
+                  "occupied": 1069,
+                  "operation": "grow",
+                  "quality": 1.1522849151029333,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4212
+        },
+        {
+          "checkpointSHA256": "4dd51b7a28e9be1ab7dff6fc085dcc43fb5ef5d4029986326a4118f9199a5f3a",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.008522727272727,
+                  "occupied": 1059,
+                  "operation": "exchange",
+                  "quality": 1.108420284714926,
+                  "storeys": 4
+                },
+                {
+                  "accepted": false,
+                  "far": 3.008522727272727,
+                  "occupied": 1059,
+                  "operation": "finish",
+                  "quality": 1.108420284714926,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "grow",
+                  "quality": 1.1427989893078148,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.096590909090909,
+                  "occupied": 1090,
+                  "operation": "exchange",
+                  "quality": 1.1086305928093578,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0745576230594607,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.0745576230594607,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1283474459026983,
+                  "storeys": 4
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0369318181818183,
+                  "occupied": 1069,
+                  "operation": "grow",
+                  "quality": 1.1470096202831719,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4213
+        },
+        {
+          "checkpointSHA256": "966451d94609bb44e12e5d0f4a1c14f68b89fcc384c4baf522ae2fd52cecb9b2",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0393679575757548,
+                  "storeys": 6
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.0393679575757548,
+                  "storeys": 6
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "grow",
+                  "quality": 1.127673402116672,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "exchange",
+                  "quality": 1.0428600315231997,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0336351206988998,
+                  "storeys": 6
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.0336351206988998,
+                  "storeys": 6
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.90625,
+                  "occupied": 1023,
+                  "operation": "remove",
+                  "quality": 1.0740267419436345,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0482954545454546,
+                  "occupied": 1073,
+                  "operation": "grow",
+                  "quality": 1.0707490517108773,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4214
+        },
+        {
+          "checkpointSHA256": "c14467b9f82a2e1b583a5022abf06cecd4babb1be9f6958956bcf618bf562ea5",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0056818181818183,
+                  "occupied": 1058,
+                  "operation": "exchange",
+                  "quality": 1.1017463899824933,
+                  "storeys": 4
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0056818181818183,
+                  "occupied": 1058,
+                  "operation": "finish",
+                  "quality": 1.1017463899824933,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "grow",
+                  "quality": 1.1381391255974114,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.096590909090909,
+                  "occupied": 1090,
+                  "operation": "exchange",
+                  "quality": 1.0926853401617174,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1533111458797878,
+                  "storeys": 4
+                },
+                {
+                  "accepted": false,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "finish",
+                  "quality": 1.1533111458797878,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1273368280892506,
+                  "storeys": 4
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0369318181818183,
+                  "occupied": 1069,
+                  "operation": "grow",
+                  "quality": 1.1511955116935932,
+                  "storeys": 4
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 0,
+              "decisions": [
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.136315733013731,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4215
+        }
+      ],
+      "confirm-imitation": [
+        {
+          "checkpointSHA256": "cce658e6af3691e65cdc3c919c9f0cbe4223df48d4869981dd3c3e25e58c9299",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9943181818181817,
+                  "occupied": 1054,
+                  "operation": "exchange",
+                  "quality": 1.062852586965294,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.9943181818181817,
+                  "occupied": 1054,
+                  "operation": "finish",
+                  "quality": 1.062852586965294,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.090909090909091,
+                  "occupied": 1088,
+                  "operation": "grow",
+                  "quality": 1.124317148134989,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0880681818181817,
+                  "occupied": 1087,
+                  "operation": "exchange",
+                  "quality": 1.0751673116361538,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.088442959260053,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "finish",
+                  "quality": 1.088442959260053,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.903409090909091,
+                  "occupied": 1022,
+                  "operation": "remove",
+                  "quality": 1.1045824237643158,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.039772727272727,
+                  "occupied": 1070,
+                  "operation": "grow",
+                  "quality": 1.0718861462356888,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.90625,
+                  "occupied": 1023,
+                  "operation": "remove",
+                  "quality": 1.1032190056257352,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1017204499040367,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4211
+        },
+        {
+          "checkpointSHA256": "1001809dc90c971098c46b59bfc47190a20fb9e5313fb0d9acdcb8269aad8023",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0655366399252055,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.0655366399252055,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.090909090909091,
+                  "occupied": 1088,
+                  "operation": "grow",
+                  "quality": 1.1236612679853157,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0880681818181817,
+                  "occupied": 1087,
+                  "operation": "exchange",
+                  "quality": 1.0723000120869886,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.903409090909091,
+                  "occupied": 1022,
+                  "operation": "remove",
+                  "quality": 1.0963635788534252,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.903409090909091,
+                  "occupied": 1022,
+                  "operation": "finish",
+                  "quality": 1.0963635788534252,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.903409090909091,
+                  "occupied": 1022,
+                  "operation": "remove",
+                  "quality": 1.1052930771289742,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0426136363636362,
+                  "occupied": 1071,
+                  "operation": "grow",
+                  "quality": 1.0738926841965577,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.0997732687775814,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.9119318181818183,
+                  "occupied": 1025,
+                  "operation": "exchange",
+                  "quality": 1.0174962758770805,
+                  "storeys": 6
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4212
+        },
+        {
+          "checkpointSHA256": "d35cbd77225a910ad64f03e2593fa67f16a62c5631506012d8b2c69fd6a342d3",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9943181818181817,
+                  "occupied": 1054,
+                  "operation": "exchange",
+                  "quality": 1.0603816543895561,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.9943181818181817,
+                  "occupied": 1054,
+                  "operation": "finish",
+                  "quality": 1.0603816543895561,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "grow",
+                  "quality": 1.1234767179607688,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "exchange",
+                  "quality": 1.0740838932674157,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "remove",
+                  "quality": 1.0971498021483423,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "finish",
+                  "quality": 1.0971498021483423,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "remove",
+                  "quality": 1.1054438316822053,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0482954545454546,
+                  "occupied": 1073,
+                  "operation": "grow",
+                  "quality": 1.070866488578824,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "remove",
+                  "quality": 1.1050482356548308,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1003371237505895,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4213
+        },
+        {
+          "checkpointSHA256": "57e6b6f6739160b6a676a4fa31e7b56d06b51d3136788266d70a0f8d17a20250",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0056818181818183,
+                  "occupied": 1058,
+                  "operation": "exchange",
+                  "quality": 1.0639256941489104,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0056818181818183,
+                  "occupied": 1058,
+                  "operation": "finish",
+                  "quality": 1.0639256941489104,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.090909090909091,
+                  "occupied": 1088,
+                  "operation": "grow",
+                  "quality": 1.1277774449481683,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.090909090909091,
+                  "occupied": 1088,
+                  "operation": "exchange",
+                  "quality": 1.0749706128590248,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.0868631154990571,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "finish",
+                  "quality": 1.0868631154990571,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1053271695752567,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0369318181818183,
+                  "occupied": 1069,
+                  "operation": "grow",
+                  "quality": 1.07466836579834,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.90625,
+                  "occupied": 1023,
+                  "operation": "remove",
+                  "quality": 1.1048231454503852,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1033252682093895,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4214
+        },
+        {
+          "checkpointSHA256": "10b8c981bf4a230e11eb5b657571875e4465cfcc6f0736899597fa1db42a79d8",
+          "episodes": [
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "exchange",
+                  "quality": 1.0620559760476604,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 3.0,
+                  "occupied": 1056,
+                  "operation": "finish",
+                  "quality": 1.0620559760476604,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9301
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 3.0994318181818183,
+                  "occupied": 1091,
+                  "operation": "grow",
+                  "quality": 1.1167224367379487,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.096590909090909,
+                  "occupied": 1090,
+                  "operation": "exchange",
+                  "quality": 1.0735216846624647,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9302
+            },
+            {
+              "committedEdits": 1,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "remove",
+                  "quality": 1.0971498021483423,
+                  "storeys": 5
+                },
+                {
+                  "accepted": false,
+                  "far": 2.909090909090909,
+                  "occupied": 1024,
+                  "operation": "finish",
+                  "quality": 1.0971498021483423,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9303
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.90625,
+                  "occupied": 1023,
+                  "operation": "remove",
+                  "quality": 1.1056316117955445,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 3.0426136363636362,
+                  "occupied": 1071,
+                  "operation": "grow",
+                  "quality": 1.0754061257357803,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9304
+            },
+            {
+              "committedEdits": 2,
+              "decisions": [
+                {
+                  "accepted": true,
+                  "far": 2.903409090909091,
+                  "occupied": 1022,
+                  "operation": "remove",
+                  "quality": 1.1029929438478325,
+                  "storeys": 5
+                },
+                {
+                  "accepted": true,
+                  "far": 2.9005681818181817,
+                  "occupied": 1021,
+                  "operation": "remove",
+                  "quality": 1.1001904495347958,
+                  "storeys": 5
+                }
+              ],
+              "evaluationSeed": 9305
+            }
+          ],
+          "modelSeed": 4215
+        }
+      ]
+    },
+    "oracle": {
+      "initial": {
+        "far": 3.0,
+        "occupied": 1056,
+        "quality": 1.136315733013731,
+        "storeys": 5
+      },
+      "oneStepBestWithStop": 1.1371624795776425,
+      "oneStepOracle": {
+        "actions": [
+          [
+            0,
+            3
+          ],
+          [
+            3,
+            0
+          ]
+        ],
+        "final": {
+          "far": 3.0,
+          "occupied": 1056,
+          "quality": 1.1371624795776425,
+          "storeys": 5
+        },
+        "intermediate": {
+          "far": 3.0,
+          "occupied": 1056,
+          "quality": 1.1311671502572116,
+          "storeys": 4
+        }
+      },
+      "twoStepOracle": {
+        "actions": [
+          [
+            0,
+            1
+          ],
+          [
+            0,
+            1
+          ]
+        ],
+        "final": {
+          "far": 3.0,
+          "occupied": 1056,
+          "quality": 1.140042696414572,
+          "storeys": 5
+        },
+        "intermediate": {
+          "far": 3.0,
+          "occupied": 1056,
+          "quality": 1.1304453707915365,
+          "storeys": 4
+        }
+      },
+      "validFirstEdits": 3,
+      "validTwoEditRoutes": 18
+    },
+    "oracleProtocol": "Transfer 16-cell roof patches among four roof positions. The score lookahead compares up to two exchanges, all checked by the actual geometry projector at identical FAR.",
+    "policyProtocol": "Free masks on the same initial state, up to two decisions. Finish is legal. No action template is supplied.",
+    "runtime": {
+      "coreLayoutVersion": "compact-core.v5",
+      "createdAt": "2026-11-22T05:47:14.979331+00:00",
+      "cuda": false,
+      "deterministic": false,
+      "gitCommit": "dac0424491137730c110ddacd09561bd439766c7",
+      "gitDirty": true,
+      "machine": "arm64",
+      "mps": true,
+      "packages": {
+        "fastapi": "0.165.0",
+        "numpy": "2.5.5",
+        "scipy": "1.18.1",
+        "shapely": "2.2.0",
+        "torch": "2.15.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "macOS-26.5.2-arm64-arm-64bit",
+      "protocol": "voxelform.research.v2",
+      "python": "3.12.11",
+      "source": {
+        "configs/research-confirmatory-l-xl.json": "dde1462d5602284be0ced4673b911b57e460f47f4e07daad37537d59ac9f500e",
+        "configs/research-real-aux-1200ep.json": "8fa3f2c95dca2a2e98b5cb4a4715b504f7d025cc1d536c4cc12e7986fecab464",
+        "configs/research-real-aux-tier-600ep.json": "4b5d0062602d8f180d0e08b4260e07a1a7981e6768598dbda623ae70dd1d89ed",
+        "configs/research-real-aux-tier-heldout.json": "2232571e1ee3fb3164bbe0f8ebb2f98ca20b56cb05991358baa947c7e06536f1",
+        "configs/research-real-aux.json": "fb12190af28c5944ce78bf1caf8f8f4cff77a8f55c2526c6f34a149a60b33915",
+        "configs/research-real-tier-600ep.json": "3533472569f9be8ffcb5f0c8444e9dda29912af33c9d81b7a1a3569a833132d2",
+        "configs/research-real.json": "96d351440d031a237e7e5ea7df109591dc9a07be8376bb4e7ea4384f5f172f1a",
+        "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+        "pyproject.toml": "ce981a8f6bf224b194e795f3a3f74f73ef8197c74df5488b001911eb41880ff3",
+        "tools/architecture_hypotheses.py": "7bc4dac79f402bdce422e543876fd775cd19a7a1ff9761ccccefd20c1cdcd279",
+        "tools/benchmark.py": "60db029af2e93adc0ed1f1949dea7a14e1d1f1f67f44a5632a96677c7b184c19",
+        "tools/blender_bake_external_props.py": "31085c15954a3b2064ede5e75a0f488abf1ac7e0c716ac6a663c33baa6ddfeb8",
+        "tools/blender_import_site.py": "762cfd0a03363be05c3c1ecf62ac4c4beb2fde0e35bd30ef416233d481f68799",
+        "tools/blender_maquette_library.py": "86df3593ff87d9fbbe35f2c24292b37c02976e79522266de8cf67b3bd715d7d8",
+        "tools/export_blender_site.py": "70c965bc9335ef49e58c03c01f5d6d0793edc43e747eb1faa233774d1eceadd7",
+        "tools/generate_readme_media.py": "48878c961fa41a0e8e4bc40ee508c6e596e34b876c11c91ffded7bc12538d066",
+        "tools/lookahead_probe.py": "52f89d11a539a9126d8e646c69deaa9fbcbaa4d51567202f26b7fcc04d4b0635",
+        "tools/render_core_plans.py": "af40720e4e5568dc527f072a1c4597538c7ba828c3bd527248552dcb49927682",
+        "tools/research.py": "eb9a583849b9a5fbd9edd15b79b3940a2b9295ca22863c0618972954696d904e",
+        "tools/research_suite.py": "b063e8da5b10608201a27ac733c3f1d71fb3f9e27fcaf87e19740f83d3fa2c1c",
+        "unified_server.py": "282bd064be80aca4efd6ed12380801a02f9dec8109f53ed706bcc165b3adcc79",
+        "uv.lock": "35cfb0f75c020cab9257e3c1febbf47e642d007d4c989636e9bc9bcb8c5cb8be",
+        "voxelform/__init__.py": "9e559ea71f7a8cbf791c8fd0f911253021e2dd658b3f6905e4caef280da4d78d",
+        "voxelform/actions.py": "985ca176bd092be966058a244ad5e75ba9c60f894eae24ae035dcb9c9ddfb0bf",
+        "voxelform/coarse_to_fine.py": "ab373e4f86d6451e1c8e4334a6f3cadf8ac858fb58d372076c89957868e28e7b",
+        "voxelform/context.py": "49d22dd3b18f48270702616750b2d72305f94223949be5a4d2c5f63e8cfe6218",
+        "voxelform/core_plans.py": "5b00280c33bcd85acf85eba2d9411526340f5e7f0a98e85fe18eaaf8b3925b51",
+        "voxelform/cores.py": "e5c738a87863e4c95a217f624f2b7a70ec953347a9b8f401e66db6af480a6794",
+        "voxelform/decoder_diagnostics.py": "518cb658104cc7ec3b1c261c03fc1d03ad7a9c0fc798fa239e80424de57a099c",
+        "voxelform/devoxelize.py": "33473044c18b596431849b637d801661e8d7101432035bd7a65517e784af8ede",
+        "voxelform/environment.py": "844288f788f51487df50deeea66fc224f8b7462169db453a130b09ac9bb14cae",
+        "voxelform/experiment.py": "e2cac0eeb4e8e5228ae7c0e97309ec51d1f329bad3544426694cea0586d08b16",
+        "voxelform/fields.py": "c732c054c0cf0fd290505d7abd9b64fc426a3ef6221f616b3e23acf223512d93",
+        "voxelform/layout_archive.py": "550c2f5d1ffd3bf7f8d238e3bded00abace1bccb88955db28d84b61170a8dec6",
+        "voxelform/objectives.py": "f36607e321729bc2e739e227aea4c80ec7b09d88542204ccd912b4f9988373e8",
+        "voxelform/patch_policy.py": "24cc9055698b952f3ec37ec04504a624fc81ff0b17c7ae01d33cc0d7c3cf4890",
+        "voxelform/policy.py": "90b8ce5adfeb556a46303b78b27c56562488e1878445b233afdaf02bd218baf6",
+        "voxelform/redistribution.py": "d93e218c8cb63358360076d8f597f22f398112e02134645361be35f77ff55ce9",
+        "voxelform/rollout.py": "30d16b66b00e5f9ab8c6c640edc4cb4d3b8c2d548477d9e1772d19ef9b264645",
+        "voxelform/server.py": "b50957b5a42d36304efdc23bfcdc7f246d514569acf58c929424d35ee8999646",
+        "voxelform/session.py": "d54e6a1387edbecfb59e8a341c7f9e03e0e275211fafb039946284fae6f52fa8",
+        "voxelform/shadows.py": "821b56da4ffcfbdea6e7406b9fb2ae8f3177f63eb43fa03c247b24a298f371aa",
+        "voxelform/training.py": "16a1838312c6b81fa5e3d543bc11a06e5a5a60d8c5f5d5938abe23d9fcfd912e",
+        "voxelform/unified.py": "33c48c8eb0d278cec2d327b603c2f99ef7269b52d9b1d9e7bfd68efa6091b056",
+        "voxelform/workload.py": "859d61cf414b59bc6463d10e5d20133f2203eb761a17e99dff094482ed060756"
+      }
+    },
+    "sceneSeed": 9951
+  },
+  "plan": {
+    "checkpointSHA256": "412f9c86d5ab0771017b5a7cd39952932de9100fbee61642a8c97e713cb3094c",
+    "confirmation": {
+      "audit_steps": 5,
+      "ceiling_storeys": 20,
+      "checkpoint_interval": 60,
+      "cores_enabled": true,
+      "decoder_retry_schedule": "legacy",
+      "device": "mps",
+      "episodes": 60,
+      "evaluation_noise_scale": 1.0,
+      "evaluation_seeds": [
+        9201,
+        9202,
+        9203,
+        9204,
+        9205
+      ],
+      "evaluation_temperature": 1.0,
+      "far_tolerance": 0.1,
+      "initial_storeys": 6,
+      "lr_schedule": "cosine",
+      "max_core_dist": 12,
+      "min_core_spacing": 10,
+      "multiscale_schedule": "tier_adaptive",
+      "reward_profile": "default",
+      "rollout_steps": 16,
+      "seeds": [
+        4211,
+        4212,
+        4213,
+        4214,
+        4215
+      ],
+      "spatial_aux_schedule": "constant",
+      "spatial_aux_weight": 1.2,
+      "strict_determinism": false,
+      "synthetic_length": 24,
+      "synthetic_width": 24,
+      "target_far": 3.0,
+      "test_sites": [
+        "m_prs_0320",
+        "l_sgp_0327",
+        "l_sgp_0367",
+        "l_sgp_0379"
+      ],
+      "threads": 1,
+      "train_sites": [
+        "m_bcn_0093",
+        "xs_tokyo_0133",
+        "s_hk_0202",
+        "l_bcn_0074",
+        "xl_tokyo_0185",
+        "xs_hk_0196",
+        "s_bcn_0112",
+        "m_tokyo_0135",
+        "l_hk_0198",
+        "l_tokyo_0191"
+      ],
+      "training_objective": "actor_critic",
+      "validation_sites": [
+        "m_nyc_0005",
+        "l_nyc_0019",
+        "xl_nyc_0062"
+      ]
+    },
+    "decoderGate": {
+      "FARGuard": "validation FAR success must equal or exceed legacy",
+      "maximumReferenceQualityLoss": 0.02,
+      "minimumRelativeRejectionReduction": 0.1
+    },
+    "reporting": "Show all model seeds, all attempts, per-site and pooled reference quality and FAR success. Greedy uses the same decoder, site split and evaluation seeds.",
+    "runtime": {
+      "coreLayoutVersion": "compact-core.v5",
+      "createdAt": "2026-11-22T05:05:02.531689+00:00",
+      "cuda": false,
+      "deterministic": false,
+      "gitCommit": "dac0424491137730c110ddacd09561bd439766c7",
+      "gitDirty": true,
+      "machine": "arm64",
+      "mps": true,
+      "packages": {
+        "fastapi": "0.165.0",
+        "numpy": "2.5.5",
+        "scipy": "1.18.1",
+        "shapely": "2.2.0",
+        "torch": "2.15.0",
+        "uvicorn": "0.54.0"
+      },
+      "platform": "macOS-26.5.2-arm64-arm-64bit",
+      "protocol": "voxelform.research.v2",
+      "python": "3.12.11",
+      "source": {
+        "configs/research-confirmatory-l-xl.json": "dde1462d5602284be0ced4673b911b57e460f47f4e07daad37537d59ac9f500e",
+        "configs/research-real-aux-1200ep.json": "8fa3f2c95dca2a2e98b5cb4a4715b504f7d025cc1d536c4cc12e7986fecab464",
+        "configs/research-real-aux-tier-600ep.json": "4b5d0062602d8f180d0e08b4260e07a1a7981e6768598dbda623ae70dd1d89ed",
+        "configs/research-real-aux-tier-heldout.json": "2232571e1ee3fb3164bbe0f8ebb2f98ca20b56cb05991358baa947c7e06536f1",
+        "configs/research-real-aux.json": "fb12190af28c5944ce78bf1caf8f8f4cff77a8f55c2526c6f34a149a60b33915",
+        "configs/research-real-tier-600ep.json": "3533472569f9be8ffcb5f0c8444e9dda29912af33c9d81b7a1a3569a833132d2",
+        "configs/research-real.json": "96d351440d031a237e7e5ea7df109591dc9a07be8376bb4e7ea4384f5f172f1a",
+        "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+        "pyproject.toml": "ce981a8f6bf224b194e795f3a3f74f73ef8197c74df5488b001911eb41880ff3",
+        "tools/architecture_hypotheses.py": "7bc4dac79f402bdce422e543876fd775cd19a7a1ff9761ccccefd20c1cdcd279",
+        "tools/benchmark.py": "60db029af2e93adc0ed1f1949dea7a14e1d1f1f67f44a5632a96677c7b184c19",
+        "tools/blender_bake_external_props.py": "31085c15954a3b2064ede5e75a0f488abf1ac7e0c716ac6a663c33baa6ddfeb8",
+        "tools/blender_import_site.py": "762cfd0a03363be05c3c1ecf62ac4c4beb2fde0e35bd30ef416233d481f68799",
+        "tools/blender_maquette_library.py": "86df3593ff87d9fbbe35f2c24292b37c02976e79522266de8cf67b3bd715d7d8",
+        "tools/export_blender_site.py": "70c965bc9335ef49e58c03c01f5d6d0793edc43e747eb1faa233774d1eceadd7",
+        "tools/generate_readme_media.py": "48878c961fa41a0e8e4bc40ee508c6e596e34b876c11c91ffded7bc12538d066",
+        "tools/render_core_plans.py": "af40720e4e5568dc527f072a1c4597538c7ba828c3bd527248552dcb49927682",
+        "tools/research.py": "eb9a583849b9a5fbd9edd15b79b3940a2b9295ca22863c0618972954696d904e",
+        "tools/research_suite.py": "b063e8da5b10608201a27ac733c3f1d71fb3f9e27fcaf87e19740f83d3fa2c1c",
+        "unified_server.py": "282bd064be80aca4efd6ed12380801a02f9dec8109f53ed706bcc165b3adcc79",
+        "uv.lock": "35cfb0f75c020cab9257e3c1febbf47e642d007d4c989636e9bc9bcb8c5cb8be",
+        "voxelform/__init__.py": "9e559ea71f7a8cbf791c8fd0f911253021e2dd658b3f6905e4caef280da4d78d",
+        "voxelform/actions.py": "985ca176bd092be966058a244ad5e75ba9c60f894eae24ae035dcb9c9ddfb0bf",
+        "voxelform/coarse_to_fine.py": "ab373e4f86d6451e1c8e4334a6f3cadf8ac858fb58d372076c89957868e28e7b",
+        "voxelform/context.py": "49d22dd3b18f48270702616750b2d72305f94223949be5a4d2c5f63e8cfe6218",
+        "voxelform/core_plans.py": "5b00280c33bcd85acf85eba2d9411526340f5e7f0a98e85fe18eaaf8b3925b51",
+        "voxelform/cores.py": "e5c738a87863e4c95a217f624f2b7a70ec953347a9b8f401e66db6af480a6794",
+        "voxelform/decoder_diagnostics.py": "518cb658104cc7ec3b1c261c03fc1d03ad7a9c0fc798fa239e80424de57a099c",
+        "voxelform/devoxelize.py": "33473044c18b596431849b637d801661e8d7101432035bd7a65517e784af8ede",
+        "voxelform/environment.py": "844288f788f51487df50deeea66fc224f8b7462169db453a130b09ac9bb14cae",
+        "voxelform/experiment.py": "e2cac0eeb4e8e5228ae7c0e97309ec51d1f329bad3544426694cea0586d08b16",
+        "voxelform/fields.py": "c732c054c0cf0fd290505d7abd9b64fc426a3ef6221f616b3e23acf223512d93",
+        "voxelform/layout_archive.py": "550c2f5d1ffd3bf7f8d238e3bded00abace1bccb88955db28d84b61170a8dec6",
+        "voxelform/objectives.py": "f36607e321729bc2e739e227aea4c80ec7b09d88542204ccd912b4f9988373e8",
+        "voxelform/patch_policy.py": "24cc9055698b952f3ec37ec04504a624fc81ff0b17c7ae01d33cc0d7c3cf4890",
+        "voxelform/policy.py": "90b8ce5adfeb556a46303b78b27c56562488e1878445b233afdaf02bd218baf6",
+        "voxelform/redistribution.py": "d93e218c8cb63358360076d8f597f22f398112e02134645361be35f77ff55ce9",
+        "voxelform/rollout.py": "30d16b66b00e5f9ab8c6c640edc4cb4d3b8c2d548477d9e1772d19ef9b264645",
+        "voxelform/server.py": "b50957b5a42d36304efdc23bfcdc7f246d514569acf58c929424d35ee8999646",
+        "voxelform/session.py": "d54e6a1387edbecfb59e8a341c7f9e03e0e275211fafb039946284fae6f52fa8",
+        "voxelform/shadows.py": "821b56da4ffcfbdea6e7406b9fb2ae8f3177f63eb43fa03c247b24a298f371aa",
+        "voxelform/training.py": "16a1838312c6b81fa5e3d543bc11a06e5a5a60d8c5f5d5938abe23d9fcfd912e",
+        "voxelform/unified.py": "33c48c8eb0d278cec2d327b603c2f99ef7269b52d9b1d9e7bfd68efa6091b056",
+        "voxelform/workload.py": "859d61cf414b59bc6463d10e5d20133f2203eb761a17e99dff094482ed060756"
+      }
+    },
+    "screen": {
+      "audit_steps": 5,
+      "ceiling_storeys": 20,
+      "checkpoint_interval": 30,
+      "cores_enabled": true,
+      "decoder_retry_schedule": "legacy",
+      "device": "mps",
+      "episodes": 30,
+      "evaluation_noise_scale": 1.0,
+      "evaluation_seeds": [
+        9101,
+        9102,
+        9103
+      ],
+      "evaluation_temperature": 1.0,
+      "far_tolerance": 0.1,
+      "initial_storeys": 6,
+      "lr_schedule": "cosine",
+      "max_core_dist": 12,
+      "min_core_spacing": 10,
+      "multiscale_schedule": "tier_adaptive",
+      "reward_profile": "default",
+      "rollout_steps": 16,
+      "seeds": [
+        4111,
+        4112
+      ],
+      "spatial_aux_schedule": "constant",
+      "spatial_aux_weight": 1.2,
+      "strict_determinism": false,
+      "synthetic_length": 24,
+      "synthetic_width": 24,
+      "target_far": 3.0,
+      "test_sites": [],
+      "threads": 1,
+      "train_sites": [
+        "m_bcn_0093",
+        "xs_tokyo_0133",
+        "s_hk_0202",
+        "l_bcn_0074",
+        "xl_tokyo_0185",
+        "xs_hk_0196",
+        "s_bcn_0112",
+        "m_tokyo_0135",
+        "l_hk_0198",
+        "l_tokyo_0191"
+      ],
+      "training_objective": "actor_critic",
+      "validation_sites": [
+        "m_nyc_0005",
+        "l_nyc_0019",
+        "xl_nyc_0062"
+      ]
+    },
+    "screenArms": {
+      "annealed": {
+        "spatial_aux_schedule": "annealed"
+      },
+      "coverage-only": {
+        "reward_profile": "coverage_only"
+      },
+      "daylight-low": {
+        "reward_profile": "daylight_low"
+      },
+      "fixed": {},
+      "imitation": {
+        "spatial_aux_weight": 0.0,
+        "training_objective": "imitation"
+      },
+      "scalar": {
+        "spatial_aux_weight": 0.0
+      }
+    },
+    "selection": "Validation FAR success, then common reference quality; ties favor fixed, annealed, scalar in that order. Confirm this arm and imitation at the frozen final episode budget.",
+    "workspaceBaseCommit": "dac0424491137730c110ddacd09561bd439766c7"
+  },
+  "scenes": {
+    "l_bcn_0074": {
+      "allowedSHA256": "ff6190df470c0895cccc9b26448ee08c2c4681e475024ec1a7ff6ddec677b0c8",
+      "center": [
+        41.391017,
+        2.167199
+      ],
+      "contextBuildings": 10,
+      "contextRadius": 100.0,
+      "gridAngle": 0.777434736744,
+      "parcelArea": 2843.8,
+      "sceneSeed": 2140408449,
+      "shape": [
+        20,
+        82,
+        53
+      ],
+      "sourceSHA256": "b14546815c062fb5feed692c427f40b016d473ff41bbaca945d2e0dcb143cee4"
+    },
+    "l_hk_0198": {
+      "allowedSHA256": "3e08978a0481a39683b424273733fefbb3af5d76500ceb899a5325484a9e5bc0",
+      "center": [
+        22.278314,
+        114.150427
+      ],
+      "contextBuildings": 9,
+      "contextRadius": 100.0,
+      "gridAngle": 1.298936859781,
+      "parcelArea": 2685.7,
+      "sceneSeed": 2059852356,
+      "shape": [
+        20,
+        85,
+        75
+      ],
+      "sourceSHA256": "a4b0ffdb00218346873c9a06e1cd3f036f92d8cb4daf49fec3f54d635da744b7"
+    },
+    "l_nyc_0019": {
+      "allowedSHA256": "c9806b8f1c92b5c373bcc8f0501fe7d6a002af48b245dac20fc01be45d4073ba",
+      "center": [
+        40.764353,
+        -73.98476
+      ],
+      "contextBuildings": 23,
+      "contextRadius": 100.0,
+      "gridAngle": 1.066769131627,
+      "parcelArea": 2964.8,
+      "sceneSeed": 279862102,
+      "shape": [
+        20,
+        57,
+        57
+      ],
+      "sourceSHA256": "10b9327119aeff6602817a44dd5b08a2e35c9766ab13930e8bc03d23bc4171f8"
+    },
+    "l_sgp_0327": {
+      "allowedSHA256": "32b4a42b92a84ae361dd0e270e1c430428c3f1fb8b6cfbdc365094dd3b6bc821",
+      "center": [
+        1.288607,
+        103.853268
+      ],
+      "contextBuildings": 9,
+      "contextRadius": 100.0,
+      "gridAngle": 1.510743612828,
+      "parcelArea": 3470.9,
+      "sceneSeed": 423632510,
+      "shape": [
+        20,
+        66,
+        93
+      ],
+      "sourceSHA256": "34192bf340d33e1a644b195e8aa1a0699be75bb77f6f68b16d073b7a4a5bcec1"
+    },
+    "l_sgp_0367": {
+      "allowedSHA256": "18083eca8f96fa505436f619a8fdc4879619505f4eab46f46d175995c3b7324d",
+      "center": [
+        1.279818,
+        103.854821
+      ],
+      "contextBuildings": 9,
+      "contextRadius": 100.0,
+      "gridAngle": 1.078722431169,
+      "parcelArea": 3938.4,
+      "sceneSeed": 694831634,
+      "shape": [
+        20,
+        66,
+        85
+      ],
+      "sourceSHA256": "4d151d8d53c4c003ce4e7bb1f0d343239e09a39377a668ea99b24a0562857582"
+    },
+    "l_sgp_0379": {
+      "allowedSHA256": "2e493b9e38792e00ac07f392bbbb4f2f8c7f348a718c1c9d65ea0bc1dfe99bab",
+      "center": [
+        1.286322,
+        103.849358
+      ],
+      "contextBuildings": 9,
+      "contextRadius": 100.0,
+      "gridAngle": 1.021017612417,
+      "parcelArea": 3844.7,
+      "sceneSeed": 524587828,
+      "shape": [
+        20,
+        71,
+        71
+      ],
+      "sourceSHA256": "723fbff9eda2089fc42f5b20f8fc38307d8794217067efcae34d5d7d7ad959f5"
+    },
+    "l_tokyo_0191": {
+      "allowedSHA256": "0e6b3982e2d5c0f041e64b84e5db7d9a105d1069f6194cb6ee8c8915aa768e08",
+      "center": [
+        35.700253,
+        139.705081
+      ],
+      "contextBuildings": 24,
+      "contextRadius": 100.0,
+      "gridAngle": 1.287931970135,
+      "parcelArea": 3052.6,
+      "sceneSeed": 439697546,
+      "shape": [
+        20,
+        60,
+        69
+      ],
+      "sourceSHA256": "50815331df3ddf830029cd531b262593dc70704ee13130a425a65c5ae838ce58"
+    },
+    "m_bcn_0093": {
+      "allowedSHA256": "2d6bc539a6c8949e2fd2a00640395d1a37c8d0f6f561354a5278ebffd39cef6e",
+      "center": [
+        41.392311,
+        2.161902
+      ],
+      "contextBuildings": 29,
+      "contextRadius": 100.0,
+      "gridAngle": 0.785398163397,
+      "parcelArea": 1450.5,
+      "sceneSeed": 1071258159,
+      "shape": [
+        20,
+        56,
+        58
+      ],
+      "sourceSHA256": "bc6408359c2d665db92617f24ddc9d3238f830e52c7dbebe8c3a042bc9b84bbe"
+    },
+    "m_nyc_0005": {
+      "allowedSHA256": "16293b2086afcf2f9c823cbb75d921e6cba2add0863c1895c8bbec64c4d0c2e0",
+      "center": [
+        40.7615,
+        -73.976933
+      ],
+      "contextBuildings": 20,
+      "contextRadius": 100.0,
+      "gridAngle": 1.115769984519,
+      "parcelArea": 1287.1,
+      "sceneSeed": 1092057325,
+      "shape": [
+        20,
+        30,
+        65
+      ],
+      "sourceSHA256": "4b1509cd71f1356b765870b5c78cf91c5c5a81e2d48dcd9b04ba4308f1e3fe68"
+    },
+    "m_prs_0320": {
+      "allowedSHA256": "abe186aa6f6f29f7b8ba563c213ca52400f747e7dc229c814d704700e3e11b78",
+      "center": [
+        48.865004,
+        2.340114
+      ],
+      "contextBuildings": 40,
+      "contextRadius": 100.0,
+      "gridAngle": 1.279223845136,
+      "parcelArea": 1942.6,
+      "sceneSeed": 1055918476,
+      "shape": [
+        20,
+        56,
+        72
+      ],
+      "sourceSHA256": "47e51847f06b426c6eb7bf1b113e55892bb10d07329071782f0d54531c5882f3"
+    },
+    "m_tokyo_0135": {
+      "allowedSHA256": "3b2851e3ed408cf0bbc46bd46486edb8e2eb8f4946d5906ad85fe2d6dc3b32f5",
+      "center": [
+        35.691737,
+        139.709674
+      ],
+      "contextBuildings": 22,
+      "contextRadius": 100.0,
+      "gridAngle": 1.537145151676,
+      "parcelArea": 1207.0,
+      "sceneSeed": 1675253163,
+      "shape": [
+        20,
+        63,
+        33
+      ],
+      "sourceSHA256": "f86b734b5fa98891830d79ffb2501dec13755b2c5b7f7bf9bd2c838aa4299c23"
+    },
+    "s_bcn_0112": {
+      "allowedSHA256": "9294254db3671d3c79173f40b39ff6b4683791ad53efd269c0698a20464fbdba",
+      "center": [
+        41.389451,
+        2.16968
+      ],
+      "contextBuildings": 29,
+      "contextRadius": 100.0,
+      "gridAngle": 0.798704678917,
+      "parcelArea": 616.2,
+      "sceneSeed": 843712500,
+      "shape": [
+        20,
+        45,
+        17
+      ],
+      "sourceSHA256": "9cf53e9feead4bae6436a00c19838b52fecb03f03b2b7d7375014977219325f6"
+    },
+    "s_hk_0202": {
+      "allowedSHA256": "929d9ae8c82ab1d416f0d7abc4b17c1e257086063880a420ef3761faaa72d6df",
+      "center": [
+        22.280872,
+        114.157028
+      ],
+      "contextBuildings": 17,
+      "contextRadius": 100.0,
+      "gridAngle": 0.651181692577,
+      "parcelArea": 696.9,
+      "sceneSeed": 1063153400,
+      "shape": [
+        20,
+        53,
+        17
+      ],
+      "sourceSHA256": "5199e73941b35fd73609e554b4ef665604a426c80af88718492998d10d15ef8d"
+    },
+    "xl_nyc_0062": {
+      "allowedSHA256": "47f7eced42bf07e813aa98e86761a51ee37c1a512b287614bc93ed55fd4fa339",
+      "center": [
+        40.759042,
+        -73.983973
+      ],
+      "contextBuildings": 20,
+      "contextRadius": 100.0,
+      "gridAngle": 1.062742381019,
+      "parcelArea": 4686.7,
+      "sceneSeed": 1486749751,
+      "shape": [
+        20,
+        86,
+        63
+      ],
+      "sourceSHA256": "b683df4bfab44a466b86024d5521559dfd993a9e2d07a29fbc85334a689a521c"
+    },
+    "xl_tokyo_0185": {
+      "allowedSHA256": "56cb78f1a65c12d9c66657533eafb766b07375e92a3fd20e99fe6fd05ff7cf59",
+      "center": [
+        35.68767,
+        139.704966
+      ],
+      "contextBuildings": 24,
+      "contextRadius": 100.0,
+      "gridAngle": 1.431169986635,
+      "parcelArea": 4128.8,
+      "sceneSeed": 164403796,
+      "shape": [
+        20,
+        128,
+        51
+      ],
+      "sourceSHA256": "088daee066b7e566fc5113a952d627f64bb41490dc304e8c716e7975dff780c3"
+    },
+    "xs_hk_0196": {
+      "allowedSHA256": "0c99b5f622b5d58261d3bfacca1b056bbbd355b3c0d3cd641614e2489ab7be27",
+      "center": [
+        22.28867,
+        114.162271
+      ],
+      "contextBuildings": 24,
+      "contextRadius": 100.0,
+      "gridAngle": 0.650564626494,
+      "parcelArea": 567.8,
+      "sceneSeed": 721336757,
+      "shape": [
+        20,
+        34,
+        31
+      ],
+      "sourceSHA256": "1dfc332d20a380ae5ea7af54f04a8e4bdcb3e69fa4f3811c0b6e9515db9d463a"
+    },
+    "xs_tokyo_0133": {
+      "allowedSHA256": "c9ff33c347ebd3e99b300041b0b3d04816b96b2a0e28b50de7c94f30b936eb5e",
+      "center": [
+        35.688705,
+        139.69748
+      ],
+      "contextBuildings": 25,
+      "contextRadius": 100.0,
+      "gridAngle": 1.494704641425,
+      "parcelArea": 154.9,
+      "sceneSeed": 1259648312,
+      "shape": [
+        20,
+        13,
+        18
+      ],
+      "sourceSHA256": "d53453da510da44e10058e053421e0fbeaea0612a9e4943828f2f5904adf8c10"
+    }
+  },
+  "selected": {
+    "greedy": {
+      "audit_steps": 5,
+      "ceiling_storeys": 20,
+      "checkpoint_interval": 60,
+      "cores_enabled": true,
+      "decoder_retry_schedule": "adaptive",
+      "device": "mps",
+      "episodes": 60,
+      "evaluation_noise_scale": 1.0,
+      "evaluation_seeds": [
+        9201,
+        9202,
+        9203,
+        9204,
+        9205
+      ],
+      "evaluation_temperature": 1.0,
+      "far_tolerance": 0.1,
+      "initial_storeys": 6,
+      "lr_schedule": "cosine",
+      "max_core_dist": 12,
+      "min_core_spacing": 10,
+      "multiscale_schedule": "tier_adaptive",
+      "reward_profile": "default",
+      "rollout_steps": 16,
+      "seeds": [
+        4211,
+        4212,
+        4213,
+        4214,
+        4215
+      ],
+      "spatial_aux_schedule": "constant",
+      "spatial_aux_weight": 1.2,
+      "strict_determinism": false,
+      "synthetic_length": 24,
+      "synthetic_width": 24,
+      "target_far": 3.0,
+      "test_sites": [
+        "m_prs_0320",
+        "l_sgp_0327",
+        "l_sgp_0367",
+        "l_sgp_0379"
+      ],
+      "threads": 1,
+      "train_sites": [
+        "m_bcn_0093",
+        "xs_tokyo_0133",
+        "s_hk_0202",
+        "l_bcn_0074",
+        "xl_tokyo_0185",
+        "xs_hk_0196",
+        "s_bcn_0112",
+        "m_tokyo_0135",
+        "l_hk_0198",
+        "l_tokyo_0191"
+      ],
+      "training_objective": "actor_critic",
+      "validation_sites": [
+        "m_nyc_0005",
+        "l_nyc_0019",
+        "xl_nyc_0062"
+      ]
+    },
+    "learners": {
+      "fixed": {
+        "audit_steps": 5,
+        "ceiling_storeys": 20,
+        "checkpoint_interval": 60,
+        "cores_enabled": true,
+        "decoder_retry_schedule": "adaptive",
+        "device": "mps",
+        "episodes": 60,
+        "evaluation_noise_scale": 1.0,
+        "evaluation_seeds": [
+          9201,
+          9202,
+          9203,
+          9204,
+          9205
+        ],
+        "evaluation_temperature": 1.0,
+        "far_tolerance": 0.1,
+        "initial_storeys": 6,
+        "lr_schedule": "cosine",
+        "max_core_dist": 12,
+        "min_core_spacing": 10,
+        "multiscale_schedule": "tier_adaptive",
+        "reward_profile": "default",
+        "rollout_steps": 16,
+        "seeds": [
+          4211,
+          4212,
+          4213,
+          4214,
+          4215
+        ],
+        "spatial_aux_schedule": "constant",
+        "spatial_aux_weight": 1.2,
+        "strict_determinism": false,
+        "synthetic_length": 24,
+        "synthetic_width": 24,
+        "target_far": 3.0,
+        "test_sites": [
+          "m_prs_0320",
+          "l_sgp_0327",
+          "l_sgp_0367",
+          "l_sgp_0379"
+        ],
+        "threads": 1,
+        "train_sites": [
+          "m_bcn_0093",
+          "xs_tokyo_0133",
+          "s_hk_0202",
+          "l_bcn_0074",
+          "xl_tokyo_0185",
+          "xs_hk_0196",
+          "s_bcn_0112",
+          "m_tokyo_0135",
+          "l_hk_0198",
+          "l_tokyo_0191"
+        ],
+        "training_objective": "actor_critic",
+        "validation_sites": [
+          "m_nyc_0005",
+          "l_nyc_0019",
+          "xl_nyc_0062"
+        ]
+      },
+      "imitation": {
+        "audit_steps": 5,
+        "ceiling_storeys": 20,
+        "checkpoint_interval": 60,
+        "cores_enabled": true,
+        "decoder_retry_schedule": "adaptive",
+        "device": "mps",
+        "episodes": 60,
+        "evaluation_noise_scale": 1.0,
+        "evaluation_seeds": [
+          9201,
+          9202,
+          9203,
+          9204,
+          9205
+        ],
+        "evaluation_temperature": 1.0,
+        "far_tolerance": 0.1,
+        "initial_storeys": 6,
+        "lr_schedule": "cosine",
+        "max_core_dist": 12,
+        "min_core_spacing": 10,
+        "multiscale_schedule": "tier_adaptive",
+        "reward_profile": "default",
+        "rollout_steps": 16,
+        "seeds": [
+          4211,
+          4212,
+          4213,
+          4214,
+          4215
+        ],
+        "spatial_aux_schedule": "constant",
+        "spatial_aux_weight": 0.0,
+        "strict_determinism": false,
+        "synthetic_length": 24,
+        "synthetic_width": 24,
+        "target_far": 3.0,
+        "test_sites": [
+          "m_prs_0320",
+          "l_sgp_0327",
+          "l_sgp_0367",
+          "l_sgp_0379"
+        ],
+        "threads": 1,
+        "train_sites": [
+          "m_bcn_0093",
+          "xs_tokyo_0133",
+          "s_hk_0202",
+          "l_bcn_0074",
+          "xl_tokyo_0185",
+          "xs_hk_0196",
+          "s_bcn_0112",
+          "m_tokyo_0135",
+          "l_hk_0198",
+          "l_tokyo_0191"
+        ],
+        "training_objective": "imitation",
+        "validation_sites": [
+          "m_nyc_0005",
+          "l_nyc_0019",
+          "xl_nyc_0062"
+        ]
+      }
+    },
+    "promoted": "fixed"
+  },
+  "sourceArchives": {
+    "confirm-fixed": "65f29b13124c4fc8dcd1d7838bf347626346761817133e955e37add32b125729",
+    "confirm-imitation": "c69f01994b94413e5002d3126f717ec88a8d0092cecf2d7156db7742091b7b5d",
+    "screen-annealed": "0cdf7934ff0fc42351b4d2dcad6ae9e897d0dc6571b5f24fc44c43bbe49516fd",
+    "screen-coverage-only": "d878dc763f73a25fef99f2a29f46878e45b42fb2a04800bacade27f01820395c",
+    "screen-daylight-low": "25930f5b86270917b03745ef9648e3bc18941e39a9ba03b258878870b7eaaa60",
+    "screen-fixed": "0af29cc667cc1194b2c87ef488c29c28945b234016b4174a343574798e0c785c",
+    "screen-imitation": "237e4a55b2952f36b1bcdec2c9c0e00848b4ed51ef0949318bdaf7fdb63052b4",
+    "screen-scalar": "08f1219110b262ce220a61aee559c549a9ef8ac3974dbfafda111112b9c15a70"
+  },
+  "validationScreen": {
+    "annealed": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.03467197442013356,
+              "stdAcrossModelSeeds": 0.0014385693310923822
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23345564305782318,
+              "stdAcrossModelSeeds": 0.00046925364535396714
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21084462041859328,
+              "stdAcrossModelSeeds": 0.009547771650301708
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21084462041859328,
+              "stdAcrossModelSeeds": 0.009547771650301708
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 487.8333333333333,
+              "stdAcrossModelSeeds": 112.90138272945207
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.03467197442013356,
+              "stdAcrossModelSeeds": 0.0014385693310923822
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23345564305782318,
+              "stdAcrossModelSeeds": 0.00046925364535396714
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21084462041859328,
+              "stdAcrossModelSeeds": 0.009547771650301708
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21084462041859328,
+              "stdAcrossModelSeeds": 0.009547771650301708
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 487.8333333333333,
+              "stdAcrossModelSeeds": 112.90138272945207
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 13.666666666666666,
+          "meanCoreCoverage": 0.8250677571999028,
+          "meanDepthBadFraction": 0.008751071804593018,
+          "meanEdits": 12.833333333333334,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04516420575479666,
+            "meanDirectSun": 0.35211185614267987,
+            "meanQuality": 0.2943234484279426,
+            "meanReferenceQuality": 0.2943234484279426,
+            "meanSeconds": 0.91065,
+            "meanUsableGoodArea": 927.3333333333334
+          },
+          "referenceStdAcrossModelSeeds": 0.014296921353056276
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 14.5,
+          "meanCoreCoverage": 0.8880664407103974,
+          "meanDepthBadFraction": 0.0,
+          "meanEdits": 13.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04425124948223432,
+            "meanDirectSun": 0.20940101395050684,
+            "meanQuality": 0.2508764541802865,
+            "meanReferenceQuality": 0.2508764541802865,
+            "meanSeconds": 0.41198333333333337,
+            "meanUsableGoodArea": 391.5
+          },
+          "referenceStdAcrossModelSeeds": 0.006464288566940717
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 18.833333333333332,
+          "meanCoreCoverage": 0.839208461464317,
+          "meanDepthBadFraction": 0.06712537727817666,
+          "meanEdits": 18.166666666666668,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.014600468023369709,
+            "meanDirectSun": 0.13885405908028284,
+            "meanQuality": 0.08733395864755077,
+            "meanReferenceQuality": 0.08733395864755077,
+            "meanSeconds": 2.3204166666666666,
+            "meanUsableGoodArea": 144.66666666666666
+          },
+          "referenceStdAcrossModelSeeds": 0.020810682164789557
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.035689196549355984,
+            "meanDirectSun": 0.23378745549254948,
+            "meanQuality": 0.2175959144977423,
+            "meanReferenceQuality": 0.2175959144977423,
+            "meanSeconds": 1.0398222222222222,
+            "meanUsableGoodArea": 567.6666666666666
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 40.90173291700194,
+          "updates": 16,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.035689196549355984,
+            "meanDirectSun": 0.23378745549254948,
+            "meanQuality": 0.2175959144977423,
+            "meanReferenceQuality": 0.2175959144977423,
+            "meanSeconds": 1.0398222222222222,
+            "meanUsableGoodArea": 567.6666666666666
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.035689196549355984,
+              "meanDirectSun": 0.23378745549254948,
+              "meanQuality": 0.2175959144977423,
+              "meanReferenceQuality": 0.2175959144977423,
+              "meanSeconds": 1.0398222222222222,
+              "meanUsableGoodArea": 567.6666666666666,
+              "updates": 16
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.033654752290911145,
+            "meanDirectSun": 0.23312383062309688,
+            "meanQuality": 0.20409332633944427,
+            "meanReferenceQuality": 0.20409332633944427,
+            "meanSeconds": 1.3888777777777777,
+            "meanUsableGoodArea": 408.0
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 39.04131904197857,
+          "updates": 17,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.033654752290911145,
+            "meanDirectSun": 0.23312383062309688,
+            "meanQuality": 0.20409332633944427,
+            "meanReferenceQuality": 0.20409332633944427,
+            "meanSeconds": 1.3888777777777777,
+            "meanUsableGoodArea": 408.0
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.033654752290911145,
+              "meanDirectSun": 0.23312383062309688,
+              "meanQuality": 0.20409332633944427,
+              "meanReferenceQuality": 0.20409332633944427,
+              "meanSeconds": 1.3888777777777777,
+              "meanUsableGoodArea": 408.0,
+              "updates": 17
+            }
+          ]
+        }
+      ]
+    },
+    "coverage-only": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.037200667429715395,
+              "stdAcrossModelSeeds": 0.004750145268553403
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23934667226341036,
+              "stdAcrossModelSeeds": 0.004625496037254051
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.24274445678100287,
+              "stdAcrossModelSeeds": 0.0211032382635405
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18570781437838585,
+              "stdAcrossModelSeeds": 0.022279549435485334
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 436.05555555555554,
+              "stdAcrossModelSeeds": 233.89520973248355
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.037200667429715395,
+              "stdAcrossModelSeeds": 0.004750145268553403
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23934667226341036,
+              "stdAcrossModelSeeds": 0.004625496037254051
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.24274445678100287,
+              "stdAcrossModelSeeds": 0.0211032382635405
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18570781437838585,
+              "stdAcrossModelSeeds": 0.022279549435485334
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 436.05555555555554,
+              "stdAcrossModelSeeds": 233.89520973248355
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 13.666666666666666,
+          "meanCoreCoverage": 0.7960952345748563,
+          "meanDepthBadFraction": 0.018987575608904052,
+          "meanEdits": 13,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04846054129302502,
+            "meanDirectSun": 0.3673151085774104,
+            "meanQuality": 0.32806924999911624,
+            "meanReferenceQuality": 0.25619114753141725,
+            "meanSeconds": 0.77905,
+            "meanUsableGoodArea": 709.0
+          },
+          "referenceStdAcrossModelSeeds": 0.07547982641706316
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 13.333333333333334,
+          "meanCoreCoverage": 0.8750027741417041,
+          "meanDepthBadFraction": 5.608292102092333e-06,
+          "meanEdits": 12.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.047354931011796,
+            "meanDirectSun": 0.21262717743714651,
+            "meanQuality": 0.2872696140193367,
+            "meanReferenceQuality": 0.24676843339924076,
+            "meanSeconds": 0.2874333333333333,
+            "meanUsableGoodArea": 458.5
+          },
+          "referenceStdAcrossModelSeeds": 0.012450517312343782
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 17,
+          "meanCoreCoverage": 0.8126862365406643,
+          "meanDepthBadFraction": 0.06715287870389774,
+          "meanEdits": 16.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.01578652998432517,
+            "meanDirectSun": 0.1380977307756742,
+            "meanQuality": 0.11289450632455571,
+            "meanReferenceQuality": 0.05416386220449955,
+            "meanSeconds": 1.8110833333333334,
+            "meanUsableGoodArea": 140.66666666666666
+          },
+          "referenceStdAcrossModelSeeds": 0.0038093392017365633
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0405595273607307,
+            "meanDirectSun": 0.2426173918777042,
+            "meanQuality": 0.2576666996621478,
+            "meanReferenceQuality": 0.20146183486599845,
+            "meanSeconds": 1.0179777777777779,
+            "meanUsableGoodArea": 601.4444444444445
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 42.980821708013536,
+          "updates": 17,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0405595273607307,
+            "meanDirectSun": 0.2426173918777042,
+            "meanQuality": 0.2576666996621478,
+            "meanReferenceQuality": 0.20146183486599845,
+            "meanSeconds": 1.0179777777777779,
+            "meanUsableGoodArea": 601.4444444444445
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.0405595273607307,
+              "meanDirectSun": 0.2426173918777042,
+              "meanQuality": 0.2576666996621478,
+              "meanReferenceQuality": 0.20146183486599845,
+              "meanSeconds": 1.0179777777777779,
+              "meanUsableGoodArea": 601.4444444444445,
+              "updates": 17
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03384180749870009,
+            "meanDirectSun": 0.23607595264911652,
+            "meanQuality": 0.22782221389985796,
+            "meanReferenceQuality": 0.16995379389077325,
+            "meanSeconds": 0.9004,
+            "meanUsableGoodArea": 270.6666666666667
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 34.604364999977406,
+          "updates": 15,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03384180749870009,
+            "meanDirectSun": 0.23607595264911652,
+            "meanQuality": 0.22782221389985796,
+            "meanReferenceQuality": 0.16995379389077325,
+            "meanSeconds": 0.9004,
+            "meanUsableGoodArea": 270.6666666666667
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.03384180749870009,
+              "meanDirectSun": 0.23607595264911652,
+              "meanQuality": 0.22782221389985796,
+              "meanReferenceQuality": 0.16995379389077325,
+              "meanSeconds": 0.9004,
+              "meanUsableGoodArea": 270.6666666666667,
+              "updates": 15
+            }
+          ]
+        }
+      ]
+    },
+    "daylight-low": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.03266378828427858,
+              "stdAcrossModelSeeds": 0.0005834491411336011
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23515677203734714,
+              "stdAcrossModelSeeds": 0.0011751630158423852
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1489289677240806,
+              "stdAcrossModelSeeds": 0.019729305251102575
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1849377000611972,
+              "stdAcrossModelSeeds": 0.019956528194158434
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 428.5,
+              "stdAcrossModelSeeds": 9.820927516479845
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.03266378828427858,
+              "stdAcrossModelSeeds": 0.0005834491411336011
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23515677203734714,
+              "stdAcrossModelSeeds": 0.0011751630158423852
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1489289677240806,
+              "stdAcrossModelSeeds": 0.019729305251102575
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1849377000611972,
+              "stdAcrossModelSeeds": 0.019956528194158434
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 428.5,
+              "stdAcrossModelSeeds": 9.820927516479845
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 13.5,
+          "meanCoreCoverage": 0.8256885550582562,
+          "meanDepthBadFraction": 0.015848773884591303,
+          "meanEdits": 12.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03966794100900491,
+            "meanDirectSun": 0.36366089681784314,
+            "meanQuality": 0.22938405574848938,
+            "meanReferenceQuality": 0.28385007242445587,
+            "meanSeconds": 0.72395,
+            "meanUsableGoodArea": 704.0
+          },
+          "referenceStdAcrossModelSeeds": 0.014759862165874287
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 14.333333333333334,
+          "meanCoreCoverage": 0.8133704802995442,
+          "meanDepthBadFraction": 0.0,
+          "meanEdits": 13.666666666666666,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0444030420233806,
+            "meanDirectSun": 0.20824581136306128,
+            "meanQuality": 0.1409813598408552,
+            "meanReferenceQuality": 0.17461050113090643,
+            "meanSeconds": 0.3450166666666667,
+            "meanUsableGoodArea": 468.16666666666663
+          },
+          "referenceStdAcrossModelSeeds": 0.11606421415489665
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 18.166666666666668,
+          "meanCoreCoverage": 0.8514550573584807,
+          "meanDepthBadFraction": 0.050954244524848605,
+          "meanEdits": 17.333333333333332,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.013920381820450226,
+            "meanDirectSun": 0.13356360793113708,
+            "meanQuality": 0.07642148758289727,
+            "meanReferenceQuality": 0.09635252662822927,
+            "meanSeconds": 1.91685,
+            "meanUsableGoodArea": 113.33333333333333
+          },
+          "referenceStdAcrossModelSeeds": 0.041434767406547085
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03225122744010554,
+            "meanDirectSun": 0.23432580629984537,
+            "meanQuality": 0.13497824219292662,
+            "meanReferenceQuality": 0.17082630364616724,
+            "meanSeconds": 1.0823333333333334,
+            "meanUsableGoodArea": 435.44444444444446
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 42.6975117920083,
+          "updates": 16,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03225122744010554,
+            "meanDirectSun": 0.23432580629984537,
+            "meanQuality": 0.13497824219292662,
+            "meanReferenceQuality": 0.17082630364616724,
+            "meanSeconds": 1.0823333333333334,
+            "meanUsableGoodArea": 435.44444444444446
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.03225122744010554,
+              "meanDirectSun": 0.23432580629984537,
+              "meanQuality": 0.13497824219292662,
+              "meanReferenceQuality": 0.17082630364616724,
+              "meanSeconds": 1.0823333333333334,
+              "meanUsableGoodArea": 435.44444444444446,
+              "updates": 16
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.033076349128451615,
+            "meanDirectSun": 0.23598773777484894,
+            "meanQuality": 0.1628796932552346,
+            "meanReferenceQuality": 0.19904909647622715,
+            "meanSeconds": 0.9082111111111112,
+            "meanUsableGoodArea": 421.55555555555554
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 36.27627833400038,
+          "updates": 17,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.033076349128451615,
+            "meanDirectSun": 0.23598773777484894,
+            "meanQuality": 0.1628796932552346,
+            "meanReferenceQuality": 0.19904909647622715,
+            "meanSeconds": 0.9082111111111112,
+            "meanUsableGoodArea": 421.55555555555554
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.033076349128451615,
+              "meanDirectSun": 0.23598773777484894,
+              "meanQuality": 0.1628796932552346,
+              "meanReferenceQuality": 0.19904909647622715,
+              "meanSeconds": 0.9082111111111112,
+              "meanUsableGoodArea": 421.55555555555554,
+              "updates": 17
+            }
+          ]
+        }
+      ]
+    },
+    "fixed": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.034349257643851966,
+              "stdAcrossModelSeeds": 0.0011780474407873448
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23738159818781746,
+              "stdAcrossModelSeeds": 0.0023458666609631616
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21451836872876803,
+              "stdAcrossModelSeeds": 0.016150839775834383
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21451836872876803,
+              "stdAcrossModelSeeds": 0.016150839775834383
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 473.6111111111111,
+              "stdAcrossModelSeeds": 85.55992052357225
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.034349257643851966,
+              "stdAcrossModelSeeds": 0.0011780474407873448
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23738159818781746,
+              "stdAcrossModelSeeds": 0.0023458666609631616
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21451836872876803,
+              "stdAcrossModelSeeds": 0.016150839775834383
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.21451836872876803,
+              "stdAcrossModelSeeds": 0.016150839775834383
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 473.6111111111111,
+              "stdAcrossModelSeeds": 85.55992052357225
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 14,
+          "meanCoreCoverage": 0.834083588207403,
+          "meanDepthBadFraction": 0.016896969693185177,
+          "meanEdits": 13,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04331269425650438,
+            "meanDirectSun": 0.36129748821258545,
+            "meanQuality": 0.28995974353931564,
+            "meanReferenceQuality": 0.28995974353931564,
+            "meanSeconds": 1.1816666666666666,
+            "meanUsableGoodArea": 710.3333333333334
+          },
+          "referenceStdAcrossModelSeeds": 0.07286392105786822
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 11.166666666666666,
+          "meanCoreCoverage": 0.8697125613539337,
+          "meanDepthBadFraction": 5.0112385225328e-05,
+          "meanEdits": 10.166666666666666,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04411372852822145,
+            "meanDirectSun": 0.2150789499282837,
+            "meanQuality": 0.24037116919271734,
+            "meanReferenceQuality": 0.24037116919271734,
+            "meanSeconds": 0.38211666666666666,
+            "meanUsableGoodArea": 424.8333333333333
+          },
+          "referenceStdAcrossModelSeeds": 0.0573451691477628
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 18.166666666666668,
+          "meanCoreCoverage": 0.860728058900893,
+          "meanDepthBadFraction": 0.055292963351844124,
+          "meanEdits": 17.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.015621350146830082,
+            "meanDirectSun": 0.13576835642258325,
+            "meanQuality": 0.1132241934542711,
+            "meanReferenceQuality": 0.1132241934542711,
+            "meanSeconds": 2.859933333333333,
+            "meanUsableGoodArea": 285.6666666666667
+          },
+          "referenceStdAcrossModelSeeds": 0.03293376741739772
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03518226297779216,
+            "meanDirectSun": 0.23904037641154396,
+            "meanQuality": 0.22593873705611794,
+            "meanReferenceQuality": 0.22593873705611794,
+            "meanSeconds": 1.5060444444444445,
+            "meanUsableGoodArea": 534.1111111111111
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 70.61101412499556,
+          "updates": 17,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03518226297779216,
+            "meanDirectSun": 0.23904037641154396,
+            "meanQuality": 0.22593873705611794,
+            "meanReferenceQuality": 0.22593873705611794,
+            "meanSeconds": 1.5060444444444445,
+            "meanUsableGoodArea": 534.1111111111111
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.03518226297779216,
+              "meanDirectSun": 0.23904037641154396,
+              "meanQuality": 0.22593873705611794,
+              "meanReferenceQuality": 0.22593873705611794,
+              "meanSeconds": 1.5060444444444445,
+              "meanUsableGoodArea": 534.1111111111111,
+              "updates": 17
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03351625230991178,
+            "meanDirectSun": 0.23572281996409097,
+            "meanQuality": 0.20309800040141812,
+            "meanReferenceQuality": 0.20309800040141812,
+            "meanSeconds": 1.4431,
+            "meanUsableGoodArea": 413.1111111111111
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 39.722037792002084,
+          "updates": 16,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03351625230991178,
+            "meanDirectSun": 0.23572281996409097,
+            "meanQuality": 0.20309800040141812,
+            "meanReferenceQuality": 0.20309800040141812,
+            "meanSeconds": 1.4431,
+            "meanUsableGoodArea": 413.1111111111111
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.03351625230991178,
+              "meanDirectSun": 0.23572281996409097,
+              "meanQuality": 0.20309800040141812,
+              "meanReferenceQuality": 0.20309800040141812,
+              "meanSeconds": 1.4431,
+              "meanUsableGoodArea": 413.1111111111111,
+              "updates": 16
+            }
+          ]
+        }
+      ]
+    },
+    "imitation": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.029967639647010297,
+              "stdAcrossModelSeeds": 0.0008392408525810214
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23462225993474325,
+              "stdAcrossModelSeeds": 0.002966384174876907
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18028100807384767,
+              "stdAcrossModelSeeds": 0.021198460721377477
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18028100807384767,
+              "stdAcrossModelSeeds": 0.021198460721377477
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 293.72222222222223,
+              "stdAcrossModelSeeds": 46.90474981870768
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.029967639647010297,
+              "stdAcrossModelSeeds": 0.0008392408525810214
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23462225993474325,
+              "stdAcrossModelSeeds": 0.002966384174876907
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18028100807384767,
+              "stdAcrossModelSeeds": 0.021198460721377477
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.18028100807384767,
+              "stdAcrossModelSeeds": 0.021198460721377477
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 293.72222222222223,
+              "stdAcrossModelSeeds": 46.90474981870768
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 14.333333333333334,
+          "meanCoreCoverage": 0.780077217436671,
+          "meanDepthBadFraction": 0.01764011179086305,
+          "meanEdits": 13.666666666666666,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03467960935086012,
+            "meanDirectSun": 0.35798127949237823,
+            "meanQuality": 0.19626524635316367,
+            "meanReferenceQuality": 0.19626524635316367,
+            "meanSeconds": 0.7781333333333333,
+            "meanUsableGoodArea": 307.1666666666667
+          },
+          "referenceStdAcrossModelSeeds": 0.13661691147813618
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 12.5,
+          "meanCoreCoverage": 0.8759598293738801,
+          "meanDepthBadFraction": 0.0,
+          "meanEdits": 11.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04118592416246732,
+            "meanDirectSun": 0.20991993943850198,
+            "meanQuality": 0.24188989014706921,
+            "meanReferenceQuality": 0.24188989014706921,
+            "meanSeconds": 0.4176,
+            "meanUsableGoodArea": 454.6666666666667
+          },
+          "referenceStdAcrossModelSeeds": 0.07161991215758981
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 17,
+          "meanCoreCoverage": 0.8526667309404296,
+          "meanDepthBadFraction": 0.07512693457231188,
+          "meanEdits": 16.166666666666668,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.01403738542770346,
+            "meanDirectSun": 0.13596556087334952,
+            "meanQuality": 0.10268788772131014,
+            "meanReferenceQuality": 0.10268788772131014,
+            "meanSeconds": 1.7546166666666667,
+            "meanUsableGoodArea": 119.33333333333333
+          },
+          "referenceStdAcrossModelSeeds": 0.0014016171564139365
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03056107254491912,
+            "meanDirectSun": 0.23671981030040318,
+            "meanQuality": 0.19527058340065037,
+            "meanReferenceQuality": 0.19527058340065037,
+            "meanSeconds": 0.8983888888888889,
+            "meanUsableGoodArea": 326.8888888888889
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 25.593655791017227,
+          "updates": 12,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03056107254491912,
+            "meanDirectSun": 0.23671981030040318,
+            "meanQuality": 0.19527058340065037,
+            "meanReferenceQuality": 0.19527058340065037,
+            "meanSeconds": 0.8983888888888889,
+            "meanUsableGoodArea": 326.8888888888889
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.03056107254491912,
+              "meanDirectSun": 0.23671981030040318,
+              "meanQuality": 0.19527058340065037,
+              "meanReferenceQuality": 0.19527058340065037,
+              "meanSeconds": 0.8983888888888889,
+              "meanUsableGoodArea": 326.8888888888889,
+              "updates": 12
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.02937420674910148,
+            "meanDirectSun": 0.23252470956908333,
+            "meanQuality": 0.165291432747045,
+            "meanReferenceQuality": 0.165291432747045,
+            "meanSeconds": 1.0685111111111112,
+            "meanUsableGoodArea": 260.55555555555554
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 24.16562308400171,
+          "updates": 12,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.02937420674910148,
+            "meanDirectSun": 0.23252470956908333,
+            "meanQuality": 0.165291432747045,
+            "meanReferenceQuality": 0.165291432747045,
+            "meanSeconds": 1.0685111111111112,
+            "meanUsableGoodArea": 260.55555555555554
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.02937420674910148,
+              "meanDirectSun": 0.23252470956908333,
+              "meanQuality": 0.165291432747045,
+              "meanReferenceQuality": 0.165291432747045,
+              "meanSeconds": 1.0685111111111112,
+              "meanUsableGoodArea": 260.55555555555554,
+              "updates": 12
+            }
+          ]
+        }
+      ]
+    },
+    "scalar": {
+      "aggregate": {
+        "bestValidationEpisodes": [
+          30,
+          30
+        ],
+        "finalValidation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.027072277023560472,
+              "stdAcrossModelSeeds": 0.0002154731288339138
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23853396707110935,
+              "stdAcrossModelSeeds": 0.004898030437929202
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1596836955301175,
+              "stdAcrossModelSeeds": 0.021656924042626903
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1596836955301175,
+              "stdAcrossModelSeeds": 0.021656924042626903
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 187.55555555555554,
+              "stdAcrossModelSeeds": 12.099382700303149
+            }
+          },
+          "modelSeeds": 2
+        },
+        "validation": {
+          "metrics": {
+            "farSuccessRate": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 1.0,
+              "stdAcrossModelSeeds": 0.0
+            },
+            "meanDiffuseSky": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.027072277023560472,
+              "stdAcrossModelSeeds": 0.0002154731288339138
+            },
+            "meanDirectSun": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.23853396707110935,
+              "stdAcrossModelSeeds": 0.004898030437929202
+            },
+            "meanQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1596836955301175,
+              "stdAcrossModelSeeds": 0.021656924042626903
+            },
+            "meanReferenceQuality": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 0.1596836955301175,
+              "stdAcrossModelSeeds": 0.021656924042626903
+            },
+            "meanUsableGoodArea": {
+              "bootstrap95AcrossModelSeeds": null,
+              "mean": 187.55555555555554,
+              "stdAcrossModelSeeds": 12.099382700303149
+            }
+          },
+          "modelSeeds": 2
+        }
+      },
+      "note": "All failures retained. Confidence intervals resample model seeds, not correlated episodes. Small runs are pipeline checks, not convergence evidence.",
+      "perSite": {
+        "l_nyc_0019": {
+          "meanAttempts": 15.166666666666666,
+          "meanCoreCoverage": 0.7573438312054908,
+          "meanDepthBadFraction": 0.02216523715641419,
+          "meanEdits": 14.666666666666666,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03060832091917594,
+            "meanDirectSun": 0.36434762676556903,
+            "meanQuality": 0.17602323257900923,
+            "meanReferenceQuality": 0.17602323257900923,
+            "meanSeconds": 0.7695,
+            "meanUsableGoodArea": 182.5
+          },
+          "referenceStdAcrossModelSeeds": 0.004578311088735716
+        },
+        "m_nyc_0005": {
+          "meanAttempts": 11.5,
+          "meanCoreCoverage": 0.8835931421988945,
+          "meanDepthBadFraction": 0.0,
+          "meanEdits": 10.5,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03803255564222733,
+            "meanDirectSun": 0.21245939284563065,
+            "meanQuality": 0.2310584948900064,
+            "meanReferenceQuality": 0.2310584948900064,
+            "meanSeconds": 0.28478333333333333,
+            "meanUsableGoodArea": 352.6666666666667
+          },
+          "referenceStdAcrossModelSeeds": 0.0015318042272928776
+        },
+        "xl_nyc_0062": {
+          "meanAttempts": 18,
+          "meanCoreCoverage": 0.8251038456766769,
+          "meanDepthBadFraction": 0.051448809757627764,
+          "meanEdits": 17.166666666666668,
+          "pooled": {
+            "count": 6,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.012575954509278139,
+            "meanDirectSun": 0.13879488160212836,
+            "meanQuality": 0.07196935912133684,
+            "meanReferenceQuality": 0.07196935912133684,
+            "meanSeconds": 1.8249,
+            "meanUsableGoodArea": 27.5
+          },
+          "referenceStdAcrossModelSeeds": 0.07108088744390928
+        }
+      },
+      "seeds": [
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.02691991451299853,
+            "meanDirectSun": 0.2419973976082272,
+            "meanQuality": 0.14436993767993403,
+            "meanReferenceQuality": 0.14436993767993403,
+            "meanSeconds": 1.041288888888889,
+            "meanUsableGoodArea": 179.0
+          },
+          "modelSeed": 4111,
+          "trainingSeconds": 37.54158874999848,
+          "updates": 14,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.02691991451299853,
+            "meanDirectSun": 0.2419973976082272,
+            "meanQuality": 0.14436993767993403,
+            "meanReferenceQuality": 0.14436993767993403,
+            "meanSeconds": 1.041288888888889,
+            "meanUsableGoodArea": 179.0
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.02691991451299853,
+              "meanDirectSun": 0.2419973976082272,
+              "meanQuality": 0.14436993767993403,
+              "meanReferenceQuality": 0.14436993767993403,
+              "meanSeconds": 1.041288888888889,
+              "meanUsableGoodArea": 179.0,
+              "updates": 14
+            }
+          ]
+        },
+        {
+          "bestValidationEpisode": 30,
+          "completedEpisodes": 30,
+          "finalValidation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.027224639534122415,
+            "meanDirectSun": 0.2350705365339915,
+            "meanQuality": 0.17499745338030095,
+            "meanReferenceQuality": 0.17499745338030095,
+            "meanSeconds": 0.8781666666666667,
+            "meanUsableGoodArea": 196.11111111111111
+          },
+          "modelSeed": 4112,
+          "trainingSeconds": 34.573879167000996,
+          "updates": 17,
+          "validation": {
+            "count": 9,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.027224639534122415,
+            "meanDirectSun": 0.2350705365339915,
+            "meanQuality": 0.17499745338030095,
+            "meanReferenceQuality": 0.17499745338030095,
+            "meanSeconds": 0.8781666666666667,
+            "meanUsableGoodArea": 196.11111111111111
+          },
+          "validationHistory": [
+            {
+              "count": 9,
+              "episode": 30,
+              "farSuccessRate": 1.0,
+              "meanDiffuseSky": 0.027224639534122415,
+              "meanDirectSun": 0.2350705365339915,
+              "meanQuality": 0.17499745338030095,
+              "meanReferenceQuality": 0.17499745338030095,
+              "meanSeconds": 0.8781666666666667,
+              "meanUsableGoodArea": 196.11111111111111,
+              "updates": 17
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

@@ -27,6 +27,8 @@ Each frame exposes three synchronous architectural analyses:
 
 *Procedurally created in Blender from VoxelForm-RL lattice output + OpenStreetMap (`m_prs_0315`, `seed=9003`) — no AI used for modeling or visualization.*
 
+Blender scenes, templates and HDRIs are local assets. The export tool supports `--json-only` for geometry and `--template PATH` for rendering with a local copy of the project's template. Add `blender/hdris/studio_small_08_4k.hdr` for the showcase lighting. Without it, the renderer uses a flat studio background. [Export tool](tools/export_blender_site.py)
+
 ---
 
 ## Cross-Scale Massing Showcase (`XS` Infill to `XL` Urban Blocks)

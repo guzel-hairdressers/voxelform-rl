@@ -1,20 +1,23 @@
 """Headless, auditable train/evaluate entry point for the organic RL task."""
 
 from __future__ import annotations
+
 import argparse
-from dataclasses import fields
 import functools
 import hashlib
 import json
-from pathlib import Path
 import math
 import shutil
 import statistics
 import time
+from dataclasses import fields
+from pathlib import Path
+from types import SimpleNamespace
+from typing import Any
 
 import numpy as np
 import torch
-from types import SimpleNamespace
+
 from voxelform.coarse_to_fine import (
     CoarseEnv,
     CoarseToFineLearner,
@@ -29,6 +32,7 @@ from voxelform.experiment import (
     archive_source,
     read_checkpoint,
     restore_rng,
+    restore_training_checkpoint,
     rng_state,
     runtime_manifest,
     save_checkpoint,
@@ -42,6 +46,7 @@ from voxelform.objectives import (
     organic_terminal_reward,
 )
 from voxelform.patch_policy import PatchConfig, PatchFacades
+from voxelform.rollout import finish_episode_rollout
 from voxelform.shadows import device_name, sync
 from voxelform.unified import UnifiedLearner, commit
 
@@ -204,6 +209,8 @@ def make_policy(config, device, seed):
             evaluation_temperature=config.evaluation_temperature,
             evaluation_noise_scale=config.evaluation_noise_scale,
             lr=1.2e-3,
+            training_objective=config.training_objective,
+            decoder_retry_schedule=config.decoder_retry_schedule,
         )
     p = UnifiedLearner(
         device,
@@ -239,13 +246,14 @@ def _reference_eval(env):
 
 
 def episode(policy, env, config, training, coarse_envs=()):
+    objective = functools.partial(organic_objective, profile=config.reward_profile)
     if isinstance(policy, CoarseToFineLearner):
         raw = run_cascade_episode(
             env,
             coarse_envs,
             policy,
             config.initial_storeys,
-            organic_objective,
+            objective,
             training=training,
             rollout_steps=config.rollout_steps,
             audit_steps=config.audit_steps,
@@ -283,7 +291,7 @@ def episode(policy, env, config, training, coarse_envs=()):
     trace = []
     reward_sum = 0.0
     tape_start = len(policy.tape)
-    _, diag = organic_objective(env)
+    _, diag = objective(env)
     previous_core = float(diag.get("coreScore") or 0.0)
     for _ in range(env.unified_limit):
         move = policy.choose(env, training=training)
@@ -330,15 +338,14 @@ def episode(policy, env, config, training, coarse_envs=()):
             "far_reached" if env.far_satisfied else "step_budget_exhausted"
         )
     env.evaluate()
-    obj, diag = organic_objective(env)
+    obj, diag = objective(env)
     terminal = organic_terminal_reward(env, obj)
     reward_sum += terminal
     learning = None
-    if training and len(policy.tape) > tape_start:
-        policy.add_reward(terminal)
-        policy.mark_done()
-        if len(policy.tape) >= config.rollout_steps:
-            learning = policy.finish(0.0)
+    if training:
+        learning = finish_episode_rollout(
+            policy, tape_start, terminal, config.rollout_steps
+        )
     reference = _reference_eval(env) if not training else None
     sync(env.device)
     return dict(
@@ -388,6 +395,14 @@ def evaluate(policy, scenes, config, split):
     return rows
 
 
+def spatial_aux_weight_at(config: ExperimentConfig, episode_index: int) -> float:
+    if config.spatial_aux_schedule == "constant":
+        return config.spatial_aux_weight
+    warmup = max(1, config.episodes // 5)
+    progress = max(0.0, (episode_index - warmup + 1) / max(1, config.episodes - warmup))
+    return config.spatial_aux_weight * 0.5 * (1.0 + math.cos(math.pi * progress))
+
+
 def summarize(rows):
     # Include unsuccessful episodes in every reported denominator/mean.
     if not rows:
@@ -408,8 +423,8 @@ def summarize(rows):
     )
 
 
-def per_site_summary(rows):
-    by_site = {}
+def per_site_summary(rows: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    by_site: dict[str, list[dict[str, Any]]] = {}
     for row in rows:
         by_site.setdefault(row["site"], []).append(row)
     out = {}
@@ -424,8 +439,8 @@ def per_site_summary(rows):
     return out
 
 
-def aggregate(summaries):
-    out = {}
+def aggregate(summaries: list[dict[str, Any]]) -> dict[str, Any]:
+    out: dict[str, Any] = {}
     for split in ("validation", "test", "finalValidation", "finalTest"):
         rows = [s[split] for s in summaries if split in s]
         if not rows:
@@ -459,23 +474,18 @@ def aggregate(summaries):
     return out
 
 
-def _sync_seed_list_manifest(out, config):
-    manifest_path = out / "manifest.json"
-    prev_cfg = json.loads((out / "config.json").read_text())
-    curr_cfg = json.loads(json.dumps(config.to_dict()))
-    if {k: v for k, v in prev_cfg.items() if k != "seeds"} != {
-        k: v for k, v in curr_cfg.items() if k != "seeds"
-    }:
-        raise ValueError("Existing run directory config does not match hyperparameters")
-    manifest = json.loads(manifest_path.read_text())
-    if manifest.get("configHash") != config.fingerprint:
-        prev_resume = manifest.get("resumeFrom")
-        manifest = runtime_manifest()
-        manifest["configHash"] = config.fingerprint
-        manifest["resumeFrom"] = prev_resume
-        write_json(out / "config.json", config.to_dict())
-        write_json(manifest_path, manifest)
-        archive_source(out / "source.tar.gz", manifest)
+def _check_existing_run(out, config):
+    manifest = json.loads((out / "manifest.json").read_text())
+    recorded = ExperimentConfig.read(out / "config.json")
+    if (
+        recorded.fingerprint != config.fingerprint
+        or manifest["configHash"] != config.fingerprint
+    ):
+        raise ValueError(
+            "The run configuration and model-seed roster are fixed at launch"
+        )
+    if manifest["source"] != source_manifest():
+        raise ValueError("Source changed; start a new experiment directory")
     return manifest
 
 
@@ -486,15 +496,23 @@ def train(args):
     only_seed = getattr(args, "only_seed", None)
     finalize_only = bool(getattr(args, "finalize_only", False))
 
+    if args.resume and (only_seed is not None or finalize_only):
+        raise ValueError("Resume one checkpoint into a new output directory")
+
     if finalize_only:
-        if (out / "config.json").is_file() and (out / "manifest.json").is_file():
-            _sync_seed_list_manifest(out, config)
+        _check_existing_run(out, config)
         summaries = []
         for s in config.seeds:
             sp = out / f"seed-{s}" / "summary.json"
             if not sp.is_file():
                 raise FileNotFoundError(f"Missing seed summary: {sp}")
-            summaries.append(json.loads(sp.read_text()))
+            result = json.loads(sp.read_text())
+            if (
+                result["modelSeed"] != s
+                or result["completedEpisodes"] != config.episodes
+            ):
+                raise ValueError(f"Seed {s} has not completed the configured budget")
+            summaries.append(result)
         payload = dict(
             seeds=summaries,
             aggregate=aggregate(summaries),
@@ -515,16 +533,10 @@ def train(args):
 
     seed_everything(config.seeds[0], config.strict_determinism)
     manifest_path = out / "manifest.json"
-    if (
-        only_seed is not None
-        and manifest_path.is_file()
-        and (out / "config.json").is_file()
+    if only_seed is not None and (
+        manifest_path.exists() or (out / "config.json").exists()
     ):
-        manifest = _sync_seed_list_manifest(out, config)
-    elif only_seed is not None and manifest_path.is_file():
-        manifest = json.loads(manifest_path.read_text())
-        if manifest.get("configHash") != config.fingerprint:
-            raise ValueError("Existing run directory configHash does not match config")
+        manifest = _check_existing_run(out, config)
     else:
         manifest = runtime_manifest()
         manifest["configHash"] = config.fingerprint
@@ -537,8 +549,12 @@ def train(args):
 
     scenes = Scenes(config)
     scenes.prepare()
-    if only_seed is None or not (out / "scenes.json").is_file():
-        write_json(out / "scenes.json", scenes.manifest)
+    scene_file = out / "scenes.json"
+    if scene_file.is_file():
+        if json.loads(scene_file.read_text()) != scenes.manifest:
+            raise ValueError("Scene content changed; start a new experiment directory")
+    else:
+        write_json(scene_file, scenes.manifest)
         write_json(out / "setup.json", scenes.setup)
 
     saved = read_checkpoint(args.resume, config) if args.resume else None
@@ -561,8 +577,12 @@ def train(args):
         "meanDiffuseSky",
     )
 
+    quality_key = (
+        "meanQuality" if config.reward_profile == "default" else "meanReferenceQuality"
+    )
+
     def _val_rank(vsum):
-        return (round(float(vsum["farSuccessRate"]), 6), float(vsum["meanQuality"]))
+        return (round(float(vsum["farSuccessRate"]), 6), float(vsum[quality_key]))
 
     for seed in seeds_to_run:
         seed_everything(seed, config.strict_determinism)
@@ -576,9 +596,8 @@ def train(args):
         best_val_summary = None
         val_history = []
         if saved:
-            policy.load(saved["policy"])
+            restore_training_checkpoint(policy, saved)
             start = int(saved["nextEpisode"])
-            restore_rng(saved["rng"])
             resume_dir = Path(args.resume).parent
             hist_path = resume_dir / "validation-history.jsonl"
             if hist_path.is_file():
@@ -587,7 +606,7 @@ def train(args):
                     for line in hist_path.read_text().splitlines()
                     if line.strip() and int(json.loads(line)["episode"]) <= start
                 ]
-                if val_history and (resume_dir / "best.pt").is_file():
+                if val_history:
                     best_row = max(
                         val_history,
                         key=lambda r: (*_val_rank(r), -int(r["episode"])),
@@ -597,12 +616,17 @@ def train(args):
                     best_val_summary = {
                         k: best_row[k] for k in val_summary_keys if k in best_row
                     }
-                    shutil.copy2(resume_dir / "best.pt", folder / "best.pt")
-                    if (resume_dir / "validation.json").is_file():
-                        best_val_rows = json.loads(
-                            (resume_dir / "validation.json").read_text()
+                    checkpoint = resume_dir / f"checkpoint-{best_val_episode:06d}.pt"
+                    if not checkpoint.is_file():
+                        checkpoint = resume_dir / "best.pt"
+                    if (
+                        read_checkpoint(checkpoint, config)["nextEpisode"]
+                        != best_val_episode
+                    ):
+                        raise ValueError(
+                            "Best checkpoint does not match recorded validation history"
                         )
-                        write_json(folder / "validation.json", best_val_rows)
+                    shutil.copy2(checkpoint, folder / "best.pt")
         else:
             baseline = evaluate(policy, scenes, config, "validation")
             write_json(folder / "untrained-validation.json", baseline)
@@ -627,6 +651,8 @@ def train(args):
             )
             min_lr = min(2e-4, base_lr)
             for i in range(start, config.episodes):
+                if config.spatial_aux_schedule != "constant":
+                    policy.spatial_aux_weight = spatial_aux_weight_at(config, i)
                 if config.lr_schedule == "cosine":
                     frac = min(1.0, i / max(1, config.episodes - 1))
                     lr = min_lr + 0.5 * (base_lr - min_lr) * (
@@ -639,6 +665,7 @@ def train(args):
                     episode=i + 1,
                     modelSeed=seed,
                     site=site,
+                    spatialAuxWeight=policy.spatial_aux_weight,
                     **episode(
                         policy,
                         scenes.get(site),
@@ -653,13 +680,15 @@ def train(args):
                 stopping = (
                     args.stop_after is not None and completed - start >= args.stop_after
                 )
-                if (
-                    completed % config.checkpoint_interval == 0
-                    or completed == config.episodes
-                    or stopping
-                ):
-                    if policy.tape:
-                        policy.finish(0.0)
+                at_budget = completed == config.episodes
+                # A shorter last batch is part of the configured training budget,
+                # independent of periodic snapshots, validation and interruptions.
+                if at_budget and policy.tape:
+                    policy.finish(0.0)
+                validation_due = (
+                    completed % config.checkpoint_interval == 0 or at_budget
+                )
+                if validation_due or stopping:
                     if source_manifest() != manifest["source"]:
                         raise RuntimeError(
                             "Source changed during training; preserve this run and start a new experiment"
@@ -673,7 +702,7 @@ def train(args):
                         completed,
                         scenes.manifest,
                     )
-                    shutil.copy2(ckpt_path, folder / "latest.pt")
+                if validation_due:
                     val_rows = evaluate(policy, scenes, config, "validation")
                     val_sum = summarize(val_rows)
                     val_entry = dict(
@@ -695,6 +724,8 @@ def train(args):
                         best_val_summary = val_sum
                         shutil.copy2(ckpt_path, folder / "best.pt")
                         write_json(folder / "validation.json", val_rows)
+                if validation_due or stopping:
+                    shutil.copy2(ckpt_path, folder / "latest.pt")
                 if stopping:
                     break
         summary = dict(
@@ -707,37 +738,47 @@ def train(args):
             summary["bestValidationEpisode"] = best_val_episode
             summary["validationHistory"] = val_history
         if completed == config.episodes:
-            random_policy = make_policy(config, scenes.device, seed)
-            baseline = evaluate(random_policy, scenes, config, "test")
-            write_json(folder / "untrained-test.json", baseline)
-            summary["untrainedTest"] = summarize(baseline)
             if final_val_rows is None:
                 final_val_rows = evaluate(policy, scenes, config, "validation")
                 final_val_summary = summarize(final_val_rows)
             write_json(folder / "validation-final.json", final_val_rows)
-            test_final_rows = evaluate(policy, scenes, config, "test")
-            write_json(folder / "test-final.json", test_final_rows)
             summary["finalValidation"] = final_val_summary
-            summary["finalTest"] = summarize(test_final_rows)
+            if config.test_sites:
+                random_policy = make_policy(config, scenes.device, seed)
+                baseline = evaluate(random_policy, scenes, config, "test")
+                write_json(folder / "untrained-test.json", baseline)
+                summary["untrainedTest"] = summarize(baseline)
+                test_final_rows = evaluate(policy, scenes, config, "test")
+                write_json(folder / "test-final.json", test_final_rows)
+                summary["finalTest"] = summarize(test_final_rows)
 
             if best_val_episode == completed:
-                test_best_rows = test_final_rows
+                best_val_rows = final_val_rows
             else:
                 best_ckpt = read_checkpoint(folder / "best.pt", config)
                 policy.load(best_ckpt["policy"])
                 if best_val_rows is None:
                     best_val_rows = evaluate(policy, scenes, config, "validation")
                     best_val_summary = summarize(best_val_rows)
-                test_best_rows = evaluate(policy, scenes, config, "test")
             write_json(folder / "validation.json", best_val_rows)
-            write_json(folder / "test.json", test_best_rows)
             summary["validation"] = best_val_summary
-            summary["test"] = summarize(test_best_rows)
+            if config.test_sites:
+                test_best_rows = (
+                    test_final_rows
+                    if best_val_episode == completed
+                    else evaluate(policy, scenes, config, "test")
+                )
+                write_json(folder / "test.json", test_best_rows)
+                summary["test"] = summarize(test_best_rows)
         summaries.append(summary)
         write_json(folder / "summary.json", summary)
         print(json.dumps(summary), flush=True)
 
-    if only_seed is None:
+    if (
+        only_seed is None
+        and tuple(seeds_to_run) == config.seeds
+        and all(row["completedEpisodes"] == config.episodes for row in summaries)
+    ):
         write_json(
             out / "summary.json",
             dict(
@@ -766,6 +807,7 @@ def evaluate_heuristic(args):
         evaluation_temperature=config.evaluation_temperature,
         evaluation_noise_scale=0.0,
         heuristic_only=True,
+        decoder_retry_schedule=config.decoder_retry_schedule,
     )
     path = Path(args.output)
     if path.exists():
@@ -777,10 +819,16 @@ def evaluate_heuristic(args):
         config=config.to_dict(),
         runtime=manifest,
         validation=dict(
-            summary=summarize(val_rows), perSite=per_site_summary(val_rows)
+            summary=summarize(val_rows),
+            perSite=per_site_summary(val_rows),
+            episodes=val_rows,
         ),
-        test=dict(summary=summarize(test_rows), perSite=per_site_summary(test_rows)),
-        note="Deterministic non-learned baseline ranking frontier edits by the hand-crafted physics desirability field (compute_spatial_desirability) under the exact same cascade stages and feasibility projector Pi_valid.",
+        test=dict(
+            summary=summarize(test_rows),
+            perSite=per_site_summary(test_rows),
+            episodes=test_rows,
+        ),
+        note="Non-learned greedy baseline ranking frontier edits with compute_spatial_desirability. The first proposal is deterministic; rejected proposals can trigger Gaussian retries. Uses the same cascade stages and feasibility projector as the learned policy.",
     )
     write_json(path, payload)
     print(path.resolve())

@@ -1,9 +1,68 @@
 # Results and evidence
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
-- **600-episode 5-seed tier-adaptive run (`compact-core.v5`, M4 MPS, seeds `123, 456, 789, 202, 303`, `checkpoint_interval=50`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 -> 2.0e-4`):** [600-ep 5-seed tier-adaptive summary](real-aux-tier-600ep-mps-2026-11-21.json) (`configs/research-real-aux-tier-600ep.json`; `XS/S/M` direct `1×1×1`, `L` `2×2×1 → 1×1×1`, `XL` `4×4×1 → 2×2×1 → 1×1×1`, scale-normalized Gaussian retry surrogate; `gitCommit: dccc2d5`, `gitDirty: false`; `best.pt` selected strictly on held-out `m_hk_0199` at `[100, 400, 250, 200, 150]`; Val `1.129 ± 0.075` / `FAR 1.00`, Test `0.776 ± 0.103` / `FAR 1.00` vs episode-600 `latest.pt` Val `0.979 ± 0.131` / `FAR 0.88`, Test `0.646 ± 0.352`; top validation-selected seeds reach `0.863` / `0.840` / `0.811` Test).
-- **Greedy physics-heuristic non-learned baseline (`compact-core.v5`, M4 MPS, `0` learned params):** [greedy heuristic summary](greedy-heuristic-tier-mps-2026-11-21.json) (`vf-research heuristic --config configs/research-real-aux-tier-600ep.json`; deterministic frontier selection via `compute_spatial_desirability` + projector $\Pi_{\text{valid}}$; `gitCommit: da065b4`, `gitDirty: false`; Val `m_hk_0199` `1.1315`, Test `0.8099`, `FAR 1.00`, NYC `0.5273`, Paris `1.0925`).
-- **600-episode pure-RL ablation (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=0.0`):** [600-ep pure-RL summary](real-tier-600ep-mps-2026-11-21.json) (`configs/research-real-tier-600ep.json`; identical cascade trained solely on GAE return; Val `m_hk_0199` `0.9074`, Test `0.4771`, `FAR 1.00`, NYC `0.2090`, Paris `0.7452`).
+
+## 600-episode L and XL follow-up — 2026-11-22
+
+Five matched model seeds per arm, with checkpoint evaluation every 50 episodes.
+Imitation averaged higher test scores than guided RL at both checkpoint choices.
+Greedy led the four-plot mean and both XL plots. Guided RL's validation-selected
+checkpoints led the Singapore L plot. [Report](l-xl-600ep-mps-2026-11-22.md) ·
+[Evidence](l-xl-600ep-mps-2026-11-22.json)
+
+## 60-episode L and XL pilot — 2026-11-22
+
+Greedy led at all four test plots in the 60-episode pilot. Guided
+RL outscored imitation at every plot. The study also measured adaptive retries,
+tested two alternative rewards during training, and compared policies on a
+synthetic two-edit planning case. [Report](confirmatory-l-xl-2026-11-22.md) ·
+[Evidence](confirmatory-l-xl-mps-2026-11-22.json)
+
+## Held-out L and XL comparison — 2026-11-22
+
+On Apple M4 MPS, five archived validation-selected checkpoints and two fresh
+30-episode guided RL policies ran on the same three unseen plots as the greedy
+heuristic. The new policies trained on the original ten XS–XL plots and visited
+each one three times. Validation selected the episode-30 checkpoint for both
+pilots. All methods used five evaluation seeds per plot, a 3.0 ± 0.1 FAR band,
+the tier-specific cascade and the same feasibility checks. Both pilot seeds
+spent about 43 seconds in the training loop, including periodic validation.
+Greedy ranked its first proposal deterministically and accepted it on each
+decision observed here.
+
+| Plot | Split | Archived RL mean $J$ ± seed SD | 30-episode RL mean $J$ | Greedy $J$ |
+|---|---|---:|---:|---:|
+| L Hong Kong `l_hk_0218` | Validation | 0.651 ± 0.096 | 0.150 | 0.642 |
+| L Paris `l_prs_0324` | Test | 0.872 ± 0.022 | 0.420 | 0.847 |
+| XL New York `xl_nyc_0048` | Test | 0.586 ± 0.064 | 0.336 | 0.664 |
+
+All 120 rollouts met the FAR band. Archived RL averaged more usable good area
+and diffuse sky access at all three plots. Greedy averaged higher direct sun
+access and fewer edits. The 30-episode policies scored below greedy on each
+plot. Evaluation covers one XL plot and two L plots.
+
+**Reward sensitivity.** The same terminal layouts were rescored under the
+original objective, eight ±25% weight perturbations and a single core coverage
+term. Paris favored archived RL in all ten variants and New York favored greedy
+in all ten. Hong Kong favored archived RL in eight. The archived logs record
+all objective components except depth, which can be recovered from the exact
+scalar formula and the stored terms.
+
+**Decoder diagnostics.** The first archived model seed produced 188 draws
+across 15 rollouts. The projector rejected 62 draws and retained 94.6% of the
+proposed cells on accepted draws. Cells were counted at each stage's grid
+resolution. An additional 168 single draws held the initial state fixed at each
+site and scale. Within each operation and budget group, all proposal masks and
+all accepted masks were distinct. Rejection was common in that probe, including
+all first-attempt fine removals on the initial Hong Kong and Paris masses. This
+diagnostic covers one checkpoint and the probed states. [Metrics, hashes and per-stage counts](heldout-l-xl-mps-2026-11-22.json)
+
+## Earlier research results
+
+- **600-episode tier-adaptive comparison, five archived seeds (`compact-core.v5`, M4 MPS, seeds `123, 456, 789, 202, 303`, `checkpoint_interval=50`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 -> 2.0e-4`):** [600-ep 5-seed tier-adaptive summary](real-aux-tier-600ep-mps-2026-11-21.json) (`configs/research-real-aux-tier-600ep.json`; `XS/S/M` direct `1×1×1`, `L` `2×2×1 → 1×1×1`, `XL` `4×4×1 → 2×2×1 → 1×1×1`, scale-normalized Gaussian retry surrogate; `gitCommit: dccc2d5`, `gitDirty: false`; `best.pt` selected strictly on held-out `m_hk_0199` at `[100, 400, 250, 200, 150]`; Val `1.129 ± 0.075` / `FAR 1.00`, Test `0.776 ± 0.103` / `FAR 1.00` vs episode-600 `latest.pt` Val `0.979 ± 0.131` / `FAR 0.88`, Test `0.646 ± 0.352`).
+  The historical runner flushed pending optimizer batches at checkpoint boundaries. Its validation and test plots exercised the M-tier fine pathway.
+- **Greedy physics-heuristic non-learned baseline (`compact-core.v5`, M4 MPS, `0` learned params):** [greedy heuristic summary](greedy-heuristic-tier-mps-2026-11-21.json) (`vf-research heuristic --config configs/research-real-aux-tier-600ep.json`; frontier selection via `compute_spatial_desirability` + projector $\Pi_{\text{valid}}$; `gitCommit: da065b4`, `gitDirty: false`; Val `m_hk_0199` `1.1315`, Test `0.8099`, `FAR 1.00`, NYC `0.5273`, Paris `1.0925`).
+- **600-episode RL ablation without spatial auxiliary loss (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=0.0`):** [600-ep auxiliary-off summary](real-tier-600ep-mps-2026-11-21.json) (`configs/research-real-tier-600ep.json`; same cascade and decoder, trained from scalar reward; Val `m_hk_0199` `0.9074`, Test `0.4771`, `FAR 1.00`, NYC `0.2090`, Paris `0.7452`).
 - **1,200-episode flat `1×1×1` baseline (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`):** [1,200-ep flat baseline summary](real-aux-1200ep-mps-2026-11-21.json) (`configs/research-real-aux-1200ep.json`; 10 balanced XS–XL sites, zero-shot held-out eval on HK `0.7729` + NYC/Paris `0.5782`, matched decoding `1.0/1.0`, full `1200`-episode traces aggregated in 30-ep bins).
 - **Pipeline & compact-core verification:** [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
 [compact cores](core-layout-v2-check-2026-11-20.json). The short checks are not convergence or learned-quality evidence.

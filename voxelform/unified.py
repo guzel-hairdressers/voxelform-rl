@@ -17,6 +17,7 @@ from .policy import Learner, Network
 from .patch_policy import PatchConfig, gaussian_field
 from .redistribution import Exchange, growth_mask
 from .actions import STRUCTURE, exterior_air
+from .rollout import generalized_advantages
 
 OPERATIONS = ("remove", "grow", "exchange", "finish")
 
@@ -1064,6 +1065,39 @@ class Organic3DNetwork(nn.Module):
         return fields, value, op_logits
 
 
+def _ensure_external_potential(e):
+    if not hasattr(e, "external_potential"):
+        e.precompute_external()
+        normals = e.suns.new_tensor(
+            ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))
+        )
+        w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor(
+            (3.0, 3.0, 3.0, 3.0, 1.0, 1.0)
+        )[None]
+        e.external_potential = (
+            e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float()
+            * w[:, :, None, None, None]
+        ).sum((0, 1)) / w.sum().clamp_min(1)
+
+
+def _organic_goal_features(e):
+    limit = getattr(e, "unified_limit", 1)
+    spent = getattr(e, "unified_actions", e.edits)
+    g_scale = max(10.0, 3.0 * float(e.target_far))
+    return [
+        min(2.0, float(e.far) / g_scale),
+        min(2.0, float(e.target_far) / g_scale),
+        min(2.0, float(e.far_error) / g_scale),
+        max(0, limit - spent) / max(1, limit),
+        spent / max(1, limit),
+    ]
+
+
+def _pooled_edit_eligibility(w_rem, w_add, consumed, kernel, stride):
+    eligible = torch.stack(((w_rem > 0).float(), (w_add > 0).float()))[consumed]
+    return F.max_pool3d(eligible[:, None], kernel, stride=stride, ceil_mode=True)[:, 0]
+
+
 def compute_spatial_desirability(
     e, w_rem, w_add, ln6_f, consumed, kernel, stride, z_slice=None
 ):
@@ -1225,18 +1259,7 @@ class UnifiedLearner(Learner):
     def observation(self, e, z_slice=None):
         # Cache immutable external exposure once. Keep direct sun and diffuse
         # facade access separate; both edit eligibility fields are explicit.
-        if not hasattr(e, "external_potential"):
-            e.precompute_external()
-            normals = e.suns.new_tensor(
-                ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))
-            )
-            w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor(
-                (3.0, 3.0, 3.0, 3.0, 1.0, 1.0)
-            )[None]
-            e.external_potential = (
-                e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float()
-                * w[:, :, None, None, None]
-            ).sum((0, 1)) / w.sum().clamp_min(1)
+        _ensure_external_potential(e)
         remove = e.frontier.weights_tensor(-1, self.device)
         grow = torch.as_tensor(
             copy_eligibility(e) if self.floor_copy else growth_mask(e),
@@ -1295,19 +1318,8 @@ class UnifiedLearner(Learner):
         return torch.cat(channels, 1)
 
     def _organic_goal(self, e):
-        limit = getattr(e, "unified_limit", 1)
-        spent = getattr(e, "unified_actions", e.edits)
-        g_scale = max(10.0, 3.0 * float(e.target_far))
         return torch.tensor(
-            [
-                min(2.0, float(e.far) / g_scale),
-                min(2.0, float(e.target_far) / g_scale),
-                min(2.0, float(e.far_error) / g_scale),
-                max(0, limit - spent) / max(1, limit),
-                spent / max(1, limit),
-            ],
-            device=self.device,
-            dtype=torch.float32,
+            _organic_goal_features(e), device=self.device, dtype=torch.float32
         )
 
     def forward(self, e):
@@ -2239,18 +2251,9 @@ class UnifiedLearner(Learner):
                     move = project_organic_3d(e, masks_np, scores_np, operation, guided)
                     if move is not None:
                         if training:
-                            elig_full = torch.stack(
-                                ((w_rem > 0).float(), (w_add > 0).float())
-                            )[consumed]
-                            elig_c = (
-                                F.max_pool3d(
-                                    elig_full[:, None],
-                                    kernel,
-                                    stride=self.config.stride,
-                                    ceil_mode=True,
-                                )[:, 0]
-                                > 0.5
-                            ).float()
+                            elig_c = _pooled_edit_eligibility(
+                                w_rem, w_add, consumed, kernel, self.config.stride
+                            )
                             des_c = compute_spatial_desirability(
                                 e,
                                 w_rem,
@@ -2342,39 +2345,7 @@ class UnifiedLearner(Learner):
                 loss=0.0,
                 gradientNorm=0.0,
             )
-        rewards = []
-        dones = []
-        val_old = []
-        zero_r = torch.zeros((), dtype=torch.float32, device=self.device)
-        for entry in self.tape:
-            val_old.append(entry["value"])
-            rew = entry["reward"]
-            rewards.append(
-                zero_r
-                if rew is None
-                else torch.as_tensor(
-                    rew, dtype=torch.float32, device=self.device
-                ).detach()
-            )
-            dones.append(bool(entry["done"]))
-        val_old_t = torch.stack(val_old)
-        next_val = torch.as_tensor(
-            bootstrap, dtype=torch.float32, device=self.device
-        ).detach()
-        gamma = 0.99
-        lam = 0.95
-        gae = torch.zeros((), dtype=torch.float32, device=self.device)
-        advs = []
-        for t in range(len(self.tape) - 1, -1, -1):
-            mask = 0.0 if dones[t] else 1.0
-            nv = next_val if t == len(self.tape) - 1 else val_old_t[t + 1]
-            delta = rewards[t] + gamma * nv * mask - val_old_t[t]
-            gae = delta + gamma * lam * mask * gae
-            advs.append(gae)
-        adv = torch.stack(list(reversed(advs)))
-        returns = adv + val_old_t
-        if len(adv) > 1:
-            adv = (adv - adv.mean()) / adv.std().clamp_min(1e-5)
+        adv, returns = generalized_advantages(self.tape, bootstrap, self.device)
 
         groups = {}
         for t, entry in enumerate(self.tape):

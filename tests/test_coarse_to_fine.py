@@ -1,7 +1,9 @@
+import copy
 import functools
 import math
 from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 
 import torch
 
@@ -13,6 +15,7 @@ from voxelform.coarse_to_fine import (
     run_episode,
     tier_cascade_blocks,
 )
+from voxelform.decoder_diagnostics import DecoderDiagnostics
 from voxelform.environment import Environment
 from voxelform.objectives import organic_step_reward, organic_terminal_reward
 from voxelform.patch_policy import PatchConfig, PatchFacades
@@ -51,6 +54,84 @@ class CoarseToFineTests(unittest.TestCase):
         solid[6:] = False
         env.restore_occupancy(solid)
         return env, cfg
+
+    def test_opt_in_decoder_measurements_preserve_the_rollout(self):
+        env, cfg = self._make_env()
+        cenv = CoarseEnv(env, block=(1, 2, 2))
+        learner = CoarseToFineLearner(device="cpu", seed=123, fine_config=cfg)
+
+        torch.manual_seed(42)
+        expected = run_cascade_episode(
+            env, [cenv], learner, 6, organic_objective, training=False
+        )
+        occupancy = env.occupied.clone()
+
+        torch.manual_seed(42)
+        probe = DecoderDiagnostics()
+        learner.decoder_diagnostics = probe
+        actual = run_cascade_episode(
+            env, [cenv], learner, 6, organic_objective, training=False
+        )
+        self.assertEqual(actual["trace"], expected["trace"])
+        torch.testing.assert_close(env.occupied, occupancy)
+        accepted = [row for row in probe.attempts if row.accepted_digest is not None]
+        self.assertEqual(len(accepted), actual["steps"])
+        for row in probe.attempts:
+            self.assertLessEqual(row.kept_voxels, row.proposed_voxels)
+            self.assertLessEqual(row.proposed_voxels, row.requested_voxels)
+
+    def test_imitation_update_is_independent_of_episode_reward(self):
+        env, cfg = self._make_env()
+        teacher_trained = CoarseToFineLearner(
+            seed=123, fine_config=cfg, training_objective="imitation"
+        )
+        differently_rewarded = CoarseToFineLearner(
+            seed=123, fine_config=cfg, training_objective="imitation"
+        )
+        torch.manual_seed(42)
+        run_cascade_episode(
+            env,
+            [CoarseEnv(env, block=(1, 2, 2))],
+            teacher_trained,
+            6,
+            organic_objective,
+            training=True,
+            rollout_steps=1000,
+        )
+        self.assertTrue(
+            any(row["teacher_mean"] is not None for row in teacher_trained.tape)
+        )
+        differently_rewarded.tape = copy.deepcopy(teacher_trained.tape)
+        for row in differently_rewarded.tape:
+            row["reward"] = torch.tensor(-100.0)
+        self.assertGreater(teacher_trained.finish()["gradientNorm"], 0.0)
+        differently_rewarded.finish()
+        torch.testing.assert_close(
+            teacher_trained.model.state_dict(),
+            differently_rewarded.model.state_dict(),
+            rtol=0,
+            atol=0,
+        )
+
+    def test_adaptive_retry_shrinks_after_the_first_rejection(self):
+        env, cfg = self._make_env()
+        cenv = CoarseEnv(env, block=(1, 2, 2))
+        cenv.reset(6)
+        budgets = {}
+        for schedule in ("legacy", "adaptive"):
+            learner = CoarseToFineLearner(
+                seed=123, fine_config=cfg, decoder_retry_schedule=schedule
+            )
+            learner.decoder_diagnostics = DecoderDiagnostics()
+            torch.manual_seed(42)
+            with patch("voxelform.coarse_to_fine.project_coarse_3d", return_value=None):
+                learner.choose_stage(cenv, is_coarse=True, training=False, retries=2)
+            budgets[schedule] = [
+                row.requested_voxels for row in learner.decoder_diagnostics.attempts
+            ]
+        self.assertEqual(budgets["legacy"][0], budgets["legacy"][1])
+        self.assertEqual(budgets["adaptive"][0], budgets["legacy"][0])
+        self.assertLess(budgets["adaptive"][1], budgets["adaptive"][0])
 
     def test_coarse_volume_equivalence_and_upsample_invariants(self):
         for plan, shape, bz in (

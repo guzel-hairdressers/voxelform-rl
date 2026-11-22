@@ -212,3 +212,82 @@ class Experiment(unittest.TestCase):
                 [seed_summary["bestValidationEpisode"]],
             )
             self.assertIn("finalTest", run_summary["aggregate"])
+
+    def test_checkpoint_cadence_and_exact_resume_preserve_optimizer_updates(self):
+        from types import SimpleNamespace
+        from tools.research import train
+
+        with tempfile.TemporaryDirectory() as d:
+            root = Path(d)
+            cfg = dict(
+                seeds=[123],
+                evaluation_seeds=[9001],
+                episodes=3,
+                initial_storeys=4,
+                ceiling_storeys=8,
+                synthetic_width=16,
+                synthetic_length=20,
+                multiscale_schedule="tier_adaptive",
+                rollout_steps=1000,
+                strict_determinism=True,
+            )
+
+            def run(name, interval, resume=None, stop_after=None):
+                config_path = root / f"interval-{interval}.json"
+                write_json(config_path, dict(cfg, checkpoint_interval=interval))
+                train(
+                    SimpleNamespace(
+                        config=config_path,
+                        output=root / name,
+                        resume=resume,
+                        stop_after=stop_after,
+                    )
+                )
+                return root / name / "seed-123"
+
+            scheduled = run("scheduled", 1)
+            uninterrupted = run("uninterrupted", 2)
+            stopped = run("stopped", 2, stop_after=1)
+            interruption = read_checkpoint(stopped / "latest.pt")
+            self.assertGreater(len(interruption["pendingRollout"]), 0)
+            self.assertEqual(interruption["policy"]["updates"], 0)
+            self.assertEqual((stopped / "validation-history.jsonl").read_text(), "")
+            periodic = read_checkpoint(scheduled / "checkpoint-000001.pt")
+            self.assertEqual(periodic["policy"]["updates"], 0)
+            self.assertEqual(
+                len(periodic["pendingRollout"]), len(interruption["pendingRollout"])
+            )
+            resumed = run("resumed", 2, resume=stopped / "latest.pt")
+
+            expected = read_checkpoint(uninterrupted / "latest.pt")["policy"]
+            for folder in (scheduled, resumed):
+                with self.subTest(run=folder.parent.name):
+                    actual = read_checkpoint(folder / "latest.pt")["policy"]
+                    self.assertEqual(actual["updates"], expected["updates"])
+                    self.assertEqual(actual["updates"], 1)
+                    for key in ("model", "optimizer"):
+                        torch.testing.assert_close(
+                            actual[key], expected[key], rtol=0, atol=0
+                        )
+
+    def test_run_manifest_freezes_seed_roster(self):
+        from types import SimpleNamespace
+        from tools.research import train
+        from voxelform.experiment import runtime_manifest
+
+        with tempfile.TemporaryDirectory() as d:
+            out = Path(d)
+            c = ExperimentConfig(seeds=(123, 456))
+            write_json(out / "config.json", c.to_dict())
+            write_json(
+                out / "manifest.json",
+                dict(runtime_manifest(), configHash=c.fingerprint),
+            )
+            reduced = out / "reduced.json"
+            write_json(reduced, dict(c.to_dict(), seeds=[123]))
+            args = SimpleNamespace(output=out, resume=None, finalize_only=True)
+            with self.assertRaisesRegex(ValueError, "roster.*fixed"):
+                train(SimpleNamespace(**vars(args), config=reduced))
+            with self.assertRaisesRegex(FileNotFoundError, "Missing seed summary"):
+                train(SimpleNamespace(**vars(args), config=out / "config.json"))
+            self.assertFalse((out / "summary.json").exists())

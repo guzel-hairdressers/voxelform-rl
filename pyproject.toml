@@ -7,11 +7,14 @@ name = "voxelform-rl"
 version = "0.2.0"
 description = "Reproducible reinforcement-learning experiments for constrained 3D voxel editing"
 readme = "README.md"
+authors = [{ name = "Ruslan Fazulzianov" }]
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.11,<3.14"
 dependencies = ["numpy>=2.0", "torch>=2.4", "fastapi>=0.110", "uvicorn>=0.30", "scipy>=1.11", "shapely>=2.1"]
 
 [project.optional-dependencies]
-dev = ["httpx>=0.28", "matplotlib>=3.9", "ruff>=0.12"]
+dev = ["httpx>=0.28", "matplotlib>=3.9", "ruff>=0.12", "mypy>=1.19"]
 
 [project.scripts]
 vf-research = "tools.research:main"
@@ -26,6 +29,11 @@ target-version = "py311"
 
 [tool.ruff.lint]
 select = ["F", "E9"]
+
+[tool.mypy]
+files = ["tools/research.py", "voxelform/experiment.py", "voxelform/rollout.py", "voxelform/decoder_diagnostics.py"]
+follow_imports = "silent"
+check_untyped_defs = true
 
 [tool.uv]
 # Resolve the CPU wheel on Linux/CI; the default macOS wheel supports MPS.

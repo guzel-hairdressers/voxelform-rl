@@ -1459,6 +1459,11 @@ def main():
     sites = list(SHOWCASE_PRESETS) if args.all_showcase else list(args.site)
     if args.out_blend is not None and len(sites) > 1:
         raise ValueError("--out-blend can only be used when exporting a single site")
+    if not args.json_only and not args.template.is_file():
+        parser.error(
+            f"Blender template is missing: {args.template}. "
+            "Set --template to a local copy or use --json-only."
+        )
 
     blender_bin = None if args.json_only else _find_blender(args.blender_bin)
     cfg, dev, policy = _load_policy(args.run_dir, args.temp, args.noise)

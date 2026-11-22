@@ -1,0 +1,64 @@
+{
+  "audit_steps": 5,
+  "ceiling_storeys": 20,
+  "checkpoint_interval": 60,
+  "cores_enabled": true,
+  "decoder_retry_schedule": "legacy",
+  "device": "mps",
+  "episodes": 60,
+  "evaluation_noise_scale": 1.0,
+  "evaluation_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205
+  ],
+  "evaluation_temperature": 1.0,
+  "far_tolerance": 0.1,
+  "initial_storeys": 6,
+  "lr_schedule": "cosine",
+  "max_core_dist": 12,
+  "min_core_spacing": 10,
+  "multiscale_schedule": "tier_adaptive",
+  "reward_profile": "default",
+  "rollout_steps": 16,
+  "seeds": [
+    4211,
+    4212,
+    4213,
+    4214,
+    4215
+  ],
+  "spatial_aux_schedule": "constant",
+  "spatial_aux_weight": 1.2,
+  "strict_determinism": false,
+  "synthetic_length": 24,
+  "synthetic_width": 24,
+  "target_far": 3.0,
+  "test_sites": [
+    "m_prs_0320",
+    "l_sgp_0327",
+    "l_sgp_0367",
+    "l_sgp_0379"
+  ],
+  "threads": 1,
+  "train_sites": [
+    "m_bcn_0093",
+    "xs_tokyo_0133",
+    "s_hk_0202",
+    "l_bcn_0074",
+    "xl_tokyo_0185",
+    "xs_hk_0196",
+    "s_bcn_0112",
+    "m_tokyo_0135",
+    "l_hk_0198",
+    "l_tokyo_0191"
+  ],
+  "training_objective": "actor_critic",
+  "validation_sites": [
+    "m_nyc_0005",
+    "l_nyc_0019",
+    "xl_nyc_0062"
+  ]
+}

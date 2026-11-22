@@ -6,5 +6,7 @@ version: 0.2.0
 date-released: 2026-11-20
 url: "https://github.com/guzel-hairdressers/voxelform-rl"
 repository-code: "https://github.com/guzel-hairdressers/voxelform-rl"
+license: MIT
 authors:
-  - name: "Ruslan F"
+  - given-names: Ruslan
+    family-names: Fazulzianov

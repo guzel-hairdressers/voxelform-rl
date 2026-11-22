@@ -35,8 +35,9 @@
   the local top-five archive as outputs for review. Keep held-out evaluation
   evidence separate. Layouts and full episode statistics persist under ignored
   `runs/layouts/`; preview requests do not mutate the run.
-- The user's own-code license remains undecided; preserve vendored licenses and
-  OSM attribution without inventing a new repository license.
+- Original project code uses the MIT License. Preserve vendored licenses and
+  OpenStreetMap attribution. Keep local Blender scenes, templates and HDRIs
+  outside version control.
 
 ## Scope and design intent
 - This is an independent voxel massing project, separate from Module Lab.

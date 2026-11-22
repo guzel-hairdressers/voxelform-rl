@@ -7,5 +7,9 @@ results/scene_cache/
 runs/
 *.egg-info/
 .ruff_cache/
+.mypy_cache/
 dist/
 build/
+*.blend
+*.blend[0-9]*
+*.hdr

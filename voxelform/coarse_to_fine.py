@@ -15,9 +15,14 @@ from .cores import DEFAULT_MAX_CORE_DIST, DEFAULT_MIN_CORE_SPACING, solve_cores
 from .fields import depth_badness, diffuse_access, facade_sky_access, usable_depth_proxy
 from .patch_policy import PatchConfig, PatchFacades, gaussian_field
 from .redistribution import Exchange
+from .decoder_diagnostics import DecoderDiagnostics
+from .rollout import finish_episode_rollout, generalized_advantages
 from .shadows import sync
 from .unified import (
     OPERATIONS,
+    _ensure_external_potential,
+    _organic_goal_features,
+    _pooled_edit_eligibility,
     Organic3DNetwork,
     clean_floor_numpy,
     clean_floor_tensor,
@@ -1016,6 +1021,8 @@ class CoarseToFineLearner:
         evaluation_noise_scale=0.08,
         lr=1.2e-3,
         heuristic_only=False,
+        training_objective="actor_critic",
+        decoder_retry_schedule="legacy",
     ):
         self.device = torch.device(device)
         self.seed = int(seed)
@@ -1027,6 +1034,9 @@ class CoarseToFineLearner:
         self.evaluation_noise_scale = float(evaluation_noise_scale)
         self.lr = float(lr)
         self.heuristic_only = bool(heuristic_only)
+        self.training_objective = training_objective
+        self.decoder_retry_schedule = decoder_retry_schedule
+        self.decoder_diagnostics: DecoderDiagnostics | None = None
         if not math.isfinite(self.spatial_aux_weight) or self.spatial_aux_weight < 0.0:
             raise ValueError("Invalid auxiliary weight")
         self.fine_config = fine_config or PatchConfig(
@@ -1060,37 +1070,16 @@ class CoarseToFineLearner:
         self.tape = []
 
     def _goal_vec(self, env_or_cenv, scale):
-        limit = getattr(env_or_cenv, "unified_limit", 1)
-        spent = getattr(env_or_cenv, "unified_actions", env_or_cenv.edits)
-        g_scale = max(10.0, 3.0 * float(env_or_cenv.target_far))
         stage_feat = 1.0 if scale >= 4 else (0.5 if scale == 2 else 0.0)
         return torch.tensor(
-            [
-                min(2.0, float(env_or_cenv.far) / g_scale),
-                min(2.0, float(env_or_cenv.target_far) / g_scale),
-                min(2.0, float(env_or_cenv.far_error) / g_scale),
-                max(0, limit - spent) / max(1, limit),
-                spent / max(1, limit),
-                stage_feat,
-            ],
+            [*_organic_goal_features(env_or_cenv), stage_feat],
             device=self.device,
             dtype=torch.float32,
         )
 
     def _fine_obs(self, e, z_slice=None):
         e.organic_3d_growth = True
-        if not hasattr(e, "external_potential"):
-            e.precompute_external()
-            normals = e.suns.new_tensor(
-                ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))
-            )
-            w = (e.suns @ normals.T).clamp_min(0) * e.suns.new_tensor(
-                (3.0, 3.0, 3.0, 3.0, 1.0, 1.0)
-            )[None]
-            e.external_potential = (
-                e.static_receivers.values.reshape(len(e.suns), 6, *e.shape).float()
-                * w[:, :, None, None, None]
-            ).sum((0, 1)) / w.sum().clamp_min(1)
+        _ensure_external_potential(e)
         remove = e.frontier.weights_tensor(-1, self.device)
         grow = torch.as_tensor(growth_mask(e), device=self.device, dtype=torch.float32)
         ep = e.external_potential
@@ -1153,6 +1142,8 @@ class CoarseToFineLearner:
         self.last_rejection = None
         self.last_attempt_recorded = False
         self.last_generated_count = 0
+        imitation = training and self.training_objective == "imitation"
+        greedy_rollout = self.heuristic_only or imitation
         cfg = env_or_cenv.config if is_coarse else self.fine_config
         stride = cfg.stride
         scale = int(env_or_cenv.bxy) if is_coarse else 1
@@ -1184,7 +1175,7 @@ class CoarseToFineLearner:
                 else self._fine_obs(env_or_cenv, z_slice=z_act)
             )
             goal = self._goal_vec(env_or_cenv, scale)
-            if self.heuristic_only:
+            if greedy_rollout:
                 mean_all = None
                 value = torch.zeros((), device=self.device, dtype=torch.float32)
                 logits = torch.zeros(4, device=self.device, dtype=torch.float32)
@@ -1223,7 +1214,7 @@ class CoarseToFineLearner:
                 self.last_rejection = "no_admissible_edits"
                 return None
 
-            if self.heuristic_only:
+            if greedy_rollout:
                 cur_vol = env_or_cenv.count_fine if is_coarse else env_or_cenv.count
                 mid_vol = 0.5 * (low_f + high_f)
                 if can_finish and env_or_cenv.edits >= 1:
@@ -1254,6 +1245,7 @@ class CoarseToFineLearner:
             consumed = None
             elig_c = None
             local_adv = None
+            teacher_mean = None
             if operation != "finish":
                 w_rem = env_or_cenv.frontier.weights_tensor(-1, self.device)[:z_act]
                 add_np = growth_mask(env_or_cenv)[:z_act]
@@ -1274,7 +1266,7 @@ class CoarseToFineLearner:
                     .clamp(-1.4, -0.3)
                     .exp()[:, None, None, None]
                 )
-                if not self.heuristic_only:
+                if not greedy_rollout:
                     mean = mean_all[consumed]
                     dist = Normal(mean, std, validate_args=False)
 
@@ -1402,7 +1394,7 @@ class CoarseToFineLearner:
                     if ln_before is not None
                     else torch.zeros_like(env_or_cenv.facade_light[:z_act])
                 )
-                if self.heuristic_only:
+                if greedy_rollout:
                     des_c = compute_spatial_desirability(
                         env_or_cenv,
                         w_rem,
@@ -1415,6 +1407,11 @@ class CoarseToFineLearner:
                     )
                     mean = (2.0 * des_c).clamp(-2.8, 2.8)
                     dist = Normal(mean, std, validate_args=False)
+                    if imitation:
+                        teacher_mean = mean
+                        elig_c = _pooled_edit_eligibility(
+                            w_rem, w_add, consumed, kernel, stride
+                        )
                 has_core_guard = (not is_coarse) and bool(
                     getattr(env_or_cenv, "cores_enabled", False)
                     and getattr(env_or_cenv, "cores", ())
@@ -1436,16 +1433,27 @@ class CoarseToFineLearner:
                     else ()
                 )
 
+                scales = (
+                    (1.0, 0.6, 0.36, 0.216, 0.1296, 0.07776, 0.046656, 0.027994)
+                    if self.decoder_retry_schedule == "adaptive"
+                    else (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)
+                )
                 for attempt in range(retries):
+                    diagnostics = self.decoder_diagnostics
+                    if diagnostics is not None:
+                        proposal_start = time.perf_counter()
+                    n_r = n_a = 0
                     latent = (
                         dist.sample()
-                        if (training or attempt > 0)
+                        if ((training and not imitation) or attempt > 0)
                         else (
                             mean
-                            + self.evaluation_noise_scale * std * torch.randn_like(mean)
+                            + (0.0 if imitation else self.evaluation_noise_scale)
+                            * std
+                            * torch.randn_like(mean)
                         )
                     )
-                    if training:
+                    if training and not imitation:
                         latent_draws.append(latent.detach())
                     decoded = F.interpolate(
                         latent[:, None],
@@ -1455,9 +1463,7 @@ class CoarseToFineLearner:
                     )[:, 0]
                     if cfg.mode == "combined":
                         decoded = gaussian_field(decoded, cfg.sigma)
-                    sc = (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)[
-                        min(attempt, 7)
-                    ]
+                    sc = scales[min(attempt, len(scales) - 1)]
                     scores = torch.zeros(
                         (2, *occ_s.shape), device=self.device, dtype=torch.float32
                     )
@@ -1589,6 +1595,8 @@ class CoarseToFineLearner:
                         masks_np[:, :z_act] = masks.cpu().numpy()
                         scores_np[:, :z_act] = scores.cpu().numpy()
                     self.last_generated_count = int(masks_np.sum())
+                    if diagnostics is not None:
+                        projection_start = time.perf_counter()
                     if is_coarse:
                         move = project_coarse_3d(
                             env_or_cenv, masks_np, scores_np, operation, True
@@ -1599,20 +1607,23 @@ class CoarseToFineLearner:
                         move = project_organic_3d(
                             env_or_cenv, masks_np, scores_np, operation, True
                         )
+                    if diagnostics is not None:
+                        diagnostics.record(
+                            scale=scale,
+                            operation=operation,
+                            retry=attempt,
+                            requested=n_r + n_a,
+                            masks=masks_np,
+                            proposed=self.last_generated_count,
+                            move=move,
+                            proposal_seconds=projection_start - proposal_start,
+                            projection_seconds=time.perf_counter() - projection_start,
+                        )
                     if move is not None:
                         if training and self.spatial_aux_weight > 0.0:
-                            elig_full = torch.stack(
-                                ((w_rem > 0).float(), (w_add > 0).float())
-                            )[consumed]
-                            elig_c = (
-                                F.max_pool3d(
-                                    elig_full[:, None],
-                                    kernel,
-                                    stride=stride,
-                                    ceil_mode=True,
-                                )[:, 0]
-                                > 0.5
-                            ).float()
+                            elig_c = _pooled_edit_eligibility(
+                                w_rem, w_add, consumed, kernel, stride
+                            )
                             des_c = compute_spatial_desirability(
                                 env_or_cenv,
                                 w_rem,
@@ -1659,6 +1670,8 @@ class CoarseToFineLearner:
                         consumed=consumed if move is not None else None,
                         elig_c=elig_c.detach() if elig_c is not None else None,
                         local_adv=local_adv.detach() if local_adv is not None else None,
+                        teacher_mean=teacher_mean,
+                        aux_weight=self.spatial_aux_weight,
                         reward=None,
                         done=False,
                     )
@@ -1687,32 +1700,9 @@ class CoarseToFineLearner:
     def finish(self, bootstrap=0.0):
         if not self.tape:
             return dict(updates=self.updates, loss=0.0, gradientNorm=0.0)
-        rewards = []
-        dones = []
-        val_old = []
-        zero_r = torch.zeros((), dtype=torch.float32, device=self.device)
-        for entry in self.tape:
-            val_old.append(entry["value"])
-            rew = entry["reward"]
-            rewards.append(zero_r if rew is None else rew)
-            dones.append(bool(entry["done"]))
-        val_old_t = torch.stack(val_old)
-        next_val = torch.as_tensor(
-            bootstrap, dtype=torch.float32, device=self.device
-        ).detach()
-        gamma, lam = 0.99, 0.95
-        gae = torch.zeros((), dtype=torch.float32, device=self.device)
-        advs = []
-        for t in range(len(self.tape) - 1, -1, -1):
-            mask = 0.0 if dones[t] else 1.0
-            nv = next_val if t == len(self.tape) - 1 else val_old_t[t + 1]
-            delta = rewards[t] + gamma * nv * mask - val_old_t[t]
-            gae = delta + gamma * lam * mask * gae
-            advs.append(gae)
-        adv = torch.stack(list(reversed(advs)))
-        returns = adv + val_old_t
-        if len(adv) > 1:
-            adv = (adv - adv.mean()) / adv.std().clamp_min(1e-5)
+        imitation = self.training_objective == "imitation"
+        if not imitation:
+            adv, returns = generalized_advantages(self.tape, bootstrap, self.device)
 
         groups = {}
         for t, entry in enumerate(self.tape):
@@ -1741,6 +1731,20 @@ class CoarseToFineLearner:
                     logits=logits_b[k].masked_fill(~entry["legal"], float("-inf"))
                 )
                 logp = dist_op.log_prob(entry["op"])
+                if imitation:
+                    term = -logp
+                    if entry["teacher_mean"] is not None:
+                        eligible = entry["elig_c"]
+                        error = F.smooth_l1_loss(
+                            mean_b[k, entry["drawn_channels"]],
+                            entry["teacher_mean"],
+                            reduction="none",
+                        )
+                        term = term + (
+                            error * eligible
+                        ).sum() / eligible.sum().clamp_min(1)
+                    actor_terms.append(term)
+                    continue
                 ent_terms.append(dist_op.entropy())
                 a_ep = adv[t].detach()
                 term = -(logp * a_ep)
@@ -1758,22 +1762,24 @@ class CoarseToFineLearner:
                         [dist_s.log_prob(draw).sum() / scale_norm for draw in draws]
                     ).sum()
                     term = term - path_logp * a_ep
+                    aux_weight = entry.get("aux_weight", self.spatial_aux_weight)
                     if (
                         entry["latent"] is not None
-                        and self.spatial_aux_weight > 0.0
+                        and aux_weight > 0.0
                         and entry["elig_c"] is not None
                     ):
                         elig_c = entry["elig_c"]
                         ecnt = elig_c.sum().clamp_min(1.0)
                         sp_lp = dist_s.log_prob(entry["latent"]) * elig_c
-                        term = term - self.spatial_aux_weight * (
+                        term = term - aux_weight * (
                             (sp_lp * entry["local_adv"]).sum() / ecnt.sqrt()
                         )
                 actor_terms.append(term)
-        values_t = torch.stack(values_out)
         actor = torch.stack(actor_terms).mean()
-        critic = F.smooth_l1_loss(values_t, returns)
-        loss = actor + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
+        loss = actor
+        if not imitation:
+            critic = F.smooth_l1_loss(torch.stack(values_out), returns)
+            loss = loss + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         norm = nn.utils.clip_grad_norm_(
@@ -1799,6 +1805,8 @@ class CoarseToFineLearner:
             block=list(self.block),
             inputChannels=self.input_channels,
             spatialAuxWeight=self.spatial_aux_weight,
+            trainingObjective=self.training_objective,
+            decoderRetrySchedule=self.decoder_retry_schedule,
             evaluationTemperature=self.evaluation_temperature,
             evaluationNoiseScale=self.evaluation_noise_scale,
             lr=self.lr,
@@ -1850,6 +1858,7 @@ def run_cascade_episode(
 ):
     """Run an arbitrary N-stage coarse -> ... -> fine episode and return timing + exact fine metrics."""
     t0 = time.perf_counter()
+    tape_start = len(learner.tape)
     coarse_envs = list(coarse_envs)
     stage_steps = []
     trace = []
@@ -2069,11 +2078,8 @@ def run_cascade_episode(
         )
         term_rew = 5.0 * (obj + far_pen)
     reward_sum += term_rew
-    if training and learner.tape:
-        learner.add_reward(term_rew)
-        learner.mark_done()
-        if len(learner.tape) >= rollout_steps:
-            learning = learner.finish(0.0)
+    if training:
+        learning = finish_episode_rollout(learner, tape_start, term_rew, rollout_steps)
     sync(env.device)
     dt = time.perf_counter() - t0
     m = env.metrics()

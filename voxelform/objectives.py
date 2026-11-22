@@ -9,7 +9,7 @@ from .unified import (
 )
 
 
-def organic_objective(env):
+def organic_objective(env, *, profile="default"):
     """Scalar research objective over uncalibrated environment proxies."""
     count = max(1.0, float(env.occupied.sum().detach().cpu()))
     mw = min_room_width(env)
@@ -75,10 +75,15 @@ def organic_objective(env):
         - 0.45 * core_uncov
         - 0.35 * core_bad
     )
+    if profile == "daylight_low":
+        obj -= 0.25 * (0.55 * sun + 0.45 * diff)
+    elif profile == "coverage_only" and core_enabled:
+        obj += 0.20 - 0.20 * core_uncov + 0.35 * core_bad - core_score_term
     diag = dict(
         organicObjective=obj,
         usableGoodFraction=usable_good,
         usableGoodArea=usable_good * count,
+        depthBadFraction=deep,
         longNarrowFraction=ln6_frac,
         cantileverVoxels=cantilever_voxels,
         slimVoxels=slim_voxels,

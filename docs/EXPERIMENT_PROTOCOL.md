@@ -35,17 +35,19 @@ copying remains only as a compatibility/control path.
 Training is synchronous actor-critic with GAE (`gamma=.99`, `lambda=.95`), Huber
 value loss (coefficient .5), operation entropy regularization (.005), Adam
 (`lr=.0012`, `weight_decay=.0001`) and gradient clipping (2). This is not PPO.
-Terminal masks prevent return propagation across episode boundaries; checkpoint
-flushes happen only at completed episodes. The terminal/environment reward is
-shared with the live app through `voxelform/objectives.py`.
+Terminal masks prevent return propagation across episodes. The runner updates
+when a completed episode takes the rollout to `rollout_steps`, and uses any
+remaining transitions at the end of the training budget. The terminal and
+environment rewards are shared with the live app through `voxelform/objectives.py`.
 
 The augmented action includes **all Gaussian retries consumed by decoding**,
-including rejected draws. The corrected actor scores their full joint log
-probability. Eligibility masking of spatial log probabilities was removed:
-smoothing may transmit information across eligibility boundaries. Only the
-operation/heads actually drawn are scored. The historical implementation saved
-only the successful spatial draw and lost rejected attempts, so those old runs
-are not an unbiased validation of this corrected estimator.
+including rejected draws. The flat learner (`gaussian-retry-path.v1`) scores
+their joint log probability. The tier-adaptive learner
+(`gaussian-retry-path-normalized.v1`) divides each spatial draw's log probability
+by the square root of the number of latent elements. This scaled score is a
+surrogate. Smoothing can transmit information across eligibility boundaries, so
+each consumed head is scored over its full latent grid. Only the drawn operation
+and spatial heads contribute to the score.
 
 An optional physics-shaped spatial auxiliary objective is weighted by
 `spatial_aux_weight`. The research reference config uses **0**. The separate
@@ -73,8 +75,13 @@ substantial uncertainty.
   training site once per ten episodes. The interactive rotation
   spends three consecutive episodes on each site with the same policy and
   optimizer. Historical results may use the original two-site pilot pool.
-- Test scenes are not used for training or checkpoint selection. Final fixed-
-  budget checkpoints are evaluated; no best-test checkpoint is selected.
+- The runner evaluates on validation at `checkpoint_interval` and at the end of
+  training. `best.pt` maximizes validation FAR success first and mean quality
+  second, with the earliest checkpoint winning ties. Test evaluation runs after
+  training for both `best.pt` and the fixed-budget `latest.pt`.
+- A development config can set `test_sites` to `[]` to skip final test evaluation.
+  Alternative reward profiles select checkpoints using common reference quality
+  after FAR success, so the selector uses the same objective across rewards.
 - Untrained policies and trained policies use common evaluation seeds. The
   untrained test baseline is evaluated only after training has finished.
 - Evaluation stores/restores Python/NumPy/Torch/device RNG state, so evaluation
@@ -116,16 +123,20 @@ Every new output directory contains:
 - Per-model-seed `train.jsonl`, raw validation/test episodes, untrained controls,
   checkpoint and summary; top-level cross-model-seed aggregation.
 
-Checkpoints include model, optimizer, counters, next episode index, complete RNG
-states, config hash, source hashes, scene fingerprints and library version.
-Pending rollouts must be flushed before saving. Changing checkpoint interval
-therefore changes the update schedule and is part of the configuration.
+Research v2 checkpoints store the model, optimizer, counters, next episode
+index, pending rollout tensors, RNG states, config and source hashes, scene
+fingerprints and core-layout version. Checkpointing and validation leave the
+pending batch intact. A clean interruption saves at the next completed episode
+and preserves the usual validation cadence. The historical v1 runner flushed
+pending batches before saving, so its published update counts include that effect.
 
 Resume writes into a **new directory**, retains parent-checkpoint provenance and
 continues one model seed. Exact resume rejects changed source/config/scene/core
 semantics. Interrupted partial episodes are not silently relabeled successes;
-resume uses the last complete atomic checkpoint. Historical checkpoints without
-this envelope are transfer/inference artifacts, not exact-resume artifacts.
+resume uses the last complete checkpoint. Use the recorded source revision for
+exact resume of a v1 run. The first launch fixes the config and model-seed roster.
+`--only-seed` accepts seeds on that roster with matching config and source hashes.
+`--finalize-only` requires completed summaries for the entire roster.
 
 CPU strict determinism is tested. Seeding MPS/CUDA does not guarantee bitwise
 identity across devices, library versions or hardware. `strict_determinism=true`
@@ -136,17 +147,94 @@ The editable checkout supports the UI. Installed ML packages/entry points suppor
 headless experiments; the renderer and external urban cache are optional data/UI
 dependencies, not prerequisites for the synthetic smoke run.
 
-## Research that remains to be done
+## Next experiments
 
-No full new multi-seed real-site study has been claimed from the smoke check.
-Longer budgets, training curves, sensitivity to reward weights/area budgets,
-independent exposure calibration, cross-city confidence, and paired comparisons
-against reproduced geometric/random and architecture baselines remain research
-work. Existing older ablation JSON is historical evidence, not automatically a
-reproduction under the corrected loss/core library.
+The published five-seed comparison tests M-tier plots. The new bundled
+[held-out config](../configs/research-real-aux-tier-heldout.json) retains the
+ten training plots and expands evaluation to these sites.
 
-Preference conditioning, vector critics, PCGrad, Lagrange multipliers and parallel
-environment throughput were proposals in the other agent's response. They were
-not implemented or validated by that response; “<80 lines”, universal Pareto
-learning and 3–5× throughput are not established results. Add them only through
-separate matched-budget, versioned experiments.
+| Split | M | L | XL |
+|---|---|---|---|
+| Validation | Hong Kong `m_hk_0199` | Hong Kong `l_hk_0218` | — |
+| Test | New York `m_nyc_0003`, Paris `m_prs_0315` | Paris `l_prs_0324` | New York `xl_nyc_0048` |
+
+Added plots were selected by size, city separation and grid fit. The validation
+city has no XL parcel in the current cache. An XL result would measure transfer
+to one site without validation on the macro pathway. Aggregate results should
+include per-site and per-tier results so failures on a larger tier are visible.
+[L/XL comparison and diagnostic results](../results/README.md#held-out-l-and-xl-comparison--2026-11-22)
+
+1. **Measure what RL adds.** Compare greedy, imitation-only, scalar-reward RL,
+   fixed auxiliary loss and an auxiliary weight that anneals to zero. Use the
+   same training sites, decoder, model and episode budget for learned arms. Log
+   environment steps, optimizer updates and wall time on MPS. Start with short
+   validation-only screens and freeze the arms, weights, seeds and budgets
+   before a held-out comparison. On a paired scene, test whether a policy
+   accepts a temporary quality loss that leads to a higher final score at
+   comparable FAR and edit count.
+2. **Check reward sensitivity.** Rescore the same terminal layouts under a
+   predeclared range of weights first. Compare FAR feasibility, usable area,
+   direct sun, diffuse sky, depth and core coverage individually. Include a
+   variant with one core-access term to measure the effect of double-counting
+   access penalties. Retrain the variants whose rankings materially change and
+   report tradeoffs among feasible layouts.
+3. **Measure decoder effects.** Log retries, rejection rate, distinct decoded
+   masks, the fraction of selected voxels changed by projection, and per-stage
+   time. Use those measurements to decide whether changing the sampler or
+   constraint projection merits a matched-budget experiment.
+
+## L/XL development screen and pilot
+
+[The confirmation config](../configs/research-confirmatory-l-xl.json) separates
+training in Barcelona, Tokyo, and Hong Kong, validation in New York, and test
+in Paris and Singapore. The training set has ten plots covering all five size
+tiers, including one XL plot. The New York XL validation and two Singapore XL
+test plots first appear in this protocol. The Singapore site IDs retain their
+catalog prefixes. The simulator uses measured areas of 3,938.4 and 3,844.7 m²
+to route both through the XL cascade.
+
+The [research suite](../tools/research_suite.py) records its plan before evaluating
+the decoder. It adopts faster budget reduction after a rejected mask only if
+rejections per accepted edit drop by at least 10%, FAR success holds, and mean
+reference quality falls by at most 0.02. It then screens six arms for 30 episodes
+per seed using two development model seeds. The screen sets `test_sites` to an
+empty list. Every learned arm uses the selected decoder and the same train sites.
+
+| Arm | Training signal |
+|---|---|
+| Scalar RL | Actor–critic with no spatial auxiliary loss |
+| Fixed guidance | Actor–critic with auxiliary weight 1.2 |
+| Annealed guidance | Weight 1.2 in the first fifth, then cosine decay to zero |
+| Imitation | Greedy teacher trajectories, operation cross-entropy, and masked score-field regression |
+| Coverage-only reward | Fixed guidance with one terminal core term, `0.20 − 0.65 × uncovered` |
+| Lower daylight reward | Fixed guidance with terminal sun and sky weights reduced by 25% |
+
+The imitation actor generates masks from its learned scores at evaluation.
+The reward arms keep the same step shaping and use the common reference for
+checkpoint selection and comparisons. The pilot uses the highest-ranked
+RL arm from validation and the imitation control. Both train from scratch for
+60 episodes with five new seeds, and both keep the final checkpoint. Greedy
+uses the same split, edit constraints, and evaluation seeds. The suite records
+every seed and includes failed FAR episodes in reported means.
+
+The [equal-FAR planning probe](../tools/lookahead_probe.py) compares one-step
+and two-step oracles in an exploratory synthetic scene at a fixed two-edit
+horizon. It can also evaluate the trained actor and heuristic from that start
+using their own generated masks and a common two-decision cap. The staged
+oracles use explicit action templates and exact volume conservation. The policy
+probe uses the production FAR band and allows finishing early.
+[Pilot results](../results/confirmatory-l-xl-2026-11-22.md)
+
+## 600-episode L/XL follow-up
+
+Fixed-guidance RL and imitation each train from scratch for 600 episodes on the
+same five model seeds and ten training sites as the pilot. The full cosine
+learning-rate schedule runs from the first episode. Both arms use the adaptive
+decoder and a validation checkpoint every 50 episodes. Selection ranks
+checkpoints by validation FAR success, then common quality, and favors the
+earliest checkpoint in a tie. The comparison reports validation-selected and
+episode-600 results on the same four test plots as greedy, with every FAR
+failure included. The test sites were previously used in the 60-episode pilot.
+[Guided RL config](../configs/research-l-xl-600ep-guided.json) ·
+[Imitation config](../configs/research-l-xl-600ep-imitation.json) ·
+[Result](../results/l-xl-600ep-mps-2026-11-22.md)
