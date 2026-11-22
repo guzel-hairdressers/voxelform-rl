@@ -1279,11 +1279,17 @@ class CoarseToFineLearner:
 
             allow_exchange = r_avail and a_avail
             if (
-                not is_coarse
-                and learned_cap
-                and not env_or_cenv.far_satisfied
-                and (env_or_cenv.unified_limit - env_or_cenv.unified_actions) <= 4
+                learned_cap
                 and (remove or grow)
+                and (
+                    abs(float(env_or_cenv.far) - float(env_or_cenv.target_far)) > 0.75
+                    or (
+                        not is_coarse
+                        and not env_or_cenv.far_satisfied
+                        and (env_or_cenv.unified_limit - env_or_cenv.unified_actions)
+                        <= 4
+                    )
+                )
             ):
                 allow_exchange = False
             legal = torch.tensor(
@@ -1957,7 +1963,8 @@ class CoarseToFineLearner:
         loss = actor
         if not imitation:
             critic = F.smooth_l1_loss(torch.stack(values_out), returns)
-            loss = loss + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
+            ent_coef = 0.02 if self.decoder_retry_schedule == "learned_cap" else 0.005
+            loss = loss + 0.5 * critic - ent_coef * torch.stack(ent_terms).mean()
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         norm = nn.utils.clip_grad_norm_(

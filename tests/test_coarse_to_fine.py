@@ -451,6 +451,26 @@ class CoarseToFineTests(unittest.TestCase):
             self.assertIsNone(mv)
             self.assertEqual(learner.last_operation, "finish")
 
+        # Verify "exchange" is gated when |far - target_far| > 0.75, and allowed within 0.75.
+        exchange_logits = torch.tensor([-5.0, -5.0, 10.0, -5.0])
+
+        def _fake_forward_exchange(obs_b, *_args, **_kwargs):
+            b, _z, _c, h, w = obs_b.shape
+            mean = torch.zeros((b, 2, obs_b.shape[1], h, w))
+            val = torch.zeros(b)
+            logits = exchange_logits.unsqueeze(0).expand(b, -1).clone()
+            return mean, val, logits
+
+        learner.model.forward_stage_batch = _fake_forward_exchange
+        cenv.reset(8)
+        learner.choose_stage(cenv, is_coarse=True, training=False, retries=1)
+        self.assertEqual(learner.last_operation, "remove")
+
+        cenv.reset(4)
+        cenv.count_fine = int(round(3.6 * cenv.plot_area))
+        learner.choose_stage(cenv, is_coarse=True, training=False, retries=1)
+        self.assertEqual(learner.last_operation, "exchange")
+
 
 if __name__ == "__main__":
     unittest.main()

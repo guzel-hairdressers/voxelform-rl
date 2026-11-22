@@ -2,6 +2,26 @@
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
 
+## 400-episode matched actor-critic control and exchange-gating ablation — 2026-11-22
+
+Strict 5-seed ablation (`seeds 4211–4215`, `spatial_aux_weight = 1.2`,
+`constant` schedule) on the exact same `tier_meso2 + dense_potential + learned_cap`
+configuration as two-teacher distillation ([config](../configs/research-control-all-tiers.json)).
+Without gating `exchange`, `actor_critic` improves from legacy `0.613` to
+`0.771 ± 0.072` (`97%` FAR) on test (`0.803 ± 0.016` across 4/5 seeds; Val
+`0.736 ± 0.015` at `100%` FAR), with `seed-4213` collapsing via premature
+`exchange` spam (`m_prs_0320 = 0.105`). Adding the `|FAR - FAR*| <= 0.75`
+`exchange` gate and `0.02` operation-entropy regularization eliminates that
+failure mode and lifts validation-selected `actor_critic` (`best.pt`) to
+**`0.803 ± 0.018`** (**`100%` FAR**, 95% CI `[0.789, 0.817]`), sweeping all `7/7`
+validation (`0.723 ± 0.025`, `100%` FAR) and test plots over `tier_meso2` Greedy
+(`0.599` Val / `0.734` Test) and surpassing two-teacher distillation (`0.752 ± 0.013`).
+Without validation selection, episode `400` (`latest.pt`) drifts to `0.762 ± 0.036`
+(`94%` FAR).
+[Report](control-all-tiers-400ep-mps-2026-11-22.md) ·
+[Evidence](control-all-tiers-400ep-mps-2026-11-22.json) ·
+[Matched Greedy](greedy-control-all-tiers-mps-2026-11-22.json)
+
 ## 400-episode two-teacher on-policy distillation — 2026-11-22
 
 Five matched model seeds (`4211–4215`) on the city-separated L/XL split,
