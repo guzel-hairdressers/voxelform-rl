@@ -291,3 +291,45 @@ class Experiment(unittest.TestCase):
             with self.assertRaisesRegex(FileNotFoundError, "Missing seed summary"):
                 train(SimpleNamespace(**vars(args), config=out / "config.json"))
             self.assertFalse((out / "summary.json").exists())
+
+    def test_distillation_config_fingerprint_annealing_and_teacher_loading(self):
+        from dataclasses import replace
+        from tools.research import make_policy, spatial_aux_weight_at
+        from voxelform.coarse_to_fine import CoarseToFineLearner
+
+        base = ExperimentConfig()
+        self.assertNotIn("teacher_checkpoints", base.to_dict())
+        alt = replace(base, teacher_checkpoints=())
+        self.assertEqual(base.fingerprint, alt.fingerprint)
+
+        sched = ExperimentConfig(
+            episodes=100,
+            multiscale_schedule="tier_macro4",
+            spatial_aux_schedule="annealed_floor",
+            spatial_aux_weight=1.0,
+        )
+        self.assertAlmostEqual(spatial_aux_weight_at(sched, 0), 1.0)
+        self.assertAlmostEqual(spatial_aux_weight_at(sched, 24), 1.0)
+        self.assertAlmostEqual(spatial_aux_weight_at(sched, 99), 0.15)
+
+        with tempfile.TemporaryDirectory() as d:
+            ckpt_path = Path(d) / "teacher.pt"
+            t_cfg = ExperimentConfig(multiscale_schedule="tier_adaptive")
+            teacher = CoarseToFineLearner("cpu", 77, input_channels=14)
+            save_checkpoint(ckpt_path, teacher, t_cfg, 77, 1, {})
+
+            s_cfg = ExperimentConfig(
+                multiscale_schedule="tier_macro4",
+                training_objective="on_policy_distill",
+                spatial_aux_schedule="annealed_floor",
+                spatial_aux_weight=1.2,
+                reward_profile="dense_potential",
+                teacher_checkpoints=(f"L_XL={ckpt_path}",),
+            )
+            self.assertIn("teacher_checkpoints", s_cfg.to_dict())
+            student = make_policy(s_cfg, "cpu", 123)
+            self.assertIn("L_XL", student.teachers)
+            for key, val in teacher.model.state_dict().items():
+                torch.testing.assert_close(
+                    val, student.teachers["L_XL"].state_dict()[key]
+                )

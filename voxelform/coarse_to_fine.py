@@ -16,6 +16,7 @@ from .fields import depth_badness, diffuse_access, facade_sky_access, usable_dep
 from .patch_policy import PatchConfig, PatchFacades, gaussian_field
 from .redistribution import Exchange
 from .decoder_diagnostics import DecoderDiagnostics
+from .objectives import coarse_potential, fine_potential
 from .rollout import finish_episode_rollout, generalized_advantages
 from .shadows import sync
 from .unified import (
@@ -35,14 +36,53 @@ from .unified import (
 from .workload import WorkloadBudget
 
 
-def tier_cascade_blocks(env):
+def tier_cascade_blocks(env, schedule="tier_adaptive"):
     """Select progressive coarse-to-fine block schedule by parcel area tier."""
     area = float(getattr(env, "plot_area", 0.0))
+    if schedule == "tier_meso2":
+        return () if area < 2500.0 else ((1, 2, 2),)
+    if schedule == "tier_macro4":
+        if area < 2500.0:
+            return ()
+        if area < 4100.0:
+            return ((1, 4, 4), (1, 2, 2))
+        return ((1, 8, 8), (1, 4, 4), (1, 2, 2))
+    if schedule == "tier_adaptive_xl8":
+        if area < 2500.0:
+            return ()
+        if area < 3800.0:
+            return ((1, 2, 2),)
+        if area < 4100.0:
+            return ((1, 4, 4), (1, 2, 2))
+        return ((1, 8, 8), (1, 4, 4), (1, 2, 2))
     if area < 2500.0:
         return ()
     if area < 3800.0:
         return ((1, 2, 2),)
     return ((1, 4, 4), (1, 2, 2))
+
+
+def _heuristic_op_index(
+    env_or_cenv, is_coarse, legal, low_f, high_f, remove, grow, can_finish
+):
+    cur_vol = env_or_cenv.count_fine if is_coarse else env_or_cenv.count
+    mid_vol = 0.5 * (low_f + high_f)
+    if can_finish and env_or_cenv.edits >= 1:
+        return 3
+    if remove and (not grow or cur_vol > mid_vol):
+        return 0
+    if grow and (not remove or cur_vol < mid_vol):
+        return 1
+    if bool(legal[2]):
+        return 2
+    return int(legal.nonzero(as_tuple=False)[0].item())
+
+
+def _learned_quota(score, weights, max_count, min_step, floor_frac=0.35):
+    """Cap thresholded positive-logit voxel selection within [min_count, max_count]."""
+    min_count = min(max_count, max(min_step, round(floor_frac * max_count)))
+    pos = int(((score > 0.5 * weights) & (weights > 0)).sum().item())
+    return min(max_count, max(min_count, pos))
 
 
 def _pool_boundary_2d(arr, kz, kx_y):
@@ -1065,6 +1105,31 @@ class CoarseToFineLearner:
         self.last_rejection = None
         self.last_attempt_recorded = False
         self.last_generated_count = 0
+        self.teachers: dict[str, CoarseToFineNetwork] = {}
+
+    def set_teachers(self, teachers: dict[str, CoarseToFineNetwork]):
+        """Register frozen tier-expert teacher networks for on-policy distillation."""
+        self.teachers = {}
+        for key, net in teachers.items():
+            net = net.to(self.device)
+            net.eval()
+            net.requires_grad_(False)
+            self.teachers[str(key)] = net
+
+    def _select_teacher(self, env_or_cenv) -> CoarseToFineNetwork | None:
+        if not self.teachers:
+            return None
+        area = float(getattr(env_or_cenv, "plot_area", 0.0))
+        if area < 2500.0:
+            order = ("XS_M", "ALL")
+        elif area < 3800.0:
+            order = ("L", "L_XL", "ALL")
+        else:
+            order = ("XL", "L_XL", "ALL")
+        for key in order:
+            if key in self.teachers:
+                return self.teachers[key]
+        return None
 
     def clear(self):
         self.tape = []
@@ -1143,7 +1208,9 @@ class CoarseToFineLearner:
         self.last_attempt_recorded = False
         self.last_generated_count = 0
         imitation = training and self.training_objective == "imitation"
+        on_policy_distill = training and self.training_objective == "on_policy_distill"
         greedy_rollout = self.heuristic_only or imitation
+        learned_cap = self.decoder_retry_schedule == "learned_cap"
         cfg = env_or_cenv.config if is_coarse else self.fine_config
         stride = cfg.stride
         scale = int(env_or_cenv.bxy) if is_coarse else 1
@@ -1195,15 +1262,32 @@ class CoarseToFineLearner:
                 low_f, high_f = env_or_cenv.acceptable_fine_counts
                 remove = r_avail and env_or_cenv.count_fine > low_f
                 grow = a_avail and env_or_cenv.count_fine < high_f
-                can_finish = bool(env_or_cenv.near_far)
+                can_finish = bool(
+                    env_or_cenv.near_far
+                    or (
+                        learned_cap
+                        and not greedy_rollout
+                        and env_or_cenv.edits >= 2
+                        and abs(env_or_cenv.far - env_or_cenv.target_far) <= 0.70
+                    )
+                )
             else:
                 low_f, high_f = env_or_cenv.acceptable_counts
                 remove = r_avail and env_or_cenv.count > low_f
                 grow = a_avail and env_or_cenv.count < high_f
                 can_finish = bool(env_or_cenv.far_satisfied)
 
+            allow_exchange = r_avail and a_avail
+            if (
+                not is_coarse
+                and learned_cap
+                and not env_or_cenv.far_satisfied
+                and (env_or_cenv.unified_limit - env_or_cenv.unified_actions) <= 4
+                and (remove or grow)
+            ):
+                allow_exchange = False
             legal = torch.tensor(
-                [remove, grow, r_avail and a_avail, can_finish],
+                [remove, grow, allow_exchange, can_finish],
                 device=self.device,
                 dtype=torch.bool,
             )
@@ -1214,20 +1298,25 @@ class CoarseToFineLearner:
                 self.last_rejection = "no_admissible_edits"
                 return None
 
+            heuristic_op = None
+            if training or greedy_rollout:
+                h_op_idx = _heuristic_op_index(
+                    env_or_cenv,
+                    is_coarse,
+                    legal,
+                    low_f,
+                    high_f,
+                    remove,
+                    grow,
+                    bool(env_or_cenv.near_far) if is_coarse else can_finish,
+                )
+                if training:
+                    heuristic_op = torch.tensor(
+                        h_op_idx, device=self.device, dtype=torch.long
+                    )
+
             if greedy_rollout:
-                cur_vol = env_or_cenv.count_fine if is_coarse else env_or_cenv.count
-                mid_vol = 0.5 * (low_f + high_f)
-                if can_finish and env_or_cenv.edits >= 1:
-                    op_idx = 3
-                elif remove and (not grow or cur_vol > mid_vol):
-                    op_idx = 0
-                elif grow and (not remove or cur_vol < mid_vol):
-                    op_idx = 1
-                elif bool(legal[2]):
-                    op_idx = 2
-                else:
-                    op_idx = int(legal.nonzero(as_tuple=False)[0].item())
-                op = torch.tensor(op_idx, device=self.device, dtype=torch.long)
+                op = torch.tensor(h_op_idx, device=self.device, dtype=torch.long)
             else:
                 eff_logits = (
                     logits if training else (logits * self.evaluation_temperature)
@@ -1246,6 +1335,20 @@ class CoarseToFineLearner:
             elig_c = None
             local_adv = None
             teacher_mean = None
+            teacher_logits = None
+            teacher_net = None
+            t_mean_all = None
+            if on_policy_distill:
+                teacher_net = self._select_teacher(env_or_cenv)
+                if teacher_net is not None:
+                    t_mean_all, _, t_logits = teacher_net.forward_stage_batch(
+                        obs[None],
+                        goal[None],
+                        is_coarse=is_coarse,
+                        stride=stride,
+                        scale=scale,
+                    )
+                    teacher_logits = t_logits[0].detach()
             if operation != "finish":
                 w_rem = env_or_cenv.frontier.weights_tensor(-1, self.device)[:z_act]
                 add_np = growth_mask(env_or_cenv)[:z_act]
@@ -1435,9 +1538,15 @@ class CoarseToFineLearner:
 
                 scales = (
                     (1.0, 0.6, 0.36, 0.216, 0.1296, 0.07776, 0.046656, 0.027994)
-                    if self.decoder_retry_schedule == "adaptive"
+                    if self.decoder_retry_schedule in ("adaptive", "learned_cap")
                     else (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)
                 )
+                if not is_coarse and not env_or_cenv.far_satisfied and productive <= 4:
+                    quota_floor = 1.0
+                elif is_coarse or env_or_cenv.far_satisfied or operation == "exchange":
+                    quota_floor = 0.35
+                else:
+                    quota_floor = 0.65
                 for attempt in range(retries):
                     diagnostics = self.decoder_diagnostics
                     if diagnostics is not None:
@@ -1471,7 +1580,7 @@ class CoarseToFineLearner:
                         (2, *occ_s.shape), device=self.device, dtype=torch.bool
                     )
                     if 0 in consumed and avail_rem > 0 and base_rem > 0:
-                        n_r = min(avail_rem, max(1, round(base_rem * sc)))
+                        max_r = min(avail_rem, max(1, round(base_rem * sc)))
                         s0 = decoded[consumed.index(0)].sigmoid() * w_rem
                         if core_m_sub is not None:
                             s0 = torch.where(core_m_sub, s0 * 0.30, s0)
@@ -1492,6 +1601,13 @@ class CoarseToFineLearner:
                                 near = near | nbr_n
                             inner = (w_rem > 0) & ~skin & near
                             s0 = torch.where(inner, torch.minimum(s0, bound), s0)
+                        n_r = (
+                            _learned_quota(
+                                s0, w_rem, max_r, min_step, floor_frac=quota_floor
+                            )
+                            if (learned_cap and not greedy_rollout)
+                            else max_r
+                        )
                         scores[0] = s0
                         r_t = torch.zeros_like(occ_s)
                         ids = s0.masked_fill(w_rem <= 0, -1).flatten().topk(n_r).indices
@@ -1561,8 +1677,15 @@ class CoarseToFineLearner:
                                 ] = False
                         masks[0] = r_t
                     if 1 in consumed and avail_add > 0 and base_add > 0:
-                        n_a = min(avail_add, max(1, round(base_add * sc)))
+                        max_a = min(avail_add, max(1, round(base_add * sc)))
                         s1 = decoded[consumed.index(1)].sigmoid() * w_add
+                        n_a = (
+                            _learned_quota(
+                                s1, w_add, max_a, min_step, floor_frac=quota_floor
+                            )
+                            if (learned_cap and not greedy_rollout)
+                            else max_a
+                        )
                         scores[1] = s1
                         a_t = torch.zeros_like(occ_s)
                         ids = s1.masked_fill(w_add <= 0, -1).flatten().topk(n_a).indices
@@ -1620,7 +1743,25 @@ class CoarseToFineLearner:
                             projection_seconds=time.perf_counter() - projection_start,
                         )
                     if move is not None:
-                        if training and self.spatial_aux_weight > 0.0:
+                        if training and on_policy_distill:
+                            elig_c = _pooled_edit_eligibility(
+                                w_rem, w_add, consumed, kernel, stride
+                            )
+                            if t_mean_all is not None:
+                                teacher_mean = t_mean_all[0, consumed].detach()
+                            else:
+                                des_c = compute_spatial_desirability(
+                                    env_or_cenv,
+                                    w_rem,
+                                    w_add,
+                                    ln_f,
+                                    consumed,
+                                    kernel,
+                                    stride,
+                                    z_slice=z_act,
+                                )
+                                teacher_mean = (2.0 * des_c).clamp(-2.8, 2.8).detach()
+                        elif training and self.spatial_aux_weight > 0.0:
                             elig_c = _pooled_edit_eligibility(
                                 w_rem, w_add, consumed, kernel, stride
                             )
@@ -1671,6 +1812,8 @@ class CoarseToFineLearner:
                         elig_c=elig_c.detach() if elig_c is not None else None,
                         local_adv=local_adv.detach() if local_adv is not None else None,
                         teacher_mean=teacher_mean,
+                        teacher_logits=teacher_logits,
+                        heuristic_op=heuristic_op,
                         aux_weight=self.spatial_aux_weight,
                         reward=None,
                         done=False,
@@ -1697,10 +1840,16 @@ class CoarseToFineLearner:
         if self.tape:
             self.tape[-1]["done"] = True
 
+    @staticmethod
+    def _masked_spatial_loss(pred, target, eligible):
+        error = F.smooth_l1_loss(pred, target, reduction="none")
+        return (error * eligible).sum() / eligible.sum().clamp_min(1.0)
+
     def finish(self, bootstrap=0.0):
         if not self.tape:
             return dict(updates=self.updates, loss=0.0, gradientNorm=0.0)
         imitation = self.training_objective == "imitation"
+        on_policy_distill = self.training_objective == "on_policy_distill"
         if not imitation:
             adv, returns = generalized_advantages(self.tape, bootstrap, self.device)
 
@@ -1734,20 +1883,18 @@ class CoarseToFineLearner:
                 if imitation:
                     term = -logp
                     if entry["teacher_mean"] is not None:
-                        eligible = entry["elig_c"]
-                        error = F.smooth_l1_loss(
+                        term = term + self._masked_spatial_loss(
                             mean_b[k, entry["drawn_channels"]],
                             entry["teacher_mean"],
-                            reduction="none",
+                            entry["elig_c"],
                         )
-                        term = term + (
-                            error * eligible
-                        ).sum() / eligible.sum().clamp_min(1)
                     actor_terms.append(term)
                     continue
                 ent_terms.append(dist_op.entropy())
                 a_ep = adv[t].detach()
-                term = -(logp * a_ep)
+                aux_weight = entry.get("aux_weight", self.spatial_aux_weight)
+                rl_scale = 0.25 if (on_policy_distill and aux_weight > 0.0) else 1.0
+                term = -(logp * a_ep) * rl_scale
                 draws = entry.get("latents") or (
                     [entry["latent"]] if entry["latent"] is not None else []
                 )
@@ -1761,18 +1908,49 @@ class CoarseToFineLearner:
                     path_logp = torch.stack(
                         [dist_s.log_prob(draw).sum() / scale_norm for draw in draws]
                     ).sum()
-                    term = term - path_logp * a_ep
-                    aux_weight = entry.get("aux_weight", self.spatial_aux_weight)
-                    if (
-                        entry["latent"] is not None
-                        and aux_weight > 0.0
-                        and entry["elig_c"] is not None
-                    ):
-                        elig_c = entry["elig_c"]
-                        ecnt = elig_c.sum().clamp_min(1.0)
-                        sp_lp = dist_s.log_prob(entry["latent"]) * elig_c
-                        term = term - aux_weight * (
-                            (sp_lp * entry["local_adv"]).sum() / ecnt.sqrt()
+                    term = term - path_logp * a_ep * rl_scale
+                    if aux_weight > 0.0 and entry["elig_c"] is not None:
+                        if on_policy_distill and entry.get("teacher_mean") is not None:
+                            term = term + (
+                                4.0 * aux_weight
+                            ) * self._masked_spatial_loss(
+                                mean, entry["teacher_mean"], entry["elig_c"]
+                            )
+                        elif (
+                            not on_policy_distill
+                            and entry["latent"] is not None
+                            and entry.get("local_adv") is not None
+                        ):
+                            elig_c = entry["elig_c"]
+                            ecnt = elig_c.sum().clamp_min(1.0)
+                            sp_lp = dist_s.log_prob(entry["latent"]) * elig_c
+                            term = term - aux_weight * (
+                                (sp_lp * entry["local_adv"]).sum() / ecnt.sqrt()
+                            )
+                if on_policy_distill and aux_weight > 0.0:
+                    if entry.get("teacher_logits") is not None:
+                        valid_mask = entry["legal"]
+                        p_t = F.softmax(
+                            entry["teacher_logits"].masked_fill(
+                                ~valid_mask, float("-inf")
+                            ),
+                            dim=-1,
+                        )
+                        log_p_s = F.log_softmax(
+                            logits_b[k].masked_fill(~valid_mask, float("-inf")),
+                            dim=-1,
+                        )
+                        op_kl = (
+                            p_t[valid_mask]
+                            * (
+                                p_t[valid_mask].clamp_min(1e-8).log()
+                                - log_p_s[valid_mask]
+                            )
+                        ).sum()
+                        term = term + (0.5 * aux_weight) * op_kl
+                    elif entry.get("heuristic_op") is not None:
+                        term = term - 0.15 * aux_weight * dist_op.log_prob(
+                            entry["heuristic_op"]
                         )
                 actor_terms.append(term)
         actor = torch.stack(actor_terms).mean()
@@ -1855,11 +2033,13 @@ def run_cascade_episode(
     audit_steps=5,
     step_reward_fn=None,
     terminal_reward_fn=None,
+    reward_profile="default",
 ):
     """Run an arbitrary N-stage coarse -> ... -> fine episode and return timing + exact fine metrics."""
     t0 = time.perf_counter()
     tape_start = len(learner.tape)
     coarse_envs = list(coarse_envs)
+    dense_potential = reward_profile == "dense_potential"
     stage_steps = []
     trace = []
     attempt_idx = 0
@@ -1873,6 +2053,7 @@ def run_cascade_episode(
             budget_total += ce.unified_limit
             c_steps = 0
             prev_core = float(getattr(ce, "core_score", 0.0))
+            prev_pot = coarse_potential(ce) if (training and dense_potential) else 0.0
             while not ce.near_far and ce.unified_actions < ce.unified_limit:
                 move = learner.choose_stage(ce, is_coarse=True, training=training)
                 ce.unified_actions += 1
@@ -1919,12 +2100,20 @@ def run_cascade_episode(
                         int(move.remove.sum() + move.add.sum()),
                         int(move.remove.sum() + move.add.sum()),
                     )
-                delta = 0.0
-                if training and getattr(ce, "cores_enabled", False):
-                    cur_core = float(getattr(ce, "core_score", 0.0))
-                    delta = cur_core - prev_core
-                    prev_core = cur_core
-                rew = 0.35 * delta - 0.002 if step_reward_fn is not None else -0.002
+                if dense_potential:
+                    if training:
+                        cur_pot = coarse_potential(ce)
+                        rew = 1.5 * (cur_pot - prev_pot) - 0.002
+                        prev_pot = cur_pot
+                    else:
+                        rew = -0.002
+                else:
+                    delta = 0.0
+                    if training and getattr(ce, "cores_enabled", False):
+                        cur_core = float(getattr(ce, "core_score", 0.0))
+                        delta = cur_core - prev_core
+                        prev_core = cur_core
+                    rew = 0.35 * delta - 0.002 if step_reward_fn is not None else -0.002
                 if training and learner.last_attempt_recorded:
                     learner.record(rew)
                 reward_sum += rew
@@ -1959,8 +2148,11 @@ def run_cascade_episode(
 
     budget_total += env.unified_limit
     fine_steps = 0
-    _, d0 = objective_fn(env)
+    obj0, d0 = objective_fn(env)
     prev_core_fine = float(d0.get("coreScore") or 0.0)
+    prev_fine_pot = (
+        fine_potential(env, obj0, start_fine) if (training and dense_potential) else 0.0
+    )
     while not env.terminal:
         move = learner.choose_stage(env, is_coarse=False, training=training)
         env.unified_actions += 1
@@ -2013,26 +2205,41 @@ def run_cascade_episode(
                 int(move.remove.sum() + move.add.sum()),
                 int(move.remove.sum() + move.add.sum()),
             )
-        delta = 0.0
-        if (
-            training
-            and getattr(env, "cores_enabled", False)
-            and step_reward_fn is not None
-        ):
-            env.update_cores()
-            cm = env.core_metrics
-            c_sc = max(
-                0.0,
-                (1.0 - float(cm["coreUncoveredFraction"]))
-                * (1.0 - 0.5 * float(cm["coreDistBadness"])),
+        if dense_potential:
+            if env.edits % audit_steps == 0:
+                env.evaluate()
+            elif training and getattr(env, "cores_enabled", False):
+                env.update_cores()
+            if training:
+                cur_obj, _ = objective_fn(env)
+                cur_fine_pot = fine_potential(env, cur_obj, start_fine)
+                rew = 2.0 * (cur_fine_pot - prev_fine_pot) + (
+                    -0.005 if env.far_satisfied else 0.0
+                )
+                prev_fine_pot = cur_fine_pot
+            else:
+                rew = -0.005 if env.far_satisfied else 0.0
+        else:
+            delta = 0.0
+            if (
+                training
+                and getattr(env, "cores_enabled", False)
+                and step_reward_fn is not None
+            ):
+                env.update_cores()
+                cm = env.core_metrics
+                c_sc = max(
+                    0.0,
+                    (1.0 - float(cm["coreUncoveredFraction"]))
+                    * (1.0 - 0.5 * float(cm["coreDistBadness"])),
+                )
+                delta = c_sc - prev_core_fine
+                prev_core_fine = c_sc
+            rew = (
+                step_reward_fn(env, delta)
+                if step_reward_fn is not None
+                else (-0.005 if env.far_satisfied else 0.0)
             )
-            delta = c_sc - prev_core_fine
-            prev_core_fine = c_sc
-        rew = (
-            step_reward_fn(env, delta)
-            if step_reward_fn is not None
-            else (-0.005 if env.far_satisfied else 0.0)
-        )
         if training and learner.last_attempt_recorded:
             learner.record(rew)
         reward_sum += rew
@@ -2052,7 +2259,7 @@ def run_cascade_episode(
                 "far_reached" if env.far_satisfied else "step_budget_exhausted"
             )
             break
-        if env.edits % audit_steps == 0:
+        if not dense_potential and env.edits % audit_steps == 0:
             env.evaluate()
 
     if not env.terminal:

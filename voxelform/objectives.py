@@ -114,6 +114,58 @@ def organic_step_reward(env, core_delta=0.0):
     return (-0.005 if env.far_satisfied else 0.0) + 0.50 * core_delta
 
 
+def coarse_potential(ce) -> float:
+    """Fast multi-objective potential on a CoarseEnv after evaluate_fast()."""
+    count = max(1.0, float(ce.occupied.sum().detach().cpu()))
+    core_enabled = bool(
+        getattr(ce, "cores_enabled", False) and hasattr(ce, "core_mask")
+    )
+    if core_enabled:
+        core_ok = (~ce.core_mask) & (
+            ce.core_distance
+            <= float(getattr(ce, "max_core_dist", DEFAULT_MAX_CORE_DIST))
+        )
+        usable_good = float((ce.usable & core_ok).sum().detach().cpu()) / count
+        core_term = 0.20 * float(getattr(ce, "core_score", 0.0))
+    else:
+        usable_good = float(ce.usable.sum().detach().cpu()) / count
+        core_term = 0.0
+    occ_f = ce.occupied.float()
+    sun_proxy = float((ce.external_potential * occ_f).sum().detach().cpu()) / count
+    diff_proxy = float((ce.facade_light * occ_f).sum().detach().cpu()) / count
+    deep = float(ce.depth_badness.sum().detach().cpu()) / count
+    far_prog = (
+        0.0
+        if ce.near_far
+        else -0.35
+        * abs(ce.count_fine - ce.goal_count_fine)
+        / max(1.0, abs(ce.start_count_fine - ce.goal_count_fine))
+    )
+    return (
+        0.65 * usable_good
+        + 0.55 * sun_proxy
+        + 0.45 * diff_proxy
+        + core_term
+        - 0.20 * deep
+        + far_prog
+    )
+
+
+def fine_potential(
+    env, objective_value: float, start_count: int | None = None
+) -> float:
+    """Potential combining fine organic_objective and normalized FAR progress."""
+    s_cnt = env.start_count if start_count is None else start_count
+    far_prog = (
+        0.0
+        if env.far_satisfied
+        else -0.35
+        * abs(env.count - env.goal_count)
+        / max(1.0, abs(s_cnt - env.goal_count))
+    )
+    return float(objective_value) + far_prog
+
+
 def organic_terminal_reward(env, objective):
     penalty = (
         0.0

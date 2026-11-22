@@ -2,6 +2,24 @@
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
 
+## 400-episode two-teacher on-policy distillation — 2026-11-22
+
+Five matched model seeds (`4211–4215`) on the city-separated L/XL split,
+combining `tier_meso2` (`2×2×1 → 1×1×1` for `area >= 2,500 m²`), `dense_potential`
+step shaping, `learned_cap` edit sizing, and on-policy distillation from frozen
+`XS_M` and `L_XL` tier experts ([config](../configs/research-distill-all-tiers.json)).
+Upgrading `tier_meso2` alone lifts Greedy on the 4-plot test split from `0.681`
+to `0.734`. Two-teacher on-policy distillation surpasses both Greedy baselines
+across all five seeds (`0.752 ± 0.013` / `99%` FAR at validation-selected
+`best.pt`; `0.753 ± 0.013` / `98%` FAR at episode `400`) and leads Greedy on
+all three unseen New York validation plots (`0.707 ± 0.022` at `100%` FAR vs.
+`0.599` at `93.3%` FAR), while M-tier held-out Paris (`m_prs_0320`: `0.632` vs.
+`0.693`) remains behind Greedy.
+[Report](distill-all-tiers-400ep-mps-2026-11-22.md) ·
+[Evidence](distill-all-tiers-400ep-mps-2026-11-22.json) ·
+[Matched Greedy](greedy-distill-all-tiers-mps-2026-11-22.json) ·
+[L/XL Greedy](greedy-expert-l-xl-mps-2026-11-22.json)
+
 ## 600-episode L and XL follow-up — 2026-11-22
 
 Five matched model seeds per arm, with checkpoint evaluation every 50 episodes.

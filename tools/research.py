@@ -21,6 +21,7 @@ import torch
 from voxelform.coarse_to_fine import (
     CoarseEnv,
     CoarseToFineLearner,
+    CoarseToFineNetwork,
     run_cascade_episode,
     tier_cascade_blocks,
 )
@@ -28,6 +29,7 @@ from voxelform.context import ContextLibrary
 from voxelform.cores import solve_cores
 from voxelform.environment import Environment
 from voxelform.experiment import (
+    ROOT,
     ExperimentConfig,
     archive_source,
     read_checkpoint,
@@ -138,12 +140,13 @@ class Scenes:
         return env
 
     def coarse_envs(self, site):
-        if self.config.multiscale_schedule != "tier_adaptive":
+        if self.config.multiscale_schedule == "none":
             return ()
         if site not in self._coarse:
             env = self.get(site)
             self._coarse[site] = tuple(
-                CoarseEnv(env, blk) for blk in tier_cascade_blocks(env)
+                CoarseEnv(env, blk)
+                for blk in tier_cascade_blocks(env, self.config.multiscale_schedule)
             )
         return self._coarse[site]
 
@@ -198,8 +201,8 @@ def make_policy(config, device, seed):
         vertical_interior=False,
         budget_reserve_fraction=0.2,
     )
-    if config.multiscale_schedule == "tier_adaptive":
-        return CoarseToFineLearner(
+    if config.multiscale_schedule != "none":
+        learner = CoarseToFineLearner(
             device,
             seed,
             block=(1, 2, 2),
@@ -212,6 +215,28 @@ def make_policy(config, device, seed):
             training_objective=config.training_objective,
             decoder_retry_schedule=config.decoder_retry_schedule,
         )
+        if config.teacher_checkpoints:
+            teachers: dict[str, CoarseToFineNetwork] = {}
+            for spec in config.teacher_checkpoints:
+                if "=" in spec:
+                    tier_key, raw_path = spec.split("=", 1)
+                else:
+                    tier_key, raw_path = "ALL", spec
+                ckpt_path = Path(raw_path)
+                if not ckpt_path.is_file():
+                    ckpt_path = ROOT / raw_path
+                ckpt = torch.load(ckpt_path, map_location="cpu", weights_only=True)
+                policy_state = ckpt["policy"] if "policy" in ckpt else ckpt
+                in_ch = int(
+                    policy_state.get(
+                        "inputChannels", 14 if config.cores_enabled else 12
+                    )
+                )
+                net = CoarseToFineNetwork(in_ch).to(device)
+                net.load_state_dict(policy_state["model"])
+                teachers[tier_key] = net
+            learner.set_teachers(teachers)
+        return learner
     p = UnifiedLearner(
         device,
         seed,
@@ -259,6 +284,7 @@ def episode(policy, env, config, training, coarse_envs=()):
             audit_steps=config.audit_steps,
             step_reward_fn=organic_step_reward,
             terminal_reward_fn=organic_terminal_reward,
+            reward_profile=config.reward_profile,
         )
         return dict(
             reference=_reference_eval(env) if not training else None,
@@ -398,6 +424,16 @@ def evaluate(policy, scenes, config, split):
 def spatial_aux_weight_at(config: ExperimentConfig, episode_index: int) -> float:
     if config.spatial_aux_schedule == "constant":
         return config.spatial_aux_weight
+    if config.spatial_aux_schedule == "annealed_floor":
+        warmup = max(1, config.episodes // 4)
+        progress = min(
+            1.0,
+            max(0.0, (episode_index - warmup + 1) / max(1, config.episodes - warmup)),
+        )
+        floor = 0.15 * config.spatial_aux_weight
+        return floor + (config.spatial_aux_weight - floor) * 0.5 * (
+            1.0 + math.cos(math.pi * progress)
+        )
     warmup = max(1, config.episodes // 5)
     progress = max(0.0, (episode_index - warmup + 1) / max(1, config.episodes - warmup))
     return config.spatial_aux_weight * 0.5 * (1.0 + math.cos(math.pi * progress))
@@ -578,7 +614,9 @@ def train(args):
     )
 
     quality_key = (
-        "meanQuality" if config.reward_profile == "default" else "meanReferenceQuality"
+        "meanQuality"
+        if config.reward_profile in ("default", "dense_potential")
+        else "meanReferenceQuality"
     )
 
     def _val_rank(vsum):

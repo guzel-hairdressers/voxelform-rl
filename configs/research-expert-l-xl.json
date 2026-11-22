@@ -1,0 +1,61 @@
+{
+  "audit_steps": 5,
+  "ceiling_storeys": 20,
+  "checkpoint_interval": 50,
+  "cores_enabled": true,
+  "decoder_retry_schedule": "learned_cap",
+  "device": "mps",
+  "episodes": 600,
+  "evaluation_noise_scale": 1.0,
+  "evaluation_seeds": [
+    9201,
+    9202,
+    9203,
+    9204,
+    9205
+  ],
+  "evaluation_temperature": 1.0,
+  "far_tolerance": 0.1,
+  "initial_storeys": 6,
+  "lr_schedule": "cosine",
+  "max_core_dist": 12,
+  "min_core_spacing": 10,
+  "multiscale_schedule": "tier_meso2",
+  "reward_profile": "dense_potential",
+  "rollout_steps": 16,
+  "seeds": [
+    4211,
+    4212,
+    4213,
+    4214,
+    4215
+  ],
+  "spatial_aux_schedule": "annealed_floor",
+  "spatial_aux_weight": 1.2,
+  "strict_determinism": false,
+  "synthetic_length": 24,
+  "synthetic_width": 24,
+  "target_far": 3.0,
+  "test_sites": [
+    "l_prs_0324",
+    "l_sgp_0327",
+    "l_sgp_0367",
+    "l_sgp_0379",
+    "xl_nyc_0048"
+  ],
+  "threads": 1,
+  "train_sites": [
+    "l_bcn_0074",
+    "l_hk_0198",
+    "l_hk_0218",
+    "l_sgp_0369",
+    "l_tokyo_0191",
+    "xl_tokyo_0185",
+    "xl_sgp_0386"
+  ],
+  "training_objective": "actor_critic",
+  "validation_sites": [
+    "l_nyc_0019",
+    "xl_nyc_0062"
+  ]
+}

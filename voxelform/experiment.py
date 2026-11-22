@@ -59,6 +59,7 @@ class ExperimentConfig:
     spatial_aux_schedule: str = "constant"
     decoder_retry_schedule: str = "legacy"
     reward_profile: str = "default"
+    teacher_checkpoints: tuple[str, ...] = ()
 
     def __post_init__(self):
         for key in (
@@ -142,27 +143,55 @@ class ExperimentConfig:
             raise ValueError("Temperature multiplier must be positive")
         if self.device not in ("cpu", "mps", "cuda", "auto"):
             raise ValueError("Unknown compute device")
-        if self.multiscale_schedule not in ("none", "tier_adaptive"):
+        if self.multiscale_schedule not in (
+            "none",
+            "tier_adaptive",
+            "tier_meso2",
+            "tier_macro4",
+            "tier_adaptive_xl8",
+        ):
             raise ValueError("Unknown multiscale schedule")
         if self.lr_schedule not in ("constant", "cosine"):
             raise ValueError("Unknown learning-rate schedule")
-        if self.training_objective not in ("actor_critic", "imitation"):
+        if self.training_objective not in (
+            "actor_critic",
+            "imitation",
+            "on_policy_distill",
+        ):
             raise ValueError("Unknown training objective")
-        if self.spatial_aux_schedule not in ("constant", "annealed"):
+        if self.spatial_aux_schedule not in (
+            "constant",
+            "annealed",
+            "annealed_floor",
+        ):
             raise ValueError("Unknown spatial auxiliary schedule")
-        if self.decoder_retry_schedule not in ("legacy", "adaptive"):
+        if self.decoder_retry_schedule not in ("legacy", "adaptive", "learned_cap"):
             raise ValueError("Unknown decoder retry schedule")
-        if self.reward_profile not in ("default", "coverage_only", "daylight_low"):
+        if self.reward_profile not in (
+            "default",
+            "coverage_only",
+            "daylight_low",
+            "dense_potential",
+        ):
             raise ValueError("Unknown reward profile")
-        if self.training_objective == "imitation" and self.spatial_aux_weight:
-            raise ValueError("Imitation uses its own supervised loss")
-        if self.multiscale_schedule != "tier_adaptive" and (
-            self.training_objective == "imitation"
-            or self.decoder_retry_schedule != "legacy"
-            or self.spatial_aux_schedule != "constant"
+        tc = self.teacher_checkpoints
+        if not isinstance(tc, (list, tuple)) or any(
+            not isinstance(item, str) or not item.strip() for item in tc
         ):
             raise ValueError(
-                "Imitation, adaptive retries and annealing require tier_adaptive"
+                "teacher_checkpoints must be a sequence of nonempty strings"
+            )
+        object.__setattr__(self, "teacher_checkpoints", tuple(tc))
+        if self.training_objective == "imitation" and self.spatial_aux_weight:
+            raise ValueError("Imitation uses its own supervised loss")
+        if self.multiscale_schedule == "none" and (
+            self.training_objective in ("imitation", "on_policy_distill")
+            or self.decoder_retry_schedule != "legacy"
+            or self.spatial_aux_schedule != "constant"
+            or bool(self.teacher_checkpoints)
+        ):
+            raise ValueError(
+                "Imitation, distillation, adaptive retries and annealing require multiscale"
             )
 
     @classmethod
@@ -176,7 +205,10 @@ class ExperimentConfig:
         return cls(**data)
 
     def to_dict(self):
-        return asdict(self)
+        d = asdict(self)
+        if not self.teacher_checkpoints:
+            d.pop("teacher_checkpoints", None)
+        return d
 
     @property
     def fingerprint(self):

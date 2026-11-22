@@ -328,6 +328,129 @@ class CoarseToFineTests(unittest.TestCase):
         self.assertEqual(len(res["stageSteps"]), 2)
         self.assertGreater(res["steps"], 0)
 
+    def test_tier_cascade_blocks_macro_and_xl8_schedules(self):
+        for area, expected_macro4, expected_xl8 in (
+            (2000.0, (), ()),
+            (3000.0, ((1, 4, 4), (1, 2, 2)), ((1, 2, 2),)),
+            (3900.0, ((1, 4, 4), (1, 2, 2)), ((1, 4, 4), (1, 2, 2))),
+            (
+                4500.0,
+                ((1, 8, 8), (1, 4, 4), (1, 2, 2)),
+                ((1, 8, 8), (1, 4, 4), (1, 2, 2)),
+            ),
+        ):
+            env = SimpleNamespace(plot_area=area)
+            self.assertEqual(tier_cascade_blocks(env, "tier_macro4"), expected_macro4)
+            self.assertEqual(
+                tier_cascade_blocks(env, "tier_adaptive_xl8"), expected_xl8
+            )
+            self.assertEqual(
+                tier_cascade_blocks(env, "tier_meso2"),
+                () if area < 2500.0 else ((1, 2, 2),),
+            )
+
+    def test_dense_potential_and_on_policy_teacher_distillation(self):
+        env, cfg = self._make_env(shape=(12, 32, 32), plan="rectangle")
+        env.plot_area = 3200.0
+        c2 = CoarseEnv(env, block=(1, 2, 2))
+        c2.plot_area = 3200.0
+        teacher = CoarseToFineLearner(device="cpu", seed=99, fine_config=cfg)
+        student = CoarseToFineLearner(
+            device="cpu",
+            seed=123,
+            fine_config=cfg,
+            spatial_aux_weight=1.0,
+            training_objective="on_policy_distill",
+        )
+        student.set_teachers({"L_XL": copy.deepcopy(teacher.model)})
+        torch.manual_seed(7)
+        res = run_cascade_episode(
+            env,
+            [c2],
+            student,
+            6,
+            organic_objective,
+            training=True,
+            rollout_steps=999,
+            reward_profile="dense_potential",
+        )
+        self.assertEqual(len(res["stageSteps"]), 2)
+        self.assertGreater(len(student.tape), 0)
+        self.assertTrue(
+            any(row.get("teacher_logits") is not None for row in student.tape)
+        )
+        self.assertTrue(
+            any(row.get("teacher_mean") is not None for row in student.tape)
+        )
+        # Verify dense potential step rewards are populated and non-constant.
+        step_rews = [
+            float(row["reward"])
+            for row in student.tape[:-1]
+            if row.get("reward") is not None
+        ]
+        self.assertGreater(len(step_rews), 0)
+        self.assertGreater(max(step_rews) - min(step_rews), 0.0)
+        stats = student.finish(0.0)
+        self.assertTrue(math.isfinite(stats["loss"]))
+        self.assertGreater(stats["gradientNorm"], 0.0)
+
+    def test_learned_cap_varies_edit_size_and_allows_early_coarse_finish(self):
+        env, cfg = self._make_env(shape=(12, 32, 32), plan="rectangle")
+        cenv = CoarseEnv(env, block=(1, 2, 2))
+        cenv.reset(8)
+        learner = CoarseToFineLearner(
+            device="cpu",
+            seed=123,
+            fine_config=cfg,
+            decoder_retry_schedule="learned_cap",
+            evaluation_noise_scale=0.0,
+        )
+        learner.decoder_diagnostics = DecoderDiagnostics()
+        base_logits = torch.tensor([10.0, -10.0, -10.0, -10.0])
+
+        def _fake_forward_neg(obs_b, *_args, **_kwargs):
+            b, _z, _c, h, w = obs_b.shape
+            mean = torch.full((b, 2, obs_b.shape[1], h, w), -5.0)
+            val = torch.zeros(b)
+            logits = base_logits.unsqueeze(0).expand(b, -1).clone()
+            return mean, val, logits
+
+        learner.model.forward_stage_batch = _fake_forward_neg
+        learner.choose_stage(cenv, is_coarse=True, training=False, retries=1)
+        low_req = learner.decoder_diagnostics.attempts[-1].requested_voxels
+
+        def _fake_forward_pos(obs_b, *_args, **_kwargs):
+            b, _z, _c, h, w = obs_b.shape
+            mean = torch.full((b, 2, obs_b.shape[1], h, w), 5.0)
+            val = torch.zeros(b)
+            logits = base_logits.unsqueeze(0).expand(b, -1).clone()
+            return mean, val, logits
+
+        learner.model.forward_stage_batch = _fake_forward_pos
+        learner.choose_stage(cenv, is_coarse=True, training=False, retries=1)
+        high_req = learner.decoder_diagnostics.attempts[-1].requested_voxels
+        self.assertLess(low_req, high_req)
+
+        # Verify early coarse "finish" is legal after 2 edits once near target FAR.
+        cenv.reset(4)
+        cenv.count_fine = int(round(3.6 * cenv.plot_area))
+        cenv.edits = 2
+        self.assertFalse(cenv.near_far)
+        finish_logits = torch.tensor([-10.0, -10.0, -10.0, 10.0])
+
+        def _fake_forward_finish(obs_b, *_args, **_kwargs):
+            b, _z, _c, h, w = obs_b.shape
+            mean = torch.zeros((b, 2, obs_b.shape[1], h, w))
+            val = torch.zeros(b)
+            logits = finish_logits.unsqueeze(0).expand(b, -1).clone()
+            return mean, val, logits
+
+        learner.model.forward_stage_batch = _fake_forward_finish
+        for is_train in (True, False):
+            mv = learner.choose_stage(cenv, is_coarse=True, training=is_train)
+            self.assertIsNone(mv)
+            self.assertEqual(learner.last_operation, "finish")
+
 
 if __name__ == "__main__":
     unittest.main()

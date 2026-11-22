@@ -100,7 +100,7 @@ J(M_t) =\;& 0.65\,u_{\text{good}} + 0.55\,\bar{s}_{\text{sun}} + 0.45\,\bar{s}_{
 
 where $`s_{\text{core}} = \max(0, (1 - f_{\text{uncov}})(1 - 0.5\,\bar{b}_{\text{core}}))`$. Step rewards add $`0.50\,\Delta s_{\text{core}}`$ (plus a small `-0.005` hold penalty when FAR is already satisfied); terminal rewards scale $`5\cdot(J(M_T) - P_{\text{FAR}})`$ where $`P_{\text{FAR}} = 0`$ inside the band and penalizes remaining relative volume error otherwise.
 
-Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, optional cosine annealing to `2.0e-4` via `lr_schedule = "cosine"`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-real.json](configs/research-real.json); `1.2` ablation in [configs/research-real-aux.json](configs/research-real-aux.json) and [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)).
+Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, optional cosine annealing to `2.0e-4` via `lr_schedule = "cosine"`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-real.json](configs/research-real.json); `1.2` ablation in [configs/research-real-aux.json](configs/research-real-aux.json) and [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)). Optionally, `reward_profile = "dense_potential"` adds potential-difference step shaping, `decoder_retry_schedule = "learned_cap"` sizes frontier edits by positive spatial scores with early coarse handoff and late pure-FAR gating, and `training_objective = "on_policy_distill"` matches frozen tier-expert `teacher_checkpoints` along on-policy student rollouts alongside scaled GAE (`0.25×`).
 
 ---
 
@@ -110,7 +110,7 @@ Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rol
 
 Instead of memory-bound full-resolution 3D convolutions across arbitrary building heights $`Z \in [8, 60]`$ or flat single-scale decoding on huge blocks, `CoarseToFineNetwork` (`voxelform/coarse_to_fine.py`) extends the `Organic3DNetwork` `48,125`-parameter factored 2D+1D core (`voxelform/unified.py`) with lightweight multi-scale stems and an exact **halo-2 sliding vertical window**:
 
-- **Tier-Adaptive Entry Stems:** Routes parcels by metric area (`tier_cascade_blocks`): `XS / S / M` (`< 2,500 m²`) run directly at `1×1×1` via the strided `4×` fine stem; `L` (`2,500–3,799 m²`) runs `2×2×1 → 1×1×1` via `coarse_stem`; `XL` (`≥ 3,800 m²`) runs `4×4×1 → 2×2×1 → 1×1×1` via `macro_stem → coarse_stem → fine stem`, preserving exact `2:1` / `4:1` grounded refinement handoffs between stages.
+- **Tier-Adaptive Entry Stems:** Routes parcels by metric area (`tier_cascade_blocks`): under `tier_adaptive`, `XS / S / M` (`< 2,500 m²`) run directly at `1×1×1` via the strided `4×` fine stem; `L` (`2,500–3,799 m²`) runs `2×2×1 → 1×1×1` via `coarse_stem`; and `XL` (`≥ 3,800 m²`) runs `4×4×1 → 2×2×1 → 1×1×1` via `macro_stem → coarse_stem → fine stem`. Alternatively, `tier_meso2` unifies all `L / XL` parcels (`≥ 2,500 m²`) on `2×2×1 → 1×1×1` to preserve `mw = 2` morphological and thin-strip guards at the coarse stage while sharing coarse-to-fine parameters across large plots.
 - **Shared Factored 2D+1D Residual Mixing (`_zmix`):** Applies planar `3×3` convolutions (`ctx_xy1`, `ctx_xy2`) followed by shift-and-add `Z`-neighbor projections (`Z-1, Z, Z+1`) inside overlapping windows (`win=16` floors, `halo=2`), keeping peak activation memory independent of maximum storey count while sharing inductive bias across all spatial scales.
 - **FiLM-Style Additive Goal & Local Skip Conditioning:** Combines exact floor-mean/max global pooling with `goal_encoder(g_t)` and a pooled `1×1` `local_skip`, outputting bounded coarse latent means $`\mu_\theta = 3\tanh(\text{head}/3)`$, categorical operation logits, and scalar critic value $`V_\phi(s_t)`$.
 
@@ -157,6 +157,21 @@ reference objective. [Pilot report](results/confirmatory-l-xl-2026-11-22.md) ·
 At 600 episodes, with validation every 50, imitation led guided RL on mean test
 quality. Greedy led the overall mean and both XL plots. Validation-selected
 guided RL led on the Singapore L plot. [600-episode results](results/l-xl-600ep-mps-2026-11-22.md)
+
+### 400-Episode Two-Teacher On-Policy Distillation (L/XL Split)
+
+To close the gap on large parcels (`≥ 2,500 m²`), [configs/research-distill-all-tiers.json](configs/research-distill-all-tiers.json) trains five seeds (`4211–4215`, mean `9.3 min/seed` on Apple M4 MPS) for `400` episodes on the same train/NYC-val/Paris+Singapore-test split using the unified `2×2×1 → 1×1×1` L/XL cascade (`tier_meso2`), dense potential shaping (`dense_potential`), positive-logit edit sizing (`learned_cap`), and on-policy distillation (`on_policy_distill`) from frozen `XS_M` and `L_XL` tier experts trained on the same training sites. Upgrading the cascade alone (`tier_meso2`) lifts the non-learned Greedy baseline on the 4-plot test split from `0.681` to `0.734`. Two-teacher on-policy distillation outperforms both Greedy baselines across every individual seed (`95%` bootstrap CI `[0.742, 0.762]` for `best.pt`):
+
+| Method (`temp=1.0 / noise=1.0`, `5` seeds unless `0` params) | Val $J$ (`3` NYC) / FAR | Test $J$ (`4` sites) / FAR | Usable Area (Val / Test `m²`) |
+|---|---:|---:|---:|
+| Guided RL, `best.pt` (`600` ep, `tier_adaptive`) | — | `0.613 ± 0.079` / `93%` | — |
+| Imitation, ep `600` (`tier_adaptive`) | — | `0.669 ± 0.011` / `100%` | — |
+| Greedy physics-heuristic (`tier_adaptive`) | — | `0.681` / `100%` | — |
+| Greedy physics-heuristic (`tier_meso2`) | `0.599` / `93.3%` | `0.734` / `100%` | `2,792.6` / `2,786.7` |
+| **On-Policy Distill, `best.pt` (`400` ep, `tier_meso2`)** | **`0.707 ± 0.022` / `100%`** | **`0.752 ± 0.013` / `99%`** | `4,887.0` / `4,479.7` |
+| **On-Policy Distill, ep `400` (`tier_meso2`)** | `0.691 ± 0.020` / **`100%`** | **`0.753 ± 0.013` / `98%`** | **`4,994.0`** / **`4,819.2`** |
+
+Validation-selected distilled policies outscore `tier_meso2` Greedy on all three unseen New York validation plots (`l_nyc_0019`: `0.916` vs. `0.769`, `xl_nyc_0062`: `0.540` vs. `0.407`, `m_nyc_0005`: `0.665` vs. `0.622`) and on `l_sgp_0327` (`0.944` vs. `0.835`) and `l_sgp_0367` (`0.699` vs. `0.646`) at test time, while M-tier held-out Paris (`m_prs_0320`: `0.632` vs. `0.693`) remains behind Greedy (note that test sites were reused from the earlier pilot and 600-episode follow-up). [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
 
 ### Historical Flat and Tier-Adaptive Comparison
 
@@ -234,6 +249,11 @@ uv run --frozen vf-research train \
 uv run --frozen vf-research train \
   --config configs/research-real-aux-1200ep.json \
   --output runs/real-aux-1200ep
+
+# Two-teacher on-policy distillation across XS-XL tiers (teachers set via teacher_checkpoints)
+uv run --frozen vf-research train \
+  --config configs/research-distill-all-tiers.json \
+  --output runs/distill_all_tiers
 ```
 
 ### 3. Live 3D Inspector & Test Suite
@@ -242,7 +262,7 @@ uv run --frozen vf-research train \
 # Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans)
 uv run --frozen python main.py
 
-# Run complete verification suite (205 Python tests, 11 JS geometry tests, repo-wide lint)
+# Run complete verification suite (215 Python tests, 11 JS geometry tests, repo-wide lint)
 uv run --frozen --extra dev python -m unittest discover -s tests
 node --check public/*.js
 node --test tests/*.test.mjs
@@ -268,9 +288,9 @@ VoxelForm-RL/
 │   ├── experiment.py        # Config schema, atomic RNG checkpoints, source archival & resume
 │   └── layout_archive.py    # SQLite episode ledger & top-five distinct layout archive
 ├── data/urban_context/      # Standalone bundled 13-site XS–XL OSM parcel & context dataset
-├── configs/                 # Reproducible experiment specs (smoke, real, real-tier, tier-600ep)
+├── configs/                 # Reproducible experiment specs (smoke, real-tier, expert-l-xl, distill-all-tiers)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
-├── tests/                   # 205 Python unittest specs + 11 Node geometry/syntax tests
+├── tests/                   # 215 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
 ├── results/                 # Retained raw JSON benchmarks, core checks & solver probes
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer
@@ -284,7 +304,7 @@ VoxelForm-RL/
 ## Methodological Limitations & Open Research Directions
 
 - **Uncalibrated Physical Proxies:** `directSunProxy`, `diffuseFacadeProxy`, acoustic `noisePrior`, planar depth, and 8-neighbor geodesic core distance are research surrogate signals — not calibrated daylight simulations, acoustic models, structural analyses, or building-code/egress compliance verifications ([docs/DATA_CARD.md](docs/DATA_CARD.md), [docs/MODEL_CARD.md](docs/MODEL_CARD.md)).
-- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field inject strong inductive bias; even with 50-episode validation checkpointing stabilizing `FAR = 1.00`, residual inter-seed variance in deep canyons (`0.504 ± 0.133` on unseen NYC across 5 seeds) leaves surpassing the deterministic greedy heuristic (`0.810` Test $J$) consistently across all random initializations an open ML challenge.
+- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field inject strong inductive bias. Two-teacher on-policy distillation (`tier_meso2` + `dense_potential` + `learned_cap`) surpasses both the legacy (`0.681`) and upgraded (`0.734`) greedy heuristic across all five seeds on the L/XL test split (`0.752 ± 0.013`, `99%` FAR) and all three unseen NYC validation plots (`0.707 ± 0.022`, `100%` FAR), whereas M-tier held-out Paris (`m_prs_0320`: `0.632` vs. `0.693`) and single-tier M-site canyon variance (`m_nyc_0003`: `0.504 ± 0.133`) remain open targets.
 - **Open Multi-Objective & Throughput Work:** Pareto trade-off learning across conflicting proxy objectives (e.g., goal-conditioned weight preferences, multi-head vector critics, or Lagrangian FAR constraints) and batched multi-environment rollout vectorization remain active next experiments rather than settled results.
 
 ---
