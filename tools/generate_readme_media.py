@@ -770,9 +770,9 @@ def generate_architecture_diagram():
     ax.text(
         2.0,
         36.9,
-        f"State O_t in R^(Z x 14 x Y x X)  ->  CoarseToFineNetwork ({n_params:,} params, shared 2D+1D blocks)  "
-        "->  XS/S/M: 1x1x1 | L: 2x2x1->1x1x1 | XL: 4x4x1->2x2x1->1x1x1",
-        fontsize=9.3,
+        f"State O_t in R^(Z x 14 x Y x X)  ->  CoarseToFineNetwork ({n_params:,} params, shared 2D+1D)  "
+        "->  XS/S/M: 1x1x1 | L/XL: 2x2x1->1x1x1 (tier_meso2)",
+        fontsize=9.2,
         color="#475569",
     )
 
@@ -814,18 +814,18 @@ def generate_architecture_diagram():
         ax.text(
             x + 1.1, ty, title, fontsize=9.6, fontweight="bold", color=title_c, va="top"
         )
-        cur_y = ty - 2.4
+        cur_y = ty - 2.2
         for line in lines:
             ax.text(
                 x + 1.1,
                 cur_y,
                 line,
-                fontsize=8.2,
+                fontsize=8.0,
                 color=body_c,
                 va="top",
-                linespacing=1.24,
+                linespacing=1.22,
             )
-            cur_y -= 1.98 * (line.count("\n") + 1)
+            cur_y -= 1.62 * (line.count("\n") + 1) + 0.45
 
     def _arrow(x0, y0, x1, y1, label="", rad=0.0, color="#334155", y_off=0.0):
         style = f"arc3,rad={rad}" if rad != 0 else "arc3,rad=0.0"
@@ -884,7 +884,7 @@ def generate_architecture_diagram():
         27.6,
         "Multi-Scale 2D+1D Network",
         [
-            "Tier-Adaptive Stems:\n  macro_stem (4x4x1), coarse_stem (2x2x1)\n  + fine stem (1x1x1 -> /4 XY)",
+            "Tier-Adaptive Stems:\n  coarse_stem (2x2x1), fine (1x1x1 -> /4 XY)\n  + optional macro_stem (4x4x1)",
             "Shared Factored 2D+1D Core:\n  ctx_xy (3x3) + _zmix (Z-1, Z, Z+1)\n  inside Halo-2 Window (win=16)",
             "Goal + Skip Conditioning:\n  1x1 local_skip (16 ch)\n  + goal_encoder(g_t) -> cat (48 ch)",
             "Policy & Value Outputs:\n  mu = 3*tanh(head/3) [2, Z_c, Y_c, X_c]\n  op_logits (4 ops), scalar critic V(s)",
@@ -901,8 +901,8 @@ def generate_architecture_diagram():
         27.6,
         "Action & Constraint Decoder",
         [
-            "1. Categorical Op + Gaussian Retry:\n  o_t in {remove, grow, exchange, finish}\n  z^(k) ~ N(mu, sigma^2), joint log-prob",
-            "2. Coarse-to-Fine Upsampling:\n  4x4x1 -> 2x2x1 -> 1x1x1 exact\n  grounded refinement handoff",
+            "1. Categorical Op + Gaussian Retry:\n  o_t in {remove, grow, exchange, finish}\n  z^(k) ~ N(mu, sigma^2), learned_cap\n  |FAR - FAR*| <= 0.75 exchange gate",
+            "2. Coarse-to-Fine Handoff:\n  2x2x1 -> 1x1x1 (or 4x4x1) exact\n  grounded refinement + early finish",
             "3. Deterministic Projection Pi_valid:\n  - FAR band & min width clean\n  - 6-neighbor connectivity & cavities\n  - Active compact-core.v5 preservation",
         ],
         fc="#fef2f2",
@@ -918,7 +918,7 @@ def generate_architecture_diagram():
         "Sim Solvers & GAE",
         [
             "Vectorized Proxy Solvers:\n  GPU DDA FastVoxelShadows\n  Cached MeshShadows (SHA-256)\n  Screened-Laplace diffuse\n  8-nb geodesic core distance",
-            "Scale-Normalized GAE:\n  gamma=0.99, lambda=0.95\n  1/sqrt(N_lat) log-prob norm\n  Aux=1.2x, Cosine LR 1.2e-3->2e-4",
+            "Scale-Normalized GAE:\n  GAE(0.99, 0.95) + dense_pot\n  1/sqrt(N_lat) logp, op_ent=0.02\n  Aux=1.2x (or distill), Cosine LR",
         ],
         fc="#f0fdf4",
         ec="#15803d",
@@ -1986,6 +1986,210 @@ def generate_multiscale_ablation(
     print(f"Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)")
 
 
+def generate_l_xl_ablation_figure():
+    """Plot 5-seed L/XL NYC validation curves and 7-site held-out ablation from committed JSONs."""
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    ctrl = json.loads(
+        (RESULTS_DIR / "control-all-tiers-400ep-mps-2026-11-22.json").read_text()
+    )
+    ungated = ctrl["ungatedAblation"]
+    dist = json.loads(
+        (RESULTS_DIR / "distill-all-tiers-400ep-mps-2026-11-22.json").read_text()
+    )
+    greedy = json.loads(
+        (RESULTS_DIR / "greedy-control-all-tiers-mps-2026-11-22.json").read_text()
+    )
+
+    fig, (ax1, ax2) = plt.subplots(
+        1,
+        2,
+        figsize=(16.2, 5.8),
+        dpi=160,
+        gridspec_kw={"width_ratios": [1.0, 1.38]},
+    )
+    fig.patch.set_facecolor("#ffffff")
+
+    def _val_curve(src):
+        vh_list = [s["validationHistory"] for s in src["seeds"]]
+        xs = np.array([r["episode"] for r in vh_list[0]], dtype=np.float32)
+        ys = np.array(
+            [[float(r["meanQuality"]) for r in vh] for vh in vh_list], dtype=np.float32
+        )
+        return xs, ys.mean(axis=0), ys.std(axis=0, ddof=1)
+
+    g_val = float(greedy["validation"]["summary"]["meanQuality"])
+    ax1.axhline(
+        g_val,
+        color="#ea580c",
+        linestyle="--",
+        linewidth=1.6,
+        label=f"Greedy (tier_meso2): {g_val:.3f}",
+        zorder=2,
+    )
+    for label, src, color, ls, marker in (
+        (
+            "FAR-Gated Actor-Critic (best.pt: 0.723)",
+            ctrl,
+            "#1d4ed8",
+            "-",
+            "o",
+        ),
+        (
+            "Ungated Actor-Critic (best.pt: 0.736)",
+            ungated,
+            "#64748b",
+            "--",
+            "s",
+        ),
+        (
+            "Two-Teacher Distill (best.pt: 0.707)",
+            dist,
+            "#0f766e",
+            "-",
+            "^",
+        ),
+    ):
+        xs, ym, ys = _val_curve(src)
+        ax1.plot(
+            xs,
+            ym,
+            label=label,
+            color=color,
+            linestyle=ls,
+            marker=marker,
+            markersize=4.5,
+            linewidth=2.0,
+            zorder=4 if color == "#1d4ed8" else 3,
+        )
+        ax1.fill_between(xs, ym - ys, ym + ys, color=color, alpha=0.11)
+
+    ax1.set_xlim(40, 410)
+    ax1.set_ylim(0.15, 0.88)
+    ax1.set_xticks(np.arange(50, 401, 50))
+    ax1.set_xlabel(
+        "Training Episode (50-Ep Checkpoint)", fontsize=9.6, fontweight="bold"
+    )
+    ax1.set_ylabel(
+        "Mean Validation Objective J (3 NYC Sites)", fontsize=9.6, fontweight="bold"
+    )
+    ax1.set_title(
+        "A. Held-Out NYC Validation Trajectory (400 Ep, 5 Seeds)",
+        fontsize=10.6,
+        fontweight="bold",
+        color="#0f172a",
+    )
+    ax1.grid(True, linestyle="--", alpha=0.45)
+    ax1.legend(loc="lower right", fontsize=7.6, frameon=True)
+
+    sites = [
+        ("m_nyc\n(Val)", "validation", "m_nyc_0005"),
+        ("l_nyc\n(Val)", "validation", "l_nyc_0019"),
+        ("xl_nyc\n(Val)", "validation", "xl_nyc_0062"),
+        ("m_prs\n(Test)", "test", "m_prs_0320"),
+        ("l_sgp_327\n(Test)", "test", "l_sgp_0327"),
+        ("l_sgp_367\n(Test)", "test", "l_sgp_0367"),
+        ("l_sgp_379\n(Test)", "test", "l_sgp_0379"),
+        ("Test Mean\n(4 sites)", "overall", "overall"),
+    ]
+    bars_spec = [
+        ("Greedy (tier_meso2)", "greedy", "#f59e0b", "#b45309"),
+        ("Two-Teacher Distill", "dist", "#14b8a6", "#0f766e"),
+        ("Ungated Actor-Critic", "ungated", "#94a3b8", "#475569"),
+        ("FAR-Gated Actor-Critic", "gated", "#1d4ed8", "#1e3a8a"),
+    ]
+
+    def _bar_val(kind, split, site_key):
+        if kind == "greedy":
+            if split == "overall":
+                return float(greedy["test"]["summary"]["meanQuality"]), 0.0
+            return float(greedy[split]["perSite"][site_key]["meanQuality"]), 0.0
+        src = dist if kind == "dist" else (ungated if kind == "ungated" else ctrl)
+        if split == "overall":
+            m = src["aggregate"]["test"]["metrics"]["meanQuality"]
+            return float(m["mean"]), float(m["stdAcrossModelSeeds"])
+        grp = "validationSelected" if split == "validation" else "testSelected"
+        node = src["perSite"][grp][site_key]
+        return float(node["meanQuality"]), float(node["stdAcrossModelSeeds"])
+
+    x = np.arange(len(sites))
+    w = 0.195
+    offsets = (np.arange(len(bars_spec)) - 1.5) * w
+    for idx_b, (b_lbl, kind, fc, ec) in enumerate(bars_spec):
+        vals, errs = [], []
+        for _slbl, sp, sk in sites:
+            v, sd = _bar_val(kind, sp, sk)
+            vals.append(v)
+            errs.append(sd)
+        has_err = any(e > 0 for e in errs)
+        rects = ax2.bar(
+            x + offsets[idx_b],
+            vals,
+            width=w,
+            yerr=errs if has_err else None,
+            capsize=2.2 if has_err else 0,
+            color=fc,
+            edgecolor=ec,
+            linewidth=0.8,
+            label=b_lbl,
+            error_kw=dict(ecolor="#0f172a", lw=0.95),
+        )
+        for idx_g, (rect, v, sd) in enumerate(zip(rects, vals, errs)):
+            is_last_group = idx_g == len(sites) - 1
+            if idx_b not in (0, 3) and not is_last_group:
+                continue
+            top_y = rect.get_height() + (sd if has_err else 0.0)
+            txt = f"{v:.3f}" if is_last_group and idx_b == 3 else f"{v:.2f}"
+            ax2.text(
+                rect.get_x() + rect.get_width() / 2,
+                top_y + (0.015 if not is_last_group else 0.018),
+                txt,
+                ha="center",
+                va="bottom",
+                fontsize=6.7 if not is_last_group else 6.6,
+                rotation=90 if is_last_group else 0,
+                fontweight="bold" if idx_b == 3 else "normal",
+                color=ec,
+            )
+
+    ax2.axvline(2.5, color="#94a3b8", linestyle=":", linewidth=1.1)
+    ax2.axvline(6.5, color="#94a3b8", linestyle=":", linewidth=1.1)
+    ax2.set_ylim(0.0, 1.15)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels([s[0] for s in sites], fontsize=8.4)
+    ax2.set_ylabel(
+        "Mean Held-Out Objective J (5 eval seeds/site)", fontsize=9.6, fontweight="bold"
+    )
+    ax2.set_title(
+        "B. Held-Out Per-Site & Aggregate Comparison (best.pt, 5 Seeds ± 1 SD)",
+        fontsize=10.6,
+        fontweight="bold",
+        color="#0f172a",
+    )
+    ax2.grid(axis="y", linestyle="--", alpha=0.45)
+    ax2.legend(loc="upper right", fontsize=7.6, ncol=2, frameon=True)
+
+    fig.suptitle(
+        "400-Episode L/XL Ablation: Matched Actor-Critic Control vs. Two-Teacher Distillation (Apple M4 MPS)",
+        fontsize=12.2,
+        fontweight="bold",
+        color="#0f172a",
+        y=0.98,
+    )
+    fig.text(
+        0.5,
+        0.015,
+        "Model seeds: 5 (4211-4215), matched decoding (temp=1.0, noise=1.0), tier_meso2 + dense_potential + learned_cap; error bars = +/-1 SD across model seeds. FAR-Gated Actor-Critic achieves 100% FAR across all 7/7 Val and Test sites (best.pt).",
+        ha="center",
+        fontsize=8.0,
+        color="#475569",
+    )
+    fig.tight_layout(rect=(0.0, 0.04, 1.0, 0.93))
+    out = MEDIA_DIR / "l-xl-ablation-400ep.png"
+    fig.savefig(out, facecolor="#ffffff")
+    plt.close(fig)
+    print(f"Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)")
+
+
 def _load_summary(summary_path: Path, cfg: ExperimentConfig) -> dict:
     if summary_path.is_file():
         return json.loads(summary_path.read_text())
@@ -2025,6 +2229,7 @@ def main():
         choices=(
             "all",
             "arch",
+            "lxl",
             "curves",
             "ablation",
             "multitier",
@@ -2038,6 +2243,12 @@ def main():
     MEDIA_DIR.mkdir(parents=True, exist_ok=True)
     if args.only in ("all", "arch"):
         generate_architecture_diagram()
+        if args.only == "arch":
+            return
+    if args.only in ("all", "lxl"):
+        generate_l_xl_ablation_figure()
+        if args.only == "lxl":
+            return
     summary = _load_summary(
         args.summary, ExperimentConfig.read(args.run_dir / "config.json")
     )

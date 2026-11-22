@@ -55,15 +55,15 @@ Selected layouts across five parcel sizes show how the same policy adapts to nar
 
 ![Untrained and trained rollouts compared on the same Hong Kong, New York, and Paris parcels](docs/media/heldout-generalization.png)
 
-The upper and lower rows compare untrained and trained rollouts on the same sites and evaluation seeds. In the later five-seed L/XL benchmark, a greedy geometry heuristic led both XL sites and the overall mean. Guided RL led on one Singapore L site. [L/XL benchmark](results/l-xl-600ep-mps-2026-11-22.md)
+The upper and lower rows compare untrained and trained rollouts on the same sites and evaluation seeds. With the unified `2×2×1 → 1×1×1` cascade and FAR-gated editing, five-seed single-stage RL (`0.803`, `100%` FAR) leads the greedy heuristic (`0.734`) across all seven held-out validation and test plots ([L/XL ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md)).
 
 ### Research figures
 
-| Training and validation | Single- and multiscale editing | Compute and scene caching |
-| --- | --- | --- |
-| [![Five-seed training curves and held-out comparisons](docs/media/training-curves-600ep.png)](docs/media/training-curves-600ep.png) | [![Historical flat and tier-adaptive training comparison](docs/media/multiscale-ablation.png)](docs/media/multiscale-ablation.png) | [![Scene-cache scaling and historical compute trade-offs](docs/media/compute-and-ablations.png)](docs/media/compute-and-ablations.png) |
+| Five-seed L/XL ablation (`400` ep) | Five-seed M-tier training & controls (`600` ep) |
+| --- | --- |
+| [![Five-seed L/XL validation curves and held-out ablation](docs/media/l-xl-ablation-400ep.png)](docs/media/l-xl-ablation-400ep.png) | [![Five-seed M-tier training curves and held-out comparisons](docs/media/training-curves-600ep.png)](docs/media/training-curves-600ep.png) |
 
-Open a figure at full size for metrics and legends. The historical single- and multiscale runs also differed in budget and training settings. [Technical README](README.md) · [Results index](results/README.md)
+Open a figure at full size for metrics and legends. [Technical README](README.md) · [Results index](results/README.md)
 
 ## Explore a plot
 

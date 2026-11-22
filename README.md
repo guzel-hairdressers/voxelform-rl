@@ -124,43 +124,11 @@ The `vf-research` runner (`tools/research.py`, `voxelform/experiment.py`) enforc
 - **Controlled Baselines & Honest Accounting:** Evaluates untrained controls and fixed-budget final checkpoints on shared evaluation seeds (isolating evaluation RNG state), retains failed-FAR episodes in every mean, and computes `meanReferenceQuality` using a standardized `10 m / 12 m` `compact-core.v5` referee so core-on/off and travel-limit ablations remain comparable.
 - **Full Provenance & Exact CPU Resume:** Each run archives `config.json`, `manifest.json` (git SHA, source SHA-256s, hardware/packages), `source.tar.gz` (including dirty diffs), `scenes.json`, and atomic optimizer+RNG checkpoints with strict hash verification on `--resume`.
 
-### 600-Episode Tier-Adaptive Comparison
+### 400-Episode L/XL Benchmark & Ablation (`tier_meso2` + `dense_potential` + `learned_cap`)
 
-![600-episode 5-seed tier-adaptive training and 50-episode validation curves plus matched held-out city comparison against scalar-reward RL, flat 1x1x1, and greedy physics-heuristic controls](docs/media/training-curves-600ep.png)
+![400-episode 5-seed L/XL validation curves and 7-site held-out comparison across Greedy, Two-Teacher Distillation, Ungated Actor-Critic, and FAR-Gated Actor-Critic](docs/media/l-xl-ablation-400ep.png)
 
-The five archived training runs used **600 episodes** (`443.5–945.3 s` per seed on Apple M4 MPS, `250–368` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, `checkpoint_interval = 50`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) with model seeds `123, 456, 789, 202, 303` and uniform rotation over 10 XS–XL training sites. Snapshots were evaluated every 50 episodes on Hong Kong (`m_hk_0199`). The runner used validation FAR success and mean quality to select the checkpoint. Learned runs share evaluation decoding (`temp=1.0, noise=1.0`) and five evaluation seeds per site. All FAR failures are included.
-
-1. **Untrained Control (5 seeds):** Untrained initialization baseline ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)).
-2. **Flat `1×1×1` (1,200 ep, seed `123`):** Fine-only baseline without coarse-to-fine stages ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)).
-3. **RL Without Spatial Auxiliary Loss (`spatial_aux_weight = 0.0`, 600 ep, seed `123`):** Cascade trained from scalar reward with the same heuristic-informed decoder ([results/real-tier-600ep-mps-2026-11-21.json](results/real-tier-600ep-mps-2026-11-21.json)).
-4. **Greedy Physics-Heuristic (`0` learned parameters):** Ranks frontier edits using `compute_spatial_desirability` and the same projector $\Pi_{\text{valid}}$. The first proposal is deterministic. Rejected proposals can trigger Gaussian retries. [Greedy results](results/greedy-heuristic-tier-mps-2026-11-21.json)
-
-| Method (`temp=1.0 / noise=1.0`) | Val `m_hk_0199` ($J$ / FAR / Sun / Sky) | Test `m_nyc_0003` ($J$) | Test `m_prs_0315` ($J$) | **Test Aggregate** ($J$ / FAR / Usable m² / Sun / Sky) |
-|---|---:|---:|---:|---:|
-| **Untrained Control** (5 seeds) | `0.536 ± 0.056` / `1.00` / `60.8%` / `6.2%` | `0.090 ± 0.045` | `0.612 ± 0.037` | `0.351 ± 0.022` / `1.00` / `507.5` / `38.7%` / `3.9%` |
-| **Flat `1×1×1` (`1,200` ep)** (seed `123`) | `0.773` / `1.00` / `64.5%` / `12.5%` | `0.341` | `0.816` | `0.578` / `1.00` / `1,722.0` / `47.1%` / `8.3%` |
-| **Tier RL Without Spatial Aux (`λ_aux=0.0`)** (seed `123`) | `0.907` / `1.00` / `66.4%` / `16.9%` | `0.209` | `0.745` | `0.477` / `1.00` / `1,040.4` / `37.5%` / `5.8%` |
-| **Tier + Aux, Final Ep 600 (`latest.pt`, 5 seeds)** | `0.979 ± 0.131` / `0.88` / **`82.4%`** / `21.4%` | `0.288 ± 0.477` | `1.004 ± 0.230` | `0.646 ± 0.352` / `1.00` / `1,920.9` / **`52.3%`** / **`11.2%`** |
-| **Tier + Aux, 50-Ep Val (`best.pt`, 5 seeds)** | `1.129 ± 0.075` / **`1.00`** / `81.6%` / **`22.2%`** | `0.504 ± 0.133` | `1.047 ± 0.089` | `0.776 ± 0.103` / **`1.00`** / `2,097.3` / `51.3%` / `10.8%` |
-| **Greedy Physics-Heuristic** (`0` params) | **`1.131`** / `1.00` / `76.5%` / `18.3%` | `0.527` | `1.093` | **`0.810`** / `1.00` / **`2,190.5`** / `48.4%` / `9.5%` |
-
-Across the five runs, validation-selected checkpoints had lower between-seed test spread and higher mean test quality than the episode-600 checkpoints. Greedy had the highest mean test scalar quality (0.810 versus 0.776 for guided RL). Guided RL averaged higher direct sun and diffuse sky proxies on these two sites. The auxiliary-off comparison used one model seed. All validation and test plots in this benchmark are M-tier and use the fine pathway.
-
-A follow-up compared those checkpoints, fresh 30-episode policies and greedy on three unseen L and XL plots. Archived RL led on both L plots. Greedy led on the New York XL plot and outscored the shorter runs at all three sites. [L/XL comparison and diagnostics](results/README.md#held-out-l-and-xl-comparison--2026-11-22)
-
-A 60-episode pilot used city-separated splits, a New York XL validation plot,
-two Singapore XL test plots, and five fresh 60-episode seeds. Guided RL
-outscored imitation on all four test plots. Greedy led all four on the common
-reference objective. [Pilot report](results/confirmatory-l-xl-2026-11-22.md) ·
-[600-episode follow-up protocol](docs/EXPERIMENT_PROTOCOL.md#600-episode-lxl-follow-up)
-
-At 600 episodes, with validation every 50, imitation led guided RL on mean test
-quality. Greedy led the overall mean and both XL plots. Validation-selected
-guided RL led on the Singapore L plot. [600-episode results](results/l-xl-600ep-mps-2026-11-22.md)
-
-### 400-Episode L/XL Ablation: Matched Actor–Critic vs. Two-Teacher Distillation
-
-To isolate what drove gains on large parcels (`≥ 2,500 m²`), three five-seed `400`-episode arms (`seeds 4211–4215`, `tier_meso2` `2×2×1 → 1×1×1`, `dense_potential`, `learned_cap`) were evaluated on the same train/NYC-val/Paris+Singapore-test split: two-teacher on-policy distillation from frozen `XS_M` + `L_XL` experts ([configs/research-distill-all-tiers.json](configs/research-distill-all-tiers.json), `9.3 min/seed`), and matched single-stage `actor_critic` controls (`spatial_aux_weight = 1.2`, [configs/research-control-all-tiers.json](configs/research-control-all-tiers.json), `7.3–7.4 min/seed`) tested both before and after adding the `|FAR - FAR*| <= 0.75` `exchange` gate and `0.02` op entropy:
+To close the gap on large parcels (`≥ 2,500 m²`), three five-seed `400`-episode arms (`seeds 4211–4215`, `tier_meso2` `2×2×1 → 1×1×1`, `dense_potential`, `learned_cap`) were evaluated on the same train/NYC-val/Paris+Singapore-test split: two-teacher on-policy distillation from frozen `XS_M` + `L_XL` experts ([configs/research-distill-all-tiers.json](configs/research-distill-all-tiers.json), `9.3 min/seed`), and matched single-stage `actor_critic` controls (`spatial_aux_weight = 1.2`, [configs/research-control-all-tiers.json](configs/research-control-all-tiers.json), `7.3–7.4 min/seed`) tested both before and after adding the `|FAR - FAR*| <= 0.75` `exchange` gate and `0.02` op entropy:
 
 | Method (`temp=1.0 / noise=1.0`, `5` seeds unless `0` params) | Val $J$ (`3` NYC) / FAR | Test $J$ (`4` sites) / FAR | Usable Area (Val / Test `m²`) |
 |---|---:|---:|---:|
@@ -173,36 +141,38 @@ To isolate what drove gains on large parcels (`≥ 2,500 m²`), three five-seed 
 | **FAR-Gated `actor_critic`, `best.pt` (`400` ep)** | `0.723 ± 0.025` / **`100%`** | **`0.803 ± 0.018`** / **`100%`** | `4,631.2` / `4,263.8` |
 | **FAR-Gated `actor_critic`, ep `400` (`latest.pt`)** | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94%` | `4,785.1` / `4,499.7` |
 
-The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Two methodological caveats remain: the `exchange` gate was introduced after diagnosing `seed-4213` on these test plots (shared with the earlier pilot/follow-up), and `actor_critic` still depends on `50`-episode validation selection (`ep 400` drifts to `0.762`). [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
+The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Two methodological caveats remain: the `exchange` gate was introduced after diagnosing `seed-4213` on these test plots (shared with earlier `30`-, `60`-, and `600`-ep exploratory L/XL studies indexed in [results/README.md](results/README.md)), and `actor_critic` still depends on `50`-episode validation selection (`ep 400` drifts to `0.762`). [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
 
-### Historical Flat and Tier-Adaptive Comparison
+### 600-Episode M-Tier Baseline & Component Controls
 
-![Flat 1x1x1 vs Tier-Adaptive Multi-Scale ablation comparing L and XL training FAR compliance, GAE gradient stability, and deterministic evaluation](docs/media/multiscale-ablation.png)
+![600-episode 5-seed tier-adaptive training and 50-episode validation curves plus matched held-out city comparison against scalar-reward RL, flat 1x1x1, and greedy physics-heuristic controls](docs/media/training-curves-600ep.png)
 
-These single-seed runs took 2,625.6 s for the 1,200-episode flat run and 416.9 s for the 600-episode tier-adaptive run on Apple M4 MPS. The runs also differed in learning-rate schedule and spatial log-probability scaling. The L/XL rows use training sites. A matched-budget comparison on held-out L/XL plots is needed to estimate the effect of the cascade.
+Five earlier baseline runs used **600 episodes** (`443.5–945.3 s` per seed on Apple M4 MPS, `250–368` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, `checkpoint_interval = 50`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) with model seeds `123, 456, 789, 202, 303` and uniform rotation over 10 XS–XL training sites, validated every 50 episodes on Hong Kong (`m_hk_0199`) and tested zero-shot on `m_nyc_0003` and `m_prs_0315` (`temp=1.0, noise=1.0`, five eval seeds per site, retaining all FAR failures):
 
-| Comparison Metric (Apple M4 MPS, `seed=123`) | Flat `1×1×1` (`1,200` ep) | Tier-Adaptive Multi-Scale (`600` ep) |
-|---|---:|---:|
-| Overall Training FAR Compliance (last 500 episodes) | `0.70 – 0.89` | **`1.00`** across all 10 `XS–XL` sites |
-| `L`-Tier Training Quality (`l_bcn_0074` / `l_sgp_0369`, last 20 visits) | `0.4995` / `0.575*` | **`1.0085`** / **`0.9659`** (`FAR 1.00`) |
-| `XL`-Tier Training FAR Compliance (late half: `xl_tokyo_0185` / `xl_sgp_0386`) | `0.52` / `0.17` | **`1.00`** / **`1.00`** |
-| Mean GAE Gradient Norm across 100-Ep Bins | `48.6 → 1,900.2` (diverging) | **`49.8 → 256.0`** (`7.4×` lower peak) |
-| Deterministic Eval (`seed=9001`): `XL` Sites (`xl_tokyo_0185` / `xl_sgp_0386`) | `FAR 5.69` / `5.79` (**FAIL**) | **`FAR 3.10`** (`0.7176`) / **`FAR 3.10`** (`0.6985`) |
-| Deterministic Eval (`seed=9001`): `L` Sites (`l_bcn_0074` / `l_sgp_0369`) | `0.5747` / `0.2923` | **`1.0164`** / **`0.8523`** |
+1. **Untrained Control (5 seeds):** Untrained initialization baseline ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)).
+2. **Flat `1×1×1` (1,200 ep, seed `123`):** Fine-only baseline without coarse-to-fine stages ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)).
+3. **RL Without Spatial Auxiliary Loss (`spatial_aux_weight = 0.0`, 600 ep, seed `123`):** Cascade trained from scalar reward with the same heuristic-informed decoder ([results/real-tier-600ep-mps-2026-11-21.json](results/real-tier-600ep-mps-2026-11-21.json)).
+4. **Greedy Physics-Heuristic (`0` learned parameters):** Ranks frontier edits using `compute_spatial_desirability` and the same projector $\Pi_{\text{valid}}$ ([Greedy results](results/greedy-heuristic-tier-mps-2026-11-21.json)).
 
-*The starred flat result for `l_sgp_0369` uses the last 10 visits. Other L-tier quality entries use the last 20.*
+| Method (`temp=1.0 / noise=1.0`) | Val `m_hk_0199` ($J$ / FAR / Sun / Sky) | Test `m_nyc_0003` ($J$) | Test `m_prs_0315` ($J$) | **Test Aggregate** ($J$ / FAR / Usable m² / Sun / Sky) |
+|---|---:|---:|---:|---:|
+| **Untrained Control** (5 seeds) | `0.536 ± 0.056` / `1.00` / `60.8%` / `6.2%` | `0.090 ± 0.045` | `0.612 ± 0.037` | `0.351 ± 0.022` / `1.00` / `507.5` / `38.7%` / `3.9%` |
+| **Flat `1×1×1` (`1,200` ep)** (seed `123`) | `0.773` / `1.00` / `64.5%` / `12.5%` | `0.341` | `0.816` | `0.578` / `1.00` / `1,722.0` / `47.1%` / `8.3%` |
+| **Tier RL Without Spatial Aux (`λ_aux=0.0`)** (seed `123`) | `0.907` / `1.00` / `66.4%` / `16.9%` | `0.209` | `0.745` | `0.477` / `1.00` / `1,040.4` / `37.5%` / `5.8%` |
+| **Tier + Aux, Final Ep 600 (`latest.pt`, 5 seeds)** | `0.979 ± 0.131` / `0.88` / **`82.4%`** / `21.4%` | `0.288 ± 0.477` | `1.004 ± 0.230` | `0.646 ± 0.352` / `1.00` / `1,920.9` / **`52.3%`** / **`11.2%`** |
+| **Tier + Aux, 50-Ep Val (`best.pt`, 5 seeds)** | `1.129 ± 0.075` / **`1.00`** / `81.6%` / **`22.2%`** | `0.504 ± 0.133` | `1.047 ± 0.089` | `0.776 ± 0.103` / **`1.00`** / `2,097.3` / `51.3%` / `10.8%` |
+| **Greedy Physics-Heuristic** (`0` params) | **`1.131`** / `1.00` / `76.5%` / `18.3%` | `0.527` | `1.093` | **`0.810`** / `1.00` / **`2,190.5`** / `48.4%` / `9.5%` |
+
+Across these five M-tier runs, validation-selected checkpoints lowered inter-seed spread and raised mean test quality vs. episode 600; while `Greedy` held the highest scalar score (`0.810` vs. `0.776`), Guided RL averaged higher direct sun and diffuse sky proxies. Exploratory follow-up studies across L/XL plots (`30`-, `60`-, and `600`-ep pilots under legacy `tier_adaptive`) are archived in [results/README.md](results/README.md).
 
 ### Infrastructure Verification & Compute Scaling
-
-![Empirical setup cache scaling and historical multi-scale coarse-to-fine Pareto tradeoff on Apple M4 MPS](docs/media/compute-and-ablations.png)
 
 | Measurement Scope | Dataset / Artifact | Key Observed Metrics | Interpretation Boundary |
 |---|---|---|---|
 | **Pipeline, Determinism & Core Integrals** (`compact-core.v5`, CPU + MPS) | [results/ml-infrastructure-final-check-2026-11-20.json](results/ml-infrastructure-final-check-2026-11-20.json) | 2-seed CPU exact resume (bitwise weight/trace equality); `farSuccessRate = 1.0`; `meanQuality = 0.593 ± 0.045`; `meanDirectSun = 0.293 ± 0.003`; `meanDiffuseSky = 0.177 ± 0.011`; native MPS 3-ep smoke (`mpsFallback=false`) | Software, gradient, and exact-resume pipeline validation on synthetic fixtures; small budgets do not test learned policy quality or convergence |
 | **Scene Cache & Vertical Scaling** (`coarse_2d1d_v3`, M4 MPS) | [results/scalable-height-speedup-2026-11-19.json](results/scalable-height-speedup-2026-11-19.json) | Cold→Warm SHA-256 cache setup: `8.16s→37ms` (`10F`), `8.53s→46ms` (`20F`), `4.57s→41ms` (`40F`); warm single-step eval stays `8.54–9.95 ms` across `10F→40F` | Historical pre-`compact-core.v5` compute benchmark; isolates scene cache and GPU/CPU field solver scaling |
-| **Multi-Scale Cascade Tradeoff** (M4 MPS, 20–35 ep) | [results/multiscale-ablation-2026-11-19.json](results/multiscale-ablation-2026-11-19.json) | On `xl_sgp_40F` (ep 25), `4×4×2`/`8×8×3` cascades cut wall-clock time vs `1×1×1` (`69.3s` vs `176.6s`) while `c2f_2x2x1` reached `0.707` objective (`40%` FAR success vs `100%` for `8×8×3` at `0.623`) | Historical pre-`compact-core.v5` exploratory ablation on single sites; matched-budget multi-seed study remains open |
 
-Retained raw benchmark summaries, pipeline verification checks, and solver probes are indexed in [results/README.md](results/README.md).
+All retained raw benchmark summaries, pipeline verification checks, and solver probes are indexed in [results/README.md](results/README.md).
 
 ---
 
@@ -229,30 +199,15 @@ uv run --frozen vf-research evaluate \
 
 ### 2. Multi-Tier Urban Context Training (Standalone Bundled Dataset)
 
-All 16 parcels used by the two urban split configurations and their surrounding building context are bundled in [`data/urban_context/public/`](data/urban_context/public/) (overrideable via `$VOXELFORM_CONTEXT_ROOT` or a sibling `Module-Lab` checkout). [The expanded held-out config](configs/research-real-aux-tier-heldout.json) adds an L plot to validation and L/XL plots to test. [See split coverage and the evaluation plan.](docs/EXPERIMENT_PROTOCOL.md#next-experiments)
+All 27 bundled XS–XL urban parcels across 6 cities (Barcelona, Hong Kong, New York, Paris, Singapore, Tokyo) and their surrounding building context are stored in [`data/urban_context/public/`](data/urban_context/public/) (overrideable via `$VOXELFORM_CONTEXT_ROOT` or a sibling `Module-Lab` checkout). [See split coverage and the evaluation plan.](docs/EXPERIMENT_PROTOCOL.md#next-experiments)
 
 ```sh
-# Non-learned greedy physics-heuristic baseline
+# Matched tier_meso2 greedy physics-heuristic baseline
 uv run --frozen vf-research heuristic \
-  --config configs/research-real-aux-tier-600ep.json \
-  --output runs/greedy-heuristic.json
+  --config configs/research-control-all-tiers.json \
+  --output results/greedy-control-all-tiers.json
 
-# Tier-adaptive RL without spatial auxiliary loss (spatial_aux_weight = 0.0, seed 123)
-uv run --frozen vf-research train \
-  --config configs/research-real-tier-600ep.json \
-  --output runs/real-tier-600ep
-
-# Multi-seed tier-adaptive 600-episode sweep (seeds 123, 456, 789, 202, 303; 50-ep Val -> best.pt)
-uv run --frozen vf-research train \
-  --config configs/research-real-aux-tier-600ep.json \
-  --output runs/real-aux-tier-600ep
-
-# Flat 1x1x1 1,200-episode baseline on Apple MPS
-uv run --frozen vf-research train \
-  --config configs/research-real-aux-1200ep.json \
-  --output runs/real-aux-1200ep
-
-# Matched single-stage actor-critic control (tier_meso2 + dense_potential + learned_cap)
+# FAR-gated single-stage actor-critic (tier_meso2 + dense_potential + learned_cap, seeds 4211-4215)
 uv run --frozen vf-research train \
   --config configs/research-control-all-tiers.json \
   --output runs/control_all_tiers
@@ -261,6 +216,14 @@ uv run --frozen vf-research train \
 uv run --frozen vf-research train \
   --config configs/research-distill-all-tiers.json \
   --output runs/distill_all_tiers
+
+# M-tier 600-episode baseline sweep (seeds 123, 456, 789, 202, 303; or seed 123 aux-off control)
+uv run --frozen vf-research train \
+  --config configs/research-real-aux-tier-600ep.json \
+  --output runs/real-aux-tier-600ep
+uv run --frozen vf-research train \
+  --config configs/research-real-tier-600ep.json \
+  --output runs/real-tier-600ep
 ```
 
 ### 3. Live 3D Inspector & Test Suite
@@ -294,7 +257,7 @@ VoxelForm-RL/
 │   ├── patch_policy.py      # Separable Gaussian field smoothing & frontier patch allocation
 │   ├── experiment.py        # Config schema, atomic RNG checkpoints, source archival & resume
 │   └── layout_archive.py    # SQLite episode ledger & top-five distinct layout archive
-├── data/urban_context/      # Standalone bundled 13-site XS–XL OSM parcel & context dataset
+├── data/urban_context/      # Standalone bundled 27-site XS–XL OSM parcel & context dataset (6 cities)
 ├── configs/                 # Reproducible experiment specs (smoke, real-tier, expert-l-xl, control-all-tiers, distill-all-tiers)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
 ├── tests/                   # 215 Python unittest specs + 11 Node geometry/syntax tests
