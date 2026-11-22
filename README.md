@@ -124,29 +124,31 @@ The `vf-research` runner (`tools/research.py`, `voxelform/experiment.py`) enforc
 - **Controlled Baselines & Honest Accounting:** Evaluates untrained controls and fixed-budget final checkpoints on shared evaluation seeds (isolating evaluation RNG state), retains failed-FAR episodes in every mean, and computes `meanReferenceQuality` using a standardized `10 m / 12 m` `compact-core.v5` referee so core-on/off and travel-limit ablations remain comparable.
 - **Full Provenance & Exact CPU Resume:** Each run archives `config.json`, `manifest.json` (git SHA, source SHA-256s, hardware/packages), `source.tar.gz` (including dirty diffs), `scenes.json`, and atomic optimizer+RNG checkpoints with strict hash verification on `--resume`.
 
-### 600-Episode Multi-Seed Tier-Adaptive Training & Held-Out Baselines
+### 600-Episode 5-Seed Tier-Adaptive Training (50-Ep Validation Checkpointing) & Controls
 
-![600-episode multi-seed tier-adaptive learning curve and matched zero-shot held-out city comparison against pure-RL, flat 1x1x1, and greedy physics-heuristic controls](docs/media/training-curves-600ep.png)
+![600-episode 5-seed tier-adaptive training and 50-episode validation curves plus matched held-out city comparison against pure-RL, flat 1x1x1, and greedy physics-heuristic controls](docs/media/training-curves-600ep.png)
 
-Trained for **600 episodes** (`416.9–752.9 s` per seed on Apple M4 MPS, `255–366` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) across **3 model seeds (`123, 456, 789`)** rotating uniformly over 10 XS–XL training sites, and evaluated under matched decoding (`temp=1.0, noise=1.0`, `5` eval seeds/site, all FAR failures retained) against four controls:
+Trained for **600 episodes** (`443.5–945.3 s` per seed on Apple M4 MPS, `250–368` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, `checkpoint_interval = 50`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) across **5 model seeds (`123, 456, 789, 202, 303`)** rotating uniformly over 10 XS–XL training sites. Every `50` episodes, a snapshot is saved and evaluated on held-out **Hong Kong (`m_hk_0199`)** validation (`best.pt` selected strictly on `(farSuccessRate, meanQuality)` without touching test sites). Evaluated under matched decoding (`temp=1.0, noise=1.0`, `5` eval seeds/site, all FAR failures retained) against four controls:
 
-1. **Untrained Control (3 seeds):** Untrained initialization baseline ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)).
+1. **Untrained Control (5 seeds):** Untrained initialization baseline ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)).
 2. **Flat `1×1×1` (1,200 ep, seed `123`):** Fine-only baseline without coarse-to-fine stages ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)).
 3. **Pure-RL Ablation (`spatial_aux_weight = 0.0`, 600 ep, seed `123`):** Identical cascade trained solely from episode-end scalar GAE return ([results/real-tier-600ep-mps-2026-11-21.json](results/real-tier-600ep-mps-2026-11-21.json)).
 4. **Greedy Physics-Heuristic (`0` learned parameters):** Deterministic non-learned baseline selecting feasible frontier edits using the same `compute_spatial_desirability` heuristic and projector $\Pi_{\text{valid}}$ ([results/greedy-heuristic-tier-mps-2026-11-21.json](results/greedy-heuristic-tier-mps-2026-11-21.json)).
 
 | Method (`temp=1.0 / noise=1.0`) | Val `m_hk_0199` ($J$ / FAR / Sun / Sky) | Test `m_nyc_0003` ($J$) | Test `m_prs_0315` ($J$) | **Test Aggregate** ($J$ / FAR / Usable m² / Sun / Sky) |
 |---|---:|---:|---:|---:|
-| **Untrained Control** (3 seeds) | `0.512 ± 0.064` / `1.00` / `60.7%` / `6.2%` | `0.071 ± 0.038` | `0.624 ± 0.043` | `0.348 ± 0.030` / `1.00` / `511.9` / `38.7%` / `3.9%` |
+| **Untrained Control** (5 seeds) | `0.536 ± 0.056` / `1.00` / `60.8%` / `6.2%` | `0.090 ± 0.045` | `0.612 ± 0.037` | `0.351 ± 0.022` / `1.00` / `507.5` / `38.7%` / `3.9%` |
 | **Flat `1×1×1` (`1,200` ep)** (seed `123`) | `0.773` / `1.00` / `64.5%` / `12.5%` | `0.341` | `0.816` | `0.578` / `1.00` / `1,722.0` / `47.1%` / `8.3%` |
 | **Tier Pure-RL (`λ_aux=0.0`)** (seed `123`) | `0.907` / `1.00` / `66.4%` / `16.9%` | `0.209` | `0.745` | `0.477` / `1.00` / `1,040.4` / `37.5%` / `5.8%` |
-| **Tier + Aux (`λ_aux=1.2`)** (3 seeds mean ± SD) | `0.967 ± 0.177` / `0.87` / **`83.4%`** / **`21.6%`** | **`0.585 ± 0.154`** | `0.933 ± 0.326` | `0.759 ± 0.091` / `0.93` / `2,098.9` / **`53.1%`** / **`11.5%`** |
-| ↳ *Best Test Seed (`123`, visual showcase)* | `1.054` / `1.00` / `78.8%` / `18.8%` | `0.550` | **`1.100`** | **`0.825`** / `1.00` / `2,136.2` / `50.0%` / `11.1%` |
+| **Tier + Aux, Final Ep 600 (`latest.pt`, 5 seeds)** | `0.979 ± 0.131` / `0.88` / **`82.4%`** / `21.4%` | `0.288 ± 0.477` | `1.004 ± 0.230` | `0.646 ± 0.352` / `1.00` / `1,920.9` / **`52.3%`** / **`11.2%`** |
+| **Tier + Aux, 50-Ep Val (`best.pt`, 5 seeds)** | `1.129 ± 0.075` / **`1.00`** / `81.6%` / **`22.2%`** | `0.504 ± 0.133` | `1.047 ± 0.089` | `0.776 ± 0.103` / **`1.00`** / `2,097.3` / `51.3%` / `10.8%` |
+| ↳ *Top Val-Selected Seeds (`303` / `789` / `456`)* | `1.064` / **`1.257`** / `1.094` | **`0.656`** / `0.522` / `0.548` | `1.070` / **`1.158`** / `1.075` | **`0.863`** / **`0.840`** / **`0.811`** (at `FAR 1.00`) |
 | **Greedy Physics-Heuristic** (`0` params) | **`1.131`** / `1.00` / `76.5%` / `18.3%` | `0.527` | `1.093` | **`0.810`** / `1.00` / **`2,190.5`** / `48.4%` / `9.5%` |
 
 **Key Empirical Takeaways:**
-- **Spatial Auxiliary Credit Assignment Is Essential (`0.759 ± 0.091` vs `0.477`):** Without dense per-voxel auxiliary advantage (`λ_aux = 0.0`), the agent hits FAR `1.00` on every site and scores reasonably on Hong Kong (`0.907`), but stalls on deep-canyon New York (`0.209`, `143.8 m²` usable) vs **`0.585 ± 0.154`** (`1,705.9 m²` usable) with `λ_aux = 1.2`.
-- **RL vs. Deterministic Physics Heuristic — Complementary Strengths & Honest Limits:** The deterministic greedy baseline using `compute_spatial_desirability` + $\Pi_{\text{valid}}$ is a remarkably strong zero-parameter comparator on scalar $J$ (`0.810` Test / `1.131` Val) because it never suffers a FAR constraint miss (`FAR = 1.00`) and aggressively retains raw usable area (`2,190.5 m²` Test, `4,404.0 m²` Val). However, the 3-seed RL policy achieves **higher daylight and sky exposure** across both unseen splits (**`83.4%` vs `76.5%`** Sun and **`21.6%` vs `18.3%`** Sky on Val; **`53.1%` vs `48.4%`** Sun and **`11.5%` vs `9.5%`** Sky on Test) and outperforms greedy in **deep-canyon NYC (`0.585 ± 0.154` vs `0.527`; seed `456` reaches `0.754`)**, whereas occasional FAR misses on `seed-456` (`0.60` Val / `0.80` Test) lower the 3-seed aggregate scalar mean (`0.759 ± 0.091`) below seed `123` (`0.825`) and the deterministic greedy heuristic (`0.810`).
+- **50-Episode Validation Checkpointing Prevents Overfitting & Policy Collapse (`0.776 ± 0.103` vs `0.646 ± 0.352`):** All 5 seeds peak early-to-mid run (`bestValidationEpisodes = [100, 400, 250, 200, 150]`). Without validation selection, `seed-303` collapses by episode `600` (`0.40` Val FAR; `-0.560` NYC Test; `0.023` Test Agg), whereas `seed-303`'s validation-selected episode-`150` `best.pt` achieves **`0.863`** Test (`0.656` NYC, `1.070` Paris). Overall, `best.pt` recovers `1.00` Val/Test FAR compliance across all 5 seeds (`0.88` -> `1.00` Val FAR) and cuts Test inter-seed SD by **3.4×** (`0.103` vs `0.352`).
+- **Spatial Auxiliary Credit Assignment Is Essential (`0.776 ± 0.103` vs `0.477`):** Without dense per-voxel auxiliary advantage (`λ_aux = 0.0`), the agent hits FAR `1.00` on every site and scores `0.907` on Hong Kong, but stalls on deep-canyon New York (`0.209`, `143.8 m²` usable) vs `0.504 ± 0.133` (`1,548.8 m²` usable; up to `0.656` on `seed-303`) with `λ_aux = 1.2`.
+- **RL vs. Deterministic Physics Heuristic — Near-Parity on Scalar $J$ with Higher Daylight Exposure:** Three of five validation-selected seeds (`303`: `0.863`, `789`: `0.840`, `456`: `0.811`) outperform the deterministic zero-parameter Greedy Physics-Heuristic (`0.810`), and 5-seed `best.pt` achieves higher mean direct sunlight (**`81.6%` vs `76.5%`** Val; **`51.3%` vs `48.4%`** Test) and diffuse sky exposure (**`22.2%` vs `18.3%`** Val; **`10.8%` vs `9.5%`** Test). On 5-seed mean scalar $J$, `seed-202` (`0.605` Test / `0.291` NYC) leaves the aggregate (`0.776 ± 0.103` Test / `1.129 ± 0.075` Val) just behind the deterministic greedy heuristic (`0.810` Test / `1.131` Val).
 
 ### Flat `1×1×1` (1,200 Ep) vs. Tier-Adaptive Multi-Scale (600 Ep) Ablation
 
@@ -163,7 +165,7 @@ In a matched `seed=123` head-to-head on Apple M4 MPS, switching large blocks fro
 | Deterministic Eval (`seed=9001`): `XL` Sites (`xl_tokyo_0185` / `xl_sgp_0386`) | `FAR 5.69` / `5.79` (**FAIL**) | **`FAR 3.10`** (`0.7176`) / **`FAR 3.10`** (`0.6985`) |
 | Deterministic Eval (`seed=9001`): `L` Sites (`l_bcn_0074` / `l_sgp_0369`) | `0.5747` / `0.2923` | **`1.0164`** / **`0.8523`** |
 
-**Note:** *The `1,200`-ep vs `600`-ep table and figure compare matched `seed=123` runs (`spatial_aux_weight=1.2`); across the 3-seed `600`-ep sweep (`123, 456, 789`), `seed-123` and `seed-789` hit `FAR = 1.00` on all held-out evaluations (`0.825` / `0.797` Test) while `seed-456` exhibits held-out FAR variance (`0.60` Val / `0.80` Test). Training-window `l_sgp_0369` `last10` was `0.575` in flat `1×1×1`, and flat `1,200`-ep had its own untrained control (`0.568` Val / `0.279` Test) due to distinct entry stems.*
+**Note:** *The `1,200`-ep vs `600`-ep comparison above reflects a single `seed=123` head-to-head (`spatial_aux_weight=1.2`); across the 5-seed validation-checkpointed `600`-ep benchmark (`123, 456, 789, 202, 303`), `best.pt` retains `FAR = 1.00` across all 5 seeds (`0.776 ± 0.103` Test vs `0.646 ± 0.352` at episode 600). Training-window `l_sgp_0369` `last10` was `0.575` in flat `1×1×1`, and flat `1,200`-ep had its own untrained control (`0.568` Val / `0.279` Test) due to distinct entry stems.*
 
 ### Infrastructure Verification & Compute Scaling
 
@@ -215,7 +217,7 @@ uv run --frozen vf-research train \
   --config configs/research-real-tier-600ep.json \
   --output runs/real-tier-600ep
 
-# Multi-seed tier-adaptive 600-episode sweep (seeds 123, 456, 789, XS–XL)
+# Multi-seed tier-adaptive 600-episode sweep (seeds 123, 456, 789, 202, 303; 50-ep Val -> best.pt)
 uv run --frozen vf-research train \
   --config configs/research-real-aux-tier-600ep.json \
   --output runs/real-aux-tier-600ep
@@ -232,7 +234,7 @@ uv run --frozen vf-research train \
 # Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans)
 uv run --frozen python main.py
 
-# Run complete verification suite (204 Python tests, 11 JS geometry tests, repo-wide lint)
+# Run complete verification suite (205 Python tests, 11 JS geometry tests, repo-wide lint)
 uv run --frozen --extra dev python -m unittest discover -s tests
 node --check public/*.js
 node --test tests/*.test.mjs
@@ -260,7 +262,7 @@ VoxelForm-RL/
 ├── data/urban_context/      # Standalone bundled 13-site XS–XL OSM parcel & context dataset
 ├── configs/                 # Reproducible experiment specs (smoke, real, real-tier, tier-600ep)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
-├── tests/                   # 204 Python unittest specs + 11 Node geometry/syntax tests
+├── tests/                   # 205 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
 ├── results/                 # Retained raw JSON benchmarks, core checks & solver probes
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer
@@ -274,7 +276,7 @@ VoxelForm-RL/
 ## Methodological Limitations & Open Research Directions
 
 - **Uncalibrated Physical Proxies:** `directSunProxy`, `diffuseFacadeProxy`, acoustic `noisePrior`, planar depth, and 8-neighbor geodesic core distance are research surrogate signals — not calibrated daylight simulations, acoustic models, structural analyses, or building-code/egress compliance verifications ([docs/DATA_CARD.md](docs/DATA_CARD.md), [docs/MODEL_CARD.md](docs/MODEL_CARD.md)).
-- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field inject strong inductive bias; as shown by our greedy physics-heuristic baseline (`0.810` Test $J$), improving pure-RL exploration and reducing inter-seed FAR variance (`0.93 ± 0.12` Test FAR across seeds `123/456/789`) remain primary ML open problems.
+- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field inject strong inductive bias; even with 50-episode validation checkpointing stabilizing `FAR = 1.00`, residual inter-seed variance in deep canyons (`0.504 ± 0.133` on unseen NYC across 5 seeds) leaves surpassing the deterministic greedy heuristic (`0.810` Test $J$) consistently across all random initializations an open ML challenge.
 - **Open Multi-Objective & Throughput Work:** Pareto trade-off learning across conflicting proxy objectives (e.g., goal-conditioned weight preferences, multi-head vector critics, or Lagrangian FAR constraints) and batched multi-environment rollout vectorization remain active next experiments rather than settled results.
 
 ---

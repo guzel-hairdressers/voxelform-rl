@@ -51,13 +51,13 @@ To verify that learned daylight-massing strategies transfer beyond the training 
 
 *Zero-shot city transfer on identical random seeds (`9005`, `9002`, `9003`) comparing unoptimized random initialization (**top**) against the `seed=123` trained policy (**bottom**). Note how the trained forms open light courts, pull back upper plates from tall neighbors, and align floor-plate depths around vertical cores.*
 
-| Unseen City Site | Untrained → **Seed `123` Usable Area** | **3-Seed RL Mean Usable Area** (`FAR` Hit) | Greedy Heuristic Usable Area (`FAR`) | `directSunProxy` (3-Seed RL vs Greedy) | `diffuseFacadeProxy` (3-Seed RL vs Greedy) |
+| Unseen City Site | Untrained → **Seed `123` Showcase Area** | **5-Seed RL Mean Usable Area** (`best.pt`, `FAR` Hit) | Greedy Heuristic Usable Area (`FAR`) | `directSunProxy` (5-Seed RL vs Greedy) | `diffuseFacadeProxy` (5-Seed RL vs Greedy) |
 |---|---:|---:|---:|---:|---:|
-| **Hong Kong** `m_hk_0199` | `1,048.8 →` **`3,552.8 m²`** (`50.8%`, `96.5%` core) | `3,192.6 ± 386.8 m²` (`86.7%`) | `4,404.0 m²` (`100%`) | **`83.4%`** vs `76.5%` | **`21.6%`** vs `18.3%` |
-| **New York** `m_nyc_0003` | `106.8 →` **`1,544.6 m²`** (`36.1%`, `96.9%` core) | **`1,705.9 m²`** (`93.3%`) | `1,434.0 m²` (`100%`) | **`28.0%`** vs `23.5%` | **`6.9%`** vs `5.7%` |
-| **Paris** `m_prs_0315` | `846.8 →` **`2,727.8 m²`** (`63.4%`, `96.6%` core) | `2,491.8 m²` (`93.3%`) | `2,947.0 m²` (`100%`) | **`78.2%`** vs `73.3%` | **`16.1%`** vs `13.4%` |
+| **Hong Kong** `m_hk_0199` | `1,048.8 →` **`3,552.8 m²`** (`50.8%`, `96.5%` core) | `4,076.4 ± 684.0 m²` (`100%`) | `4,404.0 m²` (`100%`) | **`81.6%`** vs `76.5%` | **`22.2%`** vs `18.3%` |
+| **New York** `m_nyc_0003` | `106.8 →` **`1,544.6 m²`** (`36.1%`, `96.9%` core) | **`1,548.8 m²`** (`100%`) | `1,434.0 m²` (`100%`) | **`28.5%`** vs `23.5%` | **`6.6%`** vs `5.7%` |
+| **Paris** `m_prs_0315` | `846.8 →` **`2,727.8 m²`** (`63.4%`, `96.6%` core) | `2,645.8 m²` (`100%`) | `2,947.0 m²` (`100%`) | **`74.1%`** vs `73.3%` | **`15.1%`** vs `13.4%` |
 
-*(Showcase figures above show `seed=123` under matched decoding (`temp=1.0, noise=1.0`, 5 eval seeds/site); multi-seed means aggregate training seeds `123, 456, 789` against the deterministic zero-parameter greedy physics-heuristic baseline in [README.md](README.md). Direct sun and diffuse sky remain separate unblended proxies.)*
+*(Showcase figures above render `seed=123` under matched decoding (`temp=1.0, noise=1.0`, 5 eval seeds/site); multi-seed means aggregate 50-episode validation-selected `best.pt` checkpoints across training seeds `123, 456, 789, 202, 303` against the deterministic zero-parameter greedy physics-heuristic baseline in [README.md](README.md). Direct sun and diffuse sky remain separate unblended proxies.)*
 
 ---
 
