@@ -95,11 +95,14 @@ class _IndexedMeshBuilder:
         cy: float = 0.0,
         *,
         z_split: float | None = None,
+        cap_bottom: bool = True,
     ):
         if z1 <= z0 + 1e-5 or geom is None or geom.is_empty:
             return
         for poly in _iter_polygons(geom):
-            _extrude_polygon_into(self, poly, z0, z1, cx, cy, z_split=z_split)
+            _extrude_polygon_into(
+                self, poly, z0, z1, cx, cy, z_split=z_split, cap_bottom=cap_bottom
+            )
 
     def to_dict(self) -> dict:
         return {"vertices": self.verts, "faces": self.faces}
@@ -136,6 +139,7 @@ def _extrude_polygon_into(
     cy: float,
     *,
     z_split: float | None = None,
+    cap_bottom: bool = True,
 ):
     z_levels = (
         [z0, z_split, z1]
@@ -206,7 +210,8 @@ def _extrude_polygon_into(
             bot_ids.append(pair[0])
             top_ids.append(pair[1])
         builder.faces.append(top_ids)
-        builder.faces.append([bot_ids[0], bot_ids[2], bot_ids[1]])
+        if cap_bottom:
+            builder.faces.append([bot_ids[0], bot_ids[2], bot_ids[1]])
 
 
 def _greedy_merge_2d(grid: np.ndarray) -> list[tuple[int, int, int, int]]:
@@ -321,6 +326,7 @@ def _build_exterior_shell(
     include_ground: bool,
     merge_vertical_walls: bool,
     grid_module: int = 0,
+    include_roof: bool = True,
 ) -> _IndexedMeshBuilder:
     """Emit outward CCW quads for faces of `mask` whose neighbor in `solid` is empty."""
     builder = _IndexedMeshBuilder()
@@ -392,7 +398,7 @@ def _build_exterior_shell(
                 )
 
     for z in range(nz):
-        if exp_pz[z].any():
+        if include_roof and exp_pz[z].any():
             zp = _floor_z(z + 1, gf_height)
             for y0, x0, y1, x1 in _greedy_merge_2d(exp_pz[z]):
                 builder.add_quad(
@@ -458,17 +464,21 @@ def _patch_cfg() -> PatchConfig:
     )
 
 
-def _load_policy(run_dir: Path, temp: float, noise: float):
+def _load_policy(
+    run_dir: Path, temp: float, noise: float, checkpoint: Path | None = None
+):
     cfg = ExperimentConfig.read(run_dir / "config.json")
     dev = device_name(cfg.device)
-    seed = cfg.seeds[0]
-    ckpt_path = run_dir / f"seed-{seed}" / "latest.pt"
-    saved = torch.load(ckpt_path, map_location="cpu", weights_only=False)
+    ckpt_path = checkpoint or (run_dir / f"seed-{cfg.seeds[0]}" / "latest.pt")
+    saved = torch.load(ckpt_path, map_location="cpu", weights_only=True)
     if (
         saved.get("format") != PROTOCOL
         or saved.get("coreLayoutVersion") != CORE_LAYOUT_VERSION
     ):
         raise ValueError("Incompatible checkpoint protocol or core layout version")
+    seed = saved["seed"]
+    if seed not in cfg.seeds:
+        raise ValueError("Checkpoint seed is outside the configured run")
     manifest_path = run_dir / "manifest.json"
     manifest_hash = (
         json.loads(manifest_path.read_text()).get("configHash")
@@ -489,6 +499,7 @@ def _load_policy(run_dir: Path, temp: float, noise: float):
             evaluation_temperature=temp,
             evaluation_noise_scale=noise,
             lr=1.2e-3,
+            decoder_retry_schedule=cfg.decoder_retry_schedule,
         )
     else:
         policy = UnifiedLearner(
@@ -630,6 +641,50 @@ def _oriented_stripe_poly(
     return Polygon(pts)
 
 
+def _build_road_markings(road_union, board, building_blockers) -> _IndexedMeshBuilder:
+    """Place dashes on a fixed phase along each straight road direction."""
+    markings = _IndexedMeshBuilder()
+    road_center = road_union.buffer(-2.1)
+    if road_center.is_empty:
+        return markings
+
+    pitch = 5.6
+    allowed = road_union.intersection(board.buffer(-1.0)).difference(building_blockers)
+    centers: list[tuple[float, float]] = []
+    for poly in _iter_polygons(road_union.simplify(0.08)):
+        for ring in [poly.exterior, *poly.interiors]:
+            coords = list(ring.coords)
+            for (x0, y0), (x1, y1) in zip(coords, coords[1:]):
+                length = math.hypot(x1 - x0, y1 - y0)
+                if length < 3.0:
+                    continue
+                ux, uy = (x1 - x0) / length, (y1 - y0) / length
+                nx, ny = -uy, ux
+                heading = math.atan2(uy, ux)
+                start = x0 * ux + y0 * uy
+                # Adjacent or opposite curbs on a straight street share the
+                # same stations, regardless of where the polygon is split.
+                for station in range(
+                    math.ceil(start / pitch), math.floor((start + length) / pitch) + 1
+                ):
+                    distance = station * pitch - start
+                    bx, by = x0 + distance * ux, y0 + distance * uy
+                    probed = _probe_road_center_offset(bx, by, nx, ny, road_union)
+                    if probed is None or probed[1] < 4.4:
+                        continue
+                    offset, _ = probed
+                    px, py = bx + offset * nx, by + offset * ny
+                    if not road_center.covers(Point(px, py)) or not _far_enough(
+                        px, py, centers, 4.2
+                    ):
+                        continue
+                    stripe = _oriented_stripe_poly(px, py, heading, 2.4, 0.16)
+                    if allowed.covers(stripe):
+                        markings.add_prism(stripe, 0.022, 0.032)
+                        centers.append((px, py))
+    return markings
+
+
 def _extract_street_assets(
     hero_2d,
     ctx_bld_2d: list,
@@ -675,49 +730,7 @@ def _extract_street_assets(
     if not curb_geom.is_empty:
         sidewalk_curbs.add_prism(curb_geom, 0.0, 0.18)
 
-    # Dashed centerlines across ALL straight streets inside the full scene board
-    road_markings = _IndexedMeshBuilder()
-    stripe_centers: list[tuple[float, float]] = []
-    if not road_union.is_empty:
-        road_center_safe = road_union.buffer(-2.1)
-        mark_roi = board_box.buffer(-1.0)
-        for poly in _iter_polygons(road_union):
-            for ring in [poly.exterior, *poly.interiors]:
-                coords = list(ring.coords)
-                for i in range(len(coords) - 1):
-                    x0, y0 = float(coords[i][0]), float(coords[i][1])
-                    x1, y1 = float(coords[i + 1][0]), float(coords[i + 1][1])
-                    seg_len = math.hypot(x1 - x0, y1 - y0)
-                    if seg_len < 8.0:
-                        continue
-                    ux, uy = (x1 - x0) / seg_len, (y1 - y0) / seg_len
-                    ang = math.atan2(uy, ux)
-                    nx_l, ny_l = -uy, ux
-                    probed = _probe_road_center_offset(
-                        0.5 * (x0 + x1), 0.5 * (y0 + y1), nx_l, ny_l, road_union
-                    )
-                    if probed is None:
-                        continue
-                    center_off, road_w = probed
-                    if road_w >= 4.4 and not road_center_safe.is_empty:
-                        dist = 3.0
-                        while dist <= seg_len - 3.0:
-                            px = x0 + ux * dist + center_off * nx_l
-                            py = y0 + uy * dist + center_off * ny_l
-                            pt = Point(px, py)
-                            if (
-                                mark_roi.contains(pt)
-                                and road_center_safe.contains(pt)
-                                and (
-                                    all_bld_union.is_empty
-                                    or not all_bld_union.contains(pt)
-                                )
-                                and _far_enough(px, py, stripe_centers, 4.2)
-                            ):
-                                stripe = _oriented_stripe_poly(px, py, ang, 2.4, 0.16)
-                                road_markings.add_prism(stripe, 0.022, 0.032)
-                                stripe_centers.append((px, py))
-                            dist += 5.6
+    road_markings = _build_road_markings(road_union, board_box, all_bld_union)
 
     # Extract true road curb edges across the entire road network inside board bounds
     bs_cands: list[tuple[float, float, float, float, float, float, Polygon]] = []
@@ -1141,10 +1154,14 @@ def export_site_payload(
     *,
     gf_height: float = 4.2,
     grid_module: int = 2,
+    voxel_output: Path | None = None,
 ) -> dict:
     env, occ, core_mask, obj, diag = _run_trained_episode(
         cfg, dev, policy, site_id, eval_seed
     )
+    if voxel_output is not None:
+        voxel_output.parent.mkdir(parents=True, exist_ok=True)
+        np.savez_compressed(voxel_output, occupied=occ, cores=core_mask)
     yy, xx = np.nonzero(occ.any(axis=0))
     cx = 0.5 * (float(xx.min()) + float(xx.max() + 1))
     cy = 0.5 * (float(yy.min()) + float(yy.max() + 1))
@@ -1168,6 +1185,7 @@ def export_site_payload(
         gf_height=gf_height,
         include_ground=True,
         merge_vertical_walls=True,
+        include_roof=False,
     )
 
     nz = occ.shape[0]
@@ -1181,7 +1199,9 @@ def export_site_payload(
         )
         if top_c.any():
             zt = _floor_z(z + 1, gf_height)
-            cores.add_prism(_mask_to_geom(top_c), zt, zt + 1.05, cx, cy)
+            cores.add_prism(
+                _mask_to_geom(top_c), zt, zt + 1.05, cx, cy, cap_bottom=False
+            )
 
     hero_parapets = _IndexedMeshBuilder()
     for z in range(nz):
@@ -1204,7 +1224,9 @@ def export_site_payload(
                 core_2d[z].buffer(0.02, join_style="mitre")
             )
         z_roof = _floor_z(z + 1, gf_height)
-        hero_parapets.add_prism(parapet_ring, z_roof, z_roof + 0.90, cx, cy)
+        hero_parapets.add_prism(
+            parapet_ring, z_roof, z_roof + 0.90, cx, cy, cap_bottom=False
+        )
 
     # Interior 0.30 m floor slabs, recessed upper partitions, and grounded blush GF plinth
     hero_slabs = _IndexedMeshBuilder()
@@ -1269,19 +1291,26 @@ def export_site_payload(
             ctx_bld_2d.append(g_loc)
             inner_p = g_loc.buffer(-0.35, join_style="mitre")
             p_ring = g_loc.difference(inner_p) if not inner_p.is_empty else g_loc
-            ctx_parapets.add_prism(p_ring, z_hi, z_hi + 0.75, 0.0, 0.0)
+            ctx_parapets.add_prism(
+                p_ring, z_hi, z_hi + 0.75, 0.0, 0.0, cap_bottom=False
+            )
 
     road_2d = []
     roads = _IndexedMeshBuilder()
     for r in ctx.get("roads", []):
-        rv = np.asarray(r.get("vertices", []), dtype=np.float32)
-        if len(rv) < 3:
+        vertices = np.asarray(r.get("vertices", []), dtype=np.float64)
+        faces = np.asarray(r.get("faces", []), dtype=np.int64)
+        if not len(vertices) or not len(faces):
             continue
-        rp = Polygon(rv[:, :2]).buffer(0)
-        if not rp.is_empty and rp.area > 1.0:
-            rp_loc = translate(rp, xoff=-cx, yoff=-cy)
-            road_2d.append(rp_loc)
-            roads.add_prism(rp_loc, 0.0, 0.02, 0.0, 0.0)
+        triangles = shapely.polygons(vertices[faces, :2] - (cx, cy))
+        # A road mesh's vertex buffer can contain caps, sidewalls, and holes.
+        # Only its projected faces describe the footprint.
+        footprint = shapely.union_all(
+            triangles[shapely.area(triangles) > 1e-8], grid_size=1e-4
+        )
+        if footprint.area > 1.0:
+            road_2d.append(footprint)
+    roads.add_prism(unary_union(road_2d), 0.0, 0.02)
 
     green_2d = []
     greens = _IndexedMeshBuilder()
@@ -1409,6 +1438,8 @@ def _build_blend_file(
         str(blender_bin),
         "--background",
         str(template_path),
+        "--python-exit-code",
+        "1",
         "--python",
         str(importer),
         "--",
@@ -1434,6 +1465,14 @@ def main():
         "--run-dir", type=Path, default=ROOT / "runs" / "real-aux-tier-600ep"
     )
     parser.add_argument("--site", nargs="+", default=["m_prs_0315"])
+    parser.add_argument(
+        "--checkpoint", type=Path, help="Use a checkpoint from --run-dir"
+    )
+    parser.add_argument(
+        "--save-voxels",
+        action="store_true",
+        help="Save the exact masks used for the Blender export",
+    )
     parser.add_argument("--all-showcase", action="store_true")
     parser.add_argument("--seed", type=int, default=None)
     parser.add_argument("--temp", type=float, default=1.0)
@@ -1466,7 +1505,9 @@ def main():
         )
 
     blender_bin = None if args.json_only else _find_blender(args.blender_bin)
-    cfg, dev, policy = _load_policy(args.run_dir, args.temp, args.noise)
+    cfg, dev, policy = _load_policy(
+        args.run_dir, args.temp, args.noise, args.checkpoint
+    )
 
     grid_module = _hero_grid_module(args.hero_style)
     for site_id in sites:
@@ -1487,6 +1528,7 @@ def main():
             args.noise,
             gf_height=args.gf_height,
             grid_module=grid_module,
+            voxel_output=json_path.with_suffix(".npz") if args.save_voxels else None,
         )
         json_path.write_text(json.dumps(payload))
         print(f"Exported {json_path} ({json_path.stat().st_size / 1024:.1f} KB)")

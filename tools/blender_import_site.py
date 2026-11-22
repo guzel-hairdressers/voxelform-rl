@@ -144,6 +144,7 @@ def _apply_hero_facades(
     m_swap = _add_gn_mod(obj, "Panel Swap", "Panel Swap")
     set_mod_input(m_swap, "Collection", bpy.data.collections[spec["collection"]])
     set_mod_input(m_swap, "Realize and Merge", False)
+    _add_gn_mod(obj, "Facade Glazing", "Facade Glazing")
 
 
 def _apply_context_facades(
@@ -336,8 +337,7 @@ def _max_xy_extent(payload: dict) -> float:
 
 def _ensure_studio_lighting(ctx_col: bpy.types.Collection) -> None:
     """Configure the scene world with a packed/local studio HDRI, softbox key, and dark backdrop."""
-    hdris_dir = _TOOLS_DIR.parent / "blender" / "hdris"
-    configure_studio_world(hdris_dir=hdris_dir, light_col=ctx_col)
+    configure_studio_world(light_col=ctx_col)
 
 
 def _auto_frame_camera(hero_col: bpy.types.Collection) -> None:

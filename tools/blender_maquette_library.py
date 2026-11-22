@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 from pathlib import Path
 import re
 
@@ -18,6 +19,7 @@ KEEP_NODE_GROUPS: frozenset[str] = frozenset(
         "Inset Face",
         "Simple Extrusion",
         "Hero Curtain Wall",
+        "Facade Glazing",
         "Scatter Humans On Paths",
     }
 )
@@ -43,7 +45,7 @@ HERO_STYLES: dict[str, dict] = {
         "upper_min": 3,
         "upper_max": 5,
         "opaque_id": 6,
-        "opaque_step": 4,
+        "opaque_step": 5,
     },
     "ribbon_louver": {
         "mode": "panel_swap",
@@ -57,7 +59,7 @@ HERO_STYLES: dict[str, dict] = {
         "upper_min": 3,
         "upper_max": 4,
         "opaque_id": 5,
-        "opaque_step": 4,
+        "opaque_step": 5,
     },
 }
 
@@ -825,6 +827,38 @@ def _link_glass_facade_width(
     raise KeyError("Glass Facade Mullion Width socket not found")
 
 
+def _build_facade_glazing_group(glass: bpy.types.Material) -> None:
+    """Toggle the glazing on instanced panels while retaining the frames."""
+    tree = _recreate_geo_group("Facade Glazing")
+    tree.interface.new_socket(
+        "Geometry", in_out="INPUT", socket_type="NodeSocketGeometry"
+    )
+    tree.interface.new_socket(
+        "Geometry", in_out="OUTPUT", socket_type="NodeSocketGeometry"
+    )
+    toggle = tree.interface.new_socket(
+        "Delete Glass", in_out="INPUT", socket_type="NodeSocketBool"
+    )
+    toggle.description = "Remove window glazing and retain the frames and backing"
+    group_input = tree.nodes.new("NodeGroupInput")
+    group_output = tree.nodes.new("NodeGroupOutput")
+    realize = tree.nodes.new("GeometryNodeRealizeInstances")
+    select = tree.nodes.new("GeometryNodeMaterialSelection")
+    select.inputs["Material"].default_value = glass
+    delete = tree.nodes.new("GeometryNodeDeleteGeometry")
+    delete.domain = "FACE"
+    switch = tree.nodes.new("GeometryNodeSwitch")
+    switch.input_type = "GEOMETRY"
+
+    tree.links.new(group_input.outputs["Geometry"], realize.inputs["Geometry"])
+    tree.links.new(realize.outputs["Geometry"], delete.inputs["Geometry"])
+    tree.links.new(select.outputs["Selection"], delete.inputs["Selection"])
+    tree.links.new(group_input.outputs["Delete Glass"], switch.inputs["Switch"])
+    tree.links.new(group_input.outputs["Geometry"], switch.inputs["False"])
+    tree.links.new(delete.outputs["Geometry"], switch.inputs["True"])
+    tree.links.new(switch.outputs["Output"], group_output.inputs["Geometry"])
+
+
 def _build_hero_curtain_wall_group(
     mats: dict[str, bpy.types.Material],
 ) -> bpy.types.NodeTree:
@@ -1510,6 +1544,15 @@ def _populate_facade_collections(
         front_slab_z=0.38,
     )
 
+    # Local Y becomes vertical in Panel Swap. Clear the roof plane at the panel
+    # head by 12 mm while keeping the module's dimensions and stacking pitch.
+    for collection in (c_sb, c_rl):
+        for module in collection.objects:
+            for vertex in module.data.vertices:
+                vertex.co.y -= 0.012
+            module.data.update()
+            module.data["vf_roof_clearance_m"] = 0.012
+
     # Context Height-Tiered Monotone Collections (ALL using ONLY Mat_Context_Maquette)
     m_ctx = mats["Mat_Context_Maquette"]
 
@@ -2060,15 +2103,28 @@ def _build_scatter_humans_on_paths_group(
     return ng
 
 
+def configure_cycles_light_paths(scene: bpy.types.Scene) -> None:
+    """Use the maquette light-path settings for Cycles."""
+    cycles = scene.cycles
+    cycles.use_fast_gi = False
+    cycles.max_bounces = 8
+    cycles.diffuse_bounces = 4
+    cycles.glossy_bounces = 0
+    cycles.transmission_bounces = 4
+    cycles.volume_bounces = 0
+    cycles.transparent_max_bounces = 8
+    cycles.sample_clamp_direct = 0.0
+
+
 def configure_studio_world(
     hdris_dir: Path | None = None,
     *,
     hdri_name: str = "studio_small_08_4k.hdr",
     rotation_z: float = 0.85,
-    strength: float = 1.0,
+    strength: float = 1.2,
     light_col: bpy.types.Collection | None = None,
 ) -> None:
-    """Configure EEVEE raytraced studio HDRI lighting directly matching the maquette look."""
+    """Configure the studio HDRI and Cycles lighting for the maquette."""
     _ = light_col
     scene = bpy.context.scene
     world = scene.world
@@ -2081,10 +2137,14 @@ def configure_studio_world(
     nt = world.node_tree
     nt.nodes.clear()
 
-    base_dir = hdris_dir or (
-        Path(__file__).resolve().parent.parent / "blender" / "hdris"
-    )
-    hdri_file = (base_dir / hdri_name).resolve()
+    if hdris_dir is None:
+        if override := os.environ.get("VOXELFORM_HDRI_DIR"):
+            hdris_dir = Path(override).expanduser()
+        else:
+            shared = Path.home() / "Documents" / "3D" / "Assets" / "HDRI"
+            local = Path(__file__).resolve().parent.parent / "blender" / "hdris"
+            hdris_dir = shared if (shared / hdri_name).is_file() else local
+    hdri_file = (hdris_dir / hdri_name).resolve()
 
     out = nt.nodes.new("ShaderNodeOutputWorld")
     bg = nt.nodes.new("ShaderNodeBackground")
@@ -2118,11 +2178,8 @@ def configure_studio_world(
         if key_data is not None and key_data.users == 0:
             bpy.data.lights.remove(key_data)
 
-    scene.render.engine = "BLENDER_EEVEE"
-    if hasattr(scene.eevee, "use_raytracing"):
-        scene.eevee.use_raytracing = True
-    if hasattr(scene.eevee, "taa_render_samples"):
-        scene.eevee.taa_render_samples = 64
+    scene.render.engine = "CYCLES"
+    configure_cycles_light_paths(scene)
     scene.view_settings.view_transform = "AgX"
     scene.view_settings.look = "AgX - High Contrast"
     scene.view_settings.exposure = 0.0
@@ -2140,6 +2197,7 @@ def ensure_maquette_library() -> dict:
     _build_panelize_building_group()
     _build_assign_panel_id_group()
     _build_hero_curtain_wall_group(mats)
+    _build_facade_glazing_group(mats["Glass"])
 
     _populate_facade_collections(assets_col, mats)
     humans_col = _populate_prop_collection(assets_col, mats)

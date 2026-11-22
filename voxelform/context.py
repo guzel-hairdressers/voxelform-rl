@@ -27,17 +27,27 @@ class ContextLibrary:
 
     def catalog(self):
         records = {}
-        for name in ("master_urban_dataset.json", "custom_sites_dataset.json"):
-            paths = [
-                self.root / base / "data" / name
-                for base in ("frontend/public", "public")
-            ]
-            index = next((p for p in paths if p.is_file()), None)
-            if index is None:
+        frontend = self.root / "frontend/public/data"
+        legacy = self.root / "public/data"
+        master = "master_urban_dataset.json"
+        custom = "custom_sites_dataset.json"
+        master_index = (
+            frontend / master if (frontend / master).is_file() else legacy / master
+        )
+        for index in (master_index, legacy / custom, frontend / custom):
+            if not index.is_file():
                 continue
             for row in json.loads(index.read_text()):
-                if row.get("site_id") and self._scene_path(row) is not None:
-                    records[row["site_id"]] = row
+                site_id = row.get("site_id")
+                if not site_id:
+                    continue
+                if index.name == custom:
+                    row = dict(row, is_custom=True)
+                    row["render_html"] = (
+                        row.get("render_html") or f"sites/{site_id}.html"
+                    )
+                if self._scene_path(row) is not None:
+                    records[site_id] = row
         return list(records.values())
 
     def _scene_path(self, record):
@@ -295,6 +305,7 @@ def prepare_scene(raw, record, floors=6, grid_alignment="world"):
         site_id=record["site_id"],
         city=record.get("city_name", raw.get("cityName", "Urban site")),
         tier=record.get("area_tier", ""),
+        isCustom=bool(record.get("is_custom")),
         source="cached_osm",
         lat=record.get("lat"),
         lon=record.get("lon"),

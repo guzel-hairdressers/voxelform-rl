@@ -1763,6 +1763,7 @@ def sites():
             cityCode=r.get("city_code", ""),
             tier=r.get("area_tier", ""),
             area=r.get("site_area_m2"),
+            isCustom=bool(r.get("is_custom")),
         )
         for r in library.catalog()
     ]

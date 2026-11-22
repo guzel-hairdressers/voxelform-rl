@@ -302,7 +302,7 @@ function render(){
  if (rotation?.error) error(`Training rotation paused: ${rotation.error}`);
  const m=data.metrics,l=data.learning,c=data.context,siteKey=c?`${c.site_id}:${c.gridAlignment||'world'}:${data.shape[0]}`:`synthetic:${data.seed}:${data.shape[0]}`,changedSite=siteKey!==lastSite;
  $('status').textContent=`${data.running?(data.training?'Training':'Generating'):'Paused'} · ${m.device.toUpperCase()} · ${data.activeSeconds.toFixed(1)} s active`;
- $('sourceLabel').textContent=c?'Fetched urban context':'Synthetic method fixture';
+ $('sourceLabel').textContent=c?(c.isCustom?'Module Lab custom plot':'Fetched urban context'):'Synthetic method fixture';
  $('train').textContent=data.running&&data.training?'Pause training':'▶ Train';$('train').setAttribute('aria-pressed',String(data.running&&data.training));
  $('infer').textContent=data.running&&!data.training?'Pause generation':'Generate one';
  const settings=data.settings||{targetFar:3,densityPreset:'medium',densityPresets:{low:1.5,medium:3,high:4.5}};
@@ -376,18 +376,47 @@ async function control(command,extra={}){
   if(!r.ok){const text=await r.text();let message=text;try{message=JSON.parse(text).detail||text;}catch{}throw new Error(message);}
   await poll(true);return true;
  }catch(e){error(e.message);return false;}
- finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);$('notice').hidden=true;}
+ finally{busy=false;document.querySelectorAll('button').forEach(b=>b.disabled=false);$('applySite').disabled=!filteredSites().length;$('notice').hidden=true;}
 }
-function filteredSites(){return catalog.filter(r=>(!$('city').value||r.cityCode===$('city').value)&&(!$('tier').value||r.tier===$('tier').value));}
+function customSource(){return $('source').value==='module_lab_custom';}
+function filteredSites(){
+ const custom=customSource();
+ return catalog.filter(r=>Boolean(r.isCustom)===custom&&(custom||((!$('city').value||r.cityCode===$('city').value)&&(!$('tier').value||r.tier===$('tier').value))));
+}
 function filterSites(preferred){
- const rows=filteredSites(),current=preferred||$('site').value;
- $('site').replaceChildren(...rows.map(r=>option(r.siteId,`${r.siteId} · ${Math.round(r.area||0).toLocaleString()} m²`)));
+ const rows=filteredSites(),current=preferred||$('site').value,custom=customSource();
+ $('site').replaceChildren(...(rows.length?rows.map(r=>option(r.siteId,`${custom?r.city:r.siteId}${r.area!=null?` · ${Math.round(r.area).toLocaleString()} m²`:''}`)):[option('',custom?'No saved custom plots':'No matching sites')]));
  if(rows.some(r=>r.siteId===current))$('site').value=current;
- $('catalogCount').textContent=`${rows.length} matching cached sites. Original footprints and heights.`;
+ $('catalogCount').textContent=custom
+  ?(rows.length?`${rows.length} saved ${rows.length===1?'plot':'plots'} from Module Lab.`:'Save a custom plot in Module Lab, then refresh this list.')
+  :`${rows.length} matching cached sites. Original footprints and heights.`;
+ $('site').disabled=!rows.length;
  $('applySite').disabled=!rows.length;
 }
-async function loadSite(id=$('site').value){if(!id){error('No cached sites match these filters.');return;}const ok=await control('site',{source:'cached_osm',siteId:id});if(ok){$('source').value='cached_osm';sourceSettings();}}
-function sourceSettings(){$('urbanSettings').hidden=$('source').value!=='cached_osm';$('syntheticSettings').hidden=$('source').value!=='synthetic';}
+async function loadSite(id=$('site').value){
+ if(!id)return;
+ const ok=await control('site',{source:'cached_osm',siteId:id});
+ if(ok){$('source').value=catalog.find(r=>r.siteId===id)?.isCustom?'module_lab_custom':'cached_osm';sourceSettings(id);}
+}
+function sourceSettings(preferred){
+ const synthetic=$('source').value==='synthetic',custom=customSource();
+ $('urbanSettings').hidden=synthetic;
+ $('syntheticSettings').hidden=!synthetic;
+ $('catalogFilters').hidden=custom;
+ $('refreshSites').hidden=!custom;
+ $('siteLabel').textContent=custom?'Saved custom plot':'Cached site';
+ if(!synthetic)filterSites(preferred);
+}
+async function refreshCatalog(preferred){
+ const response=await fetch('/api/sites',{cache:'no-store'});
+ if(!response.ok)throw new Error('Site catalog unavailable.');
+ catalog=await response.json();
+ const selectedCity=$('city').value;
+ const cities=new Map(catalog.filter(r=>!r.isCustom).map(r=>[r.cityCode,r.city]));
+ $('city').replaceChildren(option('','All cities'),...Array.from(cities,([code,name])=>option(code,name)));
+ if(cities.has(selectedCity))$('city').value=selectedCity;
+ filterSites(preferred);
+}
 async function navigateSite(direction){
  const rows=filteredSites();if(!rows.length)return;
  const current=rows.findIndex(r=>r.siteId===data?.siteId),next=rows[(current+direction+rows.length)%rows.length];$('site').value=next.siteId;await loadSite(next.siteId);
@@ -403,7 +432,11 @@ $('autoEnvelope')?.addEventListener('click',()=>control('envelope',{auto:true}))
 $('applyCores')?.addEventListener('click',()=>control('cores',{coresEnabled:$('coresEnabled').checked,minCoreSpacing:Number($('minCoreSpacing').value),maxCoreDist:Number($('maxCoreDist').value)}));
 $('coresEnabled')?.addEventListener('change',()=>control('cores',{coresEnabled:$('coresEnabled').checked,minCoreSpacing:Number($('minCoreSpacing').value),maxCoreDist:Number($('maxCoreDist').value)}));
 $('resetWeights')?.addEventListener('click',async()=>{const menu=$('resetWeights').closest('details');if(menu)menu.open=false;await control('reset_weights');});
-$('source').onchange=sourceSettings;$('city').onchange=()=>filterSites();$('tier').onchange=()=>filterSites();
+$('source').onchange=()=>sourceSettings();$('city').onchange=()=>filterSites();$('tier').onchange=()=>filterSites();
+$('refreshSites').onclick=async()=>{
+ $('refreshSites').disabled=true;error('');
+ try{await refreshCatalog();}catch(e){error(e.message);}finally{$('refreshSites').disabled=false;}
+};
 $('field').onchange=async()=>{view=$('field').value;updateLayerLegend();if(!data)return;if(view!=='solid'&&data[view]==null){await poll(true);}updateGeometry();};
 $('fastTrainView')?.addEventListener('change',()=>{if(data&&lastGeomRevision!==data.revision&&!$('fastTrainView').checked){lastGeomRevision=data.revision;lastRenderedEpisode=data.episodes;lastGeomAt=performance.now();updateGeometry();}});
 $('showContext').onchange=()=>{if(frameReady)viewerMessage({type:'voxel_display',...displayOptions()});};$('fit').onclick=fitViews;
@@ -420,9 +453,9 @@ async function poll(force=false){
 }
 async function init(){
  await poll(true);
- try{const r=await fetch('/api/sites');if(!r.ok)throw new Error('Cached-site catalog unavailable. Open the updated backend.');catalog=await r.json();
- const cities=new Map(catalog.map(r=>[r.cityCode,r.city]));$('city').replaceChildren(option('','All cities'),...Array.from(cities,([code,name])=>option(code,name)));
- filterSites(data?.siteId||'m_bcn_0093');
+ try{await refreshCatalog(data?.siteId||'m_bcn_0093');
+ if(catalog.find(r=>r.siteId===data?.siteId)?.isCustom)$('source').value='module_lab_custom';
+ sourceSettings(data?.siteId);
  }catch(e){error(e.message);}
 }
 const ro=new ResizeObserver(drawDashboard);ro.observe($('history'));if($('qualityChart'))ro.observe($('qualityChart'));

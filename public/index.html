@@ -20,12 +20,15 @@
   <aside class="sidebar">
     <div class="panel-heading"><h2>Study settings</h2><span class="count-tag">01</span></div>
     <p class="caption">The model generates 3D carving, growth and exchange masks from the first edit. Geometry guards check edits; height-graded core reservations and distance fields inform the policy. FAR is an acceptance range, with further exchanges allowed before finishing.</p>
-    <label for="source">Context source</label><select id="source"><option value="cached_osm">Fetched urban sites</option><option value="synthetic">Synthetic method fixture</option></select>
+    <label for="source">Context source</label><select id="source"><option value="cached_osm">Fetched urban sites</option><option value="module_lab_custom">Module Lab custom plots</option><option value="synthetic">Synthetic method fixture</option></select>
     <div id="urbanSettings">
-      <label for="city">City</label><select id="city"><option value="">All cities</option></select>
-      <label for="tier">Site area</label><select id="tier"><option value="">Any size</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select>
-      <label for="site">Cached site</label><select id="site"><option>Loading sites…</option></select>
+      <div id="catalogFilters">
+        <label for="city">City</label><select id="city"><option value="">All cities</option></select>
+        <label for="tier">Site area</label><select id="tier"><option value="">Any size</option><option>XS</option><option>S</option><option>M</option><option>L</option><option>XL</option></select>
+      </div>
+      <label for="site" id="siteLabel">Cached site</label><select id="site"><option value="">Loading sites…</option></select>
       <button id="applySite" class="wide">Load site ↗</button>
+      <button id="refreshSites" class="wide" type="button" hidden>Refresh saved plots</button>
       <p id="catalogCount" class="caption"></p>
       <label for="gridAlignment">Voxel grid alignment</label><select id="gridAlignment"><option value="auto_fit">Auto</option><option value="world">World</option><option value="principal_major">Principal 1</option><option value="longest_edge">Longest edge</option></select>
       <button id="applyGrid" class="wide">Apply grid · reset volume</button>

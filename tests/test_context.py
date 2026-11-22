@@ -95,6 +95,39 @@ class ImportedContext(unittest.TestCase):
             with self.assertRaises(ValueError):
                 library.load("escape")
 
+    def test_custom_plots_merge_current_and_legacy_module_lab_catalogs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            frontend, legacy = root / "frontend/public", root / "public"
+            for public in (frontend, legacy):
+                (public / "data").mkdir(parents=True)
+                (public / "sites").mkdir()
+
+            index = "data/custom_sites_dataset.json"
+            (frontend / index).write_text("[]")
+            (legacy / index).write_text(
+                json.dumps([dict(site_id="saved", city_name="Turin")])
+            )
+            (legacy / "sites/saved.html").write_text(
+                "const DATA = " + json.dumps(fixture())
+            )
+            library = ContextLibrary(root)
+            self.assertEqual([r["site_id"] for r in library.catalog()], ["saved"])
+            self.assertTrue(library.load("saved")["isCustom"])
+
+            (frontend / index).write_text(
+                json.dumps(
+                    [
+                        dict(
+                            site_id="saved",
+                            city_name="Updated plot",
+                            render_html="sites/saved.html?t=2",
+                        )
+                    ]
+                )
+            )
+            self.assertEqual(library.load("saved")["city"], "Updated plot")
+
     def test_environment_uses_imported_parcel_and_meshes_without_invented_noise(self):
         scene = prepare_scene(fixture(), dict(site_id="test"), floors=4)
         e = Environment(context=scene, sun_count=4)
