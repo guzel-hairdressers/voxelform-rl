@@ -124,3 +124,91 @@ class Experiment(unittest.TestCase):
         a = aggregate([dict(test=s), dict(test=s)])["test"]
         self.assertEqual(a["modelSeeds"], 2)
         self.assertIsNone(a["metrics"]["meanQuality"]["bootstrap95AcrossModelSeeds"])
+
+    def test_periodic_validation_checkpointing_selects_best_checkpoint(self):
+        from types import SimpleNamespace
+        from tools.research import train
+
+        with tempfile.TemporaryDirectory() as d:
+            cfg_path = Path(d) / "cfg.json"
+            out_dir = Path(d) / "run"
+            cfg_path.write_text(
+                json.dumps(
+                    dict(
+                        seeds=[123],
+                        train_sites=["synthetic:rectangle"],
+                        validation_sites=["synthetic:courtyard"],
+                        test_sites=["synthetic:branch"],
+                        evaluation_seeds=[9001, 9002],
+                        episodes=2,
+                        initial_storeys=4,
+                        ceiling_storeys=8,
+                        synthetic_width=16,
+                        synthetic_length=20,
+                        checkpoint_interval=1,
+                        strict_determinism=True,
+                    )
+                )
+            )
+            train(
+                SimpleNamespace(
+                    config=str(cfg_path),
+                    output=str(out_dir),
+                    resume=None,
+                    stop_after=None,
+                    only_seed=None,
+                    finalize_only=False,
+                )
+            )
+            seed_dir = out_dir / "seed-123"
+            for fname in (
+                "checkpoint-000001.pt",
+                "checkpoint-000002.pt",
+                "best.pt",
+                "latest.pt",
+                "validation-history.jsonl",
+                "validation.json",
+                "test.json",
+                "validation-final.json",
+                "test-final.json",
+                "summary.json",
+            ):
+                self.assertTrue((seed_dir / fname).is_file(), fname)
+            val_hist = [
+                json.loads(line)
+                for line in (seed_dir / "validation-history.jsonl")
+                .read_text()
+                .splitlines()
+                if line.strip()
+            ]
+            self.assertEqual([r["episode"] for r in val_hist], [1, 2])
+            seed_summary = json.loads((seed_dir / "summary.json").read_text())
+            best_ckpt = read_checkpoint(seed_dir / "best.pt")
+            self.assertEqual(
+                seed_summary["bestValidationEpisode"], best_ckpt["nextEpisode"]
+            )
+            best_row = max(
+                val_hist,
+                key=lambda r: (
+                    round(float(r["farSuccessRate"]), 6),
+                    float(r["meanQuality"]),
+                    -int(r["episode"]),
+                ),
+            )
+            self.assertEqual(seed_summary["bestValidationEpisode"], best_row["episode"])
+            self.assertAlmostEqual(
+                seed_summary["validation"]["meanQuality"],
+                best_row["meanQuality"],
+                places=7,
+            )
+            self.assertAlmostEqual(
+                seed_summary["finalValidation"]["meanQuality"],
+                val_hist[-1]["meanQuality"],
+                places=7,
+            )
+            run_summary = json.loads((out_dir / "summary.json").read_text())
+            self.assertEqual(
+                run_summary["aggregate"]["bestValidationEpisodes"],
+                [seed_summary["bestValidationEpisode"]],
+            )
+            self.assertIn("finalTest", run_summary["aggregate"])

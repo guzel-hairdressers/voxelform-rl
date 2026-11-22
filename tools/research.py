@@ -8,6 +8,7 @@ import hashlib
 import json
 from pathlib import Path
 import math
+import shutil
 import statistics
 import time
 
@@ -425,7 +426,7 @@ def per_site_summary(rows):
 
 def aggregate(summaries):
     out = {}
-    for split in ("validation", "test"):
+    for split in ("validation", "test", "finalValidation", "finalTest"):
         rows = [s[split] for s in summaries if split in s]
         if not rows:
             continue
@@ -450,6 +451,11 @@ def aggregate(summaries):
                 bootstrap95AcrossModelSeeds=ci,
             )
         out[split] = dict(modelSeeds=len(rows), metrics=stats)
+    eps = [
+        s["bestValidationEpisode"] for s in summaries if "bestValidationEpisode" in s
+    ]
+    if eps:
+        out["bestValidationEpisodes"] = eps
     return out
 
 
@@ -516,22 +522,74 @@ def train(args):
         else ([only_seed] if only_seed is not None else config.seeds)
     )
     summaries = []
+    val_summary_keys = (
+        "count",
+        "farSuccessRate",
+        "meanQuality",
+        "meanReferenceQuality",
+        "meanSeconds",
+        "meanUsableGoodArea",
+        "meanDirectSun",
+        "meanDiffuseSky",
+    )
+
+    def _val_rank(vsum):
+        return (round(float(vsum["farSuccessRate"]), 6), float(vsum["meanQuality"]))
+
     for seed in seeds_to_run:
         seed_everything(seed, config.strict_determinism)
         policy = make_policy(config, scenes.device, seed)
         folder = out / f"seed-{seed}"
         folder.mkdir()
         start = 0
+        best_val_key = None
+        best_val_episode = 0
+        best_val_rows = None
+        best_val_summary = None
+        val_history = []
         if saved:
             policy.load(saved["policy"])
             start = int(saved["nextEpisode"])
             restore_rng(saved["rng"])
+            resume_dir = Path(args.resume).parent
+            hist_path = resume_dir / "validation-history.jsonl"
+            if hist_path.is_file():
+                val_history = [
+                    json.loads(line)
+                    for line in hist_path.read_text().splitlines()
+                    if line.strip() and int(json.loads(line)["episode"]) <= start
+                ]
+                if val_history and (resume_dir / "best.pt").is_file():
+                    best_row = max(
+                        val_history,
+                        key=lambda r: (*_val_rank(r), -int(r["episode"])),
+                    )
+                    best_val_key = _val_rank(best_row)
+                    best_val_episode = int(best_row["episode"])
+                    best_val_summary = {
+                        k: best_row[k] for k in val_summary_keys if k in best_row
+                    }
+                    shutil.copy2(resume_dir / "best.pt", folder / "best.pt")
+                    if (resume_dir / "validation.json").is_file():
+                        best_val_rows = json.loads(
+                            (resume_dir / "validation.json").read_text()
+                        )
+                        write_json(folder / "validation.json", best_val_rows)
         else:
             baseline = evaluate(policy, scenes, config, "validation")
             write_json(folder / "untrained-validation.json", baseline)
         t = time.perf_counter()
         completed = start
-        with (folder / "train.jsonl").open("x") as ledger:
+        final_val_rows = None
+        final_val_summary = None
+        with (
+            (folder / "train.jsonl").open("x") as ledger,
+            (folder / "validation-history.jsonl").open("x") as val_ledger,
+        ):
+            for prev_val in val_history:
+                val_ledger.write(json.dumps(prev_val, allow_nan=False) + "\n")
+            if val_history:
+                val_ledger.flush()
             base_lr = float(
                 getattr(
                     policy,
@@ -578,14 +636,37 @@ def train(args):
                         raise RuntimeError(
                             "Source changed during training; preserve this run and start a new experiment"
                         )
+                    ckpt_path = folder / f"checkpoint-{completed:06d}.pt"
                     save_checkpoint(
-                        folder / "latest.pt",
+                        ckpt_path,
                         policy,
                         config,
                         seed,
                         completed,
                         scenes.manifest,
                     )
+                    shutil.copy2(ckpt_path, folder / "latest.pt")
+                    val_rows = evaluate(policy, scenes, config, "validation")
+                    val_sum = summarize(val_rows)
+                    val_entry = dict(
+                        episode=completed,
+                        updates=policy.updates,
+                        **val_sum,
+                    )
+                    val_history.append(val_entry)
+                    val_ledger.write(json.dumps(val_entry, allow_nan=False) + "\n")
+                    val_ledger.flush()
+                    if completed == config.episodes:
+                        final_val_rows = val_rows
+                        final_val_summary = val_sum
+                    vk = _val_rank(val_sum)
+                    if best_val_key is None or vk > best_val_key:
+                        best_val_key = vk
+                        best_val_episode = completed
+                        best_val_rows = val_rows
+                        best_val_summary = val_sum
+                        shutil.copy2(ckpt_path, folder / "best.pt")
+                        write_json(folder / "validation.json", val_rows)
                 if stopping:
                     break
         summary = dict(
@@ -594,15 +675,36 @@ def train(args):
             trainingSeconds=time.perf_counter() - t,
             updates=policy.updates,
         )
+        if val_history:
+            summary["bestValidationEpisode"] = best_val_episode
+            summary["validationHistory"] = val_history
         if completed == config.episodes:
             random_policy = make_policy(config, scenes.device, seed)
             baseline = evaluate(random_policy, scenes, config, "test")
             write_json(folder / "untrained-test.json", baseline)
             summary["untrainedTest"] = summarize(baseline)
-            for split in ("validation", "test"):
-                rows = evaluate(policy, scenes, config, split)
-                write_json(folder / f"{split}.json", rows)
-                summary[split] = summarize(rows)
+            if final_val_rows is None:
+                final_val_rows = evaluate(policy, scenes, config, "validation")
+                final_val_summary = summarize(final_val_rows)
+            write_json(folder / "validation-final.json", final_val_rows)
+            test_final_rows = evaluate(policy, scenes, config, "test")
+            write_json(folder / "test-final.json", test_final_rows)
+            summary["finalValidation"] = final_val_summary
+            summary["finalTest"] = summarize(test_final_rows)
+
+            if best_val_episode == completed:
+                test_best_rows = test_final_rows
+            else:
+                best_ckpt = read_checkpoint(folder / "best.pt", config)
+                policy.load(best_ckpt["policy"])
+                if best_val_rows is None:
+                    best_val_rows = evaluate(policy, scenes, config, "validation")
+                    best_val_summary = summarize(best_val_rows)
+                test_best_rows = evaluate(policy, scenes, config, "test")
+            write_json(folder / "validation.json", best_val_rows)
+            write_json(folder / "test.json", test_best_rows)
+            summary["validation"] = best_val_summary
+            summary["test"] = summarize(test_best_rows)
         summaries.append(summary)
         write_json(folder / "summary.json", summary)
         print(json.dumps(summary), flush=True)

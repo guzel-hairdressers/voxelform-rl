@@ -723,7 +723,10 @@ def _load_run_policy(run_dir: Path):
     cfg = ExperimentConfig.read(run_dir / "config.json")
     dev = device_name(cfg.device)
     seed = cfg.seeds[0]
-    ckpt_path = run_dir / f"seed-{seed}" / "latest.pt"
+    best_path = run_dir / f"seed-{seed}" / "best.pt"
+    ckpt_path = (
+        best_path if best_path.is_file() else run_dir / f"seed-{seed}" / "latest.pt"
+    )
     saved = torch.load(ckpt_path, map_location="cpu", weights_only=False)
     if (
         saved.get("format") != PROTOCOL
@@ -1564,8 +1567,41 @@ def generate_training_curves(
         if n_seeds > 1:
             ax1.fill_between(rx, mean - std, mean + std, color=color, alpha=0.12)
 
+    val_hist_files = [
+        p.parent / "validation-history.jsonl"
+        for p in seed_files
+        if (p.parent / "validation-history.jsonl").is_file()
+    ]
+    if len(val_hist_files) == len(seed_files):
+        all_vh = [
+            [json.loads(line) for line in vp.read_text().splitlines() if line.strip()]
+            for vp in val_hist_files
+        ]
+        if all_vh and all(len(vh) == len(all_vh[0]) and vh for vh in all_vh):
+            vx = np.array([r["episode"] for r in all_vh[0]], dtype=np.float32)
+            vq = np.array(
+                [[float(r["meanQuality"]) for r in vh] for vh in all_vh],
+                dtype=np.float32,
+            )
+            v_mean = vq.mean(axis=0)
+            v_std = vq.std(axis=0, ddof=1) if n_seeds > 1 else np.zeros_like(v_mean)
+            ax1.plot(
+                vx,
+                v_mean,
+                label="Val m_hk_0199 (50-ep ckpt)",
+                color="#7c3aed",
+                marker="o",
+                markersize=4.2,
+                linewidth=2.0,
+                zorder=5,
+            )
+            if n_seeds > 1:
+                ax1.fill_between(
+                    vx, v_mean - v_std, v_mean + v_std, color="#7c3aed", alpha=0.12
+                )
+
     ax1.set_xlim(win, total_eps)
-    ax1.set_ylim(-0.04, 1.32)
+    ax1.set_ylim(-0.04, 1.38)
     seed_lbl = f"Across {n_seeds} Seeds" if n_seeds > 1 else "Seed 123"
     ax1.set_xlabel(
         f"Training Episode (30-Ep Rolling Mean ± 1 SD {seed_lbl})",
@@ -1580,7 +1616,7 @@ def generate_training_curves(
         color="#0f172a",
     )
     ax1.grid(True, linestyle="--", alpha=0.45)
-    ax1.legend(loc="upper center", fontsize=7.6, ncol=3, frameon=True)
+    ax1.legend(loc="upper center", fontsize=6.8, ncol=4, frameon=True)
 
     sites = [
         ("HK (Val)", "validation", "m_hk_0199"),

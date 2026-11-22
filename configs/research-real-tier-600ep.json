@@ -25,6 +25,6 @@
   "spatial_aux_weight": 0.0,
   "multiscale_schedule": "tier_adaptive",
   "lr_schedule": "cosine",
-  "checkpoint_interval": 100,
+  "checkpoint_interval": 50,
   "strict_determinism": false
 }
