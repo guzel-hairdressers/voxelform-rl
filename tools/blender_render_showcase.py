@@ -8,6 +8,7 @@ Run with Blender's Python:
 from __future__ import annotations
 
 import argparse
+import json
 import math
 import sys
 from pathlib import Path
@@ -69,6 +70,27 @@ def set_camera_backdrop(world):
     tree.links.new(mix.outputs[0], surface)
 
 
+def write_axonometric_camera(scene, camera, path):
+    # For an orthographic camera the map to normalized image coordinates and
+    # camera depth is affine. Export it for the separate voxel diagram renderer.
+    origin = world_to_camera_view(scene, camera, Vector((0, 0, 0)))
+    axes = [
+        world_to_camera_view(scene, camera, Vector(axis)) - origin
+        for axis in ((1, 0, 0), (0, 1, 0), (0, 0, 1))
+    ]
+    path.write_text(
+        json.dumps(
+            {
+                "size": [scene.render.resolution_x, scene.render.resolution_y],
+                "origin": list(origin),
+                "axes": [list(axis) for axis in axes],
+            },
+            indent=2,
+        )
+        + "\n"
+    )
+
+
 def render_views(args):
     scene = bpy.context.scene
     camera = scene.camera
@@ -88,7 +110,7 @@ def render_views(args):
     hero_objects = set(hero.objects)
 
     scene.render.resolution_x = args.width
-    scene.render.resolution_y = round(args.width * 0.61)
+    scene.render.resolution_y = round(args.width * (9 / 16 if args.axo_only else 0.61))
     scene.render.resolution_percentage = 100
     scene.render.image_settings.file_format = "JPEG"
     scene.render.image_settings.quality = 92
@@ -114,7 +136,10 @@ def render_views(args):
 
     output = args.out_dir.resolve()
     output.mkdir(parents=True, exist_ok=True)
-    for name, angle in (("axo", args.axo_angle), ("street", args.street_angle)):
+    views = [("axo", args.axo_angle)]
+    if not args.axo_only:
+        views.append(("street", args.street_angle))
+    for name, angle in views:
         is_axo = name == "axo"
         camera.data.type = "ORTHO" if is_axo else "PERSP"
         camera.data.lens = 32
@@ -161,12 +186,19 @@ def render_views(args):
         )
         scene.render.filepath = str(output / f"{name}.jpg")
         bpy.ops.render.render(write_still=True)
+        if is_axo and args.axo_only:
+            write_axonometric_camera(scene, camera, output / "axo-camera.json")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--width", type=int, default=1760)
+    parser.add_argument(
+        "--axo-only",
+        action="store_true",
+        help="Render the 16:9 aerial view and save its projection for a matching voxel diagram",
+    )
     parser.add_argument("--engine", choices=("scene", "cycles"), default="scene")
     parser.add_argument("--samples", type=int, default=32)
     parser.add_argument(

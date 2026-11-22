@@ -110,9 +110,8 @@ def _extract_building_footprint(building: dict) -> tuple[Polygon | None, float, 
     z_max = float(building.get("height") or verts[:, 2].max())
     if z_max <= z_min + 0.2:
         return None, z_min, z_max
-    faces = np.asarray(faces_raw, dtype=np.int32)
     base_polys = []
-    for f in faces:
+    for f in faces_raw:
         if len(f) < 3:
             continue
         zf = verts[f, 2]
