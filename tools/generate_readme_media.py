@@ -1480,213 +1480,230 @@ def generate_heldout_generalization(
 
 
 def generate_training_curves(
-    run_dir: Path, summary: dict, baseline_summary: dict | None = None
+    run_dir: Path,
+    summary: dict,
+    baseline_summary: dict | None = None,
+    heuristic_summary: dict | None = None,
+    pure_rl_summary: dict | None = None,
 ):
-    """Plot tier-adaptive training dynamics and held-out generalization vs flat baseline."""
-    rows = [
-        json.loads(line)
-        for line in (run_dir / "seed-123" / "train.jsonl").read_text().splitlines()
-        if line.strip()
+    """Plot multi-seed tier-adaptive training dynamics and held-out generalization vs baselines."""
+    seed_files = sorted(run_dir.glob("seed-*/train.jsonl"))
+    if not seed_files:
+        seed_files = [run_dir / "seed-123" / "train.jsonl"]
+    all_seed_rows = [
+        [json.loads(line) for line in p.read_text().splitlines() if line.strip()]
+        for p in seed_files
     ]
-    eps = np.array([r["episode"] for r in rows], dtype=np.float32)
+    n_seeds = len(all_seed_rows)
+    eps = np.array([r["episode"] for r in all_seed_rows[0]], dtype=np.float32)
     win = 30
-    total_eps = len(rows)
+    total_eps = len(all_seed_rows[0])
+    kern = np.ones(win, dtype=np.float32) / win
+    rx = eps[win - 1 :]
 
-    def _roll(vals):
-        arr = np.asarray(vals, dtype=np.float32)
-        kern = np.ones(win, dtype=np.float32) / win
-        return eps[win - 1 :], np.convolve(arr, kern, mode="valid")
+    def _roll_multi(extractor):
+        curves = np.stack(
+            [
+                np.convolve(
+                    np.asarray([extractor(r) for r in rows], dtype=np.float32),
+                    kern,
+                    mode="valid",
+                )
+                for rows in all_seed_rows
+            ],
+            axis=0,
+        )
+        mean = curves.mean(axis=0)
+        std = curves.std(axis=0, ddof=1) if n_seeds > 1 else np.zeros_like(mean)
+        return mean, std
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15.2, 5.6), dpi=160)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15.6, 5.8), dpi=160)
     fig.patch.set_facecolor("#ffffff")
 
-    curves = (
-        ("Layout Objective J", [r["quality"] for r in rows], "#1d4ed8", "-", 2.2),
+    curves_spec = (
+        ("Layout Objective J", lambda r: r["quality"], "#1d4ed8", "-", 2.2),
         (
             "Usable Good Fraction",
-            [r["diagnostics"]["usableGoodFraction"] for r in rows],
+            lambda r: r["diagnostics"]["usableGoodFraction"],
             "#0f766e",
             "-",
             1.7,
         ),
         (
             "Direct Sun Proxy",
-            [r["environment"]["directSunProxy"] for r in rows],
+            lambda r: r["environment"]["directSunProxy"],
             "#d97706",
             "-",
             1.8,
         ),
         (
             "Diffuse Sky Proxy",
-            [r["environment"]["diffuseFacadeProxy"] for r in rows],
+            lambda r: r["environment"]["diffuseFacadeProxy"],
             "#0284c7",
             "--",
             1.8,
         ),
         (
             "Core Coverage (12 m)",
-            [float(r["diagnostics"].get("coreCoverage") or 0.0) for r in rows],
+            lambda r: float(r["diagnostics"].get("coreCoverage") or 0.0),
             "#dc2626",
             ":",
             1.7,
         ),
         (
             "FAR Band Success Rate",
-            [float(r["success"]) for r in rows],
+            lambda r: float(r["success"]),
             "#475569",
             "-.",
             1.7,
         ),
     )
-    for label, raw, color, ls, lw in curves:
-        rx, ry = _roll(raw)
-        ax1.plot(rx, ry, label=label, color=color, linestyle=ls, linewidth=lw)
+    for label, fn, color, ls, lw in curves_spec:
+        mean, std = _roll_multi(fn)
+        ax1.plot(rx, mean, label=label, color=color, linestyle=ls, linewidth=lw)
+        if n_seeds > 1:
+            ax1.fill_between(rx, mean - std, mean + std, color=color, alpha=0.12)
 
     ax1.set_xlim(win, total_eps)
     ax1.set_ylim(-0.04, 1.32)
+    seed_lbl = f"Across {n_seeds} Seeds" if n_seeds > 1 else "Seed 123"
     ax1.set_xlabel(
-        "Training Episode (30-Episode Rolling Mean Across 10 XS-XL Sites)",
-        fontsize=9.8,
+        f"Training Episode (30-Ep Rolling Mean ± 1 SD {seed_lbl})",
+        fontsize=9.6,
         fontweight="bold",
     )
     ax1.set_ylabel("Score / Proxy Fraction", fontsize=9.8, fontweight="bold")
     ax1.set_title(
-        f"A. Tier-Adaptive On-Policy Training Trajectory ({total_eps} Episodes)",
-        fontsize=11.0,
+        f"A. Tier-Adaptive Training Trajectory ({total_eps} Ep, {n_seeds} Seed{'s' if n_seeds != 1 else ''})",
+        fontsize=10.8,
         fontweight="bold",
         color="#0f172a",
     )
     ax1.grid(True, linestyle="--", alpha=0.45)
-    ax1.legend(loc="upper center", fontsize=7.8, ncol=3, frameon=True)
+    ax1.legend(loc="upper center", fontsize=7.6, ncol=3, frameon=True)
 
     sites = [
-        (
-            "HK (Val)",
-            summary["untrainedValidation"]["perSite"]["m_hk_0199"],
-            baseline_summary["validation"]["perSite"]["m_hk_0199"]
-            if baseline_summary
-            else None,
-            summary["validation"]["perSite"]["m_hk_0199"],
-        ),
-        (
-            "NYC (Test)",
-            summary["untrainedTest"]["perSite"]["m_nyc_0003"],
-            baseline_summary["test"]["perSite"]["m_nyc_0003"]
-            if baseline_summary
-            else None,
-            summary["test"]["perSite"]["m_nyc_0003"],
-        ),
-        (
-            "Paris (Test)",
-            summary["untrainedTest"]["perSite"]["m_prs_0315"],
-            baseline_summary["test"]["perSite"]["m_prs_0315"]
-            if baseline_summary
-            else None,
-            summary["test"]["perSite"]["m_prs_0315"],
-        ),
-        (
-            "Test Agg",
-            summary["untrainedTest"]["overall"],
-            baseline_summary["test"]["overall"] if baseline_summary else None,
-            summary["test"]["overall"],
-        ),
+        ("HK (Val)", "validation", "m_hk_0199"),
+        ("NYC (Test)", "test", "m_nyc_0003"),
+        ("Paris (Test)", "test", "m_prs_0315"),
+        ("Test Agg", "test", "overall"),
     ]
-    x = np.arange(len(sites))
-    w = 0.25 if baseline_summary else 0.32
-    u_q = [u["meanQuality"] for _, u, _, _ in sites]
-    t_q = [t["meanQuality"] for _, _, _, t in sites]
-
-    b1 = ax2.bar(
-        x - w,
-        u_q,
-        width=w,
-        color="#cbd5e1",
-        edgecolor="#64748b",
-        label="Untrained Control",
-    )
+    series = [
+        (
+            f"Untrained ({n_seeds} seeds)" if n_seeds > 1 else "Untrained Control",
+            summary["untrainedAggregate"]
+            if "untrainedAggregate" in summary
+            else summary,
+            "untrained",
+            "#cbd5e1",
+            "#64748b",
+        )
+    ]
+    if heuristic_summary is not None:
+        series.append(
+            ("Greedy Heuristic", heuristic_summary, "std", "#f59e0b", "#b45309")
+        )
     if baseline_summary is not None:
-        f_q = [f["meanQuality"] for _, _, f, _ in sites]
-        b_flat = ax2.bar(
-            x,
-            f_q,
-            width=w,
-            color="#93c5fd",
-            edgecolor="#2563eb",
-            label="Flat 1x1x1 (1,200 ep)",
+        series.append(
+            ("Flat 1x1x1 (1,200 ep)", baseline_summary, "std", "#93c5fd", "#2563eb")
         )
-        b_tier = ax2.bar(
-            x + w,
-            t_q,
-            width=w,
-            color="#1d4ed8",
-            label=f"Tier-Adaptive ({total_eps} ep)",
+    if pure_rl_summary is not None:
+        series.append(("Pure-RL (aux=0)", pure_rl_summary, "std", "#14b8a6", "#0f766e"))
+    series.append(
+        (
+            f"Tier-Adaptive ({n_seeds} seeds)"
+            if n_seeds > 1
+            else f"Tier-Adaptive ({total_eps} ep)",
+            summary,
+            "std",
+            "#1d4ed8",
+            "#1e3a8a",
         )
-        for rect in b_flat:
-            h = rect.get_height()
+    )
+
+    def _extract(src, mode, split, site_key):
+        if mode == "untrained":
+            uk = "untrainedValidation" if split == "validation" else "untrainedTest"
+            if uk in src:
+                node = (
+                    src[uk]["perSite"][site_key]
+                    if site_key != "overall"
+                    else src[uk]["overall"]
+                )
+                return node["meanQuality"], float(node.get("stdQuality") or 0.0)
+            node = (
+                src["validation"]["perSite"][site_key]
+                if split == "validation"
+                else (
+                    src["test"]["perSite"][site_key]
+                    if site_key != "overall"
+                    else src["test"]["overall"]
+                )
+            )
+            return node["meanQuality"], 0.0
+        sec = src[split]
+        if site_key == "overall":
+            node = sec.get("overall") or sec.get("summary")
+        else:
+            node = sec["perSite"][site_key]
+        return node["meanQuality"], float(node.get("stdAcrossModelSeeds") or 0.0)
+
+    x = np.arange(len(sites))
+    m_series = len(series)
+    w = min(0.24, 0.80 / m_series)
+    offsets = (np.arange(m_series) - 0.5 * (m_series - 1)) * w
+
+    for idx_s, (s_lbl, src, mode, fc, ec) in enumerate(series):
+        vals, errs = [], []
+        for _slbl, sp, sk in sites:
+            v, sd = _extract(src, mode, sp, sk)
+            vals.append(v)
+            errs.append(sd)
+        has_err = any(e > 0 for e in errs)
+        bars = ax2.bar(
+            x + offsets[idx_s],
+            vals,
+            width=w,
+            yerr=errs if has_err else None,
+            capsize=2.5 if has_err else 0,
+            color=fc,
+            edgecolor=ec,
+            linewidth=0.8,
+            label=s_lbl,
+            error_kw=dict(ecolor="#0f172a", lw=1.0),
+        )
+        for rect, v, sd in zip(bars, vals, errs):
+            h = rect.get_height() + (sd if has_err else 0.0)
+            txt = f"{v:.2f}"
             ax2.text(
                 rect.get_x() + rect.get_width() / 2,
                 h + 0.015,
-                f"{h:.2f}",
+                txt,
                 ha="center",
                 va="bottom",
-                fontsize=8.0,
-                fontweight="bold",
-                color="#2563eb",
+                fontsize=6.8 if m_series >= 4 else 7.8,
+                fontweight="bold" if idx_s == m_series - 1 else "normal",
+                color=ec if idx_s > 0 else "#475569",
             )
-    else:
-        b_tier = ax2.bar(
-            x, t_q, width=w, color="#1d4ed8", label=f"Trained ({total_eps} ep)"
-        )
-    for bu, bt, (_, u, _, t) in zip(b1, b_tier, sites):
-        ax2.text(
-            bu.get_x() + bu.get_width() / 2,
-            u["meanQuality"] + 0.015,
-            f"{u['meanQuality']:.2f}",
-            ha="center",
-            va="bottom",
-            fontsize=7.6,
-            color="#475569",
-        )
-        ax2.text(
-            bt.get_x() + bt.get_width() / 2,
-            t["meanQuality"] + 0.015,
-            f"{t['meanQuality']:.2f}",
-            ha="center",
-            va="bottom",
-            fontsize=8.4,
-            fontweight="bold",
-            color="#1d4ed8",
-        )
-        ug_ratio = t["meanUsableGoodArea"] / max(1.0, u["meanUsableGoodArea"])
-        ax2.text(
-            bt.get_x() + bt.get_width() / 2,
-            t["meanQuality"] + 0.068,
-            f"{ug_ratio:.1f}x usable\n(FAR {t['farSuccessRate']:.2f})",
-            ha="center",
-            va="bottom",
-            fontsize=7.2,
-            fontweight="bold",
-            color="#0f766e",
-        )
 
     ax2.set_ylim(0.0, 1.44)
     ax2.set_xticks(x)
     ax2.set_xticklabels([s[0] for s in sites], fontsize=9.4)
     ax2.set_ylabel(
-        "Mean Held-Out Objective J (5 seeds/site)", fontsize=9.8, fontweight="bold"
+        "Mean Held-Out Objective J (5 eval seeds/site)", fontsize=9.6, fontweight="bold"
     )
     ax2.set_title(
-        "B. Zero-Shot Held-Out Evaluation (Matched 1.0 / 1.0 Decoding)",
-        fontsize=11.0,
+        "B. Held-Out Generalization & Controls (1.0 / 1.0 Decoding)",
+        fontsize=10.8,
         fontweight="bold",
         color="#0f172a",
     )
     ax2.grid(axis="y", linestyle="--", alpha=0.45)
-    ax2.legend(loc="upper left", fontsize=8.0, ncol=3, frameon=True)
+    ax2.legend(loc="upper left", fontsize=7.4, ncol=2, frameon=True)
 
     fig.suptitle(
-        f"{total_eps}-Episode Tier-Adaptive Multi-Scale Training & Held-Out Generalization (Apple M4 MPS, compact-core.v5)",
-        fontsize=12.6,
+        f"{total_eps}-Episode Multi-Seed Tier-Adaptive Training & Controls (Apple M4 MPS, compact-core.v5)",
+        fontsize=12.4,
         fontweight="bold",
         color="#0f172a",
         y=0.98,
@@ -1694,7 +1711,7 @@ def generate_training_curves(
     fig.text(
         0.5,
         0.015,
-        "Single model seed (123), spatial_aux_weight=1.2, cosine LR (1.2e-3->2e-4), 1/sqrt(N) normalized retry gradients; uncalibrated proxies.",
+        f"Training seeds: {n_seeds} (123/456/789 when multi-seed), matched eval decoding (temp=1.0, noise=1.0), error bars = +/-1 SD across training seeds.",
         ha="center",
         fontsize=8.3,
         color="#475569",
@@ -1951,6 +1968,16 @@ def main():
         default=RESULTS_DIR / "real-aux-1200ep-mps-2026-11-21.json",
     )
     parser.add_argument(
+        "--heuristic-summary",
+        type=Path,
+        default=RESULTS_DIR / "greedy-heuristic-tier-mps-2026-11-21.json",
+    )
+    parser.add_argument(
+        "--pure-rl-summary",
+        type=Path,
+        default=RESULTS_DIR / "real-tier-600ep-mps-2026-11-21.json",
+    )
+    parser.add_argument(
         "--only",
         choices=(
             "all",
@@ -1976,9 +2003,23 @@ def main():
         if args.baseline_summary.is_file()
         else None
     )
+    heuristic_summary = (
+        json.loads(args.heuristic_summary.read_text())
+        if args.heuristic_summary.is_file()
+        else None
+    )
+    pure_rl_summary = (
+        json.loads(args.pure_rl_summary.read_text())
+        if args.pure_rl_summary.is_file()
+        else None
+    )
     if args.only in ("all", "curves"):
         generate_training_curves(
-            args.run_dir, summary, baseline_summary=baseline_summary
+            args.run_dir,
+            summary,
+            baseline_summary=baseline_summary,
+            heuristic_summary=heuristic_summary,
+            pure_rl_summary=pure_rl_summary,
         )
     if args.only in ("all", "ablation", "multitier", "heldout", "rollout"):
         cfg, dev, untrained, trained, total_eps = _load_run_policy(args.run_dir)

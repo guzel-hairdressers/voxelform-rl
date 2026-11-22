@@ -49,15 +49,15 @@ To verify that learned daylight-massing strategies transfer beyond the training 
 
 ![Paired architectural comparison on unseen Hong Kong, New York, and Paris parcels comparing initial unoptimized blocks vs 600-episode trained forms](docs/media/heldout-generalization.png)
 
-*Zero-shot city transfer on identical random seeds (`9005`, `9002`, `9003`) comparing unoptimized random initialization (**top**) against the trained policy (**bottom**). Note how the trained forms open light courts, pull back upper plates from tall neighbors, and align floor-plate depths around vertical cores.*
+*Zero-shot city transfer on identical random seeds (`9005`, `9002`, `9003`) comparing unoptimized random initialization (**top**) against the `seed=123` trained policy (**bottom**). Note how the trained forms open light courts, pull back upper plates from tall neighbors, and align floor-plate depths around vertical cores.*
 
-| Unseen City Site | Initial / Untrained Usable Area | **Trained Usable Daylit Area** | `directSunProxy` (Initial → **Trained**) | `diffuseFacadeProxy` (Initial → **Trained**) | Core Coverage (`≤ 12 m`) | FAR Target Hit |
-|---|---:|---:|---:|---:|---:|---:|
-| **Hong Kong** `m_hk_0199` | `1,048.8 m²` (`15.2%`) | **`3,552.8 m²` (`50.8%`)** | `61.2% →` **`78.8%`** | `6.1% →` **`18.8%`** | `79.2% →` **`96.5%`** | `100%` |
-| **New York** `m_nyc_0003` | `106.8 m²` (`2.6%`) | **`1,544.6 m²` (`36.1%`)** | `13.5% →` **`22.1%`** | `1.6% →` **`5.8%`** | `78.5% →` **`96.9%`** | `100%` |
-| **Paris** `m_prs_0315` | `846.8 m²` (`20.4%`) | **`2,727.8 m²` (`63.4%`)** | `63.0% →` **`77.8%`** | `6.2% →` **`16.3%`** | `88.7% →` **`96.6%`** | `100%` |
+| Unseen City Site | Untrained → **Seed `123` Usable Area** | **3-Seed RL Mean Usable Area** (`FAR` Hit) | Greedy Heuristic Usable Area (`FAR`) | `directSunProxy` (3-Seed RL vs Greedy) | `diffuseFacadeProxy` (3-Seed RL vs Greedy) |
+|---|---:|---:|---:|---:|---:|
+| **Hong Kong** `m_hk_0199` | `1,048.8 →` **`3,552.8 m²`** (`50.8%`, `96.5%` core) | `3,192.6 ± 386.8 m²` (`86.7%`) | `4,404.0 m²` (`100%`) | **`83.4%`** vs `76.5%` | **`21.6%`** vs `18.3%` |
+| **New York** `m_nyc_0003` | `106.8 →` **`1,544.6 m²`** (`36.1%`, `96.9%` core) | **`1,705.9 m²`** (`93.3%`) | `1,434.0 m²` (`100%`) | **`28.0%`** vs `23.5%` | **`6.9%`** vs `5.7%` |
+| **Paris** `m_prs_0315` | `846.8 →` **`2,727.8 m²`** (`63.4%`, `96.6%` core) | `2,491.8 m²` (`93.3%`) | `2,947.0 m²` (`100%`) | **`78.2%`** vs `73.3%` | **`16.1%`** vs `13.4%` |
 
-*(5 evaluation seeds per site under matched decoding; direct sun exposure and diffuse sky visibility are always reported as separate proxies rather than blended into a single light number.)*
+*(Showcase figures above show `seed=123` under matched decoding (`temp=1.0, noise=1.0`, 5 eval seeds/site); multi-seed means aggregate training seeds `123, 456, 789` against the deterministic zero-parameter greedy physics-heuristic baseline in [README.md](README.md). Direct sun and diffuse sky remain separate unblended proxies.)*
 
 ---
 

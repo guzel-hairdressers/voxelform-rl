@@ -1,0 +1,191 @@
+{
+  "baseline": "greedy_physics_heuristic",
+  "config": {
+    "audit_steps": 5,
+    "ceiling_storeys": 20,
+    "checkpoint_interval": 100,
+    "cores_enabled": true,
+    "device": "mps",
+    "episodes": 600,
+    "evaluation_noise_scale": 1.0,
+    "evaluation_seeds": [
+      9001,
+      9002,
+      9003,
+      9004,
+      9005
+    ],
+    "evaluation_temperature": 1.0,
+    "far_tolerance": 0.1,
+    "initial_storeys": 6,
+    "lr_schedule": "cosine",
+    "max_core_dist": 12,
+    "min_core_spacing": 10,
+    "multiscale_schedule": "tier_adaptive",
+    "rollout_steps": 16,
+    "seeds": [
+      123,
+      456,
+      789
+    ],
+    "spatial_aux_weight": 1.2,
+    "strict_determinism": false,
+    "synthetic_length": 24,
+    "synthetic_width": 24,
+    "target_far": 3.0,
+    "test_sites": [
+      "m_nyc_0003",
+      "m_prs_0315"
+    ],
+    "threads": 1,
+    "train_sites": [
+      "m_bcn_0093",
+      "xs_tokyo_0133",
+      "s_sgp_0345",
+      "l_bcn_0074",
+      "xl_tokyo_0185",
+      "xs_sgp_0346",
+      "s_bcn_0112",
+      "m_tokyo_0135",
+      "l_sgp_0369",
+      "xl_sgp_0386"
+    ],
+    "validation_sites": [
+      "m_hk_0199"
+    ]
+  },
+  "note": "Deterministic non-learned baseline ranking frontier edits by the hand-crafted physics desirability field (compute_spatial_desirability) under the exact same cascade stages and feasibility projector Pi_valid.",
+  "runtime": {
+    "configHash": "89cbdc7155aee86c404e5fa299abd50c9744286ba46a97c1e0b7fb123f661735",
+    "coreLayoutVersion": "compact-core.v5",
+    "createdAt": "2026-11-22T00:52:27.295673+00:00",
+    "cuda": false,
+    "deterministic": false,
+    "gitCommit": "da065b478aa80f3f8d3359b9a21a02cc369bb7e7",
+    "gitDirty": false,
+    "machine": "arm64",
+    "mps": true,
+    "packages": {
+      "fastapi": "0.165.0",
+      "numpy": "2.5.5",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "torch": "2.15.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "protocol": "voxelform.research.v1",
+    "python": "3.12.11",
+    "source": {
+      "configs/research-real-aux-1200ep.json": "8fa3f2c95dca2a2e98b5cb4a4715b504f7d025cc1d536c4cc12e7986fecab464",
+      "configs/research-real-aux-tier-600ep.json": "88d84620320f653a4f929f8a2a68c48a38b7f8d3892a5519b8ef96b23cf484fb",
+      "configs/research-real-aux.json": "fb12190af28c5944ce78bf1caf8f8f4cff77a8f55c2526c6f34a149a60b33915",
+      "configs/research-real-tier-600ep.json": "a9f96ca648fbd04bb514829a320e74767cab651ff3380a5e0c936d71600e83c9",
+      "configs/research-real.json": "96d351440d031a237e7e5ea7df109591dc9a07be8376bb4e7ea4384f5f172f1a",
+      "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+      "pyproject.toml": "210dbdf94b6c9ba38beb827182c2141e82314e9f22a77fab98d38c6d9d819a44",
+      "tools/architecture_hypotheses.py": "7bc4dac79f402bdce422e543876fd775cd19a7a1ff9761ccccefd20c1cdcd279",
+      "tools/benchmark.py": "60db029af2e93adc0ed1f1949dea7a14e1d1f1f67f44a5632a96677c7b184c19",
+      "tools/blender_bake_external_props.py": "31085c15954a3b2064ede5e75a0f488abf1ac7e0c716ac6a663c33baa6ddfeb8",
+      "tools/blender_import_site.py": "762cfd0a03363be05c3c1ecf62ac4c4beb2fde0e35bd30ef416233d481f68799",
+      "tools/blender_maquette_library.py": "86df3593ff87d9fbbe35f2c24292b37c02976e79522266de8cf67b3bd715d7d8",
+      "tools/export_blender_site.py": "a3a61f914a33c6552668b865d6d4b785e0969263d37176476fa3ae2d64c6f698",
+      "tools/generate_readme_media.py": "d4d461f6a1fa16a3b3a4f408cafbdec332e98d29ce469509a763207a5364d17d",
+      "tools/render_core_plans.py": "af40720e4e5568dc527f072a1c4597538c7ba828c3bd527248552dcb49927682",
+      "tools/research.py": "a21d29e2b767f6342af701f17d5e8fb95dfd29e39b4259811f2628a99b9a25ad",
+      "unified_server.py": "282bd064be80aca4efd6ed12380801a02f9dec8109f53ed706bcc165b3adcc79",
+      "uv.lock": "4cd0e24840b256a2b702183c98860bd4ae17dca20f48e1c98c1105186eee24d5",
+      "voxelform/__init__.py": "9e559ea71f7a8cbf791c8fd0f911253021e2dd658b3f6905e4caef280da4d78d",
+      "voxelform/actions.py": "985ca176bd092be966058a244ad5e75ba9c60f894eae24ae035dcb9c9ddfb0bf",
+      "voxelform/coarse_to_fine.py": "1adaf3b4477318174c885102c925f6a2414c7a1c2706b6bd04f9b2c86c3f6fa3",
+      "voxelform/context.py": "49d22dd3b18f48270702616750b2d72305f94223949be5a4d2c5f63e8cfe6218",
+      "voxelform/core_plans.py": "5b00280c33bcd85acf85eba2d9411526340f5e7f0a98e85fe18eaaf8b3925b51",
+      "voxelform/cores.py": "e5c738a87863e4c95a217f624f2b7a70ec953347a9b8f401e66db6af480a6794",
+      "voxelform/devoxelize.py": "33473044c18b596431849b637d801661e8d7101432035bd7a65517e784af8ede",
+      "voxelform/environment.py": "844288f788f51487df50deeea66fc224f8b7462169db453a130b09ac9bb14cae",
+      "voxelform/experiment.py": "7728ee129ae04568c78d05e0c0cc1a938a0f3375e043993990b62bf6f1e78417",
+      "voxelform/fields.py": "c732c054c0cf0fd290505d7abd9b64fc426a3ef6221f616b3e23acf223512d93",
+      "voxelform/layout_archive.py": "550c2f5d1ffd3bf7f8d238e3bded00abace1bccb88955db28d84b61170a8dec6",
+      "voxelform/objectives.py": "3a6dc5826e52678d4fc5bffa468235a3cc1e5094f9fd3e3021f70c0672b6090c",
+      "voxelform/patch_policy.py": "24cc9055698b952f3ec37ec04504a624fc81ff0b17c7ae01d33cc0d7c3cf4890",
+      "voxelform/policy.py": "90b8ce5adfeb556a46303b78b27c56562488e1878445b233afdaf02bd218baf6",
+      "voxelform/redistribution.py": "d93e218c8cb63358360076d8f597f22f398112e02134645361be35f77ff55ce9",
+      "voxelform/server.py": "b50957b5a42d36304efdc23bfcdc7f246d514569acf58c929424d35ee8999646",
+      "voxelform/session.py": "d54e6a1387edbecfb59e8a341c7f9e03e0e275211fafb039946284fae6f52fa8",
+      "voxelform/shadows.py": "821b56da4ffcfbdea6e7406b9fb2ae8f3177f63eb43fa03c247b24a298f371aa",
+      "voxelform/training.py": "16a1838312c6b81fa5e3d543bc11a06e5a5a60d8c5f5d5938abe23d9fcfd912e",
+      "voxelform/unified.py": "178d76572c43912f97ccf1b0a873ac2d93625cdbf34d676eb5702b790533c1e8",
+      "voxelform/workload.py": "859d61cf414b59bc6463d10e5d20133f2203eb761a17e99dff094482ed060756"
+    }
+  },
+  "test": {
+    "perSite": {
+      "m_nyc_0003": {
+        "bestDiffuseSky": 0.05707154795527458,
+        "bestDirectSun": 0.23480664193630219,
+        "bestQuality": 0.5273034821091278,
+        "bestSeed": 9001,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.05707154795527458,
+        "meanDirectSun": 0.23480664193630219,
+        "meanQuality": 0.5273034821091278,
+        "meanReferenceQuality": 0.5273034821091278,
+        "meanSeconds": 0.19448,
+        "meanUsableGoodArea": 1434.0
+      },
+      "m_prs_0315": {
+        "bestDiffuseSky": 0.13381122052669525,
+        "bestDirectSun": 0.7332267761230469,
+        "bestQuality": 1.092505395516722,
+        "bestSeed": 9001,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.13381122052669525,
+        "meanDirectSun": 0.7332267761230469,
+        "meanQuality": 1.092505395516722,
+        "meanReferenceQuality": 1.092505395516722,
+        "meanSeconds": 0.20956,
+        "meanUsableGoodArea": 2947.0
+      }
+    },
+    "summary": {
+      "count": 10,
+      "farSuccessRate": 1.0,
+      "meanDiffuseSky": 0.09544138424098492,
+      "meanDirectSun": 0.48401670902967453,
+      "meanQuality": 0.809904438812925,
+      "meanReferenceQuality": 0.809904438812925,
+      "meanSeconds": 0.20202,
+      "meanUsableGoodArea": 2190.5
+    }
+  },
+  "validation": {
+    "perSite": {
+      "m_hk_0199": {
+        "bestDiffuseSky": 0.1832958310842514,
+        "bestDirectSun": 0.764960527420044,
+        "bestQuality": 1.1314754387223143,
+        "bestSeed": 9001,
+        "count": 5,
+        "farSuccessRate": 1.0,
+        "meanDiffuseSky": 0.1832958310842514,
+        "meanDirectSun": 0.764960527420044,
+        "meanQuality": 1.1314754387223143,
+        "meanReferenceQuality": 1.1314754387223143,
+        "meanSeconds": 0.39492,
+        "meanUsableGoodArea": 4404.0
+      }
+    },
+    "summary": {
+      "count": 5,
+      "farSuccessRate": 1.0,
+      "meanDiffuseSky": 0.1832958310842514,
+      "meanDirectSun": 0.764960527420044,
+      "meanQuality": 1.1314754387223143,
+      "meanReferenceQuality": 1.1314754387223143,
+      "meanSeconds": 0.39492,
+      "meanUsableGoodArea": 4404.0
+    }
+  }
+}
