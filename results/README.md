@@ -48,29 +48,39 @@ where ungated reaches `1.113 ± 0.040`), `l_prs_0324` (`0.847` vs. **`0.885 ± 0
 `xl_sgp_0386` (`0.715` vs. **`0.804 ± 0.024`**). Two-teacher distillation remains
 strong on `L/XL` (`0.854`), but its `XS_M` teacher underperforms on tiny `xs_sgp_0346` (`-0.284 ± 0.040`).
 
-## Matched 400-episode auxiliary-supervision schedule ablation — 2026-11-23
+## Matched 400-episode auxiliary-supervision schedule & mode ablation — 2026-11-23
 
 Matched five-seed (`4211–4215`), `400`-episode ablation isolating `spatial_aux_weight`
-(`des_c`) under identical `tier_meso2 + dense_potential + learned_cap` settings and
-the full `400`-episode cosine LR schedule (`1.2e-3 → 2.0e-4`) across
+(`des_c`) and `spatial_aux_mode` under identical `tier_meso2 + dense_potential + learned_cap`
+settings and the full `400`-episode cosine LR schedule (`1.2e-3 → 2.0e-4`) across
 `pure_rl` ([config](../configs/research-pure-rl-all-tiers.json)),
+`regression_aux` ([config](../configs/research-regression-aux-all-tiers.json)),
 `annealed_aux` ([config](../configs/research-annealed-all-tiers.json)), and
 `constant_aux` ([config](../configs/research-control-all-tiers.json)).
 [Ablation evidence](aux-ablation-400ep-mps-2026-11-23.json) ·
+[Regression evidence](regression-aux-400ep-mps-2026-11-23.json) ·
 [Figure](../docs/media/blind-8site-and-aux-ablation.png)
 
 | Arm (`400` ep, `5` seeds `4211–4215`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 400` Val ($J$ / FAR) | `ep 400` Test ($J$ / FAR / m²) | Blind `8`-Site (`ALL` / `L–XL`) |
 |---|---:|---:|---:|---:|---:|
 | `pure_rl` (`λ_aux = 0.0`) | `0.291 ± 0.046` / `100%` | `0.420 ± 0.063` / `100%` / `1,142.5` | `0.292 ± 0.054` / `94.7%` | `0.418 ± 0.074` / `99.0%` / `1,191.8` | `0.531` / `0.501` |
-| **`annealed_aux` (`1.2 → 0.0`)** | **`0.727 ± 0.027`** / `100%` | `0.790 ± 0.021` / `99.0%` / `4,280.2` | **`0.688 ± 0.029`** / `96.0%` | **`0.767 ± 0.038`** / **`99.0%`** / `4,558.7` | `0.823` / `0.883` |
-| **`constant_aux` (`λ_aux = 1.2`)** | `0.723 ± 0.025` / `100%` | **`0.803 ± 0.018`** / **`100%`** / `4,263.8` | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94.0%` / `4,499.7` | **`0.864`** / **`0.896`** |
+| `regression_aux` (`mode="regression"`, `λ_aux = 1.2`) | `0.563 ± 0.027` / **`100%`** | `0.641 ± 0.031` / **`100%`** / `2,341.3` (`0.695` MAP) | `0.550 ± 0.033` / `98.7%` | `0.631 ± 0.032` / **`100%`** / `2,421.6` (`0.680` MAP) | `0.775` / `0.786` (`0.775` / `0.821` MAP) |
+| **`annealed_aux` (`"reinforce"`, `1.2 → 0.0`)** | **`0.727 ± 0.027`** / `100%` | `0.790 ± 0.021` / `99.0%` / `4,280.2` | **`0.688 ± 0.029`** / `96.0%` | **`0.767 ± 0.038`** / `99.0%` / `4,558.7` | `0.823` / `0.883` |
+| **`constant_aux` (`"reinforce"`, `λ_aux = 1.2`)** | `0.723 ± 0.025` / `100%` | **`0.803 ± 0.018`** / **`100%`** / `4,263.8` | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94.0%` / `4,499.7` | **`0.864`** / **`0.896`** |
 
 With matched `400`-episode cosine LR horizons and `5` seeds, pure RL without `des_c`
-(`λ_aux = 0.0`) stalls (`0.420` Test; `0.531` blind), whereas holding `1.2` for a
-`20%` warmup then cosine-annealing `1.2 → 0.0`
-reaches constant-aux quality (`0.727` Val, `0.790` Test, `0.883` blind `L/XL`, winning
-`7/8` blind sites over Greedy) while keeping episode-`400` Test at `0.767` with **`99.0%`
-FAR** (vs. `94.0%` for constant `λ_aux = 1.2`).
+(`λ_aux = 0.0`) stalls (`0.420` Test; `0.531` blind). Switching constant `λ_aux = 1.2`
+from `"reinforce"` to fixed-point `SmoothL1` `"regression"` confirms the saturation-drift
+diagnosis — holding **`100.0%` FAR** and near-zero `best → ep 400` drift (`-0.010 ± 0.016`,
+`95%` CI `[-0.029, +0.009]`) at episode `400` (`0.631 ± 0.032` Test; `0.771 ± 0.010` Blind)
+and cutting variance on tiny `xs_sgp_0346` (`0.881 ± 0.099`) — **but** over-constrains
+the spatial actor to static `2·des_c` (paired `t(4) = -11.77, p = 0.00030` on Test and
+`t(4) = -15.39, p = 0.00010` on Blind `L–XL` below `"reinforce"` `constant_aux`; `0.695 ± 0.039`
+Test / `0.775 ± 0.058` Blind under Det MAP). Holding `"reinforce"` at `1.2` for a
+`20%` warmup then cosine-annealing `1.2 → 0.0` reaches constant-aux peak quality
+(`0.727` Val, `0.790` Test, `0.883` blind `L/XL`, winning `7/8` blind sites over Greedy)
+while keeping episode-`400` Test at `0.767` with **`99.0%` FAR** (vs. `94.0%` for constant
+`"reinforce"`).
 
 ## 400-episode matched actor-critic control and exchange-gating ablation — 2026-11-22
 

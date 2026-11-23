@@ -54,17 +54,23 @@ failures):
    (**`100%` FAR**, `t(4)=8.13, p=0.0012` / `t(3)=6.79, p=0.0065`) on Blind `L/XL`,
    beating `5×` Best-of-5 Fair Greedy on `4/4` blind `L/XL` parcels.
    [Blind 8-site evidence](../results/blind-8site-all-tiers-mps-2026-11-23.json)
-3. **Matched 400-episode auxiliary-supervision schedule ablation (`seeds 4211–4215`):**
+3. **Matched 400-episode auxiliary-supervision schedule & mode ablation (`seeds 4211–4215`):**
    With matched `400`-episode cosine LR horizons (`1.2e-3 → 2.0e-4`) and `5` seeds,
    removing `des_c` (`pure_rl`, `λ_aux = 0.0`) stalls at `0.420 ± 0.063` Test
-   (`100%` FAR) and `0.531 ± 0.075` blind, whereas holding `λ_aux = 1.2` for a
-   `20%` warmup then cosine-decaying `1.2 → 0.0` reaches `0.727 ± 0.027` Val /
-   `0.790 ± 0.021` Test (`99.0%` FAR) at `best.pt`,
-   holds `0.767 ± 0.038` (`99.0%` FAR) at episode `400`, and scores
+   (`100%` FAR) and `0.531 ± 0.075` blind; using fixed-point `SmoothL1`
+   `spatial_aux_mode = "regression"` at constant `λ_aux = 1.2` prevents late-episode
+   FAR drift (`0.641 ± 0.031` `best.pt` vs. `0.631 ± 0.032` / `100%` FAR at
+   `ep 400`; `0.695` MAP Test; `0.775` Blind / `0.786` Blind `L/XL`, `0.821` MAP
+   Blind `L/XL`) **but** over-constrains the spatial mean to static `2·des_c`
+   (paired `p = 0.00030` Test / `p = 0.00010` Blind `L/XL` below `"reinforce"`).
+   Holding `"reinforce"` at `λ_aux = 1.2` for a `20%` warmup then cosine-decaying
+   `1.2 → 0.0` reaches `0.727 ± 0.027` Val / `0.790 ± 0.021` Test (`99.0%` FAR)
+   at `best.pt`, holds `0.767 ± 0.038` (`99.0%` FAR) at episode `400`, and scores
    `0.883 ± 0.024` on blind `L/XL` parcels (vs. constant `λ_aux = 1.2` at
    `0.803 ± 0.018` `best.pt`, `0.762 ± 0.036` / `94.0%` FAR at `ep 400`,
    `0.896 ± 0.017` blind `L/XL`).
-   [Aux ablation evidence](../results/aux-ablation-400ep-mps-2026-11-23.json)
+   [Aux ablation evidence](../results/aux-ablation-400ep-mps-2026-11-23.json) ·
+   [Regression aux evidence](../results/regression-aux-400ep-mps-2026-11-23.json)
 4. **Historical `tier_adaptive` baselines:** `600`-ep M-tier guided RL (`0.776 ± 0.103`
    vs. Greedy `0.810`), `60`-ep L/XL pilot (`0.501` RL / `0.351` Imitation vs. `0.681`
    Greedy), and `600`-ep L/XL follow-up (`0.613 ± 0.079` RL / `0.649 ± 0.021`

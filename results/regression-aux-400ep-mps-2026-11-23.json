@@ -1,0 +1,4334 @@
+{
+  "blindDetMapBest": {
+    "aggregate": {
+      "all": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanDiffuseSky": {
+          "mean": 0.10719744606874883,
+          "stdAcrossModelSeeds": 0.005269484692435509,
+          "tCi95AcrossModelSeeds": [
+            0.10065451663706582,
+            0.11374037550043184
+          ]
+        },
+        "meanDirectSun": {
+          "mean": 0.6088731378689408,
+          "stdAcrossModelSeeds": 0.02682789639098704,
+          "tCi95AcrossModelSeeds": [
+            0.5755619047727115,
+            0.6421843709651701
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.775018566299008,
+          "stdAcrossModelSeeds": 0.05838815089468509,
+          "tCi95AcrossModelSeeds": [
+            0.7025201014113887,
+            0.8475170311866274
+          ]
+        },
+        "meanSeconds": {
+          "mean": 0.5968755,
+          "stdAcrossModelSeeds": 0.06472835645507309,
+          "tCi95AcrossModelSeeds": [
+            0.5165046301268356,
+            0.6772463698731644
+          ]
+        },
+        "meanUsableGoodArea": {
+          "mean": 2299.34,
+          "stdAcrossModelSeeds": 257.28947012557666,
+          "tCi95AcrossModelSeeds": [
+            1979.8729278281487,
+            2618.8070721718514
+          ]
+        }
+      },
+      "l_xl": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.8207291141698886,
+          "stdAcrossModelSeeds": 0.035768215620215614,
+          "tCi95AcrossModelSeeds": [
+            0.7763170085542773,
+            0.8651412197854998
+          ]
+        }
+      },
+      "perSite": {
+        "l_prs_0324": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.828498580993537,
+          "stdAcrossModelSeeds": 0.07213314860478813
+        },
+        "l_sgp_0369": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.9728731294536983,
+          "stdAcrossModelSeeds": 0.09756291219814094
+        },
+        "m_nyc_0003": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.33401818268654665,
+          "stdAcrossModelSeeds": 0.10572923475521147
+        },
+        "m_prs_0315": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 1.0561712296100576,
+          "stdAcrossModelSeeds": 0.02553614430215797
+        },
+        "s_sgp_0345": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8495153219118237,
+          "stdAcrossModelSeeds": 0.09521162395266479
+        },
+        "xl_nyc_0048": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7313186864651591,
+          "stdAcrossModelSeeds": 0.05610448963958979
+        },
+        "xl_sgp_0386": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7502260597671598,
+          "stdAcrossModelSeeds": 0.05129652858172202
+        },
+        "xs_sgp_0346": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6775273395040815,
+          "stdAcrossModelSeeds": 0.5799570080435237
+        }
+      },
+      "xs_m": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7293080184281274,
+          "stdAcrossModelSeeds": 0.10609567643614928,
+          "tCi95AcrossModelSeeds": [
+            0.5975728366322854,
+            0.8610432002239694
+          ]
+        }
+      }
+    },
+    "seeds": [
+      {
+        "checkpointSHA256": "7fbfa82b7a20e639051d04863d4a114f12a79c249877fc3fc9d05dfbd4da4dc3",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10174293629825115,
+          "meanDirectSun": 0.765924721956253,
+          "meanQuality": 0.8628646124484589,
+          "meanReferenceQuality": 0.8628646124484589,
+          "meanSeconds": 1.268785,
+          "meanUsableGoodArea": 3364.0
+        },
+        "modelSeed": 4211,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10887603438459337,
+          "meanDirectSun": 0.6426141299307346,
+          "meanQuality": 0.8099885519106392,
+          "meanReferenceQuality": 0.8099885519106392,
+          "meanSeconds": 0.7009625,
+          "meanUsableGoodArea": 2174.75
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.11106869578361511,
+            "bestDirectSun": 0.6678546071052551,
+            "bestQuality": 0.8921799939574977,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11106869578361511,
+            "meanDirectSun": 0.6678546071052551,
+            "meanQuality": 0.8921799939574977,
+            "meanReferenceQuality": 0.8921799939574977,
+            "meanSeconds": 0.8183199999999999,
+            "meanUsableGoodArea": 3746.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13433846831321716,
+            "bestDirectSun": 0.8833197355270386,
+            "bestQuality": 1.032512497728943,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13433846831321716,
+            "meanDirectSun": 0.8833197355270386,
+            "meanQuality": 1.032512497728943,
+            "meanReferenceQuality": 1.032512497728943,
+            "meanSeconds": 0.5833,
+            "meanUsableGoodArea": 3318.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.01166909746825695,
+            "bestDirectSun": 0.17156076431274414,
+            "bestQuality": 0.24947466045127065,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.01166909746825695,
+            "meanDirectSun": 0.17156076431274414,
+            "meanQuality": 0.24947466045127065,
+            "meanReferenceQuality": 0.24947466045127065,
+            "meanSeconds": 0.18124,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14694836735725403,
+            "bestDirectSun": 0.7995350956916809,
+            "bestQuality": 1.0455789262862256,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14694836735725403,
+            "meanDirectSun": 0.7995350956916809,
+            "meanQuality": 1.0455789262862256,
+            "meanReferenceQuality": 1.0455789262862256,
+            "meanSeconds": 0.18272,
+            "meanUsableGoodArea": 2563.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11523396521806717,
+            "bestDirectSun": 0.6382732391357422,
+            "bestQuality": 0.8105181979256253,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11523396521806717,
+            "meanDirectSun": 0.6382732391357422,
+            "meanQuality": 0.8105181979256253,
+            "meanReferenceQuality": 0.8105181979256253,
+            "meanSeconds": 0.12462,
+            "meanUsableGoodArea": 1136.0
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.0980534553527832,
+            "bestDirectSun": 0.6227116584777832,
+            "bestQuality": 0.710753447429987,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0980534553527832,
+            "meanDirectSun": 0.6227116584777832,
+            "meanQuality": 0.710753447429987,
+            "meanReferenceQuality": 0.710753447429987,
+            "meanSeconds": 1.5504,
+            "meanUsableGoodArea": 3488.0
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.06351112574338913,
+            "bestDirectSun": 0.8898128867149353,
+            "bestQuality": 0.8160125106774079,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06351112574338913,
+            "meanDirectSun": 0.8898128867149353,
+            "meanQuality": 0.8160125106774079,
+            "meanReferenceQuality": 0.8160125106774079,
+            "meanSeconds": 2.12312,
+            "meanUsableGoodArea": 2904.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.19018509984016418,
+            "bestDirectSun": 0.46784505248069763,
+            "bestQuality": 0.922878180828157,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.19018509984016418,
+            "meanDirectSun": 0.46784505248069763,
+            "meanQuality": 0.922878180828157,
+            "meanReferenceQuality": 0.922878180828157,
+            "meanSeconds": 0.04398,
+            "meanUsableGoodArea": 242.99999999999997
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11600913247093558,
+          "meanDirectSun": 0.5193035379052162,
+          "meanQuality": 0.7571124913728197,
+          "meanReferenceQuality": 0.7571124913728197,
+          "meanSeconds": 0.13314,
+          "meanUsableGoodArea": 985.5
+        }
+      },
+      {
+        "checkpointSHA256": "beccd8b093399f5f13cd4db9c802182b80364ff6840d5ab91d79058a28aea82a",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09195059780031442,
+          "meanDirectSun": 0.6746920645236969,
+          "meanQuality": 0.7995447689705523,
+          "meanReferenceQuality": 0.7995447689705523,
+          "meanSeconds": 1.02603,
+          "meanUsableGoodArea": 4079.6
+        },
+        "modelSeed": 4212,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11366091016680002,
+          "meanDirectSun": 0.5983503878116607,
+          "meanQuality": 0.6728053327751535,
+          "meanReferenceQuality": 0.6728053327751535,
+          "meanSeconds": 0.585565,
+          "meanUsableGoodArea": 2733.375
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.09888840466737747,
+            "bestDirectSun": 0.6239546537399292,
+            "bestQuality": 0.8703187186894914,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09888840466737747,
+            "meanDirectSun": 0.6239546537399292,
+            "meanQuality": 0.8703187186894914,
+            "meanReferenceQuality": 0.8703187186894914,
+            "meanSeconds": 0.53106,
+            "meanUsableGoodArea": 4077.0000000000005
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.1219155415892601,
+            "bestDirectSun": 0.7608857154846191,
+            "bestQuality": 0.8159918528252905,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1219155415892601,
+            "meanDirectSun": 0.7608857154846191,
+            "meanQuality": 0.8159918528252905,
+            "meanReferenceQuality": 0.8159918528252905,
+            "meanSeconds": 0.5748,
+            "meanUsableGoodArea": 2704.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.05428033694624901,
+            "bestDirectSun": 0.17680852115154266,
+            "bestQuality": 0.5478314839595334,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05042606368660927,
+            "meanDirectSun": 0.17160717248916627,
+            "meanQuality": 0.5187035559848638,
+            "meanReferenceQuality": 0.5187035559848638,
+            "meanSeconds": 0.25102,
+            "meanUsableGoodArea": 1511.6
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.1396898627281189,
+            "bestDirectSun": 0.7500370740890503,
+            "bestQuality": 1.069573721734907,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1396898627281189,
+            "meanDirectSun": 0.7500370740890503,
+            "meanQuality": 1.069573721734907,
+            "meanReferenceQuality": 1.069573721734907,
+            "meanSeconds": 0.176,
+            "meanUsableGoodArea": 2796.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.12003576755523682,
+            "bestDirectSun": 0.6260817646980286,
+            "bestQuality": 0.9556054015405328,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12003576755523682,
+            "meanDirectSun": 0.6260817646980286,
+            "meanQuality": 0.9556054015405328,
+            "meanReferenceQuality": 0.9556054015405328,
+            "meanSeconds": 0.11252,
+            "meanUsableGoodArea": 1241.0
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.10816995799541473,
+            "bestDirectSun": 0.5860040187835693,
+            "bestQuality": 0.8736626955940215,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10705700814723969,
+            "meanDirectSun": 0.5872268319129944,
+            "meanQuality": 0.8301883880360172,
+            "meanReferenceQuality": 0.8301883880360172,
+            "meanSeconds": 1.28204,
+            "meanUsableGoodArea": 6052.0
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.03854294493794441,
+            "bestDirectSun": 0.7220405340194702,
+            "bestQuality": 0.6919540772489261,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03994143679738045,
+            "meanDirectSun": 0.7267010569572449,
+            "meanQuality": 0.6816801163314098,
+            "meanReferenceQuality": 0.6816801163314098,
+            "meanSeconds": 1.71622,
+            "meanUsableGoodArea": 3485.4
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.2313331961631775,
+            "bestDirectSun": 0.5403088331222534,
+            "bestQuality": -0.35961909294128414,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.2313331961631775,
+            "meanDirectSun": 0.5403088331222534,
+            "meanQuality": -0.35961909294128414,
+            "meanReferenceQuality": -0.35961909294128414,
+            "meanSeconds": 0.04086,
+            "meanUsableGoodArea": 0.0
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.13537122253328562,
+          "meanDirectSun": 0.5220087110996247,
+          "meanQuality": 0.5460658965797549,
+          "meanReferenceQuality": 0.5460658965797549,
+          "meanSeconds": 0.1451,
+          "meanUsableGoodArea": 1387.15
+        }
+      },
+      {
+        "checkpointSHA256": "bafc872c09927d65c2d2ecc89f22fff73326b15d1090a714b7053350cd90394d",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0883192690089345,
+          "meanDirectSun": 0.734490379691124,
+          "meanQuality": 0.8198548685447045,
+          "meanReferenceQuality": 0.8198548685447045,
+          "meanSeconds": 0.949445,
+          "meanUsableGoodArea": 3160.0
+        },
+        "modelSeed": 4213,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0999503075145185,
+          "meanDirectSun": 0.6229505315423012,
+          "meanQuality": 0.7829494037344634,
+          "meanReferenceQuality": 0.7829494037344634,
+          "meanSeconds": 0.555835,
+          "meanUsableGoodArea": 2057.5
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.10387804359197617,
+            "bestDirectSun": 0.6437837481498718,
+            "bestQuality": 0.7962056924105089,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10387804359197617,
+            "meanDirectSun": 0.6437837481498718,
+            "meanQuality": 0.7962056924105089,
+            "meanReferenceQuality": 0.7962056924105089,
+            "meanSeconds": 0.6001799999999999,
+            "meanUsableGoodArea": 3321.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13392725586891174,
+            "bestDirectSun": 0.8913903832435608,
+            "bestQuality": 1.030222917326916,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13392725586891174,
+            "meanDirectSun": 0.8913903832435608,
+            "meanQuality": 1.030222917326916,
+            "meanReferenceQuality": 1.030222917326916,
+            "meanSeconds": 0.4603,
+            "meanUsableGoodArea": 3407.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.014006942510604858,
+            "bestDirectSun": 0.15791171789169312,
+            "bestQuality": 0.3077852571581865,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.014006942510604858,
+            "meanDirectSun": 0.15791171789169312,
+            "meanQuality": 0.3077852571581865,
+            "meanReferenceQuality": 0.3077852571581865,
+            "meanSeconds": 0.21718,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.13892073929309845,
+            "bestDirectSun": 0.794917643070221,
+            "bestQuality": 1.0277619400948026,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13892073929309845,
+            "meanDirectSun": 0.794917643070221,
+            "meanQuality": 1.0277619400948026,
+            "meanReferenceQuality": 1.0277619400948026,
+            "meanSeconds": 0.20466,
+            "meanUsableGoodArea": 2472.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.10587631911039352,
+            "bestDirectSun": 0.6285645365715027,
+            "bestQuality": 0.7126848536831633,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10587631911039352,
+            "meanDirectSun": 0.6285645365715027,
+            "meanQuality": 0.7126848536831633,
+            "meanReferenceQuality": 0.7126848536831633,
+            "meanSeconds": 0.18312,
+            "meanUsableGoodArea": 1093.0
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.06397723406553268,
+            "bestDirectSun": 0.5858520865440369,
+            "bestQuality": 0.6938532879651738,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06397723406553268,
+            "meanDirectSun": 0.5858520865440369,
+            "meanQuality": 0.6938532879651738,
+            "meanReferenceQuality": 0.6938532879651738,
+            "meanSeconds": 1.22682,
+            "meanUsableGoodArea": 3233.0
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.0514945425093174,
+            "bestDirectSun": 0.8169353008270264,
+            "bestQuality": 0.7591375764762194,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0514945425093174,
+            "meanDirectSun": 0.8169353008270264,
+            "meanQuality": 0.7591375764762194,
+            "meanReferenceQuality": 0.7591375764762194,
+            "meanSeconds": 1.51048,
+            "meanUsableGoodArea": 2679.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.18752138316631317,
+            "bestDirectSun": 0.4642488360404968,
+            "bestQuality": 0.9359437047607368,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.18752138316631317,
+            "meanDirectSun": 0.4642488360404968,
+            "meanQuality": 0.9359437047607368,
+            "meanReferenceQuality": 0.9359437047607368,
+            "meanSeconds": 0.04394,
+            "meanUsableGoodArea": 255.0
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.1115813460201025,
+          "meanDirectSun": 0.5114106833934784,
+          "meanQuality": 0.7460439389242223,
+          "meanReferenceQuality": 0.7460439389242223,
+          "meanSeconds": 0.162225,
+          "meanUsableGoodArea": 955.0
+        }
+      },
+      {
+        "checkpointSHA256": "4a764a59fbc3e68022b6e28ae516880d622c35e298f02d4e2561e32568352d92",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09102628491818905,
+          "meanDirectSun": 0.71818927526474,
+          "meanQuality": 0.8473715743221312,
+          "meanReferenceQuality": 0.8473715743221312,
+          "meanSeconds": 0.913195,
+          "meanUsableGoodArea": 3477.5
+        },
+        "modelSeed": 4214,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.1041466839145869,
+          "meanDirectSun": 0.6094100281596184,
+          "meanQuality": 0.8131712548632287,
+          "meanReferenceQuality": 0.8131712548632287,
+          "meanSeconds": 0.5337625,
+          "meanUsableGoodArea": 2258.1
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.1052887961268425,
+            "bestDirectSun": 0.6191340684890747,
+            "bestQuality": 0.8670139327352642,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1052887961268425,
+            "meanDirectSun": 0.6191340684890747,
+            "meanQuality": 0.8670139327352642,
+            "meanReferenceQuality": 0.8670139327352642,
+            "meanSeconds": 0.56824,
+            "meanUsableGoodArea": 3818.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13830959796905518,
+            "bestDirectSun": 0.8730224370956421,
+            "bestQuality": 1.0467673561787474,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13830959796905518,
+            "meanDirectSun": 0.8730224370956421,
+            "meanQuality": 1.0467673561787474,
+            "meanReferenceQuality": 1.0467673561787474,
+            "meanSeconds": 0.45194,
+            "meanUsableGoodArea": 3632.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.016928544268012047,
+            "bestDirectSun": 0.16013050079345703,
+            "bestQuality": 0.2926501586143709,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.016928544268012047,
+            "meanDirectSun": 0.16013050079345703,
+            "meanQuality": 0.2926501586143709,
+            "meanReferenceQuality": 0.2926501586143709,
+            "meanSeconds": 0.20418,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14477470517158508,
+            "bestDirectSun": 0.7719401717185974,
+            "bestQuality": 1.044662239606108,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14477470517158508,
+            "meanDirectSun": 0.7719401717185974,
+            "meanQuality": 1.044662239606108,
+            "meanReferenceQuality": 1.044662239606108,
+            "meanSeconds": 0.19068000000000002,
+            "meanUsableGoodArea": 2717.0000000000005
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11782172322273254,
+            "bestDirectSun": 0.5949872732162476,
+            "bestQuality": 0.8700577216311541,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11451388150453568,
+            "meanDirectSun": 0.596656084060669,
+            "meanQuality": 0.8502454248815197,
+            "meanReferenceQuality": 0.8502454248815197,
+            "meanSeconds": 0.17926,
+            "meanUsableGoodArea": 1193.8
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.065241739153862,
+            "bestDirectSun": 0.5727407932281494,
+            "bestQuality": 0.7020918442684773,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.065241739153862,
+            "meanDirectSun": 0.5727407932281494,
+            "meanQuality": 0.7020918442684773,
+            "meanReferenceQuality": 0.7020918442684773,
+            "meanSeconds": 1.08758,
+            "meanUsableGoodArea": 3574.0
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05500063672661781,
+            "bestDirectSun": 0.8081042170524597,
+            "bestQuality": 0.7941684108218773,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05526500642299652,
+            "meanDirectSun": 0.8078598022460938,
+            "meanQuality": 0.773613164106036,
+            "meanReferenceQuality": 0.773613164106036,
+            "meanSeconds": 1.54502,
+            "meanUsableGoodArea": 2886.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.1928512006998062,
+            "bestDirectSun": 0.47379636764526367,
+            "bestQuality": 0.9283259185153065,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1928512006998062,
+            "meanDirectSun": 0.47379636764526367,
+            "meanQuality": 0.9283259185153065,
+            "meanReferenceQuality": 0.9283259185153065,
+            "meanSeconds": 0.0432,
+            "meanUsableGoodArea": 244.0
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11726708291098475,
+          "meanDirectSun": 0.5006307810544968,
+          "meanQuality": 0.7789709354043263,
+          "meanReferenceQuality": 0.7789709354043263,
+          "meanSeconds": 0.15433,
+          "meanUsableGoodArea": 1038.7
+        }
+      },
+      {
+        "checkpointSHA256": "18c775d238577ff982290dff7402c20b7f6e748d51d9023b7c23bfb3bdd771d9",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09371797181665897,
+          "meanDirectSun": 0.6442221015691757,
+          "meanQuality": 0.7740097465635959,
+          "meanReferenceQuality": 0.7740097465635959,
+          "meanSeconds": 1.043105,
+          "meanUsableGoodArea": 3464.95
+        },
+        "modelSeed": 4215,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10935329436324537,
+          "meanDirectSun": 0.5710406119003892,
+          "meanQuality": 0.7961782882115549,
+          "meanReferenceQuality": 0.7961782882115549,
+          "meanSeconds": 0.6082525,
+          "meanUsableGoodArea": 2272.975
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.10063739866018295,
+            "bestDirectSun": 0.5953378677368164,
+            "bestQuality": 0.7167745671749229,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10063739866018295,
+            "meanDirectSun": 0.5953378677368164,
+            "meanQuality": 0.7167745671749229,
+            "meanReferenceQuality": 0.7167745671749229,
+            "meanSeconds": 0.58888,
+            "meanUsableGoodArea": 3206.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13411439955234528,
+            "bestDirectSun": 0.7526170611381531,
+            "bestQuality": 0.9388710232085944,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13411439955234528,
+            "meanDirectSun": 0.7526170611381531,
+            "meanQuality": 0.9388710232085944,
+            "meanReferenceQuality": 0.9388710232085944,
+            "meanSeconds": 0.48382000000000003,
+            "meanUsableGoodArea": 3361.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.022260477766394615,
+            "bestDirectSun": 0.1187446191906929,
+            "bestQuality": 0.3014772812240414,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.022260477766394615,
+            "meanDirectSun": 0.1187446191906929,
+            "meanQuality": 0.3014772812240414,
+            "meanReferenceQuality": 0.3014772812240414,
+            "meanSeconds": 0.21567999999999998,
+            "meanUsableGoodArea": 299.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14532464742660522,
+            "bestDirectSun": 0.7979267835617065,
+            "bestQuality": 1.0932793203282452,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14532464742660522,
+            "meanDirectSun": 0.7979267835617065,
+            "meanQuality": 1.0932793203282452,
+            "meanReferenceQuality": 1.0932793203282452,
+            "meanSeconds": 0.18848,
+            "meanUsableGoodArea": 2598.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.12819735705852509,
+            "bestDirectSun": 0.600288987159729,
+            "bestQuality": 0.9185227315282775,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12819735705852509,
+            "meanDirectSun": 0.600288987159729,
+            "meanQuality": 0.9185227315282775,
+            "meanReferenceQuality": 0.9185227315282775,
+            "meanSeconds": 0.2318,
+            "meanUsableGoodArea": 1164.0000000000002
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.08802855759859085,
+            "bestDirectSun": 0.5264381766319275,
+            "bestQuality": 0.71970646462614,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08802855759859085,
+            "meanDirectSun": 0.5264381766319275,
+            "meanQuality": 0.71970646462614,
+            "meanReferenceQuality": 0.71970646462614,
+            "meanSeconds": 1.3424800000000001,
+            "meanUsableGoodArea": 4063.9999999999995
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05275842547416687,
+            "bestDirectSun": 0.7051275372505188,
+            "bestQuality": 0.7257300905690843,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.052091531455516815,
+            "meanDirectSun": 0.7024953007698059,
+            "meanQuality": 0.7206869312447263,
+            "meanReferenceQuality": 0.7206869312447263,
+            "meanSeconds": 1.75724,
+            "meanUsableGoodArea": 3228.8
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.20417198538780212,
+            "bestDirectSun": 0.4744760990142822,
+            "bestQuality": 0.9601079863574913,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.20417198538780212,
+            "meanDirectSun": 0.4744760990142822,
+            "meanQuality": 0.9601079863574913,
+            "meanReferenceQuality": 0.9601079863574913,
+            "meanSeconds": 0.05764,
+            "meanUsableGoodArea": 263.0
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.12498861690983176,
+          "meanDirectSun": 0.49785912223160267,
+          "meanQuality": 0.8183468298595138,
+          "meanReferenceQuality": 0.8183468298595138,
+          "meanSeconds": 0.1734,
+          "meanUsableGoodArea": 1081.0
+        }
+      }
+    ]
+  },
+  "blindStochBest": {
+    "aggregate": {
+      "all": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanDiffuseSky": {
+          "mean": 0.10002681633690372,
+          "stdAcrossModelSeeds": 0.003369476650703552,
+          "tCi95AcrossModelSeeds": [
+            0.09584305848693692,
+            0.10421057418687052
+          ]
+        },
+        "meanDirectSun": {
+          "mean": 0.5901884418725968,
+          "stdAcrossModelSeeds": 0.01975950685252301,
+          "tCi95AcrossModelSeeds": [
+            0.5656537735915584,
+            0.6147231101536351
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7744857315816008,
+          "stdAcrossModelSeeds": 0.014493482074598872,
+          "tCi95AcrossModelSeeds": [
+            0.7564896966809598,
+            0.7924817664822419
+          ]
+        },
+        "meanSeconds": {
+          "mean": 0.6384105,
+          "stdAcrossModelSeeds": 0.08450461276980682,
+          "tCi95AcrossModelSeeds": [
+            0.5334841646415808,
+            0.7433368353584192
+          ]
+        },
+        "meanUsableGoodArea": {
+          "mean": 2223.265,
+          "stdAcrossModelSeeds": 276.7109314112834,
+          "tCi95AcrossModelSeeds": [
+            1879.682998557178,
+            2566.8470014428217
+          ]
+        }
+      },
+      "l_xl": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7863729776852288,
+          "stdAcrossModelSeeds": 0.020789681427761844,
+          "tCi95AcrossModelSeeds": [
+            0.7605591787222515,
+            0.8121867766482062
+          ]
+        }
+      },
+      "perSite": {
+        "l_prs_0324": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7871359621443533,
+          "stdAcrossModelSeeds": 0.04671490918035394
+        },
+        "l_sgp_0369": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.9180943258982098,
+          "stdAcrossModelSeeds": 0.09386596845977493
+        },
+        "m_nyc_0003": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.2438435953593864,
+          "stdAcrossModelSeeds": 0.08979599777804123
+        },
+        "m_prs_0315": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 1.0688746471032924,
+          "stdAcrossModelSeeds": 0.026280582672425667
+        },
+        "s_sgp_0345": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8570743439715062,
+          "stdAcrossModelSeeds": 0.06553091949894334
+        },
+        "xl_nyc_0048": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.700433993990627,
+          "stdAcrossModelSeeds": 0.0743119902051981
+        },
+        "xl_sgp_0386": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7398276287077253,
+          "stdAcrossModelSeeds": 0.020162694802715073
+        },
+        "xs_sgp_0346": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.880601355477706,
+          "stdAcrossModelSeeds": 0.0986286669626118
+        }
+      },
+      "xs_m": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7625984854779727,
+          "stdAcrossModelSeeds": 0.018556749680091026,
+          "tCi95AcrossModelSeeds": [
+            0.7395572374765245,
+            0.785639733479421
+          ]
+        }
+      }
+    },
+    "seeds": [
+      {
+        "checkpointSHA256": "7fbfa82b7a20e639051d04863d4a114f12a79c249877fc3fc9d05dfbd4da4dc3",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09342496637254953,
+          "meanDirectSun": 0.723159196972847,
+          "meanQuality": 0.8165396686863706,
+          "meanReferenceQuality": 0.8165396686863706,
+          "meanSeconds": 1.37798,
+          "meanUsableGoodArea": 3253.7
+        },
+        "modelSeed": 4211,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10350207756273448,
+          "meanDirectSun": 0.6154869209975005,
+          "meanQuality": 0.791191288754821,
+          "meanReferenceQuality": 0.791191288754821,
+          "meanSeconds": 0.7879925,
+          "meanUsableGoodArea": 2119.025
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.10330035537481308,
+            "bestDirectSun": 0.6455039978027344,
+            "bestQuality": 0.8621327567638305,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10247469097375869,
+            "meanDirectSun": 0.6426671385765076,
+            "meanQuality": 0.8212127178712394,
+            "meanReferenceQuality": 0.8212127178712394,
+            "meanSeconds": 0.83904,
+            "meanUsableGoodArea": 3437.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13229051232337952,
+            "bestDirectSun": 0.8310015201568604,
+            "bestQuality": 1.0087406140350879,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1254223793745041,
+            "meanDirectSun": 0.8258900165557861,
+            "meanQuality": 0.9785670764814776,
+            "meanReferenceQuality": 0.9785670764814776,
+            "meanSeconds": 0.61044,
+            "meanUsableGoodArea": 3291.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.011291468515992165,
+            "bestDirectSun": 0.1410977840423584,
+            "bestQuality": 0.2772925068921915,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.008801713958382607,
+            "meanDirectSun": 0.15311757028102874,
+            "meanQuality": 0.24297357214143625,
+            "meanReferenceQuality": 0.24297357214143625,
+            "meanSeconds": 0.24578,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.1411956399679184,
+            "bestDirectSun": 0.7908582091331482,
+            "bestQuality": 1.0471398904505849,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14152859151363373,
+            "meanDirectSun": 0.7912274599075317,
+            "meanQuality": 1.0383636946197183,
+            "meanReferenceQuality": 1.0383636946197183,
+            "meanSeconds": 0.22984000000000002,
+            "meanUsableGoodArea": 2550.7999999999997
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11391042172908783,
+            "bestDirectSun": 0.6127146482467651,
+            "bestQuality": 0.8817444229604676,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11271905452013016,
+            "meanDirectSun": 0.6234044194221496,
+            "meanQuality": 0.844390360387607,
+            "meanReferenceQuality": 0.844390360387607,
+            "meanSeconds": 0.2472,
+            "meanUsableGoodArea": 1131.2
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.08878368139266968,
+            "bestDirectSun": 0.6147530674934387,
+            "bestQuality": 0.7214097374409848,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08746202141046525,
+            "meanDirectSun": 0.5922698020935059,
+            "meanQuality": 0.6977383254327498,
+            "meanReferenceQuality": 0.6977383254327498,
+            "meanSeconds": 1.69932,
+            "meanUsableGoodArea": 3439.4
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05893935635685921,
+            "bestDirectSun": 0.8409157395362854,
+            "bestQuality": 0.7916985009027102,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.058340773731470105,
+            "meanDirectSun": 0.8318098306655883,
+            "meanQuality": 0.7686405549600158,
+            "meanReferenceQuality": 0.7686405549600158,
+            "meanSeconds": 2.36312,
+            "meanUsableGoodArea": 2847.4
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.19288364052772522,
+            "bestDirectSun": 0.47508737444877625,
+            "bestQuality": 0.9548691058783552,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.19126739501953124,
+            "meanDirectSun": 0.46350913047790526,
+            "meanQuality": 0.9376440081443239,
+            "meanReferenceQuality": 0.9376440081443239,
+            "meanSeconds": 0.0692,
+            "meanUsableGoodArea": 255.4
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11357918875291943,
+          "meanDirectSun": 0.5078146450221539,
+          "meanQuality": 0.7658429088232713,
+          "meanReferenceQuality": 0.7658429088232713,
+          "meanSeconds": 0.198005,
+          "meanUsableGoodArea": 984.3499999999999
+        }
+      },
+      {
+        "checkpointSHA256": "beccd8b093399f5f13cd4db9c802182b80364ff6840d5ab91d79058a28aea82a",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07953401748090982,
+          "meanDirectSun": 0.6454337120056153,
+          "meanQuality": 0.7753241512691633,
+          "meanReferenceQuality": 0.7753241512691633,
+          "meanSeconds": 1.0715000000000001,
+          "meanUsableGoodArea": 3938.15
+        },
+        "modelSeed": 4212,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10226864060387016,
+          "meanDirectSun": 0.5815707672387361,
+          "meanQuality": 0.7840001323750965,
+          "meanReferenceQuality": 0.7840001323750965,
+          "meanSeconds": 0.6157725000000001,
+          "meanUsableGoodArea": 2669.375
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.0819292739033699,
+            "bestDirectSun": 0.5702009797096252,
+            "bestQuality": 0.8180058442713267,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08213754445314407,
+            "meanDirectSun": 0.5809244513511658,
+            "meanQuality": 0.8035698113338362,
+            "meanReferenceQuality": 0.8035698113338362,
+            "meanSeconds": 0.58286,
+            "meanUsableGoodArea": 3858.4
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.1051328033208847,
+            "bestDirectSun": 0.7135055661201477,
+            "bestQuality": 0.8376634983078484,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10546652972698212,
+            "meanDirectSun": 0.7198730111122131,
+            "meanQuality": 0.7612980369494914,
+            "meanReferenceQuality": 0.7612980369494914,
+            "meanSeconds": 0.55198,
+            "meanUsableGoodArea": 2631.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.054185450077056885,
+            "bestDirectSun": 0.1811494380235672,
+            "bestQuality": 0.5042590218901012,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04256466925144196,
+            "meanDirectSun": 0.1661021441221237,
+            "meanQuality": 0.39087850051373,
+            "meanReferenceQuality": 0.39087850051373,
+            "meanSeconds": 0.24008000000000002,
+            "meanUsableGoodArea": 1258.2
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14227622747421265,
+            "bestDirectSun": 0.7532731890678406,
+            "bestQuality": 1.145463808060528,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1352371484041214,
+            "meanDirectSun": 0.7476903915405273,
+            "meanQuality": 1.106261903686928,
+            "meanReferenceQuality": 1.106261903686928,
+            "meanSeconds": 0.21116000000000001,
+            "meanUsableGoodArea": 2874.4
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11567571014165878,
+            "bestDirectSun": 0.621573805809021,
+            "bestQuality": 0.9967181569439649,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11204514354467392,
+            "meanDirectSun": 0.6276359915733337,
+            "meanQuality": 0.968132453416637,
+            "meanReferenceQuality": 0.968132453416637,
+            "meanSeconds": 0.1422,
+            "meanUsableGoodArea": 1270.2
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.09173858165740967,
+            "bestDirectSun": 0.5745871067047119,
+            "bestQuality": 0.8271133296899217,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09206090569496155,
+            "meanDirectSun": 0.5665384531021118,
+            "meanQuality": 0.8191328493412803,
+            "meanReferenceQuality": 0.8191328493412803,
+            "meanSeconds": 1.26146,
+            "meanUsableGoodArea": 6129.2
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.04206806793808937,
+            "bestDirectSun": 0.7114933133125305,
+            "bestQuality": 0.7433998158314077,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03847109004855156,
+            "meanDirectSun": 0.7143989324569702,
+            "meanQuality": 0.7172959074520455,
+            "meanReferenceQuality": 0.7172959074520455,
+            "meanSeconds": 1.8897000000000002,
+            "meanUsableGoodArea": 3134.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.22948779165744781,
+            "bestDirectSun": 0.560812771320343,
+            "bestQuality": 1.0500712126916414,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.21016609370708467,
+            "meanDirectSun": 0.5294027626514435,
+            "meanQuality": 0.7054315963068236,
+            "meanReferenceQuality": 0.7054315963068236,
+            "meanSeconds": 0.04674,
+            "meanUsableGoodArea": 199.6
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.1250032637268305,
+          "meanDirectSun": 0.5177078224718571,
+          "meanQuality": 0.7926761134810296,
+          "meanReferenceQuality": 0.7926761134810296,
+          "meanSeconds": 0.160045,
+          "meanUsableGoodArea": 1400.6
+        }
+      },
+      {
+        "checkpointSHA256": "bafc872c09927d65c2d2ecc89f22fff73326b15d1090a714b7053350cd90394d",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08225968964397908,
+          "meanDirectSun": 0.7074679762125016,
+          "meanQuality": 0.7663447389483732,
+          "meanReferenceQuality": 0.7663447389483732,
+          "meanSeconds": 0.99823,
+          "meanUsableGoodArea": 2861.1
+        },
+        "modelSeed": 4213,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09471501177176833,
+          "meanDirectSun": 0.6014520496129989,
+          "meanQuality": 0.7592775181958792,
+          "meanReferenceQuality": 0.7592775181958792,
+          "meanSeconds": 0.592085,
+          "meanUsableGoodArea": 1917.05
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.09794913977384567,
+            "bestDirectSun": 0.6291887760162354,
+            "bestQuality": 0.7991445327025358,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09650019705295562,
+            "meanDirectSun": 0.6304865837097168,
+            "meanQuality": 0.7108801134686854,
+            "meanReferenceQuality": 0.7108801134686854,
+            "meanSeconds": 0.58296,
+            "meanUsableGoodArea": 2649.8
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.12397503107786179,
+            "bestDirectSun": 0.8264394402503967,
+            "bestQuality": 1.005002419429109,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12388997375965119,
+            "meanDirectSun": 0.8296105980873107,
+            "meanQuality": 0.9914423860702233,
+            "meanReferenceQuality": 0.9914423860702233,
+            "meanSeconds": 0.4686,
+            "meanUsableGoodArea": 3379.2
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.011577700264751911,
+            "bestDirectSun": 0.14414002001285553,
+            "bestQuality": 0.25018056100824415,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.009409942477941514,
+            "meanDirectSun": 0.14064998030662537,
+            "meanQuality": 0.2160153281972682,
+            "meanReferenceQuality": 0.2160153281972682,
+            "meanSeconds": 0.22388,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14180563390254974,
+            "bestDirectSun": 0.788155198097229,
+            "bestQuality": 1.0813913130281179,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13336085081100463,
+            "meanDirectSun": 0.7764262080192565,
+            "meanQuality": 1.0505143420479728,
+            "meanReferenceQuality": 1.0505143420479728,
+            "meanSeconds": 0.26658,
+            "meanUsableGoodArea": 2519.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.09689030051231384,
+            "bestDirectSun": 0.6036958694458008,
+            "bestQuality": 0.8581520352147082,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10071372240781784,
+            "meanDirectSun": 0.6040755867958069,
+            "meanQuality": 0.8154927481168627,
+            "meanReferenceQuality": 0.8154927481168627,
+            "meanSeconds": 0.20108,
+            "meanUsableGoodArea": 1120.4
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.0670701339840889,
+            "bestDirectSun": 0.5493056178092957,
+            "bestQuality": 0.6707194115390638,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05715180337429047,
+            "meanDirectSun": 0.5539040088653564,
+            "meanQuality": 0.6143914996505396,
+            "meanReferenceQuality": 0.6143914996505396,
+            "meanSeconds": 1.35078,
+            "meanUsableGoodArea": 2649.6
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05373029410839081,
+            "bestDirectSun": 0.800774335861206,
+            "bestQuality": 0.7721679266127559,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.051496784389019015,
+            "meanDirectSun": 0.815870714187622,
+            "meanQuality": 0.7486649566040444,
+            "meanReferenceQuality": 0.7486649566040444,
+            "meanSeconds": 1.5905799999999999,
+            "meanUsableGoodArea": 2765.8
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.18607266247272491,
+            "bestDirectSun": 0.4658219814300537,
+            "bestQuality": 0.9514961654605043,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.18519681990146636,
+            "meanDirectSun": 0.46059271693229675,
+            "meanQuality": 0.9268187714114373,
+            "meanReferenceQuality": 0.9268187714114373,
+            "meanSeconds": 0.05222,
+            "meanUsableGoodArea": 252.6
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10717033389955759,
+          "meanDirectSun": 0.4954361230134964,
+          "meanQuality": 0.7522102974433853,
+          "meanReferenceQuality": 0.7522102974433853,
+          "meanSeconds": 0.18594,
+          "meanUsableGoodArea": 973.0
+        }
+      },
+      {
+        "checkpointSHA256": "4a764a59fbc3e68022b6e28ae516880d622c35e298f02d4e2561e32568352d92",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0858208442106843,
+          "meanDirectSun": 0.6907504975795746,
+          "meanQuality": 0.7989770920160656,
+          "meanReferenceQuality": 0.7989770920160656,
+          "meanSeconds": 1.014545,
+          "meanUsableGoodArea": 3297.35
+        },
+        "modelSeed": 4214,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09990442832931876,
+          "meanDirectSun": 0.5890646040439605,
+          "meanQuality": 0.7784330495969132,
+          "meanReferenceQuality": 0.7784330495969132,
+          "meanSeconds": 0.586245,
+          "meanUsableGoodArea": 2173.875
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.10306686162948608,
+            "bestDirectSun": 0.6233478784561157,
+            "bestQuality": 0.8740096342285502,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09897060692310333,
+            "meanDirectSun": 0.6197262883186341,
+            "meanQuality": 0.824003073323664,
+            "meanReferenceQuality": 0.824003073323664,
+            "meanSeconds": 0.5903,
+            "meanUsableGoodArea": 3647.7999999999997
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.1305931657552719,
+            "bestDirectSun": 0.8059127330780029,
+            "bestQuality": 0.9995867840753434,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12403695583343506,
+            "meanDirectSun": 0.7940871953964234,
+            "meanQuality": 0.9556337071529948,
+            "meanReferenceQuality": 0.9556337071529948,
+            "meanSeconds": 0.46374,
+            "meanUsableGoodArea": 3385.4
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.013698146678507328,
+            "bestDirectSun": 0.1348709613084793,
+            "bestQuality": 0.2707457898865231,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.011525356769561767,
+            "meanDirectSun": 0.13551321029663085,
+            "meanQuality": 0.22247128605607702,
+            "meanReferenceQuality": 0.22247128605607702,
+            "meanSeconds": 0.21658,
+            "meanUsableGoodArea": 8.4
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.15279507637023926,
+            "bestDirectSun": 0.7996707558631897,
+            "bestQuality": 1.1500684124486085,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14768583178520203,
+            "meanDirectSun": 0.7837167620658875,
+            "meanQuality": 1.0785478678373248,
+            "meanReferenceQuality": 1.0785478678373248,
+            "meanSeconds": 0.19202,
+            "meanUsableGoodArea": 2780.2
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11536203324794769,
+            "bestDirectSun": 0.5941703915596008,
+            "bestQuality": 0.8833993119610101,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10645244270563126,
+            "meanDirectSun": 0.5692248463630676,
+            "meanQuality": 0.8027870218023568,
+            "meanReferenceQuality": 0.8027870218023568,
+            "meanSeconds": 0.17562,
+            "meanUsableGoodArea": 1160.8
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.06443897634744644,
+            "bestDirectSun": 0.544322669506073,
+            "bestQuality": 0.6990934300046364,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.0652450054883957,
+            "meanDirectSun": 0.5509933590888977,
+            "meanQuality": 0.6770789751105508,
+            "meanReferenceQuality": 0.6770789751105508,
+            "meanSeconds": 1.21732,
+            "meanUsableGoodArea": 3400.2
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.050276871770620346,
+            "bestDirectSun": 0.7842562198638916,
+            "bestQuality": 0.7522646560687416,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05503080859780311,
+            "meanDirectSun": 0.7981951475143433,
+            "meanQuality": 0.7391926124770527,
+            "meanReferenceQuality": 0.7391926124770527,
+            "meanSeconds": 1.78682,
+            "meanUsableGoodArea": 2756.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.19487972557544708,
+            "bestDirectSun": 0.47528812289237976,
+            "bestQuality": 0.957913175625442,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.19028841853141784,
+            "meanDirectSun": 0.46106002330780027,
+            "meanQuality": 0.9277498530152848,
+            "meanReferenceQuality": 0.9277498530152848,
+            "meanSeconds": 0.04756,
+            "meanUsableGoodArea": 252.2
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11398801244795323,
+          "meanDirectSun": 0.4873787105083466,
+          "meanQuality": 0.7578890071777609,
+          "meanReferenceQuality": 0.7578890071777609,
+          "meanSeconds": 0.157945,
+          "meanUsableGoodArea": 1050.4
+        }
+      },
+      {
+        "checkpointSHA256": "18c775d238577ff982290dff7402c20b7f6e748d51d9023b7c23bfb3bdd771d9",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08676344435662031,
+          "meanDirectSun": 0.6390608340501786,
+          "meanQuality": 0.7746792375061716,
+          "meanReferenceQuality": 0.7746792375061716,
+          "meanSeconds": 1.06281,
+          "meanUsableGoodArea": 3472.45
+        },
+        "modelSeed": 4215,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09974392341682688,
+          "meanDirectSun": 0.5633678674697876,
+          "meanQuality": 0.7595266689852941,
+          "meanReferenceQuality": 0.7595266689852941,
+          "meanSeconds": 0.6099575,
+          "meanUsableGoodArea": 2237.0
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.09303782880306244,
+            "bestDirectSun": 0.5793104767799377,
+            "bestQuality": 0.8090962054743474,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09230229854583741,
+            "meanDirectSun": 0.5717451572418213,
+            "meanQuality": 0.7760140947243415,
+            "meanReferenceQuality": 0.7760140947243415,
+            "meanSeconds": 0.62844,
+            "meanUsableGoodArea": 3704.3999999999996
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.12658526003360748,
+            "bestDirectSun": 0.7577890753746033,
+            "bestQuality": 0.9240903592094363,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12149246931076049,
+            "meanDirectSun": 0.736790144443512,
+            "meanQuality": 0.9035304228368621,
+            "meanReferenceQuality": 0.9035304228368621,
+            "meanSeconds": 0.56552,
+            "meanUsableGoodArea": 3255.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.01547709945589304,
+            "bestDirectSun": 0.11402010172605515,
+            "bestQuality": 0.27147303049359295,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.012170739192515611,
+            "meanDirectSun": 0.1118818461894989,
+            "meanQuality": 0.14687928988842047,
+            "meanReferenceQuality": 0.14687928988842047,
+            "meanSeconds": 0.24972,
+            "meanUsableGoodArea": 30.8
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.13471682369709015,
+            "bestDirectSun": 0.78841233253479,
+            "bestQuality": 1.129937121851949,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13541585206985474,
+            "meanDirectSun": 0.7895440459251404,
+            "meanQuality": 1.0706854273245179,
+            "meanReferenceQuality": 1.0706854273245179,
+            "meanSeconds": 0.188,
+            "meanUsableGoodArea": 2629.0
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11776157468557358,
+            "bestDirectSun": 0.6023074984550476,
+            "bestQuality": 0.9227288658168614,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12084062546491622,
+            "meanDirectSun": 0.5967158555984498,
+            "meanQuality": 0.8545691361340673,
+            "meanReferenceQuality": 0.8545691361340673,
+            "meanSeconds": 0.13738,
+            "meanUsableGoodArea": 1106.8
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.08625215291976929,
+            "bestDirectSun": 0.5400477647781372,
+            "bestQuality": 0.731436015329418,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08189790397882461,
+            "meanDirectSun": 0.5287006855010986,
+            "meanQuality": 0.6938283204180142,
+            "meanReferenceQuality": 0.6938283204180142,
+            "meanSeconds": 1.3868800000000001,
+            "meanUsableGoodArea": 3885.8
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05287465825676918,
+            "bestDirectSun": 0.7290348410606384,
+            "bestQuality": 0.748470559192031,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.051361105591058734,
+            "meanDirectSun": 0.7190073490142822,
+            "meanQuality": 0.7253441120454684,
+            "meanReferenceQuality": 0.7253441120454684,
+            "meanSeconds": 1.6703999999999999,
+            "meanUsableGoodArea": 3044.6
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.19707472622394562,
+            "bestDirectSun": 0.500252366065979,
+            "bestQuality": 0.9782986187722003,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.18247039318084718,
+            "meanDirectSun": 0.4525578558444977,
+            "meanQuality": 0.9053625485106603,
+            "meanReferenceQuality": 0.9053625485106603,
+            "meanSeconds": 0.05332,
+            "meanUsableGoodArea": 239.6
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11272440247703344,
+          "meanDirectSun": 0.4876749008893967,
+          "meanQuality": 0.7443741004644165,
+          "meanReferenceQuality": 0.7443741004644165,
+          "meanSeconds": 0.157105,
+          "meanUsableGoodArea": 1001.55
+        }
+      }
+    ]
+  },
+  "blindStochEp400": {
+    "aggregate": {
+      "all": {
+        "farSuccessRate": {
+          "mean": 0.995,
+          "stdAcrossModelSeeds": 0.011180339887498959,
+          "tCi95AcrossModelSeeds": [
+            0.981117774474011,
+            1.008882225525989
+          ]
+        },
+        "meanDiffuseSky": {
+          "mean": 0.10005408754106611,
+          "stdAcrossModelSeeds": 0.001834394006568287,
+          "tCi95AcrossModelSeeds": [
+            0.0977763865445895,
+            0.10233178853754271
+          ]
+        },
+        "meanDirectSun": {
+          "mean": 0.5807653281465173,
+          "stdAcrossModelSeeds": 0.01573086110171252,
+          "tCi95AcrossModelSeeds": [
+            0.5612328842557768,
+            0.6002977720372578
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7708548117754106,
+          "stdAcrossModelSeeds": 0.009902581647790107,
+          "tCi95AcrossModelSeeds": [
+            0.7585591326540763,
+            0.7831504908967449
+          ]
+        },
+        "meanSeconds": {
+          "mean": 0.6038105,
+          "stdAcrossModelSeeds": 0.01809981443275042,
+          "tCi95AcrossModelSeeds": [
+            0.5813366120446849,
+            0.6262843879553152
+          ]
+        },
+        "meanUsableGoodArea": {
+          "mean": 2295.45,
+          "stdAcrossModelSeeds": 226.01516196374973,
+          "tCi95AcrossModelSeeds": [
+            2014.815110341419,
+            2576.084889658581
+          ]
+        }
+      },
+      "l_xl": {
+        "farSuccessRate": {
+          "mean": 0.99,
+          "stdAcrossModelSeeds": 0.022360679774997918,
+          "tCi95AcrossModelSeeds": [
+            0.962235548948022,
+            1.0177644510519779
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.78063814445714,
+          "stdAcrossModelSeeds": 0.015700673228446736,
+          "tCi95AcrossModelSeeds": [
+            0.761143183761816,
+            0.8001331051524639
+          ]
+        }
+      },
+      "perSite": {
+        "l_prs_0324": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7976506627325689,
+          "stdAcrossModelSeeds": 0.029645937818628856
+        },
+        "l_sgp_0369": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8985364093915201,
+          "stdAcrossModelSeeds": 0.08943970427785979
+        },
+        "m_nyc_0003": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.22159115553625833,
+          "stdAcrossModelSeeds": 0.09821057311143246
+        },
+        "m_prs_0315": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 1.0798915003895713,
+          "stdAcrossModelSeeds": 0.020240664279635844
+        },
+        "s_sgp_0345": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8610925731732513,
+          "stdAcrossModelSeeds": 0.06291886800553778
+        },
+        "xl_nyc_0048": {
+          "farSuccessRate": 0.96,
+          "meanQuality": 0.6961858031621574,
+          "stdAcrossModelSeeds": 0.06885494434597936
+        },
+        "xl_sgp_0386": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.7301797025423136,
+          "stdAcrossModelSeeds": 0.022177213507195235
+        },
+        "xs_sgp_0346": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8817106872756437,
+          "stdAcrossModelSeeds": 0.09999730930327137
+        }
+      },
+      "xs_m": {
+        "farSuccessRate": {
+          "mean": 1.0,
+          "stdAcrossModelSeeds": 0.0,
+          "tCi95AcrossModelSeeds": [
+            1.0,
+            1.0
+          ]
+        },
+        "meanQuality": {
+          "mean": 0.7610714790936811,
+          "stdAcrossModelSeeds": 0.02077556443637197,
+          "tCi95AcrossModelSeeds": [
+            0.7352752086906755,
+            0.7868677494966867
+          ]
+        }
+      }
+    },
+    "seeds": [
+      {
+        "checkpointSHA256": "82d8a216c822ea4fb078df72ceb5936ba6f775e11f6f5138a7e18ea0182258ca",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08727880697697402,
+          "meanDirectSun": 0.6683225572109223,
+          "meanQuality": 0.7974106694614084,
+          "meanReferenceQuality": 0.7974106694614084,
+          "meanSeconds": 0.9995499999999999,
+          "meanUsableGoodArea": 3513.2
+        },
+        "modelSeed": 4211,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10137122317682952,
+          "meanDirectSun": 0.5804125547409058,
+          "meanQuality": 0.7660668492355136,
+          "meanReferenceQuality": 0.7660668492355136,
+          "meanSeconds": 0.5805175,
+          "meanUsableGoodArea": 2272.575
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.10173997282981873,
+            "bestDirectSun": 0.5952950716018677,
+            "bestQuality": 0.857335150458522,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09916875064373017,
+            "meanDirectSun": 0.5972887754440308,
+            "meanQuality": 0.8357026836820824,
+            "meanReferenceQuality": 0.8357026836820824,
+            "meanSeconds": 0.61908,
+            "meanUsableGoodArea": 3901.6
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.13217231631278992,
+            "bestDirectSun": 0.7898644208908081,
+            "bestQuality": 0.9810263730458234,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12548158317804337,
+            "meanDirectSun": 0.7613838672637939,
+            "meanQuality": 0.9358499790373173,
+            "meanReferenceQuality": 0.9358499790373173,
+            "meanSeconds": 0.48312,
+            "meanUsableGoodArea": 3467.8
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.015367702580988407,
+            "bestDirectSun": 0.14288873970508575,
+            "bestQuality": 0.19867129871716263,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.013083717040717601,
+            "meanDirectSun": 0.144382107257843,
+            "meanQuality": 0.13679603946667657,
+            "meanReferenceQuality": 0.13679603946667657,
+            "meanSeconds": 0.24008,
+            "meanUsableGoodArea": 21.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14884887635707855,
+            "bestDirectSun": 0.7828844785690308,
+            "bestQuality": 1.0608537495559394,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14443603456020354,
+            "meanDirectSun": 0.7727187871932983,
+            "meanQuality": 1.0508118071434733,
+            "meanReferenceQuality": 1.0508118071434733,
+            "meanSeconds": 0.19228,
+            "meanUsableGoodArea": 2694.6
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11679807305335999,
+            "bestDirectSun": 0.6086910367012024,
+            "bestQuality": 0.8860016537812512,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11609146147966384,
+            "meanDirectSun": 0.5815010666847229,
+            "meanQuality": 0.8175222043682074,
+            "meanReferenceQuality": 0.8175222043682074,
+            "meanSeconds": 0.16792,
+            "meanUsableGoodArea": 1155.8
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.06824304163455963,
+            "bestDirectSun": 0.5351651906967163,
+            "bestQuality": 0.6875153769935864,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06928052604198456,
+            "meanDirectSun": 0.5330266833305359,
+            "meanQuality": 0.6689636663829729,
+            "meanReferenceQuality": 0.6689636663829729,
+            "meanSeconds": 1.23932,
+            "meanUsableGoodArea": 3640.6000000000004
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05631386488676071,
+            "bestDirectSun": 0.8135968446731567,
+            "bestQuality": 0.7695699481944991,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.055184368044137955,
+            "meanDirectSun": 0.7815909028053284,
+            "meanQuality": 0.7491263487432609,
+            "meanReferenceQuality": 0.7491263487432609,
+            "meanSeconds": 1.65668,
+            "meanUsableGoodArea": 3042.8
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.1944180577993393,
+            "bestDirectSun": 0.4754454791545868,
+            "bestQuality": 0.95804565435613,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1882433444261551,
+            "meanDirectSun": 0.47140824794769287,
+            "meanQuality": 0.9337620650601177,
+            "meanReferenceQuality": 0.9337620650601177,
+            "meanSeconds": 0.04566,
+            "meanUsableGoodArea": 256.4
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11546363937668502,
+          "meanDirectSun": 0.4925025522708893,
+          "meanQuality": 0.7347230290096187,
+          "meanReferenceQuality": 0.7347230290096187,
+          "meanSeconds": 0.161485,
+          "meanUsableGoodArea": 1031.95
+        }
+      },
+      {
+        "checkpointSHA256": "beccd8b093399f5f13cd4db9c802182b80364ff6840d5ab91d79058a28aea82a",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07953401748090982,
+          "meanDirectSun": 0.6454337120056153,
+          "meanQuality": 0.7753241512691633,
+          "meanReferenceQuality": 0.7753241512691633,
+          "meanSeconds": 1.0492,
+          "meanUsableGoodArea": 3938.15
+        },
+        "modelSeed": 4212,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.10226864060387016,
+          "meanDirectSun": 0.5815707672387361,
+          "meanQuality": 0.7840001323750965,
+          "meanReferenceQuality": 0.7840001323750965,
+          "meanSeconds": 0.598065,
+          "meanUsableGoodArea": 2669.375
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.0819292739033699,
+            "bestDirectSun": 0.5702009797096252,
+            "bestQuality": 0.8180058442713267,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08213754445314407,
+            "meanDirectSun": 0.5809244513511658,
+            "meanQuality": 0.8035698113338362,
+            "meanReferenceQuality": 0.8035698113338362,
+            "meanSeconds": 0.58554,
+            "meanUsableGoodArea": 3858.4
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.1051328033208847,
+            "bestDirectSun": 0.7135055661201477,
+            "bestQuality": 0.8376634983078484,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10546652972698212,
+            "meanDirectSun": 0.7198730111122131,
+            "meanQuality": 0.7612980369494914,
+            "meanReferenceQuality": 0.7612980369494914,
+            "meanSeconds": 0.54148,
+            "meanUsableGoodArea": 2631.0
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.054185450077056885,
+            "bestDirectSun": 0.1811494380235672,
+            "bestQuality": 0.5042590218901012,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04256466925144196,
+            "meanDirectSun": 0.1661021441221237,
+            "meanQuality": 0.39087850051373,
+            "meanReferenceQuality": 0.39087850051373,
+            "meanSeconds": 0.22228,
+            "meanUsableGoodArea": 1258.2
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14227622747421265,
+            "bestDirectSun": 0.7532731890678406,
+            "bestQuality": 1.145463808060528,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1352371484041214,
+            "meanDirectSun": 0.7476903915405273,
+            "meanQuality": 1.106261903686928,
+            "meanReferenceQuality": 1.106261903686928,
+            "meanSeconds": 0.1934,
+            "meanUsableGoodArea": 2874.4
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11567571014165878,
+            "bestDirectSun": 0.621573805809021,
+            "bestQuality": 0.9967181569439649,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11204514354467392,
+            "meanDirectSun": 0.6276359915733337,
+            "meanQuality": 0.968132453416637,
+            "meanReferenceQuality": 0.968132453416637,
+            "meanSeconds": 0.12728,
+            "meanUsableGoodArea": 1270.2
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.09173858165740967,
+            "bestDirectSun": 0.5745871067047119,
+            "bestQuality": 0.8271133296899217,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09206090569496155,
+            "meanDirectSun": 0.5665384531021118,
+            "meanQuality": 0.8191328493412803,
+            "meanReferenceQuality": 0.8191328493412803,
+            "meanSeconds": 1.24606,
+            "meanUsableGoodArea": 6129.2
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.04206806793808937,
+            "bestDirectSun": 0.7114933133125305,
+            "bestQuality": 0.7433998158314077,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.03847109004855156,
+            "meanDirectSun": 0.7143989324569702,
+            "meanQuality": 0.7172959074520455,
+            "meanReferenceQuality": 0.7172959074520455,
+            "meanSeconds": 1.82372,
+            "meanUsableGoodArea": 3134.0
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.22948779165744781,
+            "bestDirectSun": 0.560812771320343,
+            "bestQuality": 1.0500712126916414,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.21016609370708467,
+            "meanDirectSun": 0.5294027626514435,
+            "meanQuality": 0.7054315963068236,
+            "meanReferenceQuality": 0.7054315963068236,
+            "meanSeconds": 0.04476,
+            "meanUsableGoodArea": 199.6
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.1250032637268305,
+          "meanDirectSun": 0.5177078224718571,
+          "meanQuality": 0.7926761134810296,
+          "meanReferenceQuality": 0.7926761134810296,
+          "meanSeconds": 0.14693,
+          "meanUsableGoodArea": 1400.6
+        }
+      },
+      {
+        "checkpointSHA256": "d1a0a51bce5a2c1c860165022dbd5d329d2f41d74f35c0fafbe82a4541f390c1",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 0.95,
+          "meanDiffuseSky": 0.08428379110991954,
+          "meanDirectSun": 0.7066399097442627,
+          "meanQuality": 0.7928901082321766,
+          "meanReferenceQuality": 0.7928901082321766,
+          "meanSeconds": 1.044395,
+          "meanUsableGoodArea": 3086.0
+        },
+        "modelSeed": 4213,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 0.975,
+          "meanDiffuseSky": 0.09754440523684024,
+          "meanDirectSun": 0.6051579967141152,
+          "meanQuality": 0.7775705442218485,
+          "meanReferenceQuality": 0.7775705442218485,
+          "meanSeconds": 0.614125,
+          "meanUsableGoodArea": 2054.85
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.09756667166948318,
+            "bestDirectSun": 0.6564527153968811,
+            "bestQuality": 0.8520865770430157,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09534975439310074,
+            "meanDirectSun": 0.6354715585708618,
+            "meanQuality": 0.7534564388667322,
+            "meanReferenceQuality": 0.7534564388667322,
+            "meanSeconds": 0.6757,
+            "meanUsableGoodArea": 2956.0
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.1285468190908432,
+            "bestDirectSun": 0.8467150926589966,
+            "bestQuality": 1.039648617193256,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1254873603582382,
+            "meanDirectSun": 0.8171982169151306,
+            "meanQuality": 0.9938398204704372,
+            "meanReferenceQuality": 0.9938398204704372,
+            "meanSeconds": 0.52528,
+            "meanUsableGoodArea": 3444.6
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.010814775712788105,
+            "bestDirectSun": 0.14256522059440613,
+            "bestQuality": 0.2613299294305736,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.009630829095840454,
+            "meanDirectSun": 0.13596895933151246,
+            "meanQuality": 0.20607589225287506,
+            "meanReferenceQuality": 0.20607589225287506,
+            "meanSeconds": 0.2653,
+            "meanUsableGoodArea": 0.0
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.14726565778255463,
+            "bestDirectSun": 0.798256516456604,
+            "bestQuality": 1.1285139155433244,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14718343019485475,
+            "meanDirectSun": 0.791037666797638,
+            "meanQuality": 1.0851457709676993,
+            "meanReferenceQuality": 1.0851457709676993,
+            "meanSeconds": 0.22178,
+            "meanUsableGoodArea": 2699.6
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.10539595782756805,
+            "bestDirectSun": 0.6153486967086792,
+            "bestQuality": 0.9551599730824887,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10346113592386245,
+            "meanDirectSun": 0.6151756286621094,
+            "meanQuality": 0.8177427098242805,
+            "meanReferenceQuality": 0.8177427098242805,
+            "meanSeconds": 0.19408,
+            "meanUsableGoodArea": 1136.0
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.060338664799928665,
+            "bestDirectSun": 0.562138557434082,
+            "bestQuality": 0.685302413337942,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 0.8,
+            "meanDiffuseSky": 0.06540075466036796,
+            "meanDirectSun": 0.5646062731742859,
+            "meanQuality": 0.6672819002487183,
+            "meanReferenceQuality": 0.6672819002487183,
+            "meanSeconds": 1.35756,
+            "meanUsableGoodArea": 3270.2
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05294273421168327,
+            "bestDirectSun": 0.8308161497116089,
+            "bestQuality": 0.7686030804778632,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.050897295027971266,
+            "meanDirectSun": 0.8092835903167724,
+            "meanQuality": 0.7569822733428189,
+            "meanReferenceQuality": 0.7569822733428189,
+            "meanSeconds": 1.61904,
+            "meanUsableGoodArea": 2673.2
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.18780602514743805,
+            "bestDirectSun": 0.47614115476608276,
+            "bestQuality": 0.9677144609717041,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.18294468224048616,
+            "meanDirectSun": 0.4725220799446106,
+            "meanQuality": 0.9400395478012263,
+            "meanReferenceQuality": 0.9400395478012263,
+            "meanSeconds": 0.05426,
+            "meanUsableGoodArea": 259.2
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11080501936376094,
+          "meanDirectSun": 0.5036760836839675,
+          "meanQuality": 0.7622509802115203,
+          "meanReferenceQuality": 0.7622509802115203,
+          "meanSeconds": 0.183855,
+          "meanUsableGoodArea": 1023.6999999999999
+        }
+      },
+      {
+        "checkpointSHA256": "1911805efee4d41959d004c1be916956a901122e478b6b26fa91915e1e438cfc",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08356046974658966,
+          "meanDirectSun": 0.6613785564899445,
+          "meanQuality": 0.7798572820563223,
+          "meanReferenceQuality": 0.7798572820563223,
+          "meanSeconds": 1.04709,
+          "meanUsableGoodArea": 3425.15
+        },
+        "modelSeed": 4214,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09953413640614599,
+          "meanDirectSun": 0.5748779186978936,
+          "meanQuality": 0.7676668503846611,
+          "meanReferenceQuality": 0.7676668503846611,
+          "meanSeconds": 0.59812,
+          "meanUsableGoodArea": 2240.6
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.09842801094055176,
+            "bestDirectSun": 0.5975398421287537,
+            "bestQuality": 0.8306171944537039,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09547078460454941,
+            "meanDirectSun": 0.596512234210968,
+            "meanQuality": 0.791462205828192,
+            "meanReferenceQuality": 0.791462205828192,
+            "meanSeconds": 0.62692,
+            "meanUsableGoodArea": 3665.4
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.12412241101264954,
+            "bestDirectSun": 0.7931199669837952,
+            "bestQuality": 0.9822708710455603,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12233726978302002,
+            "meanDirectSun": 0.7695267796516418,
+            "meanQuality": 0.9374377506463427,
+            "meanReferenceQuality": 0.9374377506463427,
+            "meanSeconds": 0.47514,
+            "meanUsableGoodArea": 3484.4
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.012913094833493233,
+            "bestDirectSun": 0.12782257795333862,
+            "bestQuality": 0.2293419042413171,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.011892698518931866,
+            "meanDirectSun": 0.12495891600847245,
+            "meanQuality": 0.17957885997401454,
+            "meanReferenceQuality": 0.17957885997401454,
+            "meanSeconds": 0.2107,
+            "meanUsableGoodArea": 16.2
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.1550477147102356,
+            "bestDirectSun": 0.8074421286582947,
+            "bestQuality": 1.1802184009642884,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.14482103884220124,
+            "meanDirectSun": 0.7703465938568115,
+            "meanQuality": 1.072836907945844,
+            "meanReferenceQuality": 1.072836907945844,
+            "meanSeconds": 0.18833999999999998,
+            "meanUsableGoodArea": 2791.4
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.11588876694440842,
+            "bestDirectSun": 0.5973062515258789,
+            "bestQuality": 0.8789547992515481,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11591518372297287,
+            "meanDirectSun": 0.5831265449523926,
+            "meanQuality": 0.8369328904045794,
+            "meanReferenceQuality": 0.8369328904045794,
+            "meanSeconds": 0.1522,
+            "meanUsableGoodArea": 1162.6
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.06918990612030029,
+            "bestDirectSun": 0.5583668351173401,
+            "bestQuality": 0.6876450768400709,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06744882315397263,
+            "meanDirectSun": 0.5393144249916076,
+            "meanQuality": 0.667193075999232,
+            "meanReferenceQuality": 0.667193075999232,
+            "meanSeconds": 1.2995,
+            "meanUsableGoodArea": 3575.0
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.04944566264748573,
+            "bestDirectSun": 0.7580633759498596,
+            "bestQuality": 0.7457809192502711,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04898500144481659,
+            "meanDirectSun": 0.7401607871055603,
+            "meanQuality": 0.7233360957515226,
+            "meanReferenceQuality": 0.7233360957515226,
+            "meanSeconds": 1.7868,
+            "meanUsableGoodArea": 2975.8
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.2042497843503952,
+            "bestDirectSun": 0.4945492148399353,
+            "bestQuality": 0.9852740628176107,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1894022911787033,
+            "meanDirectSun": 0.47507706880569456,
+            "meanQuality": 0.9325570165275612,
+            "meanReferenceQuality": 0.9325570165275612,
+            "meanSeconds": 0.04536,
+            "meanUsableGoodArea": 254.0
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11550780306570232,
+          "meanDirectSun": 0.48837728090584276,
+          "meanQuality": 0.7554764187129998,
+          "meanReferenceQuality": 0.7554764187129998,
+          "meanSeconds": 0.14915,
+          "meanUsableGoodArea": 1056.05
+        }
+      },
+      {
+        "checkpointSHA256": "894ca0ed9328d03df9f1d88f75a10469d80a14fd3fc4265b7aedbbcdecbb5adb",
+        "l_xl": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08642177991569042,
+          "meanDirectSun": 0.6340330541133881,
+          "meanQuality": 0.7577085112666294,
+          "meanReferenceQuality": 0.7577085112666294,
+          "meanSeconds": 1.10231,
+          "meanUsableGoodArea": 3450.05
+        },
+        "modelSeed": 4215,
+        "overall": {
+          "count": 40,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.09955203228164464,
+          "meanDirectSun": 0.5618074033409357,
+          "meanQuality": 0.7589696826599333,
+          "meanReferenceQuality": 0.7589696826599333,
+          "meanSeconds": 0.628225,
+          "meanUsableGoodArea": 2239.85
+        },
+        "perSite": {
+          "l_prs_0324": {
+            "bestDiffuseSky": 0.08996635675430298,
+            "bestDirectSun": 0.561212956905365,
+            "bestQuality": 0.8296757760154273,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09254639744758605,
+            "meanDirectSun": 0.5646586775779724,
+            "meanQuality": 0.8040621739520016,
+            "meanReferenceQuality": 0.8040621739520016,
+            "meanSeconds": 0.68526,
+            "meanUsableGoodArea": 3897.7999999999997
+          },
+          "l_sgp_0369": {
+            "bestDiffuseSky": 0.11984726041555405,
+            "bestDirectSun": 0.7560415863990784,
+            "bestQuality": 0.9108855944200576,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12069083154201507,
+            "meanDirectSun": 0.7344300627708436,
+            "meanQuality": 0.8642564598540123,
+            "meanReferenceQuality": 0.8642564598540123,
+            "meanSeconds": 0.49496,
+            "meanUsableGoodArea": 3171.2
+          },
+          "m_nyc_0003": {
+            "bestDiffuseSky": 0.01909724995493889,
+            "bestDirectSun": 0.13841421902179718,
+            "bestQuality": 0.2839340160699749,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.016391206718981265,
+            "meanDirectSun": 0.1256883829832077,
+            "meanQuality": 0.1946264854739954,
+            "meanReferenceQuality": 0.1946264854739954,
+            "meanSeconds": 0.20518,
+            "meanUsableGoodArea": 66.8
+          },
+          "m_prs_0315": {
+            "bestDiffuseSky": 0.13027004897594452,
+            "bestDirectSun": 0.7783370018005371,
+            "bestQuality": 1.125414932560277,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13527868390083314,
+            "meanDirectSun": 0.7811030745506287,
+            "meanQuality": 1.0844011122039117,
+            "meanReferenceQuality": 1.0844011122039117,
+            "meanSeconds": 0.19166,
+            "meanUsableGoodArea": 2692.8
+          },
+          "s_sgp_0345": {
+            "bestDiffuseSky": 0.12603501975536346,
+            "bestDirectSun": 0.6052660346031189,
+            "bestQuality": 0.9320706340039084,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.12163249850273132,
+            "meanDirectSun": 0.5915292143821717,
+            "meanQuality": 0.8651326078525517,
+            "meanReferenceQuality": 0.8651326078525517,
+            "meanSeconds": 0.16796,
+            "meanUsableGoodArea": 1116.4
+          },
+          "xl_nyc_0048": {
+            "bestDiffuseSky": 0.08677435666322708,
+            "bestDirectSun": 0.5419889688491821,
+            "bestQuality": 0.6839632754388415,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08233657330274582,
+            "meanDirectSun": 0.5342110753059387,
+            "meanQuality": 0.6583575238385837,
+            "meanReferenceQuality": 0.6583575238385837,
+            "meanSeconds": 1.46054,
+            "meanUsableGoodArea": 3695.6000000000004
+          },
+          "xl_sgp_0386": {
+            "bestDiffuseSky": 0.05188055336475372,
+            "bestDirectSun": 0.7104703187942505,
+            "bestQuality": 0.7400446106053327,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05011331737041473,
+            "meanDirectSun": 0.7028324007987976,
+            "meanQuality": 0.70415788742192,
+            "meanReferenceQuality": 0.70415788742192,
+            "meanSeconds": 1.76848,
+            "meanUsableGoodArea": 3035.6
+          },
+          "xs_sgp_0346": {
+            "bestDiffuseSky": 0.19366630911827087,
+            "bestDirectSun": 0.49412834644317627,
+            "bestQuality": 0.9671426531672478,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.17742674946784973,
+            "meanDirectSun": 0.4600063383579254,
+            "meanQuality": 0.8967632106824897,
+            "meanReferenceQuality": 0.8967632106824897,
+            "meanSeconds": 0.05176,
+            "meanUsableGoodArea": 242.6
+          }
+        },
+        "xs_m": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.11268228464759886,
+          "meanDirectSun": 0.48958175256848335,
+          "meanQuality": 0.7602308540532371,
+          "meanReferenceQuality": 0.7602308540532371,
+          "meanSeconds": 0.15414,
+          "meanUsableGoodArea": 1029.65
+        }
+      }
+    ]
+  },
+  "config": {
+    "audit_steps": 5,
+    "ceiling_storeys": 20,
+    "checkpoint_interval": 50,
+    "cores_enabled": true,
+    "decoder_retry_schedule": "learned_cap",
+    "device": "mps",
+    "episodes": 400,
+    "evaluation_noise_scale": 1.0,
+    "evaluation_seeds": [
+      9201,
+      9202,
+      9203,
+      9204,
+      9205
+    ],
+    "evaluation_temperature": 1.0,
+    "far_tolerance": 0.1,
+    "initial_storeys": 6,
+    "lr_schedule": "cosine",
+    "max_core_dist": 12,
+    "min_core_spacing": 10,
+    "multiscale_schedule": "tier_meso2",
+    "reward_profile": "dense_potential",
+    "rollout_steps": 16,
+    "seeds": [
+      4211,
+      4212,
+      4213,
+      4214,
+      4215
+    ],
+    "spatial_aux_mode": "regression",
+    "spatial_aux_schedule": "constant",
+    "spatial_aux_weight": 1.2,
+    "strict_determinism": false,
+    "synthetic_length": 24,
+    "synthetic_width": 24,
+    "target_far": 3.0,
+    "test_sites": [
+      "m_prs_0320",
+      "l_sgp_0327",
+      "l_sgp_0367",
+      "l_sgp_0379"
+    ],
+    "threads": 1,
+    "train_sites": [
+      "m_bcn_0093",
+      "xs_tokyo_0133",
+      "s_hk_0202",
+      "l_bcn_0074",
+      "xl_tokyo_0185",
+      "xs_hk_0196",
+      "s_bcn_0112",
+      "m_tokyo_0135",
+      "l_hk_0198",
+      "l_tokyo_0191"
+    ],
+    "training_objective": "actor_critic",
+    "validation_sites": [
+      "m_nyc_0005",
+      "l_nyc_0019",
+      "xl_nyc_0062"
+    ]
+  },
+  "configPath": "configs/research-regression-aux-all-tiers.json",
+  "date": "2026-11-23",
+  "device": "mps",
+  "evalSeconds": 680.25,
+  "experiment": "regression_aux_400ep_all_tiers",
+  "pairedTtestsVsReinforceConstant": {
+    "stochBlindAllBest": {
+      "p": 0.005250756255615434,
+      "t": -5.522331021547588
+    },
+    "stochBlindLxlBest": {
+      "p": 0.00010392259947515929,
+      "t": -15.39323929310147
+    },
+    "stochTestBest": {
+      "p": 0.000297851469705507,
+      "t": -11.772981936709883
+    },
+    "stochTestEp400": {
+      "p": 0.006856979791662325,
+      "t": -5.126111188983989
+    }
+  },
+  "runtime": {
+    "coreLayoutVersion": "compact-core.v5",
+    "createdAt": "2026-11-23T13:31:02.984930+00:00",
+    "cuda": false,
+    "deterministic": false,
+    "gitCommit": "82889f6bdc4211cb67841b82fe5a66bafdd40f7d",
+    "gitDirty": true,
+    "machine": "arm64",
+    "mps": true,
+    "packages": {
+      "fastapi": "0.165.0",
+      "numpy": "2.5.5",
+      "scipy": "1.18.1",
+      "shapely": "2.2.0",
+      "torch": "2.15.0",
+      "uvicorn": "0.54.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "protocol": "voxelform.research.v2",
+    "python": "3.12.11",
+    "source": {
+      "configs/historical/research-confirmatory-l-xl.json": "dde1462d5602284be0ced4673b911b57e460f47f4e07daad37537d59ac9f500e",
+      "configs/historical/research-expert-l-xl.json": "68681cc58f341cdd698218c45e98ce28c07c59d74fdf9130269f464b26810617",
+      "configs/historical/research-l-xl-600ep-guided.json": "3a16f8360c54bab39d3a6b760e03f80cff6ae8c2a1286dc9b3aa47b71ca83154",
+      "configs/historical/research-l-xl-600ep-imitation.json": "036fd1d9855a3d6beefa4da22659c06610674e0719c10b137ddc28c18e9b8cb6",
+      "configs/historical/research-real-aux-1200ep.json": "8fa3f2c95dca2a2e98b5cb4a4715b504f7d025cc1d536c4cc12e7986fecab464",
+      "configs/historical/research-real-aux-tier-600ep.json": "4b5d0062602d8f180d0e08b4260e07a1a7981e6768598dbda623ae70dd1d89ed",
+      "configs/historical/research-real-aux-tier-heldout.json": "2232571e1ee3fb3164bbe0f8ebb2f98ca20b56cb05991358baa947c7e06536f1",
+      "configs/historical/research-real-aux.json": "fb12190af28c5944ce78bf1caf8f8f4cff77a8f55c2526c6f34a149a60b33915",
+      "configs/historical/research-real-tier-600ep.json": "3533472569f9be8ffcb5f0c8444e9dda29912af33c9d81b7a1a3569a833132d2",
+      "configs/historical/research-real.json": "96d351440d031a237e7e5ea7df109591dc9a07be8376bb4e7ea4384f5f172f1a",
+      "configs/research-annealed-all-tiers.json": "e5f9c333a2e4430239b0310763ef8cd592d7784d4f33179fc62c2756af6a64a7",
+      "configs/research-control-all-tiers.json": "b2daf1741e162b87ce16e6aac981b52cb324a861765844117ac65516a29a22ec",
+      "configs/research-distill-all-tiers.json": "e6c63d842ef942307ebf00cc12cbea9c14c3948f4ddf623a5fadbea12f03d6db",
+      "configs/research-pure-rl-all-tiers.json": "89a6b901fa07666094bbf594b52b0df3562cd7a56d6f439dc7c855214590140e",
+      "configs/research-regression-aux-all-tiers.json": "0bdb9080adda7958c4f21214e038a51ee4b511728727aa362f4270d28b51ef54",
+      "configs/research-smoke.json": "1b4e6521978bfd2ffe374fb4290ecc83347bfd76b9141bcd5a0dfa1b8027bcb2",
+      "pyproject.toml": "655605d618def51cb946398ee81ddbe074fd744aa169696946e0b9d22fb6f69d",
+      "tools/architecture_hypotheses.py": "7bc4dac79f402bdce422e543876fd775cd19a7a1ff9761ccccefd20c1cdcd279",
+      "tools/benchmark.py": "60db029af2e93adc0ed1f1949dea7a14e1d1f1f67f44a5632a96677c7b184c19",
+      "tools/blender_bake_external_props.py": "31085c15954a3b2064ede5e75a0f488abf1ac7e0c716ac6a663c33baa6ddfeb8",
+      "tools/blender_import_site.py": "6edc250a133e1f3c72ad888acf09425b0fe6e80e0facc3664a863f8b06519f2a",
+      "tools/blender_maquette_library.py": "ca87d5564b181724ae7d5259cfe1ae687fa34b05c30826bedad3a5e2d309e95f",
+      "tools/blender_render_showcase.py": "4ec438a4070472d516bb904ba033cc7897e46a6f65be0d2827bf2048c566337f",
+      "tools/export_blender_site.py": "8c34a783f2660a03fd73673d4a5a7fb4a531a8653124539a5c8ec1b23734fa00",
+      "tools/generate_readme_media.py": "4eee19013fbbc72f3052860690e2ef048984f3a9fb1c3e6b6d57bc917308b096",
+      "tools/lookahead_probe.py": "a3f2263c464511b9533e3d3d413f91d3a429a977188fb5f5dcd8706e38bb700b",
+      "tools/render_core_plans.py": "af40720e4e5568dc527f072a1c4597538c7ba828c3bd527248552dcb49927682",
+      "tools/render_matched_showcase.py": "d76aef44913fb1d04714712fb0e118f344b035af6b857bfa0f60ea1fda9669a8",
+      "tools/research.py": "be08cd15b012ef1c40e099002548b6fcaca42469607eb62b931397858e250efe",
+      "tools/research_suite.py": "b063e8da5b10608201a27ac733c3f1d71fb3f9e27fcaf87e19740f83d3fa2c1c",
+      "unified_server.py": "d390f98a05299605c302ee4b1947c1e646bfc8eb9981b4f433d430b7f7c018f8",
+      "uv.lock": "35cfb0f75c020cab9257e3c1febbf47e642d007d4c989636e9bc9bcb8c5cb8be",
+      "voxelform/__init__.py": "9e559ea71f7a8cbf791c8fd0f911253021e2dd658b3f6905e4caef280da4d78d",
+      "voxelform/actions.py": "bf42890d257621de01f0ddd2e01a713cb7563f91a2c7a7acd5af750124b91069",
+      "voxelform/coarse_to_fine.py": "37612a256c8b5c43a3ae5395c3ee4275fd3621d97f316ad74f5f407fbfd04d26",
+      "voxelform/context.py": "8da2b475c479a80ed9cc6ac46dae24c9b1055a6cec4fac3e4573c313306869ee",
+      "voxelform/core_plans.py": "d9fdbd395b17e63ee68adcc1c2cdc51a8eb2abbc9b33f0509d2da3a9ab66df72",
+      "voxelform/cores.py": "8698b6627430343d37e5ea406142528d9e801c0642e7e9fb55c5ff12a430397a",
+      "voxelform/decoder_diagnostics.py": "518cb658104cc7ec3b1c261c03fc1d03ad7a9c0fc798fa239e80424de57a099c",
+      "voxelform/devoxelize.py": "bd25d0ce52c704755834f11bae4c889266a001730e552e29131268cfef0ddf81",
+      "voxelform/environment.py": "86637079cb202e67706685e477c77105c016c18299698c185bcd89079750a4b1",
+      "voxelform/experiment.py": "e6978a2bb2749f1bcc694aff79b058552b4aebd084285f180e18b59822998142",
+      "voxelform/fields.py": "bd4f14fd3cc26cd523673d02f2c9e9f3883d35aead29ef847f3ea931a7edfe8f",
+      "voxelform/layout_archive.py": "a8b8bdd04be8583e94993e6a30c91ccbea59b6b28e74d9ec54b5fae8c1147e30",
+      "voxelform/objectives.py": "5d7cbf9f7b65e27c24e5ba8fcf649c79584294572ce08103563471ba9bf7e428",
+      "voxelform/patch_policy.py": "66bc5f33758d05e228e57e87917ec5374da904893afe3cf482f0c339fbcb8e9f",
+      "voxelform/policy.py": "8ee6001b59a3cc78bb6e8f189d6aecaa1848c5efe906b1ec74690224c8b9210e",
+      "voxelform/redistribution.py": "1df280e376ae8d912f3de0e628c1babfb6a3891a6afbc555563d094a681eb15d",
+      "voxelform/rollout.py": "30d16b66b00e5f9ab8c6c640edc4cb4d3b8c2d548477d9e1772d19ef9b264645",
+      "voxelform/server.py": "2995e011cd9b26542fee0818ad692fd269aeed1f78a0a2f5454e45ccf5d25874",
+      "voxelform/session.py": "6e6de783952e98c9d40028554bda84f48dddf62d825d57e332570453123c0153",
+      "voxelform/shadows.py": "2922735a54aac73b9dffd372dce20794a5557eef01b7c351f404874294719959",
+      "voxelform/training.py": "c29fd1f17e69e002849fb6d388b2b923f6001d6c93206cee7245ffa51c305837",
+      "voxelform/unified.py": "0fb3cbba33b60ff770c6ec0f13d06d6eedf03cb59c6789a4e0d07007d3a481a2",
+      "voxelform/workload.py": "8aed529870b6889fadf41c6e57d2caff3b7be036f8911b8c410fc925077e4f74"
+    }
+  },
+  "testDetMapBest": {
+    "aggregate": {
+      "farSuccessRate": {
+        "mean": 0.98,
+        "stdAcrossModelSeeds": 0.04472135954999579,
+        "tCi95AcrossModelSeeds": [
+          0.9244710978960441,
+          1.0355289021039558
+        ]
+      },
+      "meanDiffuseSky": {
+        "mean": 0.07780072638764977,
+        "stdAcrossModelSeeds": 0.008601347242576935,
+        "tCi95AcrossModelSeeds": [
+          0.06712074318049277,
+          0.08848070959480678
+        ]
+      },
+      "meanDirectSun": {
+        "mean": 0.5749141880869866,
+        "stdAcrossModelSeeds": 0.0351781050462212,
+        "tCi95AcrossModelSeeds": [
+          0.5312348015260635,
+          0.6185935746479096
+        ]
+      },
+      "meanQuality": {
+        "mean": 0.6946692430553517,
+        "stdAcrossModelSeeds": 0.039306342574854526,
+        "tCi95AcrossModelSeeds": [
+          0.645863972579091,
+          0.7434745135316124
+        ]
+      },
+      "meanSeconds": {
+        "mean": 0.875551,
+        "stdAcrossModelSeeds": 0.14147936755053722,
+        "tCi95AcrossModelSeeds": [
+          0.69988116282386,
+          1.0512208371761398
+        ]
+      },
+      "meanUsableGoodArea": {
+        "mean": 2497.99,
+        "stdAcrossModelSeeds": 362.26225376100103,
+        "tCi95AcrossModelSeeds": [
+          2048.1820015968087,
+          2947.797998403191
+        ]
+      },
+      "perSite": {
+        "l_sgp_0327": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8126786696276483,
+          "stdAcrossModelSeeds": 0.022754961188505802
+        },
+        "l_sgp_0367": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6077273792389776,
+          "stdAcrossModelSeeds": 0.04311254594946814
+        },
+        "l_sgp_0379": {
+          "farSuccessRate": 0.92,
+          "meanQuality": 0.7096379529754812,
+          "stdAcrossModelSeeds": 0.045205376959176355
+        },
+        "m_prs_0320": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6486329703792996,
+          "stdAcrossModelSeeds": 0.09770513363140484
+        }
+      }
+    },
+    "seeds": [
+      {
+        "checkpointSHA256": "7fbfa82b7a20e639051d04863d4a114f12a79c249877fc3fc9d05dfbd4da4dc3",
+        "modelSeed": 4211,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.1139078438282013,
+            "bestDirectSun": 0.7163211703300476,
+            "bestQuality": 0.8610257143881559,
+            "bestSeed": 9203,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11178793609142304,
+            "meanDirectSun": 0.7167980432510376,
+            "meanQuality": 0.8398201633037499,
+            "meanReferenceQuality": 0.8398201633037499,
+            "meanSeconds": 1.25874,
+            "meanUsableGoodArea": 3256.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.09035392105579376,
+            "bestDirectSun": 0.47738632559776306,
+            "bestQuality": 0.6311554056952436,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.09035392105579376,
+            "meanDirectSun": 0.47738632559776306,
+            "meanQuality": 0.6311554056952436,
+            "meanReferenceQuality": 0.6311554056952436,
+            "meanSeconds": 1.3795,
+            "meanUsableGoodArea": 2467.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.06542791426181793,
+            "bestDirectSun": 0.674217700958252,
+            "bestQuality": 0.6902901548087887,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06542791426181793,
+            "meanDirectSun": 0.674217700958252,
+            "meanQuality": 0.6902901548087887,
+            "meanReferenceQuality": 0.6902901548087887,
+            "meanSeconds": 1.49146,
+            "meanUsableGoodArea": 1972.0000000000002
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.04679349064826965,
+            "bestDirectSun": 0.5479792356491089,
+            "bestQuality": 0.6329896819281309,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04679349064826965,
+            "meanDirectSun": 0.5479792356491089,
+            "meanQuality": 0.6329896819281309,
+            "meanReferenceQuality": 0.6329896819281309,
+            "meanSeconds": 0.3317,
+            "meanUsableGoodArea": 1151.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07859081551432609,
+          "meanDirectSun": 0.6040953263640404,
+          "meanQuality": 0.6985638514339783,
+          "meanReferenceQuality": 0.6985638514339783,
+          "meanSeconds": 1.11535,
+          "meanUsableGoodArea": 2211.5
+        }
+      },
+      {
+        "checkpointSHA256": "beccd8b093399f5f13cd4db9c802182b80364ff6840d5ab91d79058a28aea82a",
+        "modelSeed": 4212,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.13832883536815643,
+            "bestDirectSun": 0.7029762864112854,
+            "bestQuality": 0.8334158420336197,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13832883536815643,
+            "meanDirectSun": 0.7029762864112854,
+            "meanQuality": 0.8334158420336197,
+            "meanReferenceQuality": 0.8334158420336197,
+            "meanSeconds": 0.76518,
+            "meanUsableGoodArea": 3632.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.07669353485107422,
+            "bestDirectSun": 0.39403843879699707,
+            "bestQuality": 0.6016843436237711,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07722497582435608,
+            "meanDirectSun": 0.3960979640483856,
+            "meanQuality": 0.5689635739120831,
+            "meanReferenceQuality": 0.5689635739120831,
+            "meanSeconds": 1.00044,
+            "meanUsableGoodArea": 3111.8
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.07602261751890182,
+            "bestDirectSun": 0.5999734401702881,
+            "bestQuality": 0.767483136016267,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07602261751890182,
+            "meanDirectSun": 0.5999734401702881,
+            "meanQuality": 0.767483136016267,
+            "meanReferenceQuality": 0.767483136016267,
+            "meanSeconds": 1.17168,
+            "meanUsableGoodArea": 3859.0
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.04441976919770241,
+            "bestDirectSun": 0.51095050573349,
+            "bestQuality": 0.6428272512699456,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04441976919770241,
+            "meanDirectSun": 0.51095050573349,
+            "meanQuality": 0.6428272512699456,
+            "meanReferenceQuality": 0.6428272512699456,
+            "meanSeconds": 0.28236,
+            "meanUsableGoodArea": 1418.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08399904947727918,
+          "meanDirectSun": 0.5524995490908623,
+          "meanQuality": 0.7031724508079789,
+          "meanReferenceQuality": 0.7031724508079789,
+          "meanSeconds": 0.804915,
+          "meanUsableGoodArea": 3005.2
+        }
+      },
+      {
+        "checkpointSHA256": "bafc872c09927d65c2d2ecc89f22fff73326b15d1090a714b7053350cd90394d",
+        "modelSeed": 4213,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.1059151142835617,
+            "bestDirectSun": 0.639559805393219,
+            "bestQuality": 0.8540768279980312,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11530222445726394,
+            "meanDirectSun": 0.6518552780151368,
+            "meanQuality": 0.8047802228338113,
+            "meanReferenceQuality": 0.8047802228338113,
+            "meanSeconds": 0.80164,
+            "meanUsableGoodArea": 3447.6
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.07780181616544724,
+            "bestDirectSun": 0.4425606429576874,
+            "bestQuality": 0.671171581155991,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07780181616544724,
+            "meanDirectSun": 0.4425606429576874,
+            "meanQuality": 0.671171581155991,
+            "meanReferenceQuality": 0.671171581155991,
+            "meanSeconds": 1.02206,
+            "meanUsableGoodArea": 3169.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.09457312524318695,
+            "bestDirectSun": 0.6894399523735046,
+            "bestQuality": 0.7631403448825863,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 0.6,
+            "meanDiffuseSky": 0.0893198311328888,
+            "meanDirectSun": 0.6849108457565307,
+            "meanQuality": 0.7428775268956472,
+            "meanReferenceQuality": 0.7428775268956472,
+            "meanSeconds": 1.3087,
+            "meanUsableGoodArea": 2640.8
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.06376350671052933,
+            "bestDirectSun": 0.5881268382072449,
+            "bestQuality": 0.735008087361841,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06376350671052933,
+            "meanDirectSun": 0.5881268382072449,
+            "meanQuality": 0.735008087361841,
+            "meanReferenceQuality": 0.735008087361841,
+            "meanSeconds": 0.33818,
+            "meanUsableGoodArea": 1749.0000000000002
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 0.9,
+          "meanDiffuseSky": 0.08654684461653232,
+          "meanDirectSun": 0.5918634012341499,
+          "meanQuality": 0.7384593545618227,
+          "meanReferenceQuality": 0.7384593545618227,
+          "meanSeconds": 0.867645,
+          "meanUsableGoodArea": 2751.6
+        }
+      },
+      {
+        "checkpointSHA256": "4a764a59fbc3e68022b6e28ae516880d622c35e298f02d4e2561e32568352d92",
+        "modelSeed": 4214,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.1153431236743927,
+            "bestDirectSun": 0.7176606059074402,
+            "bestQuality": 0.7880588943652601,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.1153431236743927,
+            "meanDirectSun": 0.7176606059074402,
+            "meanQuality": 0.7880588943652601,
+            "meanReferenceQuality": 0.7880588943652601,
+            "meanSeconds": 0.77464,
+            "meanUsableGoodArea": 2965.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.07773447036743164,
+            "bestDirectSun": 0.45589330792427063,
+            "bestQuality": 0.5936952559470718,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07773447036743164,
+            "meanDirectSun": 0.45589330792427063,
+            "meanQuality": 0.5936952559470718,
+            "meanReferenceQuality": 0.5936952559470718,
+            "meanSeconds": 0.88072,
+            "meanUsableGoodArea": 2775.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.05685041844844818,
+            "bestDirectSun": 0.6274795532226562,
+            "bestQuality": 0.7125250986792584,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.055179911106824873,
+            "meanDirectSun": 0.617069399356842,
+            "meanQuality": 0.6934638512817088,
+            "meanReferenceQuality": 0.6934638512817088,
+            "meanSeconds": 1.07176,
+            "meanUsableGoodArea": 2178.4
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.052756741642951965,
+            "bestDirectSun": 0.617231011390686,
+            "bestQuality": 0.7352043498201185,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.052756741642951965,
+            "meanDirectSun": 0.617231011390686,
+            "meanQuality": 0.7352043498201185,
+            "meanReferenceQuality": 0.7352043498201185,
+            "meanSeconds": 0.26266,
+            "meanUsableGoodArea": 1390.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07525356169790029,
+          "meanDirectSun": 0.6019635811448097,
+          "meanQuality": 0.7026055878535399,
+          "meanReferenceQuality": 0.7026055878535399,
+          "meanSeconds": 0.747445,
+          "meanUsableGoodArea": 2327.1
+        }
+      },
+      {
+        "checkpointSHA256": "18c775d238577ff982290dff7402c20b7f6e748d51d9023b7c23bfb3bdd771d9",
+        "modelSeed": 4215,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.10062935203313828,
+            "bestDirectSun": 0.6507350206375122,
+            "bestQuality": 0.7973182256018005,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10062935203313828,
+            "meanDirectSun": 0.6507350206375122,
+            "meanQuality": 0.7973182256018005,
+            "meanReferenceQuality": 0.7973182256018005,
+            "meanSeconds": 0.8734999999999999,
+            "meanUsableGoodArea": 3498.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.06568779796361923,
+            "bestDirectSun": 0.39250993728637695,
+            "bestQuality": 0.5736510794844983,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06568779796361923,
+            "meanDirectSun": 0.39250993728637695,
+            "meanQuality": 0.5736510794844983,
+            "meanReferenceQuality": 0.5736510794844983,
+            "meanSeconds": 0.98254,
+            "meanUsableGoodArea": 2576.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.062009263783693314,
+            "bestDirectSun": 0.5611293315887451,
+            "bestQuality": 0.6732230121273656,
+            "bestSeed": 9204,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06771219596266746,
+            "meanDirectSun": 0.5799563527107239,
+            "meanQuality": 0.6540750958749939,
+            "meanReferenceQuality": 0.6540750958749939,
+            "meanSeconds": 1.2386599999999999,
+            "meanUsableGoodArea": 2381.2
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.024424096569418907,
+            "bestDirectSun": 0.4733950197696686,
+            "bestQuality": 0.4971354815164621,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.024424096569418907,
+            "meanDirectSun": 0.4733950197696686,
+            "meanQuality": 0.4971354815164621,
+            "meanReferenceQuality": 0.4971354815164621,
+            "meanSeconds": 0.2749,
+            "meanUsableGoodArea": 323.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06461336063221097,
+          "meanDirectSun": 0.5241490826010704,
+          "meanQuality": 0.6305449706194387,
+          "meanReferenceQuality": 0.6305449706194387,
+          "meanSeconds": 0.8423999999999999,
+          "meanUsableGoodArea": 2194.55
+        }
+      }
+    ]
+  },
+  "testDetMapEp400": {
+    "aggregate": {
+      "farSuccessRate": {
+        "mean": 1.0,
+        "stdAcrossModelSeeds": 0.0,
+        "tCi95AcrossModelSeeds": [
+          1.0,
+          1.0
+        ]
+      },
+      "meanDiffuseSky": {
+        "mean": 0.07448606280609965,
+        "stdAcrossModelSeeds": 0.007162927756657692,
+        "tCi95AcrossModelSeeds": [
+          0.06559211328892334,
+          0.08338001232327596
+        ]
+      },
+      "meanDirectSun": {
+        "mean": 0.5537340793013573,
+        "stdAcrossModelSeeds": 0.026023738562183176,
+        "tCi95AcrossModelSeeds": [
+          0.5214213400300275,
+          0.5860468185726871
+        ]
+      },
+      "meanQuality": {
+        "mean": 0.6795842687972479,
+        "stdAcrossModelSeeds": 0.0520162441101739,
+        "tCi95AcrossModelSeeds": [
+          0.6149975711638663,
+          0.7441709664306294
+        ]
+      },
+      "meanSeconds": {
+        "mean": 0.792936,
+        "stdAcrossModelSeeds": 0.046603989823833764,
+        "tCi95AcrossModelSeeds": [
+          0.735069503663091,
+          0.850802496336909
+        ]
+      },
+      "meanUsableGoodArea": {
+        "mean": 2583.1,
+        "stdAcrossModelSeeds": 356.30390118549076,
+        "tCi95AcrossModelSeeds": [
+          2140.6902734784244,
+          3025.5097265215754
+        ]
+      },
+      "perSite": {
+        "l_sgp_0327": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.8153179612139291,
+          "stdAcrossModelSeeds": 0.04417190503084426
+        },
+        "l_sgp_0367": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6016283220403781,
+          "stdAcrossModelSeeds": 0.03714938128913841
+        },
+        "l_sgp_0379": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6774003119926079,
+          "stdAcrossModelSeeds": 0.10024102727294448
+        },
+        "m_prs_0320": {
+          "farSuccessRate": 1.0,
+          "meanQuality": 0.6239904799420767,
+          "stdAcrossModelSeeds": 0.06677856501517915
+        }
+      }
+    },
+    "seeds": [
+      {
+        "checkpointSHA256": "82d8a216c822ea4fb078df72ceb5936ba6f775e11f6f5138a7e18ea0182258ca",
+        "modelSeed": 4211,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.11200203746557236,
+            "bestDirectSun": 0.6989042162895203,
+            "bestQuality": 0.8579830270038089,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11200203746557236,
+            "meanDirectSun": 0.6989042162895203,
+            "meanQuality": 0.8579830270038089,
+            "meanReferenceQuality": 0.8579830270038089,
+            "meanSeconds": 0.7765,
+            "meanUsableGoodArea": 3662.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.06641018390655518,
+            "bestDirectSun": 0.41885748505592346,
+            "bestQuality": 0.6090106813406534,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06641018390655518,
+            "meanDirectSun": 0.41885748505592346,
+            "meanQuality": 0.6090106813406534,
+            "meanReferenceQuality": 0.6090106813406534,
+            "meanSeconds": 0.97522,
+            "meanUsableGoodArea": 2870.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.06075302138924599,
+            "bestDirectSun": 0.6072854399681091,
+            "bestQuality": 0.7114803622923287,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.05968024805188179,
+            "meanDirectSun": 0.603932785987854,
+            "meanQuality": 0.6961243729065063,
+            "meanReferenceQuality": 0.6961243729065063,
+            "meanSeconds": 1.0742,
+            "meanUsableGoodArea": 2411.2
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.04668283089995384,
+            "bestDirectSun": 0.546203076839447,
+            "bestQuality": 0.6477222694402383,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04668283089995384,
+            "meanDirectSun": 0.546203076839447,
+            "meanQuality": 0.6477222694402383,
+            "meanReferenceQuality": 0.6477222694402383,
+            "meanSeconds": 0.24514,
+            "meanUsableGoodArea": 1295.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07119382508099079,
+          "meanDirectSun": 0.5669743910431861,
+          "meanQuality": 0.7027100876728017,
+          "meanReferenceQuality": 0.7027100876728017,
+          "meanSeconds": 0.767765,
+          "meanUsableGoodArea": 2559.55
+        }
+      },
+      {
+        "checkpointSHA256": "beccd8b093399f5f13cd4db9c802182b80364ff6840d5ab91d79058a28aea82a",
+        "modelSeed": 4212,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.13832883536815643,
+            "bestDirectSun": 0.7029762864112854,
+            "bestQuality": 0.8334158420336197,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.13832883536815643,
+            "meanDirectSun": 0.7029762864112854,
+            "meanQuality": 0.8334158420336197,
+            "meanReferenceQuality": 0.8334158420336197,
+            "meanSeconds": 0.7615999999999999,
+            "meanUsableGoodArea": 3632.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.07669353485107422,
+            "bestDirectSun": 0.39403843879699707,
+            "bestQuality": 0.6016843436237711,
+            "bestSeed": 9202,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07722497582435608,
+            "meanDirectSun": 0.3960979640483856,
+            "meanQuality": 0.5689635739120831,
+            "meanReferenceQuality": 0.5689635739120831,
+            "meanSeconds": 0.99582,
+            "meanUsableGoodArea": 3111.8
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.07602261751890182,
+            "bestDirectSun": 0.5999734401702881,
+            "bestQuality": 0.767483136016267,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07602261751890182,
+            "meanDirectSun": 0.5999734401702881,
+            "meanQuality": 0.767483136016267,
+            "meanReferenceQuality": 0.767483136016267,
+            "meanSeconds": 1.15732,
+            "meanUsableGoodArea": 3859.0
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.04441976919770241,
+            "bestDirectSun": 0.51095050573349,
+            "bestQuality": 0.6428272512699456,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.04441976919770241,
+            "meanDirectSun": 0.51095050573349,
+            "meanQuality": 0.6428272512699456,
+            "meanReferenceQuality": 0.6428272512699456,
+            "meanSeconds": 0.27577999999999997,
+            "meanUsableGoodArea": 1418.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.08399904947727918,
+          "meanDirectSun": 0.5524995490908623,
+          "meanQuality": 0.7031724508079789,
+          "meanReferenceQuality": 0.7031724508079789,
+          "meanSeconds": 0.79763,
+          "meanUsableGoodArea": 3005.2
+        }
+      },
+      {
+        "checkpointSHA256": "d1a0a51bce5a2c1c860165022dbd5d329d2f41d74f35c0fafbe82a4541f390c1",
+        "modelSeed": 4213,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.10995074361562729,
+            "bestDirectSun": 0.6804313659667969,
+            "bestQuality": 0.7987645045646726,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10126740485429764,
+            "meanDirectSun": 0.6622385859489441,
+            "meanQuality": 0.7791488300740637,
+            "meanReferenceQuality": 0.7791488300740637,
+            "meanSeconds": 0.7686999999999999,
+            "meanUsableGoodArea": 3045.4
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.07396834343671799,
+            "bestDirectSun": 0.44469141960144043,
+            "bestQuality": 0.658730534666102,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.07396834343671799,
+            "meanDirectSun": 0.44469141960144043,
+            "meanQuality": 0.658730534666102,
+            "meanReferenceQuality": 0.658730534666102,
+            "meanSeconds": 0.9750800000000001,
+            "meanUsableGoodArea": 3411.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.08553004264831543,
+            "bestDirectSun": 0.6789000034332275,
+            "bestQuality": 0.7650776589716201,
+            "bestSeed": 9205,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.08115942031145096,
+            "meanDirectSun": 0.6588499784469605,
+            "meanQuality": 0.7596354911052157,
+            "meanReferenceQuality": 0.7596354911052157,
+            "meanSeconds": 1.04996,
+            "meanUsableGoodArea": 2811.6
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.060611139982938766,
+            "bestDirectSun": 0.5538309812545776,
+            "bestQuality": 0.6895638455018499,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.060611139982938766,
+            "meanDirectSun": 0.5538309812545776,
+            "meanQuality": 0.6895638455018499,
+            "meanReferenceQuality": 0.6895638455018499,
+            "meanSeconds": 0.33324,
+            "meanUsableGoodArea": 1722.9999999999998
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07925157714635134,
+          "meanDirectSun": 0.5799027413129807,
+          "meanQuality": 0.7217696753368078,
+          "meanReferenceQuality": 0.7217696753368078,
+          "meanSeconds": 0.781745,
+          "meanUsableGoodArea": 2747.75
+        }
+      },
+      {
+        "checkpointSHA256": "1911805efee4d41959d004c1be916956a901122e478b6b26fa91915e1e438cfc",
+        "modelSeed": 4214,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.11241979151964188,
+            "bestDirectSun": 0.6799831986427307,
+            "bestQuality": 0.8479996801816864,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.11241979151964188,
+            "meanDirectSun": 0.6799831986427307,
+            "meanQuality": 0.8479996801816864,
+            "meanReferenceQuality": 0.8479996801816864,
+            "meanSeconds": 0.81398,
+            "meanUsableGoodArea": 3662.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.06794670969247818,
+            "bestDirectSun": 0.41216644644737244,
+            "bestQuality": 0.6034935028491318,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06794670969247818,
+            "meanDirectSun": 0.41216644644737244,
+            "meanQuality": 0.6034935028491318,
+            "meanReferenceQuality": 0.6034935028491318,
+            "meanSeconds": 0.83516,
+            "meanUsableGoodArea": 2846.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.06448259949684143,
+            "bestDirectSun": 0.6002004742622375,
+            "bestQuality": 0.6398292098717078,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06448259949684143,
+            "meanDirectSun": 0.6002004742622375,
+            "meanQuality": 0.6398292098717078,
+            "meanReferenceQuality": 0.6398292098717078,
+            "meanSeconds": 1.07582,
+            "meanUsableGoodArea": 2598.0
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.044033169746398926,
+            "bestDirectSun": 0.5408382415771484,
+            "bestQuality": 0.6281100692600878,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.044033169746398926,
+            "meanDirectSun": 0.5408382415771484,
+            "meanQuality": 0.6281100692600878,
+            "meanReferenceQuality": 0.6281100692600878,
+            "meanSeconds": 0.26672,
+            "meanUsableGoodArea": 1171.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0722205676138401,
+          "meanDirectSun": 0.5582970902323723,
+          "meanQuality": 0.6798581155406535,
+          "meanReferenceQuality": 0.6798581155406535,
+          "meanSeconds": 0.74792,
+          "meanUsableGoodArea": 2569.25
+        }
+      },
+      {
+        "checkpointSHA256": "894ca0ed9328d03df9f1d88f75a10469d80a14fd3fc4265b7aedbbcdecbb5adb",
+        "modelSeed": 4215,
+        "perSite": {
+          "l_sgp_0327": {
+            "bestDiffuseSky": 0.10618472844362259,
+            "bestDirectSun": 0.6420438885688782,
+            "bestQuality": 0.7580424267764666,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.10618472844362259,
+            "meanDirectSun": 0.6420438885688782,
+            "meanQuality": 0.7580424267764666,
+            "meanReferenceQuality": 0.7580424267764666,
+            "meanSeconds": 0.8598,
+            "meanUsableGoodArea": 3224.0
+          },
+          "l_sgp_0367": {
+            "bestDiffuseSky": 0.06690797209739685,
+            "bestDirectSun": 0.3865078091621399,
+            "bestQuality": 0.5679433174339199,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06690797209739685,
+            "meanDirectSun": 0.3865078091621399,
+            "meanQuality": 0.5679433174339199,
+            "meanReferenceQuality": 0.5679433174339199,
+            "meanSeconds": 0.9798600000000001,
+            "meanUsableGoodArea": 2536.0
+          },
+          "l_sgp_0379": {
+            "bestDiffuseSky": 0.06229018419981003,
+            "bestDirectSun": 0.5472874641418457,
+            "bestQuality": 0.5239293500633423,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.06229018419981003,
+            "meanDirectSun": 0.5472874641418457,
+            "meanQuality": 0.5239293500633423,
+            "meanReferenceQuality": 0.5239293500633423,
+            "meanSeconds": 1.29234,
+            "meanUsableGoodArea": 2048.0
+          },
+          "m_prs_0320": {
+            "bestDiffuseSky": 0.027678294107317924,
+            "bestDirectSun": 0.468147337436676,
+            "bestQuality": 0.511728964238262,
+            "bestSeed": 9201,
+            "count": 5,
+            "farSuccessRate": 1.0,
+            "meanDiffuseSky": 0.027678294107317924,
+            "meanDirectSun": 0.468147337436676,
+            "meanQuality": 0.511728964238262,
+            "meanReferenceQuality": 0.511728964238262,
+            "meanSeconds": 0.34648,
+            "meanUsableGoodArea": 327.0
+          }
+        },
+        "summary": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06576529471203685,
+          "meanDirectSun": 0.510996624827385,
+          "meanQuality": 0.5904110146279977,
+          "meanReferenceQuality": 0.5904110146279977,
+          "meanSeconds": 0.8696200000000001,
+          "meanUsableGoodArea": 2033.75
+        }
+      }
+    ]
+  },
+  "trainingSummary": {
+    "bestValidationEpisodes": [
+      200,
+      400,
+      350,
+      300,
+      350
+    ],
+    "driftBestToEp400Test": {
+      "mean": -0.009923949318451974,
+      "stdAcrossModelSeeds": 0.015534325565424301,
+      "tCi95AcrossModelSeeds": [
+        -0.02921236210941566,
+        0.00936446347251171
+      ]
+    },
+    "perSeed": [
+      {
+        "bestValidationEpisode": 200,
+        "finalTest": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06330826543271542,
+          "meanDirectSun": 0.5138521537184715,
+          "meanQuality": 0.6349561626705877,
+          "meanReferenceQuality": 0.6349561626705877,
+          "meanSeconds": 1.347995,
+          "meanUsableGoodArea": 2422.6
+        },
+        "finalValidation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0719096802175045,
+          "meanDirectSun": 0.25129301647345226,
+          "meanQuality": 0.5456871508617349,
+          "meanReferenceQuality": 0.5456871508617349,
+          "meanSeconds": 0.8137066666666667,
+          "meanUsableGoodArea": 2794.2
+        },
+        "modelSeed": 4211,
+        "test": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07077281549572945,
+          "meanDirectSun": 0.5698670998215676,
+          "meanQuality": 0.6518129084160775,
+          "meanReferenceQuality": 0.6518129084160775,
+          "meanSeconds": 1.68289,
+          "meanUsableGoodArea": 2186.9
+        },
+        "trainingSeconds": 490.5624874580026,
+        "updates": 196,
+        "validation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07532899851600329,
+          "meanDirectSun": 0.2654734303553899,
+          "meanQuality": 0.5515616411759762,
+          "meanReferenceQuality": 0.5515616411759762,
+          "meanSeconds": 1.0453133333333333,
+          "meanUsableGoodArea": 2702.866666666667
+        }
+      },
+      {
+        "bestValidationEpisode": 400,
+        "finalTest": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06957414885982871,
+          "meanDirectSun": 0.5225634828209877,
+          "meanQuality": 0.6355400211332018,
+          "meanReferenceQuality": 0.6355400211332018,
+          "meanSeconds": 1.053915,
+          "meanUsableGoodArea": 2742.85
+        },
+        "finalValidation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0844860777258873,
+          "meanDirectSun": 0.28830697139104206,
+          "meanQuality": 0.6045414367646081,
+          "meanReferenceQuality": 0.6045414367646081,
+          "meanSeconds": 0.8450666666666666,
+          "meanUsableGoodArea": 3179.9333333333334
+        },
+        "modelSeed": 4212,
+        "test": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06957414885982871,
+          "meanDirectSun": 0.5225634828209877,
+          "meanQuality": 0.6355400211332018,
+          "meanReferenceQuality": 0.6355400211332018,
+          "meanSeconds": 1.053915,
+          "meanUsableGoodArea": 2742.85
+        },
+        "trainingSeconds": 566.8951802500014,
+        "updates": 203,
+        "validation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.0844860777258873,
+          "meanDirectSun": 0.28830697139104206,
+          "meanQuality": 0.6045414367646081,
+          "meanReferenceQuality": 0.6045414367646081,
+          "meanSeconds": 0.8450666666666666,
+          "meanUsableGoodArea": 3179.9333333333334
+        }
+      },
+      {
+        "bestValidationEpisode": 350,
+        "finalTest": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07158851865679025,
+          "meanDirectSun": 0.5491007968783379,
+          "meanQuality": 0.6726263278614723,
+          "meanReferenceQuality": 0.6726263278614723,
+          "meanSeconds": 1.05511,
+          "meanUsableGoodArea": 2477.35
+        },
+        "finalValidation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07028751149773597,
+          "meanDirectSun": 0.2616211404403051,
+          "meanQuality": 0.5456721481812467,
+          "meanReferenceQuality": 0.5456721481812467,
+          "meanSeconds": 1.1094066666666667,
+          "meanUsableGoodArea": 2587.4
+        },
+        "modelSeed": 4213,
+        "test": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07488441821187734,
+          "meanDirectSun": 0.554274982213974,
+          "meanQuality": 0.6666542506674173,
+          "meanReferenceQuality": 0.6666542506674173,
+          "meanSeconds": 1.046705,
+          "meanUsableGoodArea": 2446.3
+        },
+        "trainingSeconds": 553.3345338750005,
+        "updates": 199,
+        "validation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07110213314493498,
+          "meanDirectSun": 0.2692959249019623,
+          "meanQuality": 0.5548685178775613,
+          "meanReferenceQuality": 0.5548685178775613,
+          "meanSeconds": 0.8986266666666667,
+          "meanUsableGoodArea": 2508.4666666666667
+        }
+      },
+      {
+        "bestValidationEpisode": 300,
+        "finalTest": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06209306120872497,
+          "meanDirectSun": 0.5189968258142471,
+          "meanQuality": 0.6275524639229335,
+          "meanReferenceQuality": 0.6275524639229335,
+          "meanSeconds": 1.18013,
+          "meanUsableGoodArea": 2378.4
+        },
+        "finalValidation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06941726505756378,
+          "meanDirectSun": 0.25456758638223015,
+          "meanQuality": 0.5378618378228818,
+          "meanReferenceQuality": 0.5378618378228818,
+          "meanSeconds": 1.09272,
+          "meanUsableGoodArea": 2794.5333333333333
+        },
+        "modelSeed": 4214,
+        "test": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06656276024878024,
+          "meanDirectSun": 0.549375256896019,
+          "meanQuality": 0.6608423988383089,
+          "meanReferenceQuality": 0.6608423988383089,
+          "meanSeconds": 1.28387,
+          "meanUsableGoodArea": 2334.5
+        },
+        "trainingSeconds": 490.3752763330049,
+        "updates": 181,
+        "validation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07288034881154697,
+          "meanDirectSun": 0.2649070888757706,
+          "meanQuality": 0.5735297712390024,
+          "meanReferenceQuality": 0.5735297712390024,
+          "meanSeconds": 0.9683866666666666,
+          "meanUsableGoodArea": 2717.6
+        }
+      },
+      {
+        "bestValidationEpisode": 350,
+        "finalTest": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06259868992492557,
+          "meanDirectSun": 0.5097295299172402,
+          "meanQuality": 0.5840212619464491,
+          "meanReferenceQuality": 0.5840212619464491,
+          "meanSeconds": 0.894515,
+          "meanUsableGoodArea": 2087.0
+        },
+        "finalValidation": {
+          "count": 15,
+          "farSuccessRate": 0.9333333333333333,
+          "meanDiffuseSky": 0.07649203762412071,
+          "meanDirectSun": 0.24934707979361218,
+          "meanQuality": 0.5155102481902292,
+          "meanReferenceQuality": 0.5155102481902292,
+          "meanSeconds": 0.76868,
+          "meanUsableGoodArea": 2588.3333333333335
+        },
+        "modelSeed": 4215,
+        "test": {
+          "count": 20,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.06262866444885731,
+          "meanDirectSun": 0.5165645644068718,
+          "meanQuality": 0.5894664050718987,
+          "meanReferenceQuality": 0.5894664050718987,
+          "meanSeconds": 0.87674,
+          "meanUsableGoodArea": 1996.05
+        },
+        "trainingSeconds": 444.62015899999824,
+        "updates": 199,
+        "validation": {
+          "count": 15,
+          "farSuccessRate": 1.0,
+          "meanDiffuseSky": 0.07478934352596601,
+          "meanDirectSun": 0.2474485715230306,
+          "meanQuality": 0.5321907319335049,
+          "meanReferenceQuality": 0.5321907319335049,
+          "meanSeconds": 0.76552,
+          "meanUsableGoodArea": 2633.6666666666665
+        }
+      }
+    ],
+    "rawAggregate": {
+      "bestValidationEpisodes": [
+        200,
+        400,
+        350,
+        300,
+        350
+      ],
+      "finalTest": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ],
+            "mean": 1.0,
+            "stdAcrossModelSeeds": 0.0,
+            "tCi95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ]
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": [
+              0.0625383535400033,
+              0.069387678951025
+            ],
+            "mean": 0.06583253681659698,
+            "stdAcrossModelSeeds": 0.0044143056415142275,
+            "tCi95AcrossModelSeeds": [
+              0.060351452424460994,
+              0.07131362120873297
+            ]
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": [
+              0.513120845258236,
+              0.5367436054348946
+            ],
+            "mean": 0.5228485578298568,
+            "stdAcrossModelSeeds": 0.015468850495808624,
+            "tCi95AcrossModelSeeds": [
+              0.5036414430756149,
+              0.5420556725840988
+            ]
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.6043952222361046,
+              0.6561942937281104
+            ],
+            "mean": 0.6309392475069289,
+            "stdAcrossModelSeeds": 0.031574843887090746,
+            "tCi95AcrossModelSeeds": [
+              0.5917339006034241,
+              0.6701445944104336
+            ]
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.6043952222361046,
+              0.6561942937281104
+            ],
+            "mean": 0.6309392475069289,
+            "stdAcrossModelSeeds": 0.031574843887090746,
+            "tCi95AcrossModelSeeds": [
+              0.5917339006034241,
+              0.6701445944104336
+            ]
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": [
+              2223.35,
+              2614.75
+            ],
+            "mean": 2421.64,
+            "stdAcrossModelSeeds": 234.5922084170742,
+            "tCi95AcrossModelSeeds": [
+              2130.355300549405,
+              2712.9246994505947
+            ]
+          }
+        },
+        "modelSeeds": 5
+      },
+      "finalValidation": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": [
+              0.96,
+              1.0
+            ],
+            "mean": 0.9866666666666667,
+            "stdAcrossModelSeeds": 0.029814239699997188,
+            "tCi95AcrossModelSeeds": [
+              0.9496473985973628,
+              1.0236859347359706
+            ]
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": [
+              0.07026384666562081,
+              0.07987350717186928
+            ],
+            "mean": 0.07451851442456245,
+            "stdAcrossModelSeeds": 0.006204378671070675,
+            "tCi95AcrossModelSeeds": [
+              0.06681476079747067,
+              0.08222226805165422
+            ]
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": [
+              0.2511695557832718,
+              0.27556701421737667
+            ],
+            "mean": 0.2610271588961284,
+            "stdAcrossModelSeeds": 0.015948705570051437,
+            "tCi95AcrossModelSeeds": [
+              0.24122422537184368,
+              0.28083009242041307
+            ]
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.5275750081866362,
+              0.5794346597956882
+            ],
+            "mean": 0.5498545643641402,
+            "stdAcrossModelSeeds": 0.03297298703756983,
+            "tCi95AcrossModelSeeds": [
+              0.5089131934463503,
+              0.59079593528193
+            ]
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.5275750081866362,
+              0.5794346597956882
+            ],
+            "mean": 0.5498545643641402,
+            "stdAcrossModelSeeds": 0.03297298703756983,
+            "tCi95AcrossModelSeeds": [
+              0.5089131934463503,
+              0.59079593528193
+            ]
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": [
+              2629.0133333333333,
+              2984.5333333333338
+            ],
+            "mean": 2788.88,
+            "stdAcrossModelSeeds": 241.76234611700804,
+            "tCi95AcrossModelSeeds": [
+              2488.6923987052337,
+              3089.0676012947665
+            ]
+          }
+        },
+        "modelSeeds": 5
+      },
+      "test": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ],
+            "mean": 1.0,
+            "stdAcrossModelSeeds": 0.0,
+            "tCi95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ]
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": [
+              0.06504431381821633,
+              0.07239776607602835
+            ],
+            "mean": 0.06888456145301461,
+            "stdAcrossModelSeeds": 0.0045979974827892395,
+            "tCi95AcrossModelSeeds": [
+              0.06317539351480368,
+              0.07459372939122554
+            ]
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": [
+              0.5253064316511155,
+              0.5595318841934205
+            ],
+            "mean": 0.542529077231884,
+            "stdAcrossModelSeeds": 0.022388528454191585,
+            "tCi95AcrossModelSeeds": [
+              0.5147300474775538,
+              0.5703281069862143
+            ]
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.614118697403263,
+              0.6613612414855059
+            ],
+            "mean": 0.6408631968253808,
+            "stdAcrossModelSeeds": 0.03104114027092216,
+            "tCi95AcrossModelSeeds": [
+              0.6023205304877838,
+              0.6794058631629779
+            ]
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.614118697403263,
+              0.6613612414855059
+            ],
+            "mean": 0.6408631968253808,
+            "stdAcrossModelSeeds": 0.03104114027092216,
+            "tCi95AcrossModelSeeds": [
+              0.6023205304877838,
+              0.6794058631629779
+            ]
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": [
+              2131.2509999999997,
+              2572.35
+            ],
+            "mean": 2341.32,
+            "stdAcrossModelSeeds": 280.78041375779753,
+            "tCi95AcrossModelSeeds": [
+              1992.685068836186,
+              2689.9549311638143
+            ]
+          }
+        },
+        "modelSeeds": 5
+      },
+      "validation": {
+        "metrics": {
+          "farSuccessRate": {
+            "bootstrap95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ],
+            "mean": 1.0,
+            "stdAcrossModelSeeds": 0.0,
+            "tCi95AcrossModelSeeds": [
+              1.0,
+              1.0
+            ]
+          },
+          "meanDiffuseSky": {
+            "bootstrap95AcrossModelSeeds": [
+              0.07252470567822457,
+              0.08033351610104242
+            ],
+            "mean": 0.0757173803448677,
+            "stdAcrossModelSeeds": 0.0051781126189875465,
+            "tCi95AcrossModelSeeds": [
+              0.06928790432722626,
+              0.08214685636250915
+            ]
+          },
+          "meanDirectSun": {
+            "bootstrap95AcrossModelSeeds": [
+              0.25530974566936493,
+              0.27982478559017177
+            ],
+            "mean": 0.26708639740943907,
+            "stdAcrossModelSeeds": 0.01456185106533648,
+            "tCi95AcrossModelSeeds": [
+              0.24900547119440564,
+              0.2851673236244725
+            ]
+          },
+          "meanQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.5443327216430986,
+              0.5877431445417606
+            ],
+            "mean": 0.5633384197981306,
+            "stdAcrossModelSeeds": 0.02730458965038042,
+            "tCi95AcrossModelSeeds": [
+              0.5294352938435262,
+              0.597241545752735
+            ]
+          },
+          "meanReferenceQuality": {
+            "bootstrap95AcrossModelSeeds": [
+              0.5443327216430986,
+              0.5877431445417606
+            ],
+            "mean": 0.5633384197981306,
+            "stdAcrossModelSeeds": 0.02730458965038042,
+            "tCi95AcrossModelSeeds": [
+              0.5294352938435262,
+              0.597241545752735
+            ]
+          },
+          "meanUsableGoodArea": {
+            "bootstrap95AcrossModelSeeds": [
+              2586.226666666667,
+              2978.213333333333
+            ],
+            "mean": 2748.5066666666667,
+            "stdAcrossModelSeeds": 254.93853551177568,
+            "tCi95AcrossModelSeeds": [
+              2431.958665366903,
+              3065.0546679664303
+            ]
+          }
+        },
+        "modelSeeds": 5
+      }
+    },
+    "testStochBest": {
+      "mean": 0.6408631968253808,
+      "stdAcrossModelSeeds": 0.03104114027092216,
+      "tCi95AcrossModelSeeds": [
+        0.6023205304877838,
+        0.6794058631629779
+      ]
+    },
+    "testStochBestFar": {
+      "mean": 1.0,
+      "stdAcrossModelSeeds": 0.0,
+      "tCi95AcrossModelSeeds": [
+        1.0,
+        1.0
+      ]
+    },
+    "testStochBestMeanSeconds": {
+      "mean": 1.1888239999999999,
+      "stdAcrossModelSeeds": 0.3118211129678361,
+      "tCi95AcrossModelSeeds": [
+        0.8016469501480089,
+        1.5760010498519907
+      ]
+    },
+    "testStochEp400": {
+      "mean": 0.6309392475069289,
+      "stdAcrossModelSeeds": 0.031574843887090746,
+      "tCi95AcrossModelSeeds": [
+        0.5917339006034241,
+        0.6701445944104336
+      ]
+    },
+    "testStochEp400Far": {
+      "mean": 1.0,
+      "stdAcrossModelSeeds": 0.0,
+      "tCi95AcrossModelSeeds": [
+        1.0,
+        1.0
+      ]
+    },
+    "trainingSeconds": {
+      "mean": 509.1575273832015,
+      "stdAcrossModelSeeds": 50.370787276220874,
+      "tCi95AcrossModelSeeds": [
+        446.61393426113784,
+        571.7011205052652
+      ]
+    },
+    "updates": {
+      "mean": 195.6,
+      "stdAcrossModelSeeds": 8.532291603080617,
+      "tCi95AcrossModelSeeds": [
+        185.0057606942785,
+        206.19423930572148
+      ]
+    },
+    "validationStochBest": {
+      "mean": 0.5633384197981306,
+      "stdAcrossModelSeeds": 0.02730458965038042,
+      "tCi95AcrossModelSeeds": [
+        0.5294352938435262,
+        0.597241545752735
+      ]
+    },
+    "validationStochEp400": {
+      "mean": 0.5498545643641402,
+      "stdAcrossModelSeeds": 0.03297298703756983,
+      "tCi95AcrossModelSeeds": [
+        0.5089131934463503,
+        0.59079593528193
+      ]
+    },
+    "validationStochEp400Far": {
+      "mean": 0.9866666666666667,
+      "stdAcrossModelSeeds": 0.029814239699997188,
+      "tCi95AcrossModelSeeds": [
+        0.9496473985973628,
+        1.0236859347359706
+      ]
+    }
+  },
+  "ttestsVsFairGreedyDet": {
+    "mapBlindAll_1samp": {
+      "p": 0.09225386405717953,
+      "t": -2.203870138378437
+    },
+    "mapBlindLxl_1samp": {
+      "p": 0.5096410916589681,
+      "t": -0.7230967703952841
+    },
+    "mapTest_1samp": {
+      "p": 0.11204368377974833,
+      "t": -2.031324611965104
+    },
+    "stochBlindAll_1samp": {
+      "p": 0.0008581506729622724,
+      "t": -8.960673230378257
+    },
+    "stochBlindLxl_1samp": {
+      "p": 0.007820672901949174,
+      "t": -4.939303095073669
+    },
+    "stochTest_1samp": {
+      "p": 0.002977130953074213,
+      "t": -6.448149658884882
+    }
+  }
+}
