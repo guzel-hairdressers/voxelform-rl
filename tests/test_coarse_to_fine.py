@@ -472,5 +472,139 @@ class CoarseToFineTests(unittest.TestCase):
         self.assertEqual(learner.last_operation, "exchange")
 
 
+class BundledTeachersAndServerImportTests(unittest.TestCase):
+    def _organic_session(self):
+        import unified_server as server
+        from voxelform.environment import Environment
+        from voxelform.patch_policy import PatchConfig, PatchFacades
+        from voxelform.unified import UnifiedLearner
+
+        cfg = PatchConfig(
+            mode="combined",
+            allocation="feedback",
+            eligibility="depth",
+            facade_layers=2,
+            minimum_patch=4,
+            maximum_patches=4,
+            maximum_voids=1,
+            minimum_void_area=4,
+            batched=True,
+            vertical_interior=False,
+            budget_reserve_fraction=0.2,
+        )
+        env = Environment(
+            (8, 12, 16),
+            sun_count=4,
+            device="cpu",
+            far_tolerance=0.1,
+            frontier_factory=functools.partial(
+                PatchFacades, config=cfg, depth_device="cpu"
+            ),
+        )
+        solid = env.allowed.clone()
+        solid[4:] = False
+        env.restore_occupancy(solid)
+        env.termination = None
+        env.unified_limit = 12
+        env.precompute_external()
+        env.organic_3d_growth = True
+        env.floor_copy_growth = False
+        policy = UnifiedLearner(
+            "cpu",
+            123,
+            cfg,
+            amount_feedback=True,
+            net_guided=True,
+            floor_copy=False,
+            organic_3d=True,
+        )
+        session = server.UnifiedSession(device="cpu", autostart=False)
+        session.env, session.policy, session.config = env, policy, cfg
+        session.last_objective, session.last_diag = organic_objective(env)
+        from voxelform.objectives import fine_potential
+
+        session.last_fine_potential = fine_potential(
+            env, session.last_objective, env.start_count
+        )
+        session.ready = True
+        return server, session, cfg
+
+    def test_distill_config_loads_bundled_teachers(self):
+        from pathlib import Path
+        from tools.research import make_policy
+        from voxelform.experiment import ExperimentConfig
+
+        cfg = ExperimentConfig.read(Path("configs/research-distill-all-tiers.json"))
+        learner = make_policy(cfg, torch.device("cpu"), 4211)
+        self.assertIsInstance(learner, CoarseToFineLearner)
+        self.assertEqual(set(learner.teachers.keys()), {"XS_M", "L_XL"})
+        for net in learner.teachers.values():
+            params = list(net.parameters())
+            self.assertGreater(len(params), 0)
+            self.assertTrue(all(torch.isfinite(p).all() for p in params))
+
+    def test_server_imports_research_multiscale_checkpoint(self):
+        import io
+        from fastapi.testclient import TestClient
+
+        server, session, cfg = self._organic_session()
+        research_learner = CoarseToFineLearner(
+            "cpu", 77, fine_config=cfg, input_channels=14
+        )
+        state = research_learner.state()
+        state["updates"] = 42
+        payload_buf = io.BytesIO()
+        torch.save({"format": "voxelform.research.v2", "policy": state}, payload_buf)
+
+        with patch.object(server, "session", session):
+            client = TestClient(server.app)
+            resp = client.post("/api/policy", content=payload_buf.getvalue())
+            self.assertEqual(resp.status_code, 200, resp.text)
+            self.assertTrue(resp.json()["ok"])
+            self.assertEqual(session.policy.updates, 42)
+            self.assertTrue(session.policy.organic_3d)
+            self.assertTrue(session.policy.net_guided)
+            expected = research_learner.model.state_dict()
+            for key, tensor in session.policy.model.state_dict().items():
+                target = expected[key]
+                if (
+                    target.ndim == 2
+                    and tensor.ndim == 2
+                    and target.shape[1] == tensor.shape[1] + 1
+                ):
+                    target = target[:, : tensor.shape[1]]
+                torch.testing.assert_close(tensor, target)
+
+            bad_state = dict(state, inputChannels=12)
+            bad_buf = io.BytesIO()
+            torch.save(
+                {"format": "voxelform.research.v2", "policy": bad_state}, bad_buf
+            )
+            bad_resp = client.post("/api/policy", content=bad_buf.getvalue())
+            self.assertEqual(bad_resp.status_code, 400)
+
+    def test_server_audit_environment_applies_fine_potential_shaping(self):
+        from voxelform.objectives import fine_potential
+
+        _server, session, _cfg = self._organic_session()
+        session.training = True
+        session.policy.tape.append({"reward": torch.tensor(0.0)})
+        prev_pot = session.last_fine_potential
+        # Trigger an occupancy edit so fine_potential shifts on audit.
+        occ = session.env.occupied.clone()
+        occ[3, :2, :2] = False
+        session.env.restore_occupancy(occ)
+        session.audit_environment()
+        cur_pot = fine_potential(
+            session.env, session.last_objective, session.env.start_count
+        )
+        self.assertAlmostEqual(session.last_fine_potential, cur_pot, places=6)
+        self.assertAlmostEqual(
+            float(session.policy.tape[-1]["reward"]),
+            2.0 * (cur_pot - prev_pot),
+            places=5,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

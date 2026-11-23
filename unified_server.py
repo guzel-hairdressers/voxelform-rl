@@ -50,6 +50,7 @@ from voxelform.unified import (
 
 
 from voxelform.objectives import (
+    fine_potential,
     organic_objective,
     organic_step_reward,
     organic_terminal_reward,
@@ -135,6 +136,7 @@ class UnifiedSession:
         self.episode_started = time.perf_counter()
         self.op_counts = {k: 0 for k in OPERATIONS}
         self.last_objective = 0.0
+        self.last_fine_potential = 0.0
         self.last_diag = {}
 
         chosen_device = device or os.getenv("VOXELFORM_DEVICE", "auto")
@@ -282,6 +284,9 @@ class UnifiedSession:
         replacement.organic_3d_growth = getattr(policy, "organic_3d", True)
         replacement.floor_copy_growth = getattr(policy, "floor_copy", False)
         self.last_objective, self.last_diag = organic_objective(replacement)
+        self.last_fine_potential = fine_potential(
+            replacement, self.last_objective, replacement.start_count
+        )
         self.env = replacement
         self.target_far = replacement.target_far
 
@@ -395,6 +400,7 @@ class UnifiedSession:
                 last_eval_seconds=float(e.last_eval_seconds),
                 depth_seconds=float(e.depth_seconds),
                 last_objective=float(self.last_objective),
+                last_fine_potential=float(self.last_fine_potential),
                 last_diag=dict(self.last_diag),
                 frontier=dict(
                     occupied=f.occupied.copy(),
@@ -499,6 +505,7 @@ class UnifiedSession:
         f.commit_seconds = 0.0
         reset_budget(e)
         self.last_objective = snap["last_objective"]
+        self.last_fine_potential = snap.get("last_fine_potential", 0.0)
         self.last_diag = dict(snap["last_diag"])
         return True
 
@@ -523,6 +530,9 @@ class UnifiedSession:
             )
             if getattr(self.policy, "organic_3d", False):
                 self.last_objective, self.last_diag = organic_objective(self.env)
+                self.last_fine_potential = fine_potential(
+                    self.env, self.last_objective, self.env.start_count
+                )
         self._init_snap = None
         self._capture_initial_snapshot()
         self._state_cache.clear()
@@ -546,6 +556,9 @@ class UnifiedSession:
         )
         if self._init_snap is None or self._init_snap[0] != self._snap_key():
             self.last_objective, self.last_diag = organic_objective(self.env)
+            self.last_fine_potential = fine_potential(
+                self.env, self.last_objective, self.env.start_count
+            )
             self._capture_initial_snapshot()
         self.steps = 0
         self.episode_started = time.perf_counter()
@@ -685,6 +698,9 @@ class UnifiedSession:
         self.env.unified_limit = max(8, self.env.workload.limit + 8)
         self.env.termination = None
         self.last_objective, self.last_diag = organic_objective(self.env)
+        self.last_fine_potential = fine_potential(
+            self.env, self.last_objective, self.env.start_count
+        )
         self.steps = 0
         self.episode_started = time.perf_counter()
         self.episode_recorded = False
@@ -910,6 +926,13 @@ class UnifiedSession:
             if self.env.last_audit_edit != self.env.edits:
                 self.env.evaluate()
             self.last_objective, self.last_diag = organic_objective(self.env)
+            cur_pot = fine_potential(
+                self.env, self.last_objective, self.env.start_count
+            )
+            if self.training and self.policy.tape:
+                bonus = 2.0 * (cur_pot - self.last_fine_potential)
+                self.policy.add_reward(bonus)
+            self.last_fine_potential = cur_pot
             return
         before = float(self.env.quality.detach().cpu())
         if self.env.last_audit_edit != self.env.edits:
@@ -1852,14 +1875,85 @@ async def load_policy(request: Request):
                 raise ValueError("Could not read this policy file") from exc
             if not isinstance(saved, dict):
                 raise ValueError("Invalid policy file")
-            if not (saved.get("organic3d") or saved.get("floorCopy")) or not saved.get(
-                "netGuided"
-            ):
-                raise ValueError(
-                    "Import an organic 3D or whole-floor unified policy saved from this preview"
+            policy_state = (
+                saved["policy"]
+                if saved.get("format") == "voxelform.research.v2"
+                and isinstance(saved.get("policy"), dict)
+                else saved
+            )
+            if policy_state.get("format") == "voxelform.multiscale.v1":
+                if int(policy_state.get("inputChannels", 0)) != 14:
+                    raise ValueError(
+                        "Research multiscale policy requires 14 input channels"
+                    )
+                model_state = policy_state.get("model")
+                if not isinstance(model_state, dict):
+                    raise ValueError(
+                        "Research multiscale policy is missing model weights"
+                    )
+                fine_cfg_raw = policy_state.get("fineConfig")
+                fine_cfg = (
+                    PatchConfig(**fine_cfg_raw)
+                    if isinstance(fine_cfg_raw, dict)
+                    else session.config
                 )
-            replacement = UnifiedLearner(session.device)
-            replacement.load(saved)
+                replacement = UnifiedLearner(
+                    session.device,
+                    config=fine_cfg,
+                    organic_3d=True,
+                    floor_copy=False,
+                    net_guided=True,
+                    spatial_aux_weight=float(policy_state.get("spatialAuxWeight", 1.2)),
+                )
+                expected_state = replacement.model.state_dict()
+                stage_goal_keys = {
+                    "goal_encoder.weight",
+                    "critic.0.weight",
+                    "operation_head.weight",
+                }
+                shared = {}
+                for key, target in expected_state.items():
+                    if key not in model_state:
+                        continue
+                    tensor = model_state[key]
+                    if (
+                        key in stage_goal_keys
+                        and isinstance(tensor, torch.Tensor)
+                        and tensor.ndim == 2
+                        and target.ndim == 2
+                        and tensor.shape[0] == target.shape[0]
+                        and tensor.shape[1] == target.shape[1] + 1
+                    ):
+                        # CoarseToFineNetwork appends stage_feat (= 0.0 at fine scale=1),
+                        # so dropping that trailing column preserves exact fine-stage behavior.
+                        tensor = tensor[:, : target.shape[1]]
+                    shared[key] = tensor
+                missing, _ = replacement.model.load_state_dict(shared, strict=False)
+                if missing:
+                    raise ValueError(
+                        f"Research policy missing model keys: {sorted(missing)}"
+                    )
+                replacement.updates = int(policy_state.get("updates", 0))
+                replacement.direct_updates = int(
+                    policy_state.get("directMaskUpdates", 0)
+                )
+                if "evaluationTemperature" in policy_state:
+                    replacement.evaluation_temperature = float(
+                        policy_state["evaluationTemperature"]
+                    )
+                if "evaluationNoiseScale" in policy_state:
+                    replacement.evaluation_noise_scale = float(
+                        policy_state["evaluationNoiseScale"]
+                    )
+            else:
+                if not (
+                    policy_state.get("organic3d") or policy_state.get("floorCopy")
+                ) or not policy_state.get("netGuided"):
+                    raise ValueError(
+                        "Import an organic 3D or whole-floor unified policy saved from this preview"
+                    )
+                replacement = UnifiedLearner(session.device)
+                replacement.load(policy_state)
             session.pause()
             session.policy = replacement
             session.config = replacement.config

@@ -2,6 +2,55 @@
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
 
+## Blind 8-site zero-shot evaluation across XS–XL tiers — 2026-11-23
+
+Independent zero-shot evaluation (`640` episodes total across eval seeds
+`9201–9205`, `temp = 1.0 / noise = 1.0`, `tier_meso2 + dense_potential + learned_cap`)
+on eight untouched catalog parcels (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`,
+`m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`) with
+verified zero Haversine context overlap against all `10` training sites and `3`
+NYC validation sites ([evidence](blind-8site-all-tiers-mps-2026-11-23.json)).
+Across all `5` archived `400`-ep seeds (`4211–4215`), FAR-Gated `actor_critic`
+outscores `tier_meso2` Greedy on **all `4/4` blind `L/XL` parcels** and **`6/8`
+blind parcels overall**, cutting `XS_M` cross-seed SD from `±0.206` (ungated)
+to `±0.084` (`ALL` `±0.101 → ±0.046`):
+
+| Method (`5` seeds unless Greedy) | All `8` blind ($J$ / FAR / Usable m²) | `XS–M` (`4` sites) | `L–XL` (`4` sites) |
+|---|---:|---:|---:|
+| **`far_gated_actor_critic` (`best.pt`)** | **`0.864 ± 0.046`** / `99.5%` / `3,408.3` | **`0.833 ± 0.084`** / `100%` | **`0.896 ± 0.017`** / `99.0%` |
+| `tier_meso2` Greedy (`0` params) | `0.824` / **`100%`** / `2,426.9` | **`0.833`** / `100%` | `0.815` / `100%` |
+| `ungated_actor_critic` (`best.pt`) | `0.820 ± 0.101` / `98.0%` / **`3,423.8`** | `0.747 ± 0.206` / `100%` | `0.892 ± 0.014` / `96.0%` |
+| `on_policy_distill` (`best.pt`) | `0.659 ± 0.054` / **`100%`** / `3,223.4` | `0.463 ± 0.102` / `100%` | `0.854 ± 0.013` / `100%` |
+
+Per-site comparison (`Greedy` vs. `FAR-Gated actor_critic`): `xs_sgp_0346`
+(`0.990` vs. `0.798 ± 0.219`), `s_sgp_0345` (`0.721` vs. **`0.914 ± 0.089`**),
+`m_nyc_0003` (`0.527` vs. **`0.547 ± 0.028`**), `m_prs_0315` (`1.093` vs. `1.073 ± 0.064`,
+where ungated reaches `1.113 ± 0.040`), `l_prs_0324` (`0.847` vs. **`0.885 ± 0.017`**),
+`l_sgp_0369` (`0.931` vs. **`0.992 ± 0.035`**), `xl_nyc_0048` (`0.766` vs. **`0.902 ± 0.021`**),
+`xl_sgp_0386` (`0.715` vs. **`0.804 ± 0.024`**). Two-teacher distillation remains
+strong on `L/XL` (`0.854`), but its `XS_M` teacher underperforms on tiny `xs_sgp_0346` (`-0.284 ± 0.040`).
+
+## 200-episode auxiliary-supervision schedule ablation — 2026-11-23
+
+Three-seed (`4211–4213`) ablation isolating `spatial_aux_weight` (`des_c`) under
+FAR-gated `tier_meso2 + dense_potential + learned_cap` (`pure_rl`
+[config](../configs/research-pure-rl-all-tiers.json) and `annealed_aux`
+[config](../configs/research-annealed-all-tiers.json) trained for `200` episodes;
+`constant_aux` uses the `<= 200`-episode `best.pt` checkpoints `150/100/100` plus
+evaluated `checkpoint-000200.pt` from `runs/control_all_tiers`, which ran a
+`400`-episode cosine LR horizon). [Ablation evidence](aux-ablation-200ep-mps-2026-11-23.json)
+
+| Arm (`seeds 4211–4213`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 200` Val ($J$ / FAR) | `ep 200` Test ($J$ / FAR / m²) |
+|---|---:|---:|---:|---:|
+| `pure_rl` (`λ_aux = 0.0`) | `0.313 ± 0.054` / `100%` | `0.464 ± 0.066` / `100%` / `547.2` | `0.311 ± 0.054` / `100%` | `0.444 ± 0.088` / `100%` / `473.8` |
+| **`annealed_aux` (`1.2 → 0.0`)** | **`0.735 ± 0.021`** / `100%` | `0.797 ± 0.025` / `98.3%` / `4,223.7` | **`0.720 ± 0.040`** / `97.8%` | **`0.788 ± 0.033`** / `98.3%` / `4,269.7` |
+| `constant_aux` (`λ_aux = 1.2`) | `0.718 ± 0.030` / `100%` | **`0.801 ± 0.023`** / `100%` / `4,274.0` | `0.669 ± 0.018` / `91.1%` | `0.746 ± 0.062` / `98.3%` / `4,287.4` |
+
+Pure RL without `des_c` (`λ_aux = 0.0`) stalls within `200` episodes, whereas
+annealing `1.2 → 0.0` achieves constant-aux `best.pt` quality (`0.797` vs. `0.801`)
+while eliminating the `-0.055` late drift at `ep 200` (`0.788` vs. `0.746` Test;
+`0.720` vs. `0.669` Val) even after `λ_aux` reaches zero.
+
 ## 400-episode matched actor-critic control and exchange-gating ablation — 2026-11-22
 
 Strict 5-seed ablation (`seeds 4211–4215`, `spatial_aux_weight = 1.2`,
@@ -37,7 +86,7 @@ all three unseen New York validation plots (`0.707 ± 0.022` at `100%` FAR vs.
 `0.693`) remains behind Greedy.
 [Report](distill-all-tiers-400ep-mps-2026-11-22.md) ·
 [Evidence](distill-all-tiers-400ep-mps-2026-11-22.json) ·
-[Matched Greedy](greedy-distill-all-tiers-mps-2026-11-22.json) ·
+[Matched Greedy](greedy-control-all-tiers-mps-2026-11-22.json) ·
 [L/XL Greedy](greedy-expert-l-xl-mps-2026-11-22.json)
 
 ## 600-episode L and XL follow-up — 2026-11-22

@@ -33,12 +33,26 @@ organic decoder permits genuine 3D additions and cantilevers. Legacy whole-floor
 copying remains only as a compatibility/control path.
 
 Training is synchronous actor-critic with GAE (`gamma=.99`, `lambda=.95`), Huber
-value loss (coefficient .5), operation entropy regularization (.005), Adam
-(`lr=.0012`, `weight_decay=.0001`) and gradient clipping (2). This is not PPO.
-Terminal masks prevent return propagation across episodes. The runner updates
-when a completed episode takes the rollout to `rollout_steps`, and uses any
-remaining transitions at the end of the training budget. The terminal and
-environment rewards are shared with the live app through `voxelform/objectives.py`.
+value loss (coefficient `.5`), operation entropy regularization (`.005` baseline,
+raised to `.02` under `decoder_retry_schedule="learned_cap"`), Adam (`lr=.0012`,
+optional cosine decay via `lr_schedule="cosine"`, `weight_decay=.0001`), and gradient
+clipping (`2.0`). This is not PPO. When `multiscale_schedule="tier_meso2"` is
+selected, all parcels with `area >= 2,500 m²` (`L` and `XL`) share the `2×2×1 → 1×1×1`
+cascade. Under `decoder_retry_schedule="learned_cap"`, accepted voxel budgets scale
+with positive frontier logits, early coarse handoff is enabled near target FAR,
+and `exchange` is gated off outside `|FAR - FAR*| <= 0.75` (with late fine `exchange`
+also suppressed in the final `<= 4` productive steps if FAR is not yet met).
+`training_objective="on_policy_distill"` adds masked spatial MSE and legal-masked
+operation KL toward frozen tier experts along student trajectories alongside `0.25×`
+GAE updates. `reward_profile="dense_potential"` adds scaled coarse/fine potential
+differences (`2.0 * delta fine_potential` on audited steps). Both terminal/step
+objectives and audited `fine_potential` shaping match the live app via
+`voxelform/objectives.py` (`POST /api/policy` also imports `voxelform.research.v2` /
+`voxelform.multiscale.v1` `14`-channel checkpoints into `UnifiedLearner` by projecting
+out the fine-stage zero `stage_feat` column). Terminal masks prevent return
+propagation across episodes. The runner updates when a completed episode takes
+the rollout to `rollout_steps`, and uses any remaining transitions at the end
+of the training budget.
 
 The augmented action includes **all Gaussian retries consumed by decoding**,
 including rejected draws. The flat learner (`gaussian-retry-path.v1`) scores
@@ -51,7 +65,7 @@ and spatial heads contribute to the score.
 
 An optional physics-shaped spatial auxiliary objective is weighted by
 `spatial_aux_weight`. The research reference config uses **0**. The separate
-`research-real-aux.json` uses **1.2** for an ablation. This term is a heuristic
+`research-real-aux.json` uses **1.2** for an ablation (annealing linearly toward `0.0` when `spatial_aux_schedule="annealed"`). This term is a heuristic
 auxiliary learning signal, **not an exact control variate for the original return**.
 The live UI retains 1.2 by default so its hybrid behaviour is explicit. Another
 corrected bug wrote step reward into dictionary key `3` while the trainer read
@@ -238,3 +252,25 @@ failure included. The test sites were previously used in the 60-episode pilot.
 [Guided RL config](../configs/research-l-xl-600ep-guided.json) ·
 [Imitation config](../configs/research-l-xl-600ep-imitation.json) ·
 [Result](../results/l-xl-600ep-mps-2026-11-22.md)
+
+## 400-episode `tier_meso2` suite, blind 8-site holdout, and auxiliary ablation
+
+To address L/XL performance without macro `4×4×1` loss of morphological width guards, the current suite combines `multiscale_schedule="tier_meso2"`, `reward_profile="dense_potential"`, and `decoder_retry_schedule="learned_cap"` across five seeds (`4211–4215`, `400` episodes, cosine LR `1.2e-3 → 2.0e-4`) on the city-separated Barcelona/Tokyo/Hong Kong train, New York validation (`3` plots), and Paris+Singapore test (`4` plots) split:
+
+1. **Two-teacher on-policy distillation** ([config](../configs/research-distill-all-tiers.json), [report](../results/distill-all-tiers-400ep-mps-2026-11-22.md)): queries bundled frozen tier experts under [`data/teachers/`](../data/teachers/) (`teacher_xs_m_seed789.pt`, `teacher_l_xl_ep100.pt`) at student-visited states, achieving `0.752 ± 0.013` (`99%` FAR) test (`0.753 ± 0.013` at episode `400`) vs. `tier_meso2` Greedy `0.734`.
+2. **Matched `actor_critic` control & `exchange` gating** ([config](../configs/research-control-all-tiers.json), [report](../results/control-all-tiers-400ep-mps-2026-11-22.md)): before gating `exchange`, `actor_critic` reached `0.771 ± 0.072` (`97%` FAR; `seed-4213` suffered premature `exchange`-spam collapse on `m_prs_0320`). Adding the `|FAR - FAR*| <= 0.75` `exchange` gate and `0.02` op entropy eliminates that failure mode and lifts validation-selected `best.pt` to **`0.803 ± 0.018`** (`100%` FAR, leading Greedy on all `7/7` Val/Test sites), though fixed-budget episode `400` drifts to `0.762 ± 0.036` (`94%` FAR).
+3. **Blind 8-site zero-shot holdout** ([evidence](../results/blind-8site-all-tiers-mps-2026-11-23.json), `640` episodes): evaluating all archived `400`-ep seeds (`4211–4215`) on eight completely untouched catalog parcels (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`, `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`; zero Haversine overlap with train or validation), FAR-Gated `actor_critic` achieves **`0.864 ± 0.046`** (`99.5%` FAR; `XS/S/M = 0.833 ± 0.084`, `L/XL = 0.896 ± 0.017`) vs. `tier_meso2` Greedy `0.824` (`100%` FAR; `XS/S/M = 0.833`, `L/XL = 0.815`), ungated `actor_critic` `0.820 ± 0.101`, and distillation `0.659 ± 0.054` (`L/XL = 0.854`, `xs_sgp_0346 = -0.284`). FAR-Gated `actor_critic` outscores Greedy on `4/4` blind `L/XL` parcels and `6/8` parcels overall, while Greedy retains an edge on tiny `xs_sgp_0346` (`0.990` vs. `0.798`).
+4. **200-episode auxiliary-supervision ablation** ([pure-RL config](../configs/research-pure-rl-all-tiers.json), [annealed config](../configs/research-annealed-all-tiers.json), [evidence](../results/aux-ablation-200ep-mps-2026-11-23.json), seeds `4211–4213`): removing `des_c` (`pure_rl`, `λ_aux = 0.0`) yields `0.464 ± 0.066` Test (`best.pt`), whereas annealing `λ_aux: 1.2 → 0.0` reaches `0.797 ± 0.025` (`best.pt`, `98.3%` FAR) and holds `0.788 ± 0.033` at episode `200` (`98.3%` FAR) vs. constant `λ_aux = 1.2` decaying from `0.801 ± 0.023` (`best.pt`) to `0.746 ± 0.062` at episode `200` (`400`-ep cosine LR prefix).
+
+## Canonical vs. historical configurations
+
+| Config (`configs/`) | Status | Role |
+|---|---|---|
+| [`research-control-all-tiers.json`](../configs/research-control-all-tiers.json) | **Canonical** | 5-seed `400`-ep FAR-gated `actor_critic` (`tier_meso2 + dense_potential + learned_cap`, `λ_aux = 1.2` constant) |
+| [`research-annealed-all-tiers.json`](../configs/research-annealed-all-tiers.json) | **Canonical** | 3-seed `200`-ep `λ_aux: 1.2 → 0.0` annealed ablation (`tier_meso2 + dense_potential + learned_cap`) |
+| [`research-pure-rl-all-tiers.json`](../configs/research-pure-rl-all-tiers.json) | **Canonical** | 3-seed `200`-ep scalar/potential pure-RL control (`λ_aux = 0.0`) |
+| [`research-distill-all-tiers.json`](../configs/research-distill-all-tiers.json) | **Canonical** | 5-seed `400`-ep two-teacher `on_policy_distill` using bundled `data/teachers/*.pt` |
+| [`research-smoke.json`](../configs/research-smoke.json) | **Canonical (CI)** | Fast deterministic CPU synthetic smoke check |
+| [`research-real-aux-tier-600ep.json`](../configs/research-real-aux-tier-600ep.json), [`research-real-tier-600ep.json`](../configs/research-real-tier-600ep.json), [`research-real-aux-1200ep.json`](../configs/research-real-aux-1200ep.json) | Historical (M-tier) | Pre-`tier_meso2` `600`/`1200`-ep M-tier baseline & flat/aux controls |
+| [`research-real.json`](../configs/research-real.json), [`research-real-aux.json`](../configs/research-real-aux.json), [`research-real-aux-tier-heldout.json`](../configs/research-real-aux-tier-heldout.json) | Historical | Early M-tier single-stage and initial held-out transfer specs |
+| [`research-expert-l-xl.json`](../configs/research-expert-l-xl.json), [`research-confirmatory-l-xl.json`](../configs/research-confirmatory-l-xl.json), [`research-l-xl-600ep-guided.json`](../configs/research-l-xl-600ep-guided.json), [`research-l-xl-600ep-imitation.json`](../configs/research-l-xl-600ep-imitation.json) | Historical (L/XL pilots) | Pre-`tier_meso2` `tier_adaptive` L/XL expert, `60`-ep pilot, and `600`-ep follow-up |

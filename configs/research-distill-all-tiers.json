@@ -37,8 +37,8 @@
   "synthetic_width": 24,
   "target_far": 3.0,
   "teacher_checkpoints": [
-    "XS_M=runs/real-aux-tier-600ep-5seed/seed-789/best.pt",
-    "L_XL=runs/expert_l_xl_ep100_backup.pt"
+    "XS_M=data/teachers/teacher_xs_m_seed789.pt",
+    "L_XL=data/teachers/teacher_l_xl_ep100.pt"
   ],
   "test_sites": [
     "m_prs_0320",

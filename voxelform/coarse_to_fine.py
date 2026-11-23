@@ -3,6 +3,7 @@
 from dataclasses import asdict
 import math
 import time
+from typing import Any
 import numpy as np
 from scipy import ndimage as ndi
 import torch
@@ -215,7 +216,9 @@ class CoarseEnv:
         self.target_coarse = max(
             1, int(round(self.target_count_fine / max(1e-6, self.avg_vol)))
         )
-        self._init_cache = None
+        self.frontier: Any = None
+        self.light: torch.Tensor | None = None
+        self._init_cache: tuple[int, dict[str, Any]] | None = None
 
     @property
     def far(self):
@@ -358,12 +361,10 @@ class CoarseEnv:
         z_top = int(occ_z[-1].item()) + 1 if len(occ_z) else 1
         z_hi = min(self.nz, z_top + 2)
         sp = (float(self.bxy), float(self.bxy), 3.0 * self.bz)
+        prev_light = self.light
         init_f = (
-            self.light
-            if (
-                getattr(self, "light", None) is not None
-                and self.light.shape == self.shape
-            )
+            prev_light
+            if (prev_light is not None and prev_light.shape == self.shape)
             else None
         )
         if z_hi < self.nz:
@@ -460,10 +461,13 @@ class CoarseEnv:
             f.add_skin = fc["add_skin"].copy()
             f.components = fc["components"]
             f.count = fc["count"]
-            f.depth_tensor = fc["depth_tensor"].clone()
+            dt_cached = fc["depth_tensor"]
+            assert dt_cached is not None
+            f.depth_tensor = dt_cached.clone()
+            old_voids_raw = fc["old_voids"]
             f.old_voids = (
-                [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in fc["old_voids"]]
-                if fc["old_voids"] is not None
+                [(lab.copy(), list(ids), sz.copy()) for lab, ids, sz in old_voids_raw]
+                if old_voids_raw is not None
                 else None
             )
             f.facade_band = fc["facade_band"].copy()
@@ -512,6 +516,8 @@ class CoarseEnv:
         self.unified_limit = max(6, self.workload.limit + 4)
         self._ln_cache = None
         f = self.frontier
+        assert f is not None and f.depth_tensor is not None
+        assert self.light is not None
         self._init_cache = (
             init_c,
             dict(
@@ -575,7 +581,11 @@ class CoarseEnv:
         )
         ep = self.external_potential
         fl = self.facade_light
-        light = self.light
+        light = (
+            self.light
+            if self.light is not None
+            else torch.zeros_like(self.occupied, dtype=torch.float32)
+        )
         noise = self.noise
         allowed = self.allowed.float()
         rel_z = self.rel_z
@@ -994,8 +1004,8 @@ class CoarseToFineNetwork(Organic3DNetwork):
             coarse_z = self._head_stage_slice(v_bz, obs_b, goal_exp, st_scale)
         else:
             cz_parts = []
-            floor_sum = None
-            floor_max = None
+            floor_sum: torch.Tensor | None = None
+            floor_max: torch.Tensor | None = None
             k0 = 0
             while k0 < Z:
                 w_start = max(0, k0 - halo)
@@ -1016,6 +1026,7 @@ class CoarseToFineNetwork(Organic3DNetwork):
                     self._head_stage_slice(v_keep, obs_b[:, k0:k1], goal_exp, st_scale)
                 )
                 k0 = k1
+            assert floor_sum is not None and floor_max is not None
             coarse_z = torch.cat(cz_parts, dim=2)
             context = torch.cat((floor_sum / Z, floor_max, goal_b), dim=-1)
 
@@ -1120,6 +1131,7 @@ class CoarseToFineLearner:
         if not self.teachers:
             return None
         area = float(getattr(env_or_cenv, "plot_area", 0.0))
+        order: tuple[str, ...]
         if area < 2500.0:
             order = ("XS_M", "ALL")
         elif area < 3800.0:
@@ -1133,6 +1145,127 @@ class CoarseToFineLearner:
 
     def clear(self):
         self.tape = []
+
+    @staticmethod
+    def _stage_edit_budgets(
+        env_or_cenv,
+        is_coarse: bool,
+        scale: int,
+        operation: str,
+        low_f: int,
+        high_f: int,
+        avail_rem: int,
+        avail_add: int,
+    ) -> tuple[int, int, int, int]:
+        """Compute stage-normalized (base_rem, base_add, productive_steps, min_step)."""
+        productive = max(
+            1,
+            env_or_cenv.workload.limit
+            - env_or_cenv.workload.margin
+            - env_or_cenv.unified_actions,
+        )
+        ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
+        if is_coarse:
+            avg_v = max(1e-6, env_or_cenv.avg_vol)
+            c_low = max(1, int(round(low_f / avg_v)))
+            c_high = min(env_or_cenv.capacity_coarse, int(round(high_f / avg_v)))
+            c_goal = min(c_high, max(c_low, env_or_cenv.count))
+            remaining = max(
+                0, abs(env_or_cenv.count_fine - env_or_cenv.goal_count_fine)
+            )
+            rem_c = max(0, int(round(remaining / avg_v)))
+            min_step = 1 if scale == 4 else 2
+            step_net = (
+                max(min_step, math.ceil(rem_c / productive / ret)) if rem_c else 0
+            )
+            reloc = max(
+                min_step,
+                min(
+                    int(round((env_or_cenv.plot_area / float(scale * scale)) * 0.35)),
+                    max(min_step, round(env_or_cenv.target_coarse * 0.10)),
+                ),
+            )
+        else:
+            c_low, c_high = low_f, high_f
+            c_goal = env_or_cenv.goal_count
+            remaining = abs(env_or_cenv.count - c_goal)
+            rem_c = remaining
+            step_net = max(4, math.ceil(rem_c / productive / ret)) if rem_c else 0
+            reloc = max(
+                16,
+                min(
+                    int(round(env_or_cenv.plot_area * 0.35)),
+                    max(16, round(env_or_cenv.target_count * 0.08)),
+                ),
+            )
+            min_step = 4
+
+        base_rem = 0
+        base_add = 0
+        cur_c = env_or_cenv.count
+        if operation == "remove":
+            if cur_c > c_goal:
+                base_rem = min(max(1, cur_c - c_low), step_net)
+            else:
+                base_rem = min(
+                    max(1, cur_c - c_low), max(min_step, round(c_goal * 0.04))
+                )
+            base_rem = min(avail_rem, max(0, base_rem))
+        elif operation == "grow":
+            if cur_c < c_goal:
+                base_add = min(max(1, c_high - cur_c), step_net)
+            else:
+                base_add = min(
+                    max(1, c_high - cur_c), max(min_step, round(c_goal * 0.05))
+                )
+            base_add = min(avail_add, max(0, base_add))
+        else:
+            if cur_c > c_goal:
+                base_add = min(avail_add, reloc)
+                base_rem = min(
+                    avail_rem,
+                    base_add + min(max(1, cur_c - c_low), max(min_step, step_net)),
+                )
+            elif cur_c < c_goal:
+                base_rem = min(avail_rem, reloc)
+                base_add = min(
+                    avail_add,
+                    base_rem + min(max(1, c_high - cur_c), max(min_step, step_net)),
+                )
+            else:
+                both = min(reloc, avail_rem, avail_add)
+                base_rem = both
+                base_add = both
+        return base_rem, base_add, productive, min_step
+
+    @staticmethod
+    def _protect_active_cores_on_remove(
+        r_t: torch.Tensor, s0: torch.Tensor, active_cores: list[Any], z_act: int
+    ) -> torch.Tensor:
+        """Prevent a single removal proposal from stripping every active core column."""
+        if not active_cores or not bool(r_t.any()):
+            return r_t
+        hits: list[bool] = []
+        best_keep = None
+        best_keep_sc = float("inf")
+        for kc in active_cores:
+            kcz = min(z_act, int(kc.floors))
+            sl = r_t[:kcz, kc.y0 : kc.y0 + kc.size_y, kc.x0 : kc.x0 + kc.size_x]
+            hit = bool(sl.any())
+            hits.append(hit)
+            if hit:
+                sc_val = float(
+                    s0[
+                        :kcz, kc.y0 : kc.y0 + kc.size_y, kc.x0 : kc.x0 + kc.size_x
+                    ].mean()
+                )
+                if sc_val < best_keep_sc:
+                    best_keep_sc = sc_val
+                    best_keep = (kc, kcz)
+        if all(hits) and best_keep is not None:
+            kc, kcz = best_keep
+            r_t[:kcz, kc.y0 : kc.y0 + kc.size_y, kc.x0 : kc.x0 + kc.size_x] = False
+        return r_t
 
     def _goal_vec(self, env_or_cenv, scale):
         stage_feat = 1.0 if scale >= 4 else (0.5 if scale == 2 else 0.0)
@@ -1376,107 +1509,20 @@ class CoarseToFineLearner:
                     .exp()[:, None, None, None]
                 )
                 if not greedy_rollout:
+                    assert mean_all is not None
                     mean = mean_all[consumed]
                     dist = Normal(mean, std, validate_args=False)
 
-                if is_coarse:
-                    avg_v = max(1e-6, env_or_cenv.avg_vol)
-                    c_low = max(1, int(round(low_f / avg_v)))
-                    c_high = min(
-                        env_or_cenv.capacity_coarse, int(round(high_f / avg_v))
-                    )
-                    c_goal = min(c_high, max(c_low, env_or_cenv.count))
-                    remaining = max(
-                        0, abs(env_or_cenv.count_fine - env_or_cenv.goal_count_fine)
-                    )
-                    rem_c = max(0, int(round(remaining / avg_v)))
-                    productive = max(
-                        1,
-                        env_or_cenv.workload.limit
-                        - env_or_cenv.workload.margin
-                        - env_or_cenv.unified_actions,
-                    )
-                    ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
-                    min_step = 1 if scale == 4 else 2
-                    step_net = (
-                        max(min_step, math.ceil(rem_c / productive / ret))
-                        if rem_c
-                        else 0
-                    )
-                    reloc = max(
-                        min_step,
-                        min(
-                            int(
-                                round(
-                                    (env_or_cenv.plot_area / float(scale * scale))
-                                    * 0.35
-                                )
-                            ),
-                            max(min_step, round(env_or_cenv.target_coarse * 0.10)),
-                        ),
-                    )
-                else:
-                    c_low, c_high = low_f, high_f
-                    c_goal = env_or_cenv.goal_count
-                    remaining = abs(env_or_cenv.count - c_goal)
-                    rem_c = remaining
-                    productive = max(
-                        1,
-                        env_or_cenv.workload.limit
-                        - env_or_cenv.workload.margin
-                        - env_or_cenv.unified_actions,
-                    )
-                    ret = max(0.55, min(1.0, env_or_cenv.workload.retention))
-                    step_net = (
-                        max(4, math.ceil(rem_c / productive / ret)) if rem_c else 0
-                    )
-                    reloc = max(
-                        16,
-                        min(
-                            int(round(env_or_cenv.plot_area * 0.35)),
-                            max(16, round(env_or_cenv.target_count * 0.08)),
-                        ),
-                    )
-                    min_step = 4
-
-                base_rem = 0
-                base_add = 0
-                cur_c = env_or_cenv.count
-                if operation == "remove":
-                    if cur_c > c_goal:
-                        base_rem = min(max(1, cur_c - c_low), step_net)
-                    else:
-                        base_rem = min(
-                            max(1, cur_c - c_low), max(min_step, round(c_goal * 0.04))
-                        )
-                    base_rem = min(avail_rem, max(0, base_rem))
-                elif operation == "grow":
-                    if cur_c < c_goal:
-                        base_add = min(max(1, c_high - cur_c), step_net)
-                    else:
-                        base_add = min(
-                            max(1, c_high - cur_c), max(min_step, round(c_goal * 0.05))
-                        )
-                    base_add = min(avail_add, max(0, base_add))
-                else:
-                    if cur_c > c_goal:
-                        base_add = min(avail_add, reloc)
-                        base_rem = min(
-                            avail_rem,
-                            base_add
-                            + min(max(1, cur_c - c_low), max(min_step, step_net)),
-                        )
-                    elif cur_c < c_goal:
-                        base_rem = min(avail_rem, reloc)
-                        base_add = min(
-                            avail_add,
-                            base_rem
-                            + min(max(1, c_high - cur_c), max(min_step, step_net)),
-                        )
-                    else:
-                        both = min(reloc, avail_rem, avail_add)
-                        base_rem = both
-                        base_add = both
+                base_rem, base_add, productive, min_step = self._stage_edit_budgets(
+                    env_or_cenv,
+                    is_coarse,
+                    scale,
+                    operation,
+                    low_f,
+                    high_f,
+                    avail_rem,
+                    avail_add,
+                )
 
                 clean_occ = clean_floor_tensor(occ_s, mw) if mw > 1 else None
                 skin = (
@@ -1618,8 +1664,12 @@ class CoarseToFineLearner:
                         r_t = torch.zeros_like(occ_s)
                         ids = s0.masked_fill(w_rem <= 0, -1).flatten().topk(n_r).indices
                         r_t.flatten()[ids] = True
-                        if mw > 1:
-                            if ln_before is not None and attempt < 3:
+                        if mw > 1 and clean_occ is not None:
+                            if (
+                                ln_before is not None
+                                and allowed_ln is not None
+                                and attempt < 3
+                            ):
                                 after_t = occ_s & ~r_t
                                 new_ln = (
                                     long_narrow_mask(after_t, ln_w, ln_stub)
@@ -1650,37 +1700,9 @@ class CoarseToFineLearner:
                                     > 0.5
                                 )
                                 r_t = r_t & ~zone
-                        if active_cores and bool(r_t.any()):
-                            hits = []
-                            best_keep = None
-                            best_keep_sc = float("inf")
-                            for kc in active_cores:
-                                kcz = min(z_act, int(kc.floors))
-                                sl = r_t[
-                                    :kcz,
-                                    kc.y0 : kc.y0 + kc.size_y,
-                                    kc.x0 : kc.x0 + kc.size_x,
-                                ]
-                                hit = bool(sl.any())
-                                hits.append(hit)
-                                if hit:
-                                    sc_val = float(
-                                        s0[
-                                            :kcz,
-                                            kc.y0 : kc.y0 + kc.size_y,
-                                            kc.x0 : kc.x0 + kc.size_x,
-                                        ].mean()
-                                    )
-                                    if sc_val < best_keep_sc:
-                                        best_keep_sc = sc_val
-                                        best_keep = (kc, kcz)
-                            if all(hits) and best_keep is not None:
-                                kc, kcz = best_keep
-                                r_t[
-                                    :kcz,
-                                    kc.y0 : kc.y0 + kc.size_y,
-                                    kc.x0 : kc.x0 + kc.size_x,
-                                ] = False
+                        r_t = self._protect_active_cores_on_remove(
+                            r_t, s0, list(active_cores), z_act
+                        )
                         masks[0] = r_t
                     if 1 in consumed and avail_add > 0 and base_add > 0:
                         max_a = min(avail_add, max(1, round(base_add * sc)))
@@ -1699,7 +1721,7 @@ class CoarseToFineLearner:
                         if mw > 1:
                             base_occ = occ_s & ~masks[0]
                             a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
-                            if ln_before is not None:
+                            if ln_before is not None and allowed_ln is not None:
                                 cand = base_occ | a_t
                                 has_core = (
                                     F.avg_pool2d(cand.float()[:, None], ln_w, stride=1)
@@ -1811,7 +1833,11 @@ class CoarseToFineLearner:
                         op=op.detach(),
                         legal=legal.detach(),
                         value=value.detach(),
-                        latent=latent.detach() if move is not None else None,
+                        latent=(
+                            latent.detach()
+                            if (move is not None and latent is not None)
+                            else None
+                        ),
                         latents=latent_draws,
                         drawn_channels=consumed,
                         consumed=consumed if move is not None else None,
@@ -1859,7 +1885,7 @@ class CoarseToFineLearner:
         if not imitation:
             adv, returns = generalized_advantages(self.tape, bootstrap, self.device)
 
-        groups = {}
+        groups: dict[tuple[Any, ...], list[int]] = {}
         for t, entry in enumerate(self.tape):
             key = (
                 entry["is_coarse"],
@@ -1869,7 +1895,7 @@ class CoarseToFineLearner:
             )
             groups.setdefault(key, []).append(t)
 
-        values_out = [None] * len(self.tape)
+        values_out: list[torch.Tensor | None] = [None] * len(self.tape)
         ent_terms = []
         actor_terms = []
         stds = self.model.patch_log_std.clamp(-1.4, -0.3).exp()
@@ -1962,7 +1988,8 @@ class CoarseToFineLearner:
         actor = torch.stack(actor_terms).mean()
         loss = actor
         if not imitation:
-            critic = F.smooth_l1_loss(torch.stack(values_out), returns)
+            val_tensors = [v for v in values_out if v is not None]
+            critic = F.smooth_l1_loss(torch.stack(val_tensors), returns)
             ent_coef = 0.02 if self.decoder_retry_schedule == "learned_cap" else 0.005
             loss = loss + 0.5 * critic - ent_coef * torch.stack(ent_terms).mean()
         self.optimizer.zero_grad(set_to_none=True)

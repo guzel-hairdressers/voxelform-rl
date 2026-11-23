@@ -100,7 +100,7 @@ J(M_t) =\;& 0.65\,u_{\text{good}} + 0.55\,\bar{s}_{\text{sun}} + 0.45\,\bar{s}_{
 
 where $`s_{\text{core}} = \max(0, (1 - f_{\text{uncov}})(1 - 0.5\,\bar{b}_{\text{core}}))`$. Step rewards add $`0.50\,\Delta s_{\text{core}}`$ (plus a small `-0.005` hold penalty when FAR is already satisfied); terminal rewards scale $`5\cdot(J(M_T) - P_{\text{FAR}})`$ where $`P_{\text{FAR}} = 0`$ inside the band and penalizes remaining relative volume error otherwise.
 
-Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`, raised to `0.02×` under `learned_cap`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, optional cosine annealing to `2.0e-4` via `lr_schedule = "cosine"`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-real.json](configs/research-real.json); `1.2` ablation in [configs/research-real-aux.json](configs/research-real-aux.json) and [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)). Optionally, `reward_profile = "dense_potential"` adds potential-difference step shaping, `decoder_retry_schedule = "learned_cap"` sizes frontier edits by positive spatial scores, gates premature `exchange` until `|FAR - FAR*| <= 0.75`, allows early coarse handoff, and enforces late pure-FAR moves, while `training_objective = "on_policy_distill"` matches frozen tier-expert `teacher_checkpoints` along on-policy student rollouts alongside scaled GAE (`0.25×`).
+Training runs synchronous actor–critic with GAE (`γ = 0.99`, `λ = 0.95`, rollout horizon `16`), Huber value regression (`0.5×`), operation entropy regularization (`0.005×`, raised to `0.02×` under `learned_cap`), gradient norm clipping (`≤ 2.0`), and Adam (`lr = 1.2e-3`, optional cosine annealing to `2.0e-4` via `lr_schedule = "cosine"`, `wd = 1e-4`). An optional heuristic physics-shaped dense spatial auxiliary objective is isolated via `spatial_aux_weight` (`0.0` in [configs/research-pure-rl-all-tiers.json](configs/research-pure-rl-all-tiers.json); `1.2 → 0.0` linear decay when `spatial_aux_schedule = "annealed"` in [configs/research-annealed-all-tiers.json](configs/research-annealed-all-tiers.json); `1.2` constant in [configs/research-control-all-tiers.json](configs/research-control-all-tiers.json)). Optionally, `reward_profile = "dense_potential"` adds potential-difference step shaping (`2.0 * Δ fine_potential` on audited steps, matched in [unified_server.py](unified_server.py)), `decoder_retry_schedule = "learned_cap"` sizes frontier edits by positive spatial scores, gates premature `exchange` until `|FAR - FAR*| <= 0.75`, allows early coarse handoff, and enforces late pure-FAR moves, while `training_objective = "on_policy_distill"` matches frozen tier-expert `teacher_checkpoints` along on-policy student rollouts alongside scaled GAE (`0.25×`).
 
 ---
 
@@ -141,7 +141,32 @@ To close the gap on large parcels (`≥ 2,500 m²`), three five-seed `400`-episo
 | **FAR-Gated `actor_critic`, `best.pt` (`400` ep)** | `0.723 ± 0.025` / **`100%`** | **`0.803 ± 0.018`** / **`100%`** | `4,631.2` / `4,263.8` |
 | **FAR-Gated `actor_critic`, ep `400` (`latest.pt`)** | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94%` | `4,785.1` / `4,499.7` |
 
-The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Two methodological caveats remain: the `exchange` gate was introduced after diagnosing `seed-4213` on these test plots (shared with earlier `30`-, `60`-, and `600`-ep exploratory L/XL studies indexed in [results/README.md](results/README.md)), and `actor_critic` still depends on `50`-episode validation selection (`ep 400` drifts to `0.762`). [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
+The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Because that `exchange` gate was motivated on these development/test plots, it is tested below on an untouched 8-site blind holdout, while constant-aux `actor_critic` late drift (`ep 400` at `0.762`) is isolated in the 200-episode auxiliary schedule ablation. [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
+
+#### Blind 8-Site Zero-Shot Evaluation Across `XS`–`XL` (`640` Episodes)
+
+To verify transfer beyond the split used to diagnose `seed-4213`, all archived `400`-ep five-seed arms (`4211–4215`, `best.pt`) and `tier_meso2` Greedy were evaluated zero-shot across **eight untouched catalog parcels** spanning every tier (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`, `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`; verified zero Haversine context overlap with all `10` train and `3` NYC validation sites; [results/blind-8site-all-tiers-mps-2026-11-23.json](results/blind-8site-all-tiers-mps-2026-11-23.json)):
+
+| Method (`temp=1.0 / noise=1.0`, `5` seeds unless Greedy) | All `8` Blind ($J$ / FAR / Usable m²) | `XS–M` (`4` sites) | `L–XL` (`4` sites) |
+|---|---:|---:|---:|
+| **`far_gated_actor_critic` (`best.pt`)** | **`0.864 ± 0.046`** / `99.5%` / `3,408.3` | **`0.833 ± 0.084`** / `100%` | **`0.896 ± 0.017`** / `99.0%` |
+| `tier_meso2` Greedy (`0` params) | `0.824` / **`100%`** / `2,426.9` | **`0.833`** / `100%` | `0.815` / `100%` |
+| `ungated_actor_critic` (`best.pt`) | `0.820 ± 0.101` / `98.0%` / **`3,423.8`** | `0.747 ± 0.206` / `100%` | `0.892 ± 0.014` / `96.0%` |
+| `on_policy_distill` (`best.pt`) | `0.659 ± 0.054` / **`100%`** / `3,223.4` | `0.463 ± 0.102` / `100%` | `0.854 ± 0.013` / `100%` |
+
+On the untouched sites, FAR-Gated `actor_critic` cuts `XS_M` inter-seed SD in half (`±0.206 → ±0.084`, lifting `xs_sgp_0346` from `0.522 ± 0.525` to `0.798 ± 0.219`), beats Greedy on **all `4/4` blind `L/XL` parcels** (`l_prs_0324`: `0.885` vs. `0.847`; `l_sgp_0369`: `0.992` vs. `0.931`; `xl_nyc_0048`: `0.902` vs. `0.766`; `xl_sgp_0386`: `0.804` vs. `0.715`) and **`6/8` blind parcels overall** (`s_sgp_0345`: `0.914` vs. `0.721`; `m_nyc_0003`: `0.547` vs. `0.527`), while Greedy stays ahead on tiny `xs_sgp_0346` (`0.990` vs. `0.798`) and marginally on `m_prs_0315` (`1.093` vs. `1.073`, where ungated reaches `1.113`). Two-teacher distillation generalizes well on `L/XL` (`0.854 ± 0.013`) but inherits `XS_M` teacher weakness on `xs_sgp_0346` (`-0.284 ± 0.040`).
+
+#### 200-Episode Auxiliary-Supervision Schedule Ablation (`seeds 4211–4213`)
+
+A 3-seed `200`-episode ablation isolates `spatial_aux_weight` (`des_c`) under FAR-gated `tier_meso2 + dense_potential + learned_cap` ([results/aux-ablation-200ep-mps-2026-11-23.json](results/aux-ablation-200ep-mps-2026-11-23.json); note `constant_aux` comes from the `<= 200`-ep `best.pt` checkpoints `150/100/100` plus evaluated `checkpoint-000200.pt` of `runs/control_all_tiers`, which ran a `400`-ep cosine LR horizon):
+
+| Arm (`seeds 4211–4213`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 200` Val ($J$ / FAR) | `ep 200` Test ($J$ / FAR / m²) |
+|---|---:|---:|---:|---:|
+| `pure_rl` (`λ_aux = 0.0`, [config](configs/research-pure-rl-all-tiers.json)) | `0.313 ± 0.054` / `100%` | `0.464 ± 0.066` / `100%` / `547.2` | `0.311 ± 0.054` / `100%` | `0.444 ± 0.088` / `100%` / `473.8` |
+| **`annealed_aux` (`1.2 → 0.0`, [config](configs/research-annealed-all-tiers.json))** | **`0.735 ± 0.021`** / `100%` | `0.797 ± 0.025` / `98.3%` / `4,223.7` | **`0.720 ± 0.040`** / `97.8%` | **`0.788 ± 0.033`** / `98.3%` / `4,269.7` |
+| `constant_aux` (`λ_aux = 1.2`, [config](configs/research-control-all-tiers.json)) | `0.718 ± 0.030` / `100%` | **`0.801 ± 0.023`** / `100%` / `4,274.0` | `0.669 ± 0.018` / `91.1%` | `0.746 ± 0.062` / `98.3%` / `4,287.4` |
+
+Pure scalar/potential RL (`λ_aux = 0.0`) fails to solve `14`-channel spatial attribution within `200` episodes (`0.464`), whereas linearly **annealing `λ_aux: 1.2 → 0.0`** reaches constant-aux `best.pt` quality (`0.797` vs. `0.801`) and eliminates the `-0.055` late-episode drift at `ep 200` (`0.788` vs. `0.746` Test; `0.720` vs. `0.669` Val) once training finishes under pure RL (`λ_aux = 0.0`).
 
 ### 600-Episode M-Tier Baseline & Component Controls
 
@@ -212,31 +237,34 @@ uv run --frozen vf-research train \
   --config configs/research-control-all-tiers.json \
   --output runs/control_all_tiers
 
-# Two-teacher on-policy distillation across XS-XL tiers (teachers set via teacher_checkpoints)
+# Two-teacher on-policy distillation across XS-XL tiers (uses bundled data/teachers/*.pt)
 uv run --frozen vf-research train \
   --config configs/research-distill-all-tiers.json \
   --output runs/distill_all_tiers
 
-# M-tier 600-episode baseline sweep (seeds 123, 456, 789, 202, 303; or seed 123 aux-off control)
+# 200-episode auxiliary supervision ablations (annealed 1.2->0.0 vs. pure-RL lambda_aux=0.0)
 uv run --frozen vf-research train \
-  --config configs/research-real-aux-tier-600ep.json \
-  --output runs/real-aux-tier-600ep
+  --config configs/research-annealed-all-tiers.json \
+  --output runs/annealed_all_tiers
 uv run --frozen vf-research train \
-  --config configs/research-real-tier-600ep.json \
-  --output runs/real-tier-600ep
+  --config configs/research-pure-rl-all-tiers.json \
+  --output runs/pure_rl_all_tiers
+# Canonical vs. historical config index: docs/EXPERIMENT_PROTOCOL.md#canonical-vs-historical-configurations
 ```
 
 ### 3. Live 3D Inspector & Test Suite
 
 ```sh
-# Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans)
+# Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans;
+# POST /api/policy accepts both live checkpoints and voxelform.research.v2 / multiscale weights)
 uv run --frozen python main.py
 
-# Run complete verification suite (215 Python tests, 11 JS geometry tests, repo-wide lint)
+# Run complete verification suite (218 Python tests, 11 JS geometry tests, ruff + mypy)
 uv run --frozen --extra dev python -m unittest discover -s tests
 node --check public/*.js
 node --test tests/*.test.mjs
 uv run --frozen --extra dev ruff check .
+uv run --frozen --extra dev mypy
 ```
 
 ---
@@ -257,14 +285,16 @@ VoxelForm-RL/
 │   ├── patch_policy.py      # Separable Gaussian field smoothing & frontier patch allocation
 │   ├── experiment.py        # Config schema, atomic RNG checkpoints, source archival & resume
 │   └── layout_archive.py    # SQLite episode ledger & top-five distinct layout archive
-├── data/urban_context/      # Standalone bundled 27-site XS–XL OSM parcel & context dataset (6 cities)
-├── configs/                 # Reproducible experiment specs (smoke, real-tier, expert-l-xl, control-all-tiers, distill-all-tiers)
+├── data/
+│   ├── urban_context/       # Standalone bundled 27-site XS–XL OSM parcel & context dataset (6 cities)
+│   └── teachers/            # Bundled compact weight-only XS_M and L_XL teacher checkpoints
+├── configs/                 # Canonical & historical experiment specs (see EXPERIMENT_PROTOCOL.md)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
-├── tests/                   # 215 Python unittest specs + 11 Node geometry/syntax tests
+├── tests/                   # 218 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
 ├── results/                 # Retained raw JSON benchmarks, core checks & solver probes
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer
-├── unified_server.py        # FastAPI inspection server (port 8011)
+├── unified_server.py        # FastAPI inspection server (port 8011; fine_potential + research import)
 ├── README_ARCHITECTURE.md   # Architectural & urban massing overview (non-ML reader guide)
 └── .github/workflows/       # CPU CI: unit tests, JS checks, ruff lint & smoke train
 ```
@@ -274,7 +304,7 @@ VoxelForm-RL/
 ## Methodological Limitations & Open Research Directions
 
 - **Uncalibrated Physical Proxies:** `directSunProxy`, `diffuseFacadeProxy`, acoustic `noisePrior`, planar depth, and 8-neighbor geodesic core distance are research surrogate signals — not calibrated daylight simulations, acoustic models, structural analyses, or building-code/egress compliance verifications ([docs/DATA_CARD.md](docs/DATA_CARD.md), [docs/MODEL_CARD.md](docs/MODEL_CARD.md)).
-- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field inject strong inductive bias. With `tier_meso2`, `dense_potential`, and `learned_cap`, both FAR-gated single-stage `actor_critic` (`0.803 ± 0.018`, `100%` FAR, leading Greedy on all 7 Val/Test plots) and two-teacher `on_policy_distill` (`0.752 ± 0.013`, `99%` FAR) surpass `tier_meso2` Greedy (`0.734`) across all five seeds on the L/XL test split, while late-episode `actor_critic` drift without validation selection (`0.803 → 0.762` at ep `400`), independent evaluation of the `|FAR - FAR*| <= 0.75` `exchange` gate on an unseen split, and single-tier M-site NYC canyon variance (`m_nyc_0003`: `0.504 ± 0.133`) remain open targets.
+- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field (`des_c`) inject strong inductive bias. With `tier_meso2`, `dense_potential`, and `learned_cap`, FAR-gated single-stage `actor_critic` beats `tier_meso2` Greedy on all `7/7` Val/Test sites (`0.803 ± 0.018` vs. `0.734`) and transfers zero-shot across the **8-site blind holdout** (`0.864 ± 0.046` vs. `0.824`, winning `4/4` blind `L/XL` and `6/8` overall). Meanwhile, our 200-ep ablation shows pure RL without `des_c` stalls (`0.464 ± 0.066`), whereas **annealing `λ_aux: 1.2 → 0.0`** eliminates constant-aux late drift at `ep 200` (`0.788 ± 0.033` vs. `0.746 ± 0.062`), leaving tiny-parcel performance (`xs_sgp_0346`: `0.798` vs. Greedy `0.990`), dense M-tier canyons (`m_nyc_0003`: `0.547`), and scaling `annealed` training to `400+` episodes as clear open next experiments.
 - **Open Multi-Objective & Throughput Work:** Pareto trade-off learning across conflicting proxy objectives (e.g., goal-conditioned weight preferences, multi-head vector critics, or Lagrangian FAR constraints) and batched multi-environment rollout vectorization remain active next experiments rather than settled results.
 
 ---

@@ -31,9 +31,20 @@ target-version = "py311"
 select = ["F", "E9"]
 
 [tool.mypy]
-files = ["tools/research.py", "voxelform/experiment.py", "voxelform/rollout.py", "voxelform/decoder_diagnostics.py"]
+files = [
+    "tools/research.py",
+    "voxelform/experiment.py",
+    "voxelform/rollout.py",
+    "voxelform/decoder_diagnostics.py",
+    "voxelform/coarse_to_fine.py",
+    "voxelform/objectives.py",
+]
 follow_imports = "silent"
 check_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = ["scipy", "scipy.*"]
+ignore_missing_imports = true
 
 [tool.uv]
 # Resolve the CPU wheel on Linux/CI; the default macOS wheel supports MPS.

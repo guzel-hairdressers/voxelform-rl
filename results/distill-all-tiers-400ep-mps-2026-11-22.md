@@ -51,5 +51,5 @@ Every individual seed surpasses both `tier_adaptive` Greedy (`0.681`) and upgrad
 | `4215` | `300` | `0.736` | `100%` | `0.749` | `100%` |
 
 - [Machine-readable evidence](distill-all-tiers-400ep-mps-2026-11-22.json)
-- [Matched `tier_meso2` Greedy baseline](greedy-distill-all-tiers-mps-2026-11-22.json)
+- [Matched `tier_meso2` Greedy baseline](greedy-control-all-tiers-mps-2026-11-22.json)
 - [Matched `L/XL` Greedy baseline (`tier_meso2`)](greedy-expert-l-xl-mps-2026-11-22.json)

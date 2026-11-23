@@ -1321,7 +1321,7 @@
     }
   },
   "greedyBaseline": {
-    "source": "results/greedy-distill-all-tiers-mps-2026-11-22.json",
+    "source": "results/greedy-control-all-tiers-mps-2026-11-22.json",
     "validation": {
       "summary": {
         "count": 15,
