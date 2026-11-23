@@ -25,7 +25,7 @@ failures):
    at episode `400` drifts to `0.762 ± 0.036` (`94%` FAR).
    [Control & ablation](../results/control-all-tiers-400ep-mps-2026-11-22.md) ·
    [Distillation](../results/distill-all-tiers-400ep-mps-2026-11-22.md)
-2. **8-site zero-shot blind holdout across `XS`–`XL` (`640` episodes, zero train/val overlap):**
+2. **8-site zero-shot blind holdout across `XS`–`XL` (`640` eval rollouts, `400`-ep models, zero train/val overlap):**
    Evaluating the archived `400`-ep policies on eight untouched catalog parcels
    (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`, `m_prs_0315`, `l_prs_0324`,
    `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`), FAR-Gated `actor_critic` scores
