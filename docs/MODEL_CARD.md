@@ -38,14 +38,16 @@ failures):
    stronger on tiny `xs_sgp_0346` (`0.990` vs. `0.798 ± 0.219`) and marginally on
    `m_prs_0315` (`1.093` vs. `1.073 ± 0.064`).
    [Blind 8-site evidence](../results/blind-8site-all-tiers-mps-2026-11-23.json)
-3. **200-episode auxiliary-supervision schedule ablation (`seeds 4211–4213`):**
-   Removing `des_c` spatial auxiliary loss (`pure_rl`, `λ_aux = 0.0`) stalls at
-   `0.464 ± 0.066` Test (`100%` FAR) within `200` episodes, whereas annealing
-   `λ_aux: 1.2 → 0.0` reaches `0.797 ± 0.025` (`best.pt`, `98.3%` FAR) and holds
-   **`0.788 ± 0.033`** at episode `200` (when `λ_aux = 0.0`), versus constant
-   `λ_aux = 1.2` dropping from `0.801 ± 0.023` (`best.pt`) to `0.746 ± 0.062` by
-   episode `200` (`400`-ep cosine LR prefix).
-   [Aux ablation evidence](../results/aux-ablation-200ep-mps-2026-11-23.json)
+3. **Matched 400-episode auxiliary-supervision schedule ablation (`seeds 4211–4215`):**
+   With matched `400`-episode cosine LR horizons (`1.2e-3 → 2.0e-4`) and `5` seeds,
+   removing `des_c` (`pure_rl`, `λ_aux = 0.0`) stalls at `0.420 ± 0.063` Test
+   (`100%` FAR) and `0.531 ± 0.075` blind, whereas annealing `λ_aux: 1.2 → 0.0`
+   reaches `0.727 ± 0.027` Val / `0.790 ± 0.021` Test (`99.0%` FAR) at `best.pt`,
+   holds `0.767 ± 0.038` (`99.0%` FAR) at episode `400`, and scores
+   `0.883 ± 0.024` on blind `L/XL` parcels (vs. constant `λ_aux = 1.2` at
+   `0.803 ± 0.018` `best.pt`, `0.762 ± 0.036` / `94.0%` FAR at `ep 400`,
+   `0.896 ± 0.017` blind `L/XL`).
+   [Aux ablation evidence](../results/aux-ablation-400ep-mps-2026-11-23.json)
 4. **Historical `tier_adaptive` baselines:** `600`-ep M-tier guided RL (`0.776 ± 0.103`
    vs. Greedy `0.810`), `60`-ep L/XL pilot (`0.501` RL / `0.351` Imitation vs. `0.681`
    Greedy), and `600`-ep L/XL follow-up (`0.613 ± 0.079` RL / `0.649 ± 0.021`

@@ -143,11 +143,11 @@ To close the gap on large parcels (`≥ 2,500 m²`), three five-seed `400`-episo
 | **FAR-Gated `actor_critic`, `best.pt` (`400` ep)** | `0.723 ± 0.025` / **`100%`** | **`0.803 ± 0.018`** / **`100%`** | `4,631.2` / `4,263.8` |
 | **FAR-Gated `actor_critic`, ep `400` (`latest.pt`)** | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94%` | `4,785.1` / `4,499.7` |
 
-The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Because that `exchange` gate was motivated on these development/test plots, it is tested below on an untouched 8-site blind holdout, while constant-aux `actor_critic` late drift (`ep 400` at `0.762`) is isolated in the 200-episode auxiliary schedule ablation. [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
+The strict ablation shows three complementary effects: (1) switching from `tier_adaptive` to `tier_meso2 + dense_potential + learned_cap` supplies the primary improvement over legacy Guided RL (`0.613 → 0.771`, and `0.803 ± 0.016` on four of five ungated seeds); (2) two-teacher `on_policy_distill` prevents catastrophic `exchange`-spam collapse (`±0.013` SD across seeds, stable at `0.753` through ep `400`), though at a conservative quality ceiling; and (3) gating premature `exchange` until `|FAR - FAR*| <= 0.75` (`+ 0.02` op entropy) fixes `seed-4213` directly in single-stage `actor_critic`, lifting validation-selected `best.pt` to **`0.803 ± 0.018`** (`100/100` FAR compliance, 95% CI `[0.789, 0.817]`) and outscoring `tier_meso2` Greedy on **all 7/7 validation and test plots** (`m_prs_0320`: `0.713` vs. `0.693`, `l_sgp_0327`: `0.921` vs. `0.835`, `l_sgp_0367`: `0.741` vs. `0.646`, `l_sgp_0379`: `0.836` vs. `0.762`). Because that `exchange` gate was motivated on these development/test plots, it is evaluated below on an untouched 8-site blind holdout, and constant-aux late drift (`ep 400` at `0.762`) is isolated in the matched 400-episode auxiliary schedule ablation. [Control & ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md) · [Control evidence](results/control-all-tiers-400ep-mps-2026-11-22.json) · [Distillation report](results/distill-all-tiers-400ep-mps-2026-11-22.md) · [Distillation evidence](results/distill-all-tiers-400ep-mps-2026-11-22.json)
 
 #### Blind 8-Site Zero-Shot Evaluation Across `XS`–`XL` (`640` Episodes)
 
-![8-site zero-shot blind holdout across XS-XL tiers and 200-episode auxiliary-supervision schedule ablation](docs/media/blind-8site-and-aux-ablation.png)
+![8-site zero-shot blind holdout across XS-XL tiers and matched 400-episode auxiliary-supervision schedule ablation](docs/media/blind-8site-and-aux-ablation.png)
 
 To verify transfer beyond the split used to diagnose `seed-4213`, all archived `400`-ep five-seed arms (`4211–4215`, `best.pt`) and `tier_meso2` Greedy were evaluated zero-shot across **eight untouched catalog parcels** spanning every tier (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`, `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`; verified zero Haversine context overlap with all `10` train and `3` NYC validation sites; [results/blind-8site-all-tiers-mps-2026-11-23.json](results/blind-8site-all-tiers-mps-2026-11-23.json)):
 
@@ -160,17 +160,17 @@ To verify transfer beyond the split used to diagnose `seed-4213`, all archived `
 
 On the untouched sites, FAR-Gated `actor_critic` cuts `XS_M` inter-seed SD in half (`±0.206 → ±0.084`, lifting `xs_sgp_0346` from `0.522 ± 0.525` to `0.798 ± 0.219`), beats Greedy on **all `4/4` blind `L/XL` parcels** (`l_prs_0324`: `0.885` vs. `0.847`; `l_sgp_0369`: `0.992` vs. `0.931`; `xl_nyc_0048`: `0.902` vs. `0.766`; `xl_sgp_0386`: `0.804` vs. `0.715`) and **`6/8` blind parcels overall** (`s_sgp_0345`: `0.914` vs. `0.721`; `m_nyc_0003`: `0.547` vs. `0.527`), while Greedy stays ahead on tiny `xs_sgp_0346` (`0.990` vs. `0.798`) and marginally on `m_prs_0315` (`1.093` vs. `1.073`, where ungated reaches `1.113`). Two-teacher distillation generalizes well on `L/XL` (`0.854 ± 0.013`) but inherits `XS_M` teacher weakness on `xs_sgp_0346` (`-0.284 ± 0.040`).
 
-#### 200-Episode Auxiliary-Supervision Schedule Ablation (`seeds 4211–4213`)
+#### Matched 400-Episode Auxiliary-Supervision Schedule Ablation (`seeds 4211–4215`)
 
-A 3-seed `200`-episode ablation isolates `spatial_aux_weight` (`des_c`) under FAR-gated `tier_meso2 + dense_potential + learned_cap` ([results/aux-ablation-200ep-mps-2026-11-23.json](results/aux-ablation-200ep-mps-2026-11-23.json); note `constant_aux` comes from the `<= 200`-ep `best.pt` checkpoints `150/100/100` plus evaluated `checkpoint-000200.pt` of `runs/control_all_tiers`, which ran a `400`-ep cosine LR horizon):
+All three arms share the exact same `400`-episode budget, `5` model seeds (`4211–4215`), cosine LR schedule (`1.2e-3 → 2.0e-4` over `400` episodes), `tier_meso2 + dense_potential + learned_cap` decoder/shaping, and validation-selection / blind-evaluation protocol ([results/aux-ablation-400ep-mps-2026-11-23.json](results/aux-ablation-400ep-mps-2026-11-23.json)):
 
-| Arm (`seeds 4211–4213`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 200` Val ($J$ / FAR) | `ep 200` Test ($J$ / FAR / m²) |
-|---|---:|---:|---:|---:|
-| `pure_rl` (`λ_aux = 0.0`, [config](configs/research-pure-rl-all-tiers.json)) | `0.313 ± 0.054` / `100%` | `0.464 ± 0.066` / `100%` / `547.2` | `0.311 ± 0.054` / `100%` | `0.444 ± 0.088` / `100%` / `473.8` |
-| **`annealed_aux` (`1.2 → 0.0`, [config](configs/research-annealed-all-tiers.json))** | **`0.735 ± 0.021`** / `100%` | `0.797 ± 0.025` / `98.3%` / `4,223.7` | **`0.720 ± 0.040`** / `97.8%` | **`0.788 ± 0.033`** / `98.3%` / `4,269.7` |
-| `constant_aux` (`λ_aux = 1.2`, [config](configs/research-control-all-tiers.json)) | `0.718 ± 0.030` / `100%` | **`0.801 ± 0.023`** / `100%` / `4,274.0` | `0.669 ± 0.018` / `91.1%` | `0.746 ± 0.062` / `98.3%` / `4,287.4` |
+| Arm (`400` ep, `5` seeds `4211–4215`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 400` Val ($J$ / FAR) | `ep 400` Test ($J$ / FAR / m²) | Blind `8`-Site (`ALL` / `L–XL`) |
+|---|---:|---:|---:|---:|---:|
+| `pure_rl` (`λ_aux = 0.0`, [config](configs/research-pure-rl-all-tiers.json)) | `0.291 ± 0.046` / `100%` | `0.420 ± 0.063` / `100%` / `1,142.5` | `0.292 ± 0.054` / `94.7%` | `0.418 ± 0.074` / `99.0%` / `1,191.8` | `0.531` / `0.501` |
+| **`annealed_aux` (`1.2 → 0.0`, [config](configs/research-annealed-all-tiers.json))** | **`0.727 ± 0.027`** / `100%` | `0.790 ± 0.021` / `99.0%` / `4,280.2` | **`0.688 ± 0.029`** / `96.0%` | **`0.767 ± 0.038`** / **`99.0%`** / `4,558.7` | `0.823` / `0.883` |
+| **`constant_aux` (`λ_aux = 1.2`, [config](configs/research-control-all-tiers.json))** | `0.723 ± 0.025` / `100%` | **`0.803 ± 0.018`** / **`100%`** / `4,263.8` | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94.0%` / `4,499.7` | **`0.864`** / **`0.896`** |
 
-Pure scalar/potential RL (`λ_aux = 0.0`) fails to solve `14`-channel spatial attribution within `200` episodes (`0.464`), whereas linearly **annealing `λ_aux: 1.2 → 0.0`** reaches constant-aux `best.pt` quality (`0.797` vs. `0.801`) and eliminates the `-0.055` late-episode drift at `ep 200` (`0.788` vs. `0.746` Test; `0.720` vs. `0.669` Val) once training finishes under pure RL (`λ_aux = 0.0`).
+With matched horizons and seeds, **pure RL without `des_c` (`λ_aux = 0.0`) stalls through episode `400`** (`0.420` Test; `0.531` blind), confirming the spatial auxiliary objective is essential for `14`-channel spatial credit assignment. **Linearly annealing `λ_aux: 1.2 → 0.0` matches constant `des_c` supervision** (`0.727` vs. `0.723` Val; `0.790` vs. `0.803` Test; beating Greedy on `4/4` blind `L/XL` sites at `0.883 ± 0.024` and `7/8` blind sites overall), while raising fixed-budget episode-`400` FAR compliance from `94.0% → 99.0%` (`0.767` vs. `0.762` Test; `0.688` vs. `0.667` Val) once training finishes under pure RL (`λ_aux = 0.0`), leaving constant `λ_aux = 1.2` slightly stronger only on tiny `xs_sgp_0346` (`0.798` vs. `0.534`).
 
 ### 600-Episode M-Tier Baseline & Component Controls
 
@@ -246,13 +246,13 @@ uv run --frozen vf-research train \
   --config configs/research-distill-all-tiers.json \
   --output runs/distill_all_tiers
 
-# 200-episode auxiliary supervision ablations (annealed 1.2->0.0 vs. pure-RL lambda_aux=0.0)
+# Matched 400-episode, 5-seed auxiliary supervision ablations (annealed 1.2->0.0 vs. pure-RL lambda_aux=0.0)
 uv run --frozen vf-research train \
   --config configs/research-annealed-all-tiers.json \
-  --output runs/annealed_all_tiers
+  --output runs/annealed_all_tiers_400ep
 uv run --frozen vf-research train \
   --config configs/research-pure-rl-all-tiers.json \
-  --output runs/pure_rl_all_tiers
+  --output runs/pure_rl_all_tiers_400ep
 # Canonical vs. historical config index: docs/EXPERIMENT_PROTOCOL.md#canonical-vs-historical-configurations
 ```
 
@@ -309,7 +309,7 @@ VoxelForm-RL/
 ## Methodological Limitations & Open Research Directions
 
 - **Uncalibrated Physical Proxies:** `directSunProxy`, `diffuseFacadeProxy`, acoustic `noisePrior`, planar depth, and 8-neighbor geodesic core distance are research surrogate signals — not calibrated daylight simulations, acoustic models, structural analyses, or building-code/egress compliance verifications ([docs/DATA_CARD.md](docs/DATA_CARD.md), [docs/MODEL_CARD.md](docs/MODEL_CARD.md)).
-- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field (`des_c`) inject strong inductive bias. With `tier_meso2`, `dense_potential`, and `learned_cap`, FAR-gated single-stage `actor_critic` beats `tier_meso2` Greedy on all `7/7` Val/Test sites (`0.803 ± 0.018` vs. `0.734`) and transfers zero-shot across the **8-site blind holdout** (`0.864 ± 0.046` vs. `0.824`, winning `4/4` blind `L/XL` and `6/8` overall). Meanwhile, our 200-ep ablation shows pure RL without `des_c` stalls (`0.464 ± 0.066`), whereas **annealing `λ_aux: 1.2 → 0.0`** eliminates constant-aux late drift at `ep 200` (`0.788 ± 0.033` vs. `0.746 ± 0.062`), leaving tiny-parcel performance (`xs_sgp_0346`: `0.798` vs. Greedy `0.990`), dense M-tier canyons (`m_nyc_0003`: `0.547`), and scaling `annealed` training to `400+` episodes as clear open next experiments.
+- **Hand-Designed Structural & Heuristic Priors:** Morphological opening (`k=3`), long-strip filtering (`<6 m`), connectivity/cavity checks, deterministic greedy core placement, and the `compute_spatial_desirability` auxiliary field (`des_c`) inject strong inductive bias. With `tier_meso2`, `dense_potential`, and `learned_cap`, FAR-gated single-stage `actor_critic` beats `tier_meso2` Greedy on all `7/7` Val/Test sites (`0.803 ± 0.018` vs. `0.734`) and transfers zero-shot across the **8-site blind holdout** (`0.864 ± 0.046` vs. `0.824`, winning `4/4` blind `L/XL` and `6/8` overall). Meanwhile, our matched `400`-ep, `5`-seed ablation confirms pure RL without `des_c` stalls (`0.420 ± 0.063` Test), whereas **annealing `λ_aux: 1.2 → 0.0`** sustains performance even at `λ_aux = 0` (`0.790` `best.pt`, `0.767` / `99.0%` FAR at `ep 400`, `0.883` blind `L/XL`), leaving tiny-parcel stability (`xs_sgp_0346`: `0.798` vs. Greedy `0.990`) and dense M-tier canyons (`m_nyc_0003`: `0.547`) as clear open targets.
 - **Open Multi-Objective & Throughput Work:** Pareto trade-off learning across conflicting proxy objectives (e.g., goal-conditioned weight preferences, multi-head vector critics, or Lagrangian FAR constraints) and batched multi-environment rollout vectorization remain active next experiments rather than settled results.
 
 ---

@@ -31,28 +31,28 @@ where ungated reaches `1.113 ± 0.040`), `l_prs_0324` (`0.847` vs. **`0.885 ± 0
 `xl_sgp_0386` (`0.715` vs. **`0.804 ± 0.024`**). Two-teacher distillation remains
 strong on `L/XL` (`0.854`), but its `XS_M` teacher underperforms on tiny `xs_sgp_0346` (`-0.284 ± 0.040`).
 
-## 200-episode auxiliary-supervision schedule ablation — 2026-11-23
+## Matched 400-episode auxiliary-supervision schedule ablation — 2026-11-23
 
-Three-seed (`4211–4213`) ablation isolating `spatial_aux_weight` (`des_c`) under
-FAR-gated `tier_meso2 + dense_potential + learned_cap` (`pure_rl`
-[config](../configs/research-pure-rl-all-tiers.json) and `annealed_aux`
-[config](../configs/research-annealed-all-tiers.json) trained for `200` episodes;
-`constant_aux` uses the `<= 200`-episode `best.pt` checkpoints `150/100/100` plus
-evaluated `checkpoint-000200.pt` from `runs/control_all_tiers`, which ran a
-`400`-episode cosine LR horizon).
-[Ablation evidence](aux-ablation-200ep-mps-2026-11-23.json) ·
+Matched five-seed (`4211–4215`), `400`-episode ablation isolating `spatial_aux_weight`
+(`des_c`) under identical `tier_meso2 + dense_potential + learned_cap` settings and
+the full `400`-episode cosine LR schedule (`1.2e-3 → 2.0e-4`) across
+`pure_rl` ([config](../configs/research-pure-rl-all-tiers.json)),
+`annealed_aux` ([config](../configs/research-annealed-all-tiers.json)), and
+`constant_aux` ([config](../configs/research-control-all-tiers.json)).
+[Ablation evidence](aux-ablation-400ep-mps-2026-11-23.json) ·
 [Figure](../docs/media/blind-8site-and-aux-ablation.png)
 
-| Arm (`seeds 4211–4213`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 200` Val ($J$ / FAR) | `ep 200` Test ($J$ / FAR / m²) |
-|---|---:|---:|---:|---:|
-| `pure_rl` (`λ_aux = 0.0`) | `0.313 ± 0.054` / `100%` | `0.464 ± 0.066` / `100%` / `547.2` | `0.311 ± 0.054` / `100%` | `0.444 ± 0.088` / `100%` / `473.8` |
-| **`annealed_aux` (`1.2 → 0.0`)** | **`0.735 ± 0.021`** / `100%` | `0.797 ± 0.025` / `98.3%` / `4,223.7` | **`0.720 ± 0.040`** / `97.8%` | **`0.788 ± 0.033`** / `98.3%` / `4,269.7` |
-| `constant_aux` (`λ_aux = 1.2`) | `0.718 ± 0.030` / `100%` | **`0.801 ± 0.023`** / `100%` / `4,274.0` | `0.669 ± 0.018` / `91.1%` | `0.746 ± 0.062` / `98.3%` / `4,287.4` |
+| Arm (`400` ep, `5` seeds `4211–4215`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 400` Val ($J$ / FAR) | `ep 400` Test ($J$ / FAR / m²) | Blind `8`-Site (`ALL` / `L–XL`) |
+|---|---:|---:|---:|---:|---:|
+| `pure_rl` (`λ_aux = 0.0`) | `0.291 ± 0.046` / `100%` | `0.420 ± 0.063` / `100%` / `1,142.5` | `0.292 ± 0.054` / `94.7%` | `0.418 ± 0.074` / `99.0%` / `1,191.8` | `0.531` / `0.501` |
+| **`annealed_aux` (`1.2 → 0.0`)** | **`0.727 ± 0.027`** / `100%` | `0.790 ± 0.021` / `99.0%` / `4,280.2` | **`0.688 ± 0.029`** / `96.0%` | **`0.767 ± 0.038`** / **`99.0%`** / `4,558.7` | `0.823` / `0.883` |
+| **`constant_aux` (`λ_aux = 1.2`)** | `0.723 ± 0.025` / `100%` | **`0.803 ± 0.018`** / **`100%`** / `4,263.8` | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94.0%` / `4,499.7` | **`0.864`** / **`0.896`** |
 
-Pure RL without `des_c` (`λ_aux = 0.0`) stalls within `200` episodes, whereas
-annealing `1.2 → 0.0` achieves constant-aux `best.pt` quality (`0.797` vs. `0.801`)
-while eliminating the `-0.055` late drift at `ep 200` (`0.788` vs. `0.746` Test;
-`0.720` vs. `0.669` Val) even after `λ_aux` reaches zero.
+With matched `400`-episode cosine LR horizons and `5` seeds, pure RL without `des_c`
+(`λ_aux = 0.0`) stalls (`0.420` Test; `0.531` blind), whereas annealing `1.2 → 0.0`
+reaches constant-aux quality (`0.727` Val, `0.790` Test, `0.883` blind `L/XL`, winning
+`7/8` blind sites over Greedy) while keeping episode-`400` Test at `0.767` with **`99.0%`
+FAR** (vs. `94.0%` for constant `λ_aux = 1.2`).
 
 ## 400-episode matched actor-critic control and exchange-gating ablation — 2026-11-22
 

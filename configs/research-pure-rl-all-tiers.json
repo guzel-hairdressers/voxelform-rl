@@ -5,7 +5,7 @@
   "cores_enabled": true,
   "decoder_retry_schedule": "learned_cap",
   "device": "mps",
-  "episodes": 200,
+  "episodes": 400,
   "evaluation_noise_scale": 1.0,
   "evaluation_seeds": [
     9201,
@@ -26,7 +26,9 @@
   "seeds": [
     4211,
     4212,
-    4213
+    4213,
+    4214,
+    4215
   ],
   "spatial_aux_schedule": "constant",
   "spatial_aux_weight": 0.0,
