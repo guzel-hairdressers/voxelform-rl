@@ -488,7 +488,7 @@ def _load_policy(
     if saved.get("configHash") not in (cfg.fingerprint, manifest_hash):
         raise ValueError("Checkpoint configHash does not match run config")
 
-    if cfg.multiscale_schedule == "tier_adaptive":
+    if cfg.multiscale_schedule != "none":
         policy = CoarseToFineLearner(
             dev,
             seed=seed,
@@ -500,6 +500,7 @@ def _load_policy(
             evaluation_noise_scale=noise,
             lr=1.2e-3,
             decoder_retry_schedule=cfg.decoder_retry_schedule,
+            spatial_aux_mode=cfg.spatial_aux_mode,
         )
     else:
         policy = UnifiedLearner(
@@ -545,8 +546,11 @@ def _run_trained_episode(
 
     if isinstance(policy, CoarseToFineLearner):
         coarse_envs = (
-            tuple(CoarseEnv(env, blk) for blk in tier_cascade_blocks(env))
-            if cfg.multiscale_schedule == "tier_adaptive"
+            tuple(
+                CoarseEnv(env, blk)
+                for blk in tier_cascade_blocks(env, schedule=cfg.multiscale_schedule)
+            )
+            if cfg.multiscale_schedule != "none"
             else ()
         )
         res = run_cascade_episode(
@@ -558,6 +562,7 @@ def _run_trained_episode(
             training=False,
             rollout_steps=cfg.rollout_steps,
             audit_steps=cfg.audit_steps,
+            reward_profile=cfg.reward_profile,
         )
         obj = float(res["rawObjective"])
         diag = res["diagnostics"]

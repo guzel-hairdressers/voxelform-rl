@@ -123,8 +123,8 @@ def _apply_hero_facades(
         set_mod_input(m_cw, "GF Height", gf_h)
         set_mod_input(m_cw, "Grid Module", float(spec["grid_module"]))
         set_mod_input(m_cw, "Opaque Every N Bays", int(spec.get("opaque_step", 0)))
-        set_mod_input(m_cw, "Delete Glass", False)
-        set_mod_input(m_cw, "Use Backing", False)
+        set_mod_input(m_cw, "Delete Glass", True)
+        set_mod_input(m_cw, "Use Backing", True)
         return
 
     m_id = _add_gn_mod(obj, "Assign Panel ID", "Assign Panel ID")
@@ -144,7 +144,8 @@ def _apply_hero_facades(
     m_swap = _add_gn_mod(obj, "Panel Swap", "Panel Swap")
     set_mod_input(m_swap, "Collection", bpy.data.collections[spec["collection"]])
     set_mod_input(m_swap, "Realize and Merge", False)
-    _add_gn_mod(obj, "Facade Glazing", "Facade Glazing")
+    m_fg = _add_gn_mod(obj, "Facade Glazing", "Facade Glazing")
+    set_mod_input(m_fg, "Delete Glass", True)
 
 
 def _apply_context_facades(

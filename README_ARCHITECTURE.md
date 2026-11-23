@@ -28,7 +28,7 @@ As FAR fell from **5.82 to 2.90**, the share of floor area within **8 m of a fa�
 
 ![Singapore comparison plate with the voxel axonometric at left and the Blender maquette from the same camera at right](docs/media/singapore-axo-comparison.jpg)
 
-The **3,845 m²** parcel reaches **FAR 2.90** with a broad upper plate and stepped wings. The axonometrics show how the setbacks change across the block. Continuous slabs and vertical louvers give those steps a legible façade rhythm.
+The **3,845 m²** parcel reaches **FAR 2.90** by carving the block into a curved perimeter wing and a companion courtyard volume (**68% direct-sun proxy**, **7 cores**). Recessed curtain-frame bays, solid structural piers, and a ground-floor plinth give the faceted massing a legible façade rhythm.
 
 ## Architectural precedents
 

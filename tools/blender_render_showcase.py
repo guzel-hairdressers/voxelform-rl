@@ -92,6 +92,25 @@ def write_axonometric_camera(scene, camera, path):
 
 
 def render_views(args):
+    hdri_root = Path(__file__).resolve().parent.parent / "blender" / "hdris"
+    for img in bpy.data.images:
+        raw_path = getattr(img, "filepath", "") or ""
+        if not raw_path:
+            continue
+        resolved = Path(bpy.path.abspath(raw_path))
+        readable = False
+        if resolved.is_file():
+            try:
+                with resolved.open("rb"):
+                    readable = True
+            except OSError:
+                readable = False
+        if not readable:
+            fallback = hdri_root / Path(raw_path.replace("\\", "/")).name
+            if fallback.is_file():
+                img.filepath = str(fallback.resolve())
+                img.reload()
+
     scene = bpy.context.scene
     camera = scene.camera
     hero = bpy.data.collections.get("01_Hero_Building")
