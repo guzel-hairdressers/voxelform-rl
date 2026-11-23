@@ -549,7 +549,11 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
 
         server, session, cfg = self._organic_session()
         research_learner = CoarseToFineLearner(
-            "cpu", 77, fine_config=cfg, input_channels=14
+            "cpu",
+            77,
+            fine_config=cfg,
+            input_channels=14,
+            decoder_retry_schedule="learned_cap",
         )
         state = research_learner.state()
         state["updates"] = 42
@@ -564,6 +568,11 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
             self.assertEqual(session.policy.updates, 42)
             self.assertTrue(session.policy.organic_3d)
             self.assertTrue(session.policy.net_guided)
+            self.assertEqual(session.policy.decoder_retry_schedule, "learned_cap")
+            session.env.configure_far(session.env.far + 1.5, 0.1)
+            self.assertFalse(bool(session.policy.legal_operations(session.env)[2]))
+            session.env.configure_far(session.env.far, 0.1)
+            self.assertTrue(bool(session.policy.legal_operations(session.env)[2]))
             expected = research_learner.model.state_dict()
             for key, tensor in session.policy.model.state_dict().items():
                 target = expected[key]

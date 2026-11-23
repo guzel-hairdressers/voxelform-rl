@@ -1216,6 +1216,13 @@ def compute_spatial_desirability(
         return torch.stack(des_list, dim=0)
 
 
+def _learned_quota(score, weights, max_count, min_step, floor_frac=0.35):
+    """Cap thresholded positive-logit voxel selection within [min_count, max_count]."""
+    min_count = min(max_count, max(min_step, round(floor_frac * max_count)))
+    pos = int(((score > 0.5 * weights) & (weights > 0)).sum().item())
+    return min(max_count, max(min_count, pos))
+
+
 class UnifiedLearner(Learner):
     def __init__(
         self,
@@ -1228,9 +1235,12 @@ class UnifiedLearner(Learner):
         floor_copy=False,
         organic_3d=False,
         spatial_aux_weight=1.2,
+        decoder_retry_schedule="fixed",
     ):
         if floor_copy and organic_3d:
             raise ValueError("Cannot enable both floor_copy and organic_3d")
+        if decoder_retry_schedule not in ("fixed", "adaptive", "learned_cap"):
+            raise ValueError("Invalid decoder retry schedule")
         super().__init__(device, seed)
         self.config = config or PatchConfig(mode="combined", allocation="feedback")
         self.amount_feedback = bool(amount_feedback)
@@ -1239,6 +1249,7 @@ class UnifiedLearner(Learner):
         self.floor_copy = bool(floor_copy)
         self.organic_3d = bool(organic_3d)
         self.spatial_aux_weight = float(spatial_aux_weight)
+        self.decoder_retry_schedule = str(decoder_retry_schedule)
         self.evaluation_temperature = 2.5
         self.evaluation_noise_scale = 0.08
         if not math.isfinite(self.spatial_aux_weight) or self.spatial_aux_weight < 0:
@@ -1364,8 +1375,26 @@ class UnifiedLearner(Learner):
                 e.count + _min_plate(plate) <= e.acceptable_counts[1]
                 for plate in copy_plates(e)
             )
+        allow_exchange = bool(r and a)
+        if (
+            self.organic_3d
+            and self.decoder_retry_schedule == "learned_cap"
+            and (remove or grow)
+            and (
+                abs(float(e.far) - float(e.target_far)) > 0.75
+                or (
+                    not e.far_satisfied
+                    and (
+                        getattr(e, "unified_limit", 8)
+                        - getattr(e, "unified_actions", e.edits)
+                    )
+                    <= 4
+                )
+            )
+        ):
+            allow_exchange = False
         return torch.tensor(
-            [remove, grow, r and a, e.far_satisfied],
+            [remove, grow, allow_exchange, e.far_satisfied],
             device=self.device,
             dtype=torch.bool,
         )
@@ -2096,6 +2125,22 @@ class UnifiedLearner(Learner):
                     if has_core_guard
                     else ()
                 )
+                learned_cap = self.decoder_retry_schedule == "learned_cap"
+                scales = (
+                    (1.0, 0.6, 0.36, 0.216, 0.1296, 0.07776, 0.046656, 0.027994)
+                    if self.decoder_retry_schedule in ("adaptive", "learned_cap")
+                    else (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)
+                )
+                rem_steps = getattr(e, "unified_limit", 8) - getattr(
+                    e, "unified_actions", e.edits
+                )
+                quota_floor = (
+                    1.0
+                    if (not e.far_satisfied and rem_steps <= 4)
+                    else (
+                        0.35 if (e.far_satisfied or operation == "exchange") else 0.65
+                    )
+                )
                 for attempt in range(retries):
                     latent = (
                         dist.sample()
@@ -2115,9 +2160,7 @@ class UnifiedLearner(Learner):
                     )[:, 0]
                     if self.config.mode == "combined":
                         decoded = gaussian_field(decoded, self.config.sigma)
-                    sc = (1.0, 1.0, 0.75, 0.5, 0.35, 0.25, 0.125, 0.0625)[
-                        min(attempt, 7)
-                    ]
+                    sc = scales[min(attempt, 7)]
                     scores = torch.zeros(
                         (2, *occ_s.shape), device=self.device, dtype=torch.float32
                     )
@@ -2125,7 +2168,7 @@ class UnifiedLearner(Learner):
                         (2, *occ_s.shape), device=self.device, dtype=torch.bool
                     )
                     if 0 in consumed and avail_rem > 0 and base_rem > 0:
-                        n_r = min(avail_rem, max(1, round(base_rem * sc)))
+                        max_r = min(avail_rem, max(1, round(base_rem * sc)))
                         s0 = decoded[consumed.index(0)].sigmoid() * w_rem
                         if core_m_sub is not None:
                             s0 = torch.where(core_m_sub, s0 * 0.30, s0)
@@ -2146,6 +2189,11 @@ class UnifiedLearner(Learner):
                                 near = near | nbr_n
                             inner = (w_rem > 0) & ~skin & near
                             s0 = torch.where(inner, torch.minimum(s0, bound), s0)
+                        n_r = (
+                            _learned_quota(s0, w_rem, max_r, 4, floor_frac=quota_floor)
+                            if learned_cap
+                            else max_r
+                        )
                         scores[0] = s0
                         r_t = torch.zeros_like(occ_s)
                         ids = s0.masked_fill(w_rem <= 0, -1).flatten().topk(n_r).indices
@@ -2215,8 +2263,13 @@ class UnifiedLearner(Learner):
                                 ] = False
                         masks[0] = r_t
                     if 1 in consumed and avail_add > 0 and base_add > 0:
-                        n_a = min(avail_add, max(1, round(base_add * sc)))
+                        max_a = min(avail_add, max(1, round(base_add * sc)))
                         s1 = decoded[consumed.index(1)].sigmoid() * w_add
+                        n_a = (
+                            _learned_quota(s1, w_add, max_a, 4, floor_frac=quota_floor)
+                            if learned_cap
+                            else max_a
+                        )
                         scores[1] = s1
                         a_t = torch.zeros_like(occ_s)
                         ids = s1.masked_fill(w_add <= 0, -1).flatten().topk(n_a).indices
@@ -2400,7 +2453,8 @@ class UnifiedLearner(Learner):
         values_t = torch.stack(values_out)
         actor = torch.stack(actor_terms).mean()
         critic = F.smooth_l1_loss(values_t, returns)
-        loss = actor + 0.5 * critic - 0.005 * torch.stack(ent_terms).mean()
+        ent_coef = 0.02 if self.decoder_retry_schedule == "learned_cap" else 0.005
+        loss = actor + 0.5 * critic - ent_coef * torch.stack(ent_terms).mean()
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         norm = nn.utils.clip_grad_norm_(
@@ -2442,6 +2496,7 @@ class UnifiedLearner(Learner):
             data["spatialAuxWeight"] = self.spatial_aux_weight
             data["evaluationTemperature"] = self.evaluation_temperature
             data["evaluationNoiseScale"] = self.evaluation_noise_scale
+            data["decoderRetrySchedule"] = self.decoder_retry_schedule
         return data
 
     def load(self, state):
@@ -2462,6 +2517,7 @@ class UnifiedLearner(Learner):
             floor_copy=state.get("floorCopy", False),
             organic_3d=is_o3d,
             spatial_aux_weight=state.get("spatialAuxWeight", 1.2),
+            decoder_retry_schedule=state.get("decoderRetrySchedule", "fixed"),
         )
         other.model.load_state_dict(state["model"])
         other.optimizer.load_state_dict(state["optimizer"])

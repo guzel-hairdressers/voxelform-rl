@@ -38,6 +38,10 @@ files = [
     "voxelform/decoder_diagnostics.py",
     "voxelform/coarse_to_fine.py",
     "voxelform/objectives.py",
+    "voxelform/cores.py",
+    "voxelform/core_plans.py",
+    "voxelform/fields.py",
+    "voxelform/layout_archive.py",
 ]
 follow_imports = "silent"
 check_untyped_defs = true

@@ -5,9 +5,10 @@ Height bands and lift counts are experimental priors, not traffic/egress design.
 """
 
 from __future__ import annotations
+
+import math
 from dataclasses import dataclass, replace
 from html import escape
-import math
 
 CORE_LAYOUT_VERSION = "compact-core.v5"
 

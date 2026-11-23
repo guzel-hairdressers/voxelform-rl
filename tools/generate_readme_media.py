@@ -2190,6 +2190,241 @@ def generate_l_xl_ablation_figure():
     print(f"Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)")
 
 
+def generate_blind_and_aux_ablation_figure():
+    """Plot 8-site zero-shot blind holdout (XS-XL) and 200-ep auxiliary schedule ablation."""
+    MEDIA_DIR.mkdir(parents=True, exist_ok=True)
+    blind = json.loads(
+        (RESULTS_DIR / "blind-8site-all-tiers-mps-2026-11-23.json").read_text()
+    )
+    aux = json.loads(
+        (RESULTS_DIR / "aux-ablation-200ep-mps-2026-11-23.json").read_text()
+    )
+    greedy = json.loads(
+        (RESULTS_DIR / "greedy-control-all-tiers-mps-2026-11-22.json").read_text()
+    )
+
+    fig, (ax1, ax2) = plt.subplots(
+        1,
+        2,
+        figsize=(16.5, 5.8),
+        dpi=160,
+        gridspec_kw={"width_ratios": [1.45, 1.0]},
+    )
+    fig.patch.set_facecolor("#ffffff")
+
+    groups = [
+        ("xs_sgp\n346", "site", "xs_sgp_0346"),
+        ("s_sgp\n345", "site", "s_sgp_0345"),
+        ("m_nyc\n003", "site", "m_nyc_0003"),
+        ("m_prs\n315", "site", "m_prs_0315"),
+        ("XS–M\nMean", "xs_m", "xs_m"),
+        ("l_prs\n324", "site", "l_prs_0324"),
+        ("l_sgp\n369", "site", "l_sgp_0369"),
+        ("xl_nyc\n048", "site", "xl_nyc_0048"),
+        ("xl_sgp\n386", "site", "xl_sgp_0386"),
+        ("L–XL\nMean", "l_xl", "l_xl"),
+        ("All 8\nBlind", "overall", "overall"),
+    ]
+    bars_spec = [
+        ("Greedy (tier_meso2)", "greedy_tier_meso2", "#f59e0b", "#b45309"),
+        ("Two-Teacher Distill", "on_policy_distill", "#14b8a6", "#0f766e"),
+        ("Ungated Actor-Critic", "ungated_actor_critic", "#94a3b8", "#475569"),
+        ("FAR-Gated Actor-Critic", "far_gated_actor_critic", "#1d4ed8", "#1e3a8a"),
+    ]
+
+    def _blind_val(arm_key: str, kind: str, key: str) -> tuple[float, float]:
+        arm = blind[arm_key]
+        if arm_key == "greedy_tier_meso2":
+            if kind == "site":
+                return float(arm["perSite"][key]["meanQuality"]), 0.0
+            node = arm["summary"] if kind == "overall" else arm[kind]
+            return float(node["meanQuality"]), 0.0
+        if kind == "site":
+            node = arm["perSite"][key]
+            return float(node["meanQuality"]), float(node["stdAcrossModelSeeds"])
+        node = arm["aggregate"][kind]["meanQuality"]
+        return float(node["mean"]), float(node["stdAcrossModelSeeds"])
+
+    x = np.arange(len(groups))
+    w = 0.20
+    offsets = (np.arange(len(bars_spec)) - 1.5) * w
+    for idx_b, (b_lbl, arm_key, fc, ec) in enumerate(bars_spec):
+        vals, errs = [], []
+        for _lbl, kind, key in groups:
+            v, sd = _blind_val(arm_key, kind, key)
+            vals.append(v)
+            errs.append(sd)
+        has_err = any(e > 0 for e in errs)
+        rects = ax1.bar(
+            x + offsets[idx_b],
+            vals,
+            width=w,
+            yerr=errs if has_err else None,
+            capsize=2.0 if has_err else 0,
+            color=fc,
+            edgecolor=ec,
+            linewidth=0.8,
+            label=b_lbl,
+            error_kw=dict(ecolor="#0f172a", lw=0.9),
+        )
+        for idx_g, (rect, v, sd) in enumerate(zip(rects, vals, errs)):
+            is_summary = groups[idx_g][1] != "site"
+            show_neg = v < 0
+            if idx_b not in (0, 3) and not is_summary and not show_neg:
+                continue
+            cx = rect.get_x() + rect.get_width() / 2
+            if v >= 0:
+                top_y = v + (sd if has_err else 0.0)
+                txt = (
+                    f"{v:.3f}"
+                    if (idx_g == len(groups) - 1 and idx_b == 3)
+                    else f"{v:.2f}"
+                )
+                ax1.text(
+                    cx,
+                    top_y + (0.015 if not is_summary else 0.018),
+                    txt,
+                    ha="center",
+                    va="bottom",
+                    fontsize=6.4,
+                    rotation=90 if is_summary else 0,
+                    fontweight="bold" if idx_b == 3 else "normal",
+                    color=ec,
+                )
+            else:
+                bot_y = v - (sd if has_err else 0.0)
+                ax1.text(
+                    cx,
+                    bot_y - 0.015,
+                    f"{v:.2f}",
+                    ha="center",
+                    va="top",
+                    fontsize=6.4,
+                    color=ec,
+                )
+
+    for split_x in (3.5, 4.5, 8.5, 9.5):
+        ax1.axvline(split_x, color="#94a3b8", linestyle=":", linewidth=1.1)
+    ax1.axhline(0.0, color="#64748b", linewidth=0.85)
+    ax1.set_ylim(-0.42, 1.24)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels([g[0] for g in groups], fontsize=7.9)
+    ax1.set_ylabel(
+        "Mean Zero-Shot Objective J (5 eval seeds/site)",
+        fontsize=9.5,
+        fontweight="bold",
+    )
+    ax1.set_title(
+        "A. Blind 8-Site Zero-Shot Holdout Across XS–XL (640 Episodes, 5 Seeds ± 1 SD)",
+        fontsize=10.4,
+        fontweight="bold",
+        color="#0f172a",
+    )
+    ax1.grid(axis="y", linestyle="--", alpha=0.45)
+    ax1.legend(loc="lower right", fontsize=7.6, ncol=2, frameon=True)
+
+    g_val = float(greedy["validation"]["summary"]["meanQuality"])
+    ax2.axhline(
+        g_val,
+        color="#ea580c",
+        linestyle=":",
+        linewidth=1.6,
+        label=f"Greedy (tier_meso2) NYC Val: {g_val:.3f}",
+        zorder=2,
+    )
+    arms_spec = [
+        (
+            "annealed_aux",
+            "Annealed Aux (1.2→0.0) [best Test 0.797]",
+            "#1d4ed8",
+            "-",
+            "o",
+            0.0,
+        ),
+        (
+            "constant_aux",
+            "Constant Aux (λ=1.2)* [best Test 0.801]",
+            "#0f766e",
+            "--",
+            "s",
+            0.0,
+        ),
+        ("pure_rl", "Pure RL (λ=0.0) [best Test 0.464]", "#dc2626", "-.", "^", 0.0),
+    ]
+    for arm_key, label, color, ls, marker, y_off in arms_spec:
+        arm_doc = aux["arms"][arm_key]
+        curve = arm_doc["validationCurve200"]
+        xs = np.array([row["episode"] for row in curve], dtype=np.float32)
+        ym = np.array([row["meanQuality"] for row in curve], dtype=np.float32)
+        ys = np.array([row["stdQuality"] for row in curve], dtype=np.float32)
+        ep200_test = float(
+            arm_doc["aggregate"]["finalTest"]["metrics"]["meanQuality"]["mean"]
+        )
+        ax2.plot(
+            xs,
+            ym,
+            label=label,
+            color=color,
+            linestyle=ls,
+            marker=marker,
+            markersize=4.8,
+            linewidth=2.0,
+            zorder=4 if arm_key == "annealed_aux" else 3,
+        )
+        ax2.fill_between(xs, ym - ys, ym + ys, color=color, alpha=0.12)
+        ax2.text(
+            204,
+            float(ym[-1]) + y_off,
+            f"ep200 Test\n{ep200_test:.3f}",
+            ha="left",
+            va="center",
+            fontsize=7.3,
+            fontweight="bold" if arm_key == "annealed_aux" else "normal",
+            color=color,
+        )
+
+    ax2.set_xlim(42, 236)
+    ax2.set_ylim(0.18, 0.84)
+    ax2.set_xticks([50, 100, 150, 200])
+    ax2.set_xlabel(
+        "Training Episode (50-Ep Checkpoint)", fontsize=9.5, fontweight="bold"
+    )
+    ax2.set_ylabel(
+        "Mean Validation Objective J (3 NYC Sites)", fontsize=9.5, fontweight="bold"
+    )
+    ax2.set_title(
+        "B. 200-Episode Auxiliary Supervision Ablation (3 Seeds ± 1 SD)",
+        fontsize=10.4,
+        fontweight="bold",
+        color="#0f172a",
+    )
+    ax2.grid(True, linestyle="--", alpha=0.45)
+    ax2.legend(
+        loc="center right", bbox_to_anchor=(0.98, 0.56), fontsize=7.4, frameon=True
+    )
+
+    fig.suptitle(
+        "Blind Cross-Scale Transfer (XS–XL) & Auxiliary-Supervision Schedule Ablation (Apple M4 MPS)",
+        fontsize=12.0,
+        fontweight="bold",
+        color="#0f172a",
+        y=0.98,
+    )
+    fig.text(
+        0.5,
+        0.015,
+        "Panel A: 8 untouched parcels (0 overlap with train/val, best.pt, seeds 4211-4215). Panel B: seeds 4211-4213, tier_meso2 + dense_potential + learned_cap (*constant_aux uses 400-ep cosine LR prefix).",
+        ha="center",
+        fontsize=8.0,
+        color="#475569",
+    )
+    fig.tight_layout(rect=(0.0, 0.04, 1.0, 0.93))
+    out = MEDIA_DIR / "blind-8site-and-aux-ablation.png"
+    fig.savefig(out, facecolor="#ffffff")
+    plt.close(fig)
+    print(f"Saved {out.relative_to(ROOT)} ({out.stat().st_size / 1024:.1f} KB)")
+
+
 def _load_summary(summary_path: Path, cfg: ExperimentConfig) -> dict:
     if summary_path.is_file():
         return json.loads(summary_path.read_text())
@@ -2230,6 +2465,7 @@ def main():
             "all",
             "arch",
             "lxl",
+            "blind",
             "curves",
             "ablation",
             "multitier",
@@ -2248,6 +2484,10 @@ def main():
     if args.only in ("all", "lxl"):
         generate_l_xl_ablation_figure()
         if args.only == "lxl":
+            return
+    if args.only in ("all", "blind"):
+        generate_blind_and_aux_ablation_figure()
+        if args.only == "blind":
             return
     summary = _load_summary(
         args.summary, ExperimentConfig.read(args.run_dir / "config.json")

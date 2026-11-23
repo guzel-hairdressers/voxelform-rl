@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import math
+from dataclasses import dataclass
 from typing import Sequence
-
-from .core_plans import CORE_LAYOUT_VERSION, plan_library
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+
+from .core_plans import CORE_LAYOUT_VERSION, plan_library
 
 UNREACHABLE_DIST: float = 999.0
 SQRT2: float = math.sqrt(2.0)
@@ -87,6 +87,8 @@ class PlacedCore:
     def to_dict(self) -> dict:
         template = next(t for t in CORE_TEMPLATES if t.tier == self.tier)
         plan = template.metric_plan
+        if plan is None:
+            raise ValueError(f"Missing metric plan for tier {self.tier}")
         return {
             "layoutVersion": CORE_LAYOUT_VERSION,
             "stairLayout": plan["stairLayout"],
@@ -245,7 +247,7 @@ def compute_core_distance(
         se = p[:, 2:, 2:]
         diags = [
             torch.where(ok, value, inf_val)
-            for ok, value in zip(diag_legal, (nw, ne, sw, se))
+            for ok, value in zip(diag_legal, (nw, ne, sw, se), strict=False)
         ]
         diag = (
             torch.minimum(
@@ -644,7 +646,7 @@ def solve_cores(
                 else 0.0
             )
 
-            key = (
+            cand_key = (
                 uncov,
                 round(bad_sum, 4),
                 round(mean_d, 4),
@@ -652,8 +654,8 @@ def solve_cores(
                 -float(att_arr[ci]),
                 ci,
             )
-            if best_key is None or key < best_key:
-                best_key = key
+            if best_key is None or cand_key < best_key:
+                best_key = cand_key
                 best_bi = bi
                 best_ci = ci
 

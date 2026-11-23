@@ -1904,6 +1904,9 @@ async def load_policy(request: Request):
                     floor_copy=False,
                     net_guided=True,
                     spatial_aux_weight=float(policy_state.get("spatialAuxWeight", 1.2)),
+                    decoder_retry_schedule=str(
+                        policy_state.get("decoderRetrySchedule", "learned_cap")
+                    ),
                 )
                 expected_state = replacement.model.state_dict()
                 stage_goal_keys = {

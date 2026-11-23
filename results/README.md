@@ -9,7 +9,8 @@ Independent zero-shot evaluation (`640` episodes total across eval seeds
 on eight untouched catalog parcels (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`,
 `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`) with
 verified zero Haversine context overlap against all `10` training sites and `3`
-NYC validation sites ([evidence](blind-8site-all-tiers-mps-2026-11-23.json)).
+NYC validation sites ([Evidence](blind-8site-all-tiers-mps-2026-11-23.json) ·
+[Figure](../docs/media/blind-8site-and-aux-ablation.png)).
 Across all `5` archived `400`-ep seeds (`4211–4215`), FAR-Gated `actor_critic`
 outscores `tier_meso2` Greedy on **all `4/4` blind `L/XL` parcels** and **`6/8`
 blind parcels overall**, cutting `XS_M` cross-seed SD from `±0.206` (ungated)
@@ -38,7 +39,9 @@ FAR-gated `tier_meso2 + dense_potential + learned_cap` (`pure_rl`
 [config](../configs/research-annealed-all-tiers.json) trained for `200` episodes;
 `constant_aux` uses the `<= 200`-episode `best.pt` checkpoints `150/100/100` plus
 evaluated `checkpoint-000200.pt` from `runs/control_all_tiers`, which ran a
-`400`-episode cosine LR horizon). [Ablation evidence](aux-ablation-200ep-mps-2026-11-23.json)
+`400`-episode cosine LR horizon).
+[Ablation evidence](aux-ablation-200ep-mps-2026-11-23.json) ·
+[Figure](../docs/media/blind-8site-and-aux-ablation.png)
 
 | Arm (`seeds 4211–4213`) | `best.pt` Val ($J$ / FAR) | `best.pt` Test ($J$ / FAR / m²) | `ep 200` Val ($J$ / FAR) | `ep 200` Test ($J$ / FAR / m²) |
 |---|---:|---:|---:|---:|

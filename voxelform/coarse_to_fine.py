@@ -1,38 +1,41 @@
 """Additive N-stage coarse-to-fine policy (4x4x1 / 2x2x1 -> 1x1x3 m fine) with 14-ch compact cores."""
 
-from dataclasses import asdict
 import math
 import time
+from dataclasses import asdict
 from typing import Any
+
 import numpy as np
-from scipy import ndimage as ndi
 import torch
+from scipy import ndimage as ndi
 from torch import nn
 from torch.distributions import Categorical, Normal
 from torch.nn import functional as F
 
 from .actions import STRUCTURE, exterior_air
 from .cores import DEFAULT_MAX_CORE_DIST, DEFAULT_MIN_CORE_SPACING, solve_cores
+from .decoder_diagnostics import DecoderDiagnostics
 from .fields import depth_badness, diffuse_access, facade_sky_access, usable_depth_proxy
+from .objectives import coarse_potential, fine_potential
 from .patch_policy import PatchConfig, PatchFacades, gaussian_field
 from .redistribution import Exchange
-from .decoder_diagnostics import DecoderDiagnostics
-from .objectives import coarse_potential, fine_potential
 from .rollout import finish_episode_rollout, generalized_advantages
 from .shadows import sync
 from .unified import (
     OPERATIONS,
+    Organic3DNetwork,
     _ensure_external_potential,
     _organic_goal_features,
     _pooled_edit_eligibility,
-    Organic3DNetwork,
     clean_floor_numpy,
     clean_floor_tensor,
-    commit as commit_fine,
     compute_spatial_desirability,
     growth_mask,
     long_narrow_mask,
     min_room_width,
+)
+from .unified import (
+    commit as commit_fine,
 )
 from .workload import WorkloadBudget
 
@@ -1495,7 +1498,9 @@ class CoarseToFineLearner:
                 avail_rem = int(env_or_cenv.frontier.eligible(-1)[:z_act].sum())
                 avail_add = int(add_np.sum())
                 occ_s = env_or_cenv.occupied[:z_act]
-                kernel = tuple(min(n, s) for n, s in zip(occ_s.shape, stride))
+                kernel = tuple(
+                    min(n, s) for n, s in zip(occ_s.shape, stride, strict=False)
+                )
                 consumed = (
                     [0]
                     if operation == "remove"

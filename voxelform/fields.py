@@ -1,10 +1,13 @@
 """Device-resident relative environmental fields; no dBA/lux claims."""
 
 import math
+from typing import Any
+
 import numpy as np
 import torch
 import torch.nn.functional as F
-from .shadows import DirectShadows
+
+from .shadows import DirectShadows, MeshShadows
 
 
 def grid_points(shape, device="cpu", spacing=(1.0, 1.0, 3.0)):
@@ -65,11 +68,10 @@ def sky_boundary(
     boundary[1:-1, 1:-1, 1:-1] = False
     boundary[0] = False
     out = torch.zeros(padded, device=device)
+    method: DirectShadows | MeshShadows
     if buildings is None:
         method = DirectShadows(boxes, suns, device)
     else:
-        from .shadows import MeshShadows
-
         method = MeshShadows(buildings, suns, device)
     out[boundary] = method.query(p[boundary]).float().mean(0)
     return out
@@ -215,6 +217,7 @@ def facade_depth(occupied, exterior=None, pitch=1.0):
     Empty cells return zero. No sky/lighting sufficiency is asserted here.
     """
     from scipy import ndimage as ndi
+
     from .actions import exterior_air, neighbors_horizontal
 
     occupied = np.asarray(occupied, dtype=bool)
@@ -257,7 +260,7 @@ def depth_badness(depth):
     return np.clip((np.asarray(depth) - 8.0) / 8.0, 0.0, 1.0)
 
 
-_DEPTH_TENSOR_GRIDS = {}
+_DEPTH_TENSOR_GRIDS: dict[tuple[Any, ...], tuple[torch.Tensor, torch.Tensor]] = {}
 
 
 def facade_depth_tensor(occupied, exterior):

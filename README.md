@@ -18,6 +18,8 @@ Urban building massing provides the concrete constraint structure, proxy physics
 
 ## Visual Overview
 
+*Note: The 3D trajectory animations and qualitative site renders below illustrate `compact-core.v5` rollouts from the historical `600`-episode `tier_adaptive` baseline; quantitative multi-tier benchmarks use the `400`-episode FAR-gated `tier_meso2` policies reported in the ablation sections below.*
+
 ### Sequential 3D Editing Trajectory on Held-Out Paris (`600`-Episode Tier-Adaptive Policy)
 
 ![600-episode tier-adaptive trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
@@ -145,6 +147,8 @@ The strict ablation shows three complementary effects: (1) switching from `tier_
 
 #### Blind 8-Site Zero-Shot Evaluation Across `XS`–`XL` (`640` Episodes)
 
+![8-site zero-shot blind holdout across XS-XL tiers and 200-episode auxiliary-supervision schedule ablation](docs/media/blind-8site-and-aux-ablation.png)
+
 To verify transfer beyond the split used to diagnose `seed-4213`, all archived `400`-ep five-seed arms (`4211–4215`, `best.pt`) and `tier_meso2` Greedy were evaluated zero-shot across **eight untouched catalog parcels** spanning every tier (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`, `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`; verified zero Haversine context overlap with all `10` train and `3` NYC validation sites; [results/blind-8site-all-tiers-mps-2026-11-23.json](results/blind-8site-all-tiers-mps-2026-11-23.json)):
 
 | Method (`temp=1.0 / noise=1.0`, `5` seeds unless Greedy) | All `8` Blind ($J$ / FAR / Usable m²) | `XS–M` (`4` sites) | `L–XL` (`4` sites) |
@@ -256,7 +260,8 @@ uv run --frozen vf-research train \
 
 ```sh
 # Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans;
-# POST /api/policy accepts both live checkpoints and voxelform.research.v2 / multiscale weights)
+# POST /api/policy accepts live checkpoints and voxelform.research.v2 / multiscale weights,
+# running fine 1x1x1 edits with learned_cap + the |FAR - FAR*| <= 0.75 exchange gate)
 uv run --frozen python main.py
 
 # Run complete verification suite (218 Python tests, 11 JS geometry tests, ruff + mypy)
