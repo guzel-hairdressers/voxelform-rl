@@ -1,6 +1,6 @@
 # 60-episode L and XL pilot
 
-Fixed guidance was promoted by the validation screen. The selected actor–critic and imitation control each trained for 60 episodes on five model seeds. The test compared the final checkpoints to greedy under the same decoder and five evaluation seeds per plot. The 600-episode follow-up validates every 50 episodes and reports both validation-selected and final checkpoints. [Follow-up protocol](../docs/EXPERIMENT_PROTOCOL.md#600-episode-lxl-follow-up)
+Fixed guidance was promoted by the validation screen. The selected actor–critic and imitation control each trained for 60 episodes on five model seeds. The test compared the final checkpoints to greedy under the same decoder and five evaluation seeds per plot. The 600-episode follow-up validates every 50 episodes and reports both validation-selected and final checkpoints. [Follow-up protocol](../../docs/EXPERIMENT_PROTOCOL.md#600-episode-lxl-follow-up)
 
 | Test plot | Promoted RL | Imitation | Greedy |
 |---|---:|---:|---:|

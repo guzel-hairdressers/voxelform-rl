@@ -25,6 +25,7 @@ from .unified import (
     OPERATIONS,
     Organic3DNetwork,
     _ensure_external_potential,
+    _learned_quota,
     _organic_goal_features,
     _pooled_edit_eligibility,
     clean_floor_numpy,
@@ -80,13 +81,6 @@ def _heuristic_op_index(
     if bool(legal[2]):
         return 2
     return int(legal.nonzero(as_tuple=False)[0].item())
-
-
-def _learned_quota(score, weights, max_count, min_step, floor_frac=0.35):
-    """Cap thresholded positive-logit voxel selection within [min_count, max_count]."""
-    min_count = min(max_count, max(min_step, round(floor_frac * max_count)))
-    pos = int(((score > 0.5 * weights) & (weights > 0)).sum().item())
-    return min(max_count, max(min_count, pos))
 
 
 def _pool_boundary_2d(arr, kz, kx_y):

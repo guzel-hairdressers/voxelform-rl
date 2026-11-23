@@ -4,13 +4,16 @@ Both masks are decoded from one actor pass. Invalid pairs are rejected whole;
 neither a geometric candidate bank nor synthesized bridging voxels are used.
 """
 
+import math
+import time
 from dataclasses import dataclass
-import math, time
+
 import numpy as np
-from scipy import ndimage as ndi
 import torch
-from torch.nn import functional as F
+from scipy import ndimage as ndi
 from torch.distributions import Normal
+from torch.nn import functional as F
+
 from .actions import STRUCTURE, exterior_air
 from .patch_policy import gaussian_field
 
@@ -188,7 +191,9 @@ def choose(
     move = None
     with torch.set_grad_enabled(training):
         fields, value = policy.fields(env)
-        kernel = tuple(min(n, s) for n, s in zip(env.shape, policy.config.stride))
+        kernel = tuple(
+            min(n, s) for n, s in zip(env.shape, policy.config.stride, strict=True)
+        )
         mean = F.avg_pool3d(
             fields[:, None],
             kernel,

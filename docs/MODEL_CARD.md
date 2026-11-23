@@ -58,8 +58,9 @@ teachers (`teacher_xs_m_seed789.pt`, `teacher_l_xl_ep100.pt`) are bundled under
 [`data/teachers/`](../data/teachers/) for reproducing `on_policy_distill`. Full
 student run directories remain local and gitignored; any saved `voxelform.research.v2` /
 `voxelform.multiscale.v1` `14`-channel checkpoint can also be imported into the
-live web inspector via `POST /api/policy` (mapping all fine-stage weights identically
-by projecting out the `scale=1` zero `stage_feat` column). New-run checkpoints
+live web inspector via `POST /api/policy`, executing `2×2×1 → 1×1×1`
+`tier_meso2` coarse-to-fine evaluation on parcels `>= 2,500 m²` alongside `1×1×1`
+fine edits (`UnifiedLearner` fallback weights are also synced). New-run checkpoints
 contain a reproducibility envelope and source archive.
 
 **Known limits:** proxy reward exploitation, imperfect exposure simulation,

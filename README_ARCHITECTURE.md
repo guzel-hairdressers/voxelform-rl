@@ -53,15 +53,22 @@ The evaluation keeps three design questions distinct. **Plan depth** measures ho
 
 Selected layouts across five parcel sizes show how the same policy adapts to narrow infill, perimeter wings, and larger blocks with several circulation cores.
 
-![Untrained and trained rollouts compared on the same Hong Kong, New York, and Paris parcels](docs/media/heldout-generalization.png)
+![Untrained seed-4211 and 400-episode FAR-gated tier_meso2 rollouts compared on the same New York, Paris, and Singapore parcels](docs/media/heldout-generalization.png)
 
-The upper and lower rows compare untrained and trained rollouts on the same sites and evaluation seeds. With the unified `2×2×1 → 1×1×1` cascade and FAR-gated editing, five-seed single-stage RL (`0.803`, `100%` FAR) leads the greedy heuristic (`0.734`) across all seven held-out validation and test plots ([L/XL ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md)). Across an untouched **eight-site blind holdout (`XS`–`XL`)**, FAR-gated RL reaches `0.864 ± 0.046` (`99.5%` FAR) vs. Greedy `0.824`, leading on `4/4` blind `L/XL` parcels and `6/8` parcels overall, while the matched `400`-episode, five-seed auxiliary ablation confirms linear annealing (`1.2 → 0.0`) holds `0.767` (`99%` FAR) at episode `400` and `0.883` on blind `L/XL` parcels versus `0.420` (`0.501` blind `L/XL`) for pure RL from scratch.
+The upper and lower rows compare untrained and trained rollouts on the same held-out parcels (`l_nyc_0019`, `m_prs_0320`, `l_sgp_0327`) and evaluation seeds. With the unified `2×2×1 → 1×1×1` cascade and FAR-gated editing, five-seed single-stage RL (`0.803`, `100%` FAR) leads the greedy heuristic (`0.734`) across all seven held-out validation and test plots ([L/XL ablation report](results/control-all-tiers-400ep-mps-2026-11-22.md)). Across an untouched **eight-site blind holdout (`XS`–`XL`)**, FAR-gated RL reaches `0.864 ± 0.046` (`99.5%` FAR) vs. Greedy `0.824`, leading on `4/4` blind `L/XL` parcels and `6/8` parcels overall, while the matched `400`-episode, five-seed auxiliary ablation confirms linear annealing (`1.2 → 0.0`) holds `0.767` (`99%` FAR) at episode `400` and `0.883` on blind `L/XL` parcels versus `0.420` (`0.501` blind `L/XL`) for pure RL from scratch.
 
 ### Research figures
 
-| Blind 8-site holdout & 400-ep aux ablation | Five-seed L/XL ablation (`400` ep) | Five-seed M-tier training & controls (`600` ep) |
-| --- | --- | --- |
-| [![Blind 8-site zero-shot holdout and matched 400-episode auxiliary ablation](docs/media/blind-8site-and-aux-ablation.png)](docs/media/blind-8site-and-aux-ablation.png) | [![Five-seed L/XL validation curves and held-out ablation](docs/media/l-xl-ablation-400ep.png)](docs/media/l-xl-ablation-400ep.png) | [![Five-seed M-tier training curves and held-out comparisons](docs/media/training-curves-600ep.png)](docs/media/training-curves-600ep.png) |
+| Blind 8-site holdout & 400-ep aux ablation | Five-seed L/XL ablation (`400` ep) |
+| --- | --- |
+| [![Blind 8-site zero-shot holdout and matched 400-episode auxiliary ablation](docs/media/blind-8site-and-aux-ablation.png)](docs/media/blind-8site-and-aux-ablation.png) | [![Five-seed L/XL validation curves and held-out ablation](docs/media/l-xl-ablation-400ep.png)](docs/media/l-xl-ablation-400ep.png) |
+
+<details>
+<summary>Historical five-seed M-tier baseline chart (<code>600</code> ep, <code>tier_adaptive</code>)</summary>
+
+[![Five-seed M-tier training curves and held-out comparisons](docs/media/training-curves-600ep.png)](docs/media/training-curves-600ep.png)
+
+</details>
 
 Open a figure at full size for metrics and legends. [Technical README](README.md) · [Results index](results/README.md)
 

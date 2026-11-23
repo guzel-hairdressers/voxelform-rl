@@ -29,8 +29,8 @@
   Historical results remain intact but use earlier core/loss semantics.
 - Use `uv sync --frozen --extra dev` and `uv.lock`. Synthetic CPU CI plus JS
   checks require no sibling renderer/data. Record real hardware for MPS claims.
-- Live site rotation uses the ten-site training split in `configs/research-real.json`
-  (two each from XS to XL). It switches after three completed episodes per site
+- Live site rotation uses the ten-site training split in `configs/research-control-all-tiers.json`
+  (covering XS to XL; historical M-tier split archived under `configs/historical/research-real.json`). It switches after three completed episodes per site
   while sharing the policy and optimizer. Treat
   the local top-five archive as outputs for review. Keep held-out evaluation
   evidence separate. Layouts and full episode statistics persist under ignored

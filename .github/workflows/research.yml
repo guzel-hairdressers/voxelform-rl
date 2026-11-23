@@ -24,7 +24,7 @@ jobs:
         run: uv run --frozen --extra dev ruff check .
       - name: Research runner import, bugbear and type checks
         run: |
-          uv run --frozen --extra dev ruff check --select I,B tools/research.py voxelform/experiment.py voxelform/rollout.py voxelform/decoder_diagnostics.py voxelform/coarse_to_fine.py voxelform/objectives.py voxelform/cores.py voxelform/core_plans.py voxelform/fields.py voxelform/layout_archive.py
+          uv run --frozen --extra dev ruff check --select I,B tools/research.py voxelform/actions.py voxelform/coarse_to_fine.py voxelform/context.py voxelform/core_plans.py voxelform/cores.py voxelform/decoder_diagnostics.py voxelform/experiment.py voxelform/fields.py voxelform/layout_archive.py voxelform/objectives.py voxelform/patch_policy.py voxelform/policy.py voxelform/redistribution.py voxelform/rollout.py voxelform/shadows.py voxelform/workload.py
           uv run --frozen --extra dev mypy
       - name: Headless pipeline smoke test (no Module Lab data or UI)
         run: uv run --frozen --extra dev vf-research train --config configs/research-smoke.json --output runs/ci-smoke

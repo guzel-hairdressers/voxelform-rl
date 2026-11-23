@@ -90,25 +90,29 @@ all three unseen New York validation plots (`0.707 ± 0.022` at `100%` FAR vs.
 [Report](distill-all-tiers-400ep-mps-2026-11-22.md) ·
 [Evidence](distill-all-tiers-400ep-mps-2026-11-22.json) ·
 [Matched Greedy](greedy-control-all-tiers-mps-2026-11-22.json) ·
-[L/XL Greedy](greedy-expert-l-xl-mps-2026-11-22.json)
+[Historical L/XL Greedy](historical/greedy-expert-l-xl-mps-2026-11-22.json)
 
-## 600-episode L and XL follow-up — 2026-11-22
+## Historical results (pre-`tier_meso2` & early checks)
+
+All earlier `tier_adaptive`, `60`-episode L/XL pilot, `600`/`1200`-episode M-tier, and synthetic benchmark JSON/Markdown artifacts are archived under [`results/historical/`](historical/).
+
+### 600-episode L and XL follow-up — 2026-11-22
 
 Five matched model seeds per arm, with checkpoint evaluation every 50 episodes.
 Imitation averaged higher test scores than guided RL at both checkpoint choices.
 Greedy led the four-plot mean and both XL plots. Guided RL's validation-selected
-checkpoints led the Singapore L plot. [Report](l-xl-600ep-mps-2026-11-22.md) ·
-[Evidence](l-xl-600ep-mps-2026-11-22.json)
+checkpoints led the Singapore L plot. [Report](historical/l-xl-600ep-mps-2026-11-22.md) ·
+[Evidence](historical/l-xl-600ep-mps-2026-11-22.json)
 
-## 60-episode L and XL pilot — 2026-11-22
+### 60-episode L and XL pilot — 2026-11-22
 
 Greedy led at all four test plots in the 60-episode pilot. Guided
 RL outscored imitation at every plot. The study also measured adaptive retries,
 tested two alternative rewards during training, and compared policies on a
-synthetic two-edit planning case. [Report](confirmatory-l-xl-2026-11-22.md) ·
-[Evidence](confirmatory-l-xl-mps-2026-11-22.json)
+synthetic two-edit planning case. [Report](historical/confirmatory-l-xl-2026-11-22.md) ·
+[Evidence](historical/confirmatory-l-xl-mps-2026-11-22.json)
 
-## Held-out L and XL comparison — 2026-11-22
+#### Held-out L and XL comparison — 2026-11-22
 
 On Apple M4 MPS, five archived validation-selected checkpoints and two fresh
 30-episode guided RL policies ran on the same three unseen plots as the greedy
@@ -145,23 +149,23 @@ resolution. An additional 168 single draws held the initial state fixed at each
 site and scale. Within each operation and budget group, all proposal masks and
 all accepted masks were distinct. Rejection was common in that probe, including
 all first-attempt fine removals on the initial Hong Kong and Paris masses. This
-diagnostic covers one checkpoint and the probed states. [Metrics, hashes and per-stage counts](heldout-l-xl-mps-2026-11-22.json)
+diagnostic covers one checkpoint and the probed states. [Metrics, hashes and per-stage counts](historical/heldout-l-xl-mps-2026-11-22.json)
 
-## Earlier research results
+### Earlier M-tier, pipeline, and prototype results
 
-- **600-episode tier-adaptive comparison, five archived seeds (`compact-core.v5`, M4 MPS, seeds `123, 456, 789, 202, 303`, `checkpoint_interval=50`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 -> 2.0e-4`):** [600-ep 5-seed tier-adaptive summary](real-aux-tier-600ep-mps-2026-11-21.json) (`configs/research-real-aux-tier-600ep.json`; `XS/S/M` direct `1×1×1`, `L` `2×2×1 → 1×1×1`, `XL` `4×4×1 → 2×2×1 → 1×1×1`, scale-normalized Gaussian retry surrogate; `gitCommit: dccc2d5`, `gitDirty: false`; `best.pt` selected strictly on held-out `m_hk_0199` at `[100, 400, 250, 200, 150]`; Val `1.129 ± 0.075` / `FAR 1.00`, Test `0.776 ± 0.103` / `FAR 1.00` vs episode-600 `latest.pt` Val `0.979 ± 0.131` / `FAR 0.88`, Test `0.646 ± 0.352`).
+- **600-episode tier-adaptive comparison, five archived seeds (`compact-core.v5`, M4 MPS, seeds `123, 456, 789, 202, 303`, `checkpoint_interval=50`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 -> 2.0e-4`):** [600-ep 5-seed tier-adaptive summary](historical/real-aux-tier-600ep-mps-2026-11-21.json) (`configs/historical/research-real-aux-tier-600ep.json`; `XS/S/M` direct `1×1×1`, `L` `2×2×1 → 1×1×1`, `XL` `4×4×1 → 2×2×1 → 1×1×1`, scale-normalized Gaussian retry surrogate; `gitCommit: dccc2d5`, `gitDirty: false`; `best.pt` selected strictly on held-out `m_hk_0199` at `[100, 400, 250, 200, 150]`; Val `1.129 ± 0.075` / `FAR 1.00`, Test `0.776 ± 0.103` / `FAR 1.00` vs episode-600 `latest.pt` Val `0.979 ± 0.131` / `FAR 0.88`, Test `0.646 ± 0.352`).
   The historical runner flushed pending optimizer batches at checkpoint boundaries. Its validation and test plots exercised the M-tier fine pathway.
-- **Greedy physics-heuristic non-learned baseline (`compact-core.v5`, M4 MPS, `0` learned params):** [greedy heuristic summary](greedy-heuristic-tier-mps-2026-11-21.json) (`vf-research heuristic --config configs/research-real-aux-tier-600ep.json`; frontier selection via `compute_spatial_desirability` + projector $\Pi_{\text{valid}}$; `gitCommit: da065b4`, `gitDirty: false`; Val `m_hk_0199` `1.1315`, Test `0.8099`, `FAR 1.00`, NYC `0.5273`, Paris `1.0925`).
-- **600-episode RL ablation without spatial auxiliary loss (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=0.0`):** [600-ep auxiliary-off summary](real-tier-600ep-mps-2026-11-21.json) (`configs/research-real-tier-600ep.json`; same cascade and decoder, trained from scalar reward; Val `m_hk_0199` `0.9074`, Test `0.4771`, `FAR 1.00`, NYC `0.2090`, Paris `0.7452`).
-- **1,200-episode flat `1×1×1` baseline (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`):** [1,200-ep flat baseline summary](real-aux-1200ep-mps-2026-11-21.json) (`configs/research-real-aux-1200ep.json`; 10 balanced XS–XL sites, zero-shot held-out eval on HK `0.7729` + NYC/Paris `0.5782`, matched decoding `1.0/1.0`, full `1200`-episode traces aggregated in 30-ep bins).
-- **Pipeline & compact-core verification:** [ML pipeline](ml-infrastructure-final-check-2026-11-20.json),
-[compact cores](core-layout-v2-check-2026-11-20.json). The short checks are not convergence or learned-quality evidence.
-- **Historical compute & cascade pilots (`2026-11-19`):** [scene cache & vertical scaling](scalable-height-speedup-2026-11-19.json), [early multi-scale cascade tradeoff](multiscale-ablation-2026-11-19.json) (pre-`compact-core.v5`; their older reward/core semantics must not be conflated with current runs).
+- **Greedy physics-heuristic non-learned baseline (`compact-core.v5`, M4 MPS, `0` learned params):** [greedy heuristic summary](historical/greedy-heuristic-tier-mps-2026-11-21.json) (`vf-research heuristic --config configs/historical/research-real-aux-tier-600ep.json`; frontier selection via `compute_spatial_desirability` + projector $\Pi_{\text{valid}}$; `gitCommit: da065b4`, `gitDirty: false`; Val `m_hk_0199` `1.1315`, Test `0.8099`, `FAR 1.00`, NYC `0.5273`, Paris `1.0925`).
+- **600-episode RL ablation without spatial auxiliary loss (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=0.0`):** [600-ep auxiliary-off summary](historical/real-tier-600ep-mps-2026-11-21.json) (`configs/historical/research-real-tier-600ep.json`; same cascade and decoder, trained from scalar reward; Val `m_hk_0199` `0.9074`, Test `0.4771`, `FAR 1.00`, NYC `0.2090`, Paris `0.7452`).
+- **1,200-episode flat `1×1×1` baseline (`compact-core.v5`, M4 MPS, `seed=123`, `spatial_aux_weight=1.2`):** [1,200-ep flat baseline summary](historical/real-aux-1200ep-mps-2026-11-21.json) (`configs/historical/research-real-aux-1200ep.json`; 10 balanced XS–XL sites, zero-shot held-out eval on HK `0.7729` + NYC/Paris `0.5782`, matched decoding `1.0/1.0`, full `1200`-episode traces aggregated in 30-ep bins).
+- **Pipeline & compact-core verification:** [ML pipeline](historical/ml-infrastructure-final-check-2026-11-20.json),
+[compact cores](historical/core-layout-v2-check-2026-11-20.json). The short checks are not convergence or learned-quality evidence.
+- **Historical compute & cascade pilots (`2026-11-19`):** [scene cache & vertical scaling](historical/scalable-height-speedup-2026-11-19.json), [early multi-scale cascade tradeoff](historical/multiscale-ablation-2026-11-19.json) (pre-`compact-core.v5`; their older reward/core semantics must not be conflated with current runs).
 
-# First prototype measurements — 2026-11-06
+### First prototype measurements — 2026-11-06
 
-Raw data: [CPU](benchmark-cpu.json), [MPS](benchmark-mps.json),
-[field probes](field-probes.json).
+Raw data: [CPU](historical/benchmark-cpu.json), [MPS](historical/benchmark-mps.json),
+[field probes](historical/field-probes.json).
 These are synthetic method checks, not a design-quality or convergence study.
 
 The final CPU and MPS runs used identical eight-edit volume sequences and

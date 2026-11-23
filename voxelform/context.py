@@ -7,7 +7,6 @@ from urllib.parse import unquote, urlsplit
 
 import numpy as np
 
-
 BUNDLED_ROOT = Path(__file__).resolve().parents[1] / "data" / "urban_context"
 SIBLING_ROOT = Path(__file__).resolve().parents[2] / "Module-Lab"
 DEFAULT_ROOT = (

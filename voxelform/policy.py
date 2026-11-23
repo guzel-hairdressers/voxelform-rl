@@ -6,10 +6,12 @@ of masks. Two convolutional output channels define the mask distribution itself.
 
 import math
 import time
+
 import numpy as np
 import torch
 from torch import nn
 from torch.distributions import Bernoulli
+
 from .actions import ACTION_SPACE
 from .shadows import sync
 
@@ -30,8 +32,11 @@ class Network(nn.Module):
         self.critic = nn.Sequential(nn.Linear(51, 32), nn.SiLU(), nn.Linear(32, 1))
         nn.init.zeros_(self.goal_encoder.weight)
         nn.init.zeros_(self.goal_encoder.bias)
-        nn.init.normal_(self.mask_head[-1].weight, std=0.01)
-        nn.init.constant_(self.mask_head[-1].bias, -3.0)
+        final_mask_layer = self.mask_head[-1]
+        assert isinstance(final_mask_layer, nn.Conv2d)
+        nn.init.normal_(final_mask_layer.weight, std=0.01)
+        assert final_mask_layer.bias is not None
+        nn.init.constant_(final_mask_layer.bias, -3.0)
 
     @property
     def actor(self):
@@ -167,20 +172,20 @@ class Learner:
                 loss=0.0,
                 gradientNorm=0.0,
             )
-        returns = []
+        return_list: list[torch.Tensor] = []
         total = torch.as_tensor(
             bootstrap, dtype=torch.float32, device=self.device
         ).detach()
         for _, _, _, reward in reversed(self.tape):
             total = reward + 0.99 * total
-            returns.append(total)
-        returns = torch.stack(list(reversed(returns)))
-        logp, value, entropy, _ = zip(*self.tape)
-        value = torch.stack(value)
-        advantage = returns - value
-        actor = -(torch.stack(logp) * advantage.detach()).mean()
-        critic = nn.functional.smooth_l1_loss(value, returns)
-        loss = actor + 0.5 * critic - 0.001 * torch.stack(entropy).mean()
+            return_list.append(total)
+        returns = torch.stack(list(reversed(return_list)))
+        logp_seq, value_seq, entropy_seq, _ = zip(*self.tape, strict=True)
+        value_t = torch.stack(value_seq)
+        advantage = returns - value_t
+        actor = -(torch.stack(logp_seq) * advantage.detach()).mean()
+        critic = nn.functional.smooth_l1_loss(value_t, returns)
+        loss = actor + 0.5 * critic - 0.001 * torch.stack(entropy_seq).mean()
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         norm = nn.utils.clip_grad_norm_(

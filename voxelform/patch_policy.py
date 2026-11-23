@@ -1,20 +1,24 @@
 """Direct coherent neural masks. Gaussian latents are RL actions, not patch candidates."""
 
-from dataclasses import dataclass, asdict
-import math, time
+import math
+import time
+from dataclasses import asdict, dataclass
+from typing import Any
+
 import numpy as np
-from scipy import ndimage as ndi
 import torch
+from scipy import ndimage as ndi
 from torch import nn
+from torch.distributions import Bernoulli, Normal
 from torch.nn import functional as F
-from torch.distributions import Normal, Bernoulli
+
 from .actions import ExteriorFacades, exterior_air, neighbors_horizontal
-from .fields import facade_depth, depth_badness, facade_depth_tensor
+from .fields import depth_badness, facade_depth, facade_depth_tensor
 from .policy import Learner, Network
 from .shadows import sync
 
 MODES = ("independent", "smooth", "correlated", "combined")
-_GAUSSIAN_KERNELS = {}
+_GAUSSIAN_KERNELS: dict[tuple[str, torch.dtype, float], torch.Tensor] = {}
 
 
 @dataclass(frozen=True)
@@ -184,10 +188,14 @@ class PatchFacades(ExteriorFacades):
         self.depth_device = (
             torch.device(depth_device) if depth_device is not None else None
         )
-        self._prev_occ = None
-        self._prev_air = None
-        self._empty_voids = None
-        self.plot_edge = None
+        self._prev_occ: np.ndarray | None = None
+        self._prev_air: np.ndarray | None = None
+        self._empty_voids: tuple[np.ndarray, list[int], np.ndarray] | None = None
+        self.plot_edge: np.ndarray | None = None
+        self.depth_numpy: np.ndarray | None = None
+        self.depth_tensor: torch.Tensor | None = None
+        self.old_voids: list[tuple[np.ndarray, list[int], np.ndarray]] | None = None
+        self.remove_weights: np.ndarray | None = None
         super().__init__(occupied, allowed, seed)
 
     @property
@@ -213,23 +221,23 @@ class PatchFacades(ExteriorFacades):
         )
         changed_z = np.flatnonzero(z_mask.any((1, 2))) if z_mask is not None else None
         if self.depth_device is None:
-            if changed_z is not None and getattr(self, "depth_numpy", None) is not None:
+            cur_depth_np = getattr(self, "depth_numpy", None)
+            if changed_z is not None and cur_depth_np is not None:
                 if len(changed_z):
-                    self.depth_numpy[changed_z] = facade_depth(
+                    cur_depth_np[changed_z] = facade_depth(
                         self.occupied[changed_z], self.exterior_air[changed_z]
                     )
             else:
-                self.depth_numpy = np.zeros(self.shape, dtype=np.float32)
+                depth_np = np.zeros(self.shape, dtype=np.float32)
                 if len(occ_z):
-                    self.depth_numpy[occ_z] = facade_depth(
+                    depth_np[occ_z] = facade_depth(
                         self.occupied[occ_z], self.exterior_air[occ_z]
                     )
+                self.depth_numpy = depth_np
             self.depth_tensor = None
         else:
-            if (
-                changed_z is not None
-                and getattr(self, "depth_tensor", None) is not None
-            ):
+            cur_depth_t = getattr(self, "depth_tensor", None)
+            if changed_z is not None and cur_depth_t is not None:
                 if len(changed_z):
                     occ_sub = torch.as_tensor(
                         self.occupied[changed_z], device=self.depth_device
@@ -237,9 +245,9 @@ class PatchFacades(ExteriorFacades):
                     air_sub = torch.as_tensor(
                         self.exterior_air[changed_z], device=self.depth_device
                     )
-                    self.depth_tensor[changed_z] = facade_depth_tensor(occ_sub, air_sub)
+                    cur_depth_t[changed_z] = facade_depth_tensor(occ_sub, air_sub)
             else:
-                self.depth_tensor = torch.zeros(
+                depth_t = torch.zeros(
                     self.shape, dtype=torch.float32, device=self.depth_device
                 )
                 if len(occ_z):
@@ -249,17 +257,19 @@ class PatchFacades(ExteriorFacades):
                     air_sub = torch.as_tensor(
                         self.exterior_air[occ_z], device=self.depth_device
                     )
-                    self.depth_tensor[occ_z] = facade_depth_tensor(occ_sub, air_sub)
+                    depth_t[occ_z] = facade_depth_tensor(occ_sub, air_sub)
+                self.depth_tensor = depth_t
             self.depth_numpy = None
         if self.config.maximum_voids or self.config.minimum_void_area > 1:
+            cur_voids = getattr(self, "old_voids", None)
             if (
                 changed_z is not None
-                and getattr(self, "old_voids", None) is not None
-                and len(self.old_voids) == self.shape[0]
+                and cur_voids is not None
+                and len(cur_voids) == self.shape[0]
             ):
                 for z in changed_z:
                     zi = int(z)
-                    self.old_voids[zi] = self._floor_voids(self.occupied[zi], zi)
+                    cur_voids[zi] = self._floor_voids(self.occupied[zi], zi)
             else:
                 uniform = bool((self.allowed == self.allowed[:1]).all())
                 if uniform and self._empty_voids is None:
@@ -267,6 +277,7 @@ class PatchFacades(ExteriorFacades):
                         np.zeros_like(self.occupied[0]), 0
                     )
                 if uniform:
+                    assert self._empty_voids is not None
                     el, ei, es = self._empty_voids
                     self.old_voids = [
                         self._floor_voids(self.occupied[z], z)
@@ -290,6 +301,8 @@ class PatchFacades(ExteriorFacades):
         self._remove_eligible = self.facade_band.copy()
         if self.config.eligibility == "depth":
             if self.depth_tensor is None:
+                assert self.depth_numpy is not None
+                assert self.remove_weights is not None
                 self.remove_weights = np.maximum(
                     self.remove_weights, depth_badness(self.depth_numpy) * self.occupied
                 )
@@ -308,6 +321,7 @@ class PatchFacades(ExteriorFacades):
         if operation == 1:
             return self.add_skin.astype(np.float32)
         if self.remove_weights is None:
+            assert self.depth_tensor is not None
             self.remove_weights = np.maximum(
                 self.facade_band, depth_badness(self.depth_tensor.cpu().numpy())
             )
@@ -339,6 +353,7 @@ class PatchFacades(ExteriorFacades):
         labels, n = ndi.label(
             self.allowed[z] & ~solid, structure=ndi.generate_binary_structure(2, 1)
         )
+        assert self.plot_edge is not None
         outside = set(np.unique(labels[self.plot_edge[z]]))
         sizes = np.bincount(labels.ravel())
         ids = [i for i in range(1, n + 1) if i not in outside]
@@ -464,7 +479,9 @@ class BudgetNetwork(PatchNetwork):
         nn.init.zeros_(self.budget_critic.weight)
         nn.init.zeros_(self.budget_critic.bias)
 
-    def forward(self, observation, goal, budget):
+    def forward(self, observation, goal, budget=None):
+        if budget is None:
+            raise ValueError("BudgetNetwork.forward requires budget features")
         encoded = self.encoder(observation)
         floor = encoded.mean((-1, -2))
         context = torch.cat((floor.mean(0), floor.amax(0)))
@@ -550,9 +567,10 @@ class PatchLearner(Learner):
             logp = entropy = None
         else:
             channel = 0 if self._operation == -1 else 1
+            model: Any = self.model
             dist = Normal(
                 self._amount_mean[channel],
-                self.model.amount_log_std[channel].clamp(-2.5, 0).exp(),
+                model.amount_log_std[channel].clamp(-2.5, 0).exp(),
                 validate_args=False,
             )
             latent = (
@@ -585,7 +603,7 @@ class PatchLearner(Learner):
         if c.mode in ("independent", "smooth"):
             mean = gaussian_field(field, c.sigma) if c.mode == "smooth" else field
             p = (mean.sigmoid() * weights).clamp(1e-6, 1 - 1e-6)
-            dist = Bernoulli(probs=p[legal], validate_args=False)
+            bern = Bernoulli(probs=p[legal], validate_args=False)
             if greedy:
                 k = max(
                     min(2, remaining, int(legal.sum())),
@@ -600,20 +618,22 @@ class PatchLearner(Learner):
                 selected.flatten()[ids] = True
             else:
                 selected = torch.zeros_like(p, dtype=torch.bool)
-                selected[legal] = dist.sample().bool()
+                selected[legal] = bern.sample().bool()
             logp = (
-                dist.log_prob(selected[legal].float()).sum()
+                bern.log_prob(selected[legal].float()).sum()
                 / math.sqrt(int(legal.sum()))
                 if training
                 else None
             )
-            entropy = dist.entropy().mean() if training else None
+            entropy = bern.entropy().mean() if training else None
             scores = p
         else:
             # All action decoding depends on the sampled latent and the frozen
             # environment. In particular the area k is decoded from this draw,
             # never directly from a separate parameter-dependent neural mean.
-            kernel = tuple(min(n, s) for n, s in zip(field.shape, c.stride))
+            kernel = tuple(
+                min(n, s) for n, s in zip(field.shape, c.stride, strict=True)
+            )
             mean = F.avg_pool3d(
                 field[None, None],
                 kernel_size=kernel,
@@ -621,9 +641,10 @@ class PatchLearner(Learner):
                 ceil_mode=True,
                 count_include_pad=False,
             )[0, 0]
-            std = self.model.patch_log_std[channel].clamp(-2, 1).exp()
-            dist = Normal(mean, std, validate_args=False)
-            latent = mean.detach() if greedy else dist.sample()
+            model: Any = self.model
+            std = model.patch_log_std[channel].clamp(-2, 1).exp()
+            norm_dist = Normal(mean, std, validate_args=False)
+            latent = mean.detach() if greedy else norm_dist.sample()
             decoded = F.interpolate(
                 latent[None, None],
                 size=field.shape,
@@ -647,11 +668,11 @@ class PatchLearner(Learner):
             ids = scores.masked_fill(~legal, -1).flatten().topk(k).indices
             selected.flatten()[ids] = True
             logp = (
-                dist.log_prob(latent).sum() / math.sqrt(latent.numel())
+                norm_dist.log_prob(latent).sum() / math.sqrt(latent.numel())
                 if training
                 else None
             )
-            entropy = dist.entropy().mean() if training else None
+            entropy = norm_dist.entropy().mean() if training else None
         if c.allocation != "probability":
             if c.mode not in ("correlated", "combined"):
                 raise ValueError("Workload allocation requires a correlated sampler")
@@ -699,7 +720,9 @@ class PatchLearner(Learner):
             sync(self.device)
             self.model_seconds = time.perf_counter() - start
             field = fields[0 if operation == -1 else 1]
-            kernel = tuple(min(a, b) for a, b in zip(field.shape, self.config.stride))
+            kernel = tuple(
+                min(a, b) for a, b in zip(field.shape, self.config.stride, strict=True)
+            )
             mean = F.avg_pool3d(
                 field[None, None],
                 kernel_size=kernel,
@@ -707,11 +730,10 @@ class PatchLearner(Learner):
                 ceil_mode=True,
                 count_include_pad=False,
             )[0, 0]
+            model: Any = self.model
             dist = Normal(
                 mean,
-                self.model.patch_log_std[0 if operation == -1 else 1]
-                .clamp(-2, 1)
-                .exp(),
+                model.patch_log_std[0 if operation == -1 else 1].clamp(-2, 1).exp(),
                 validate_args=False,
             )
             legal = weights > 0

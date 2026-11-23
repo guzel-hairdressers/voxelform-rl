@@ -18,13 +18,11 @@ Urban building massing provides the concrete constraint structure, proxy physics
 
 ## Visual Overview
 
-*Note: The 3D trajectory animations and qualitative site renders below illustrate `compact-core.v5` rollouts from the historical `600`-episode `tier_adaptive` baseline; quantitative multi-tier benchmarks use the `400`-episode FAR-gated `tier_meso2` policies reported in the ablation sections below.*
+### Sequential 3D Editing Trajectory on Held-Out Paris (`400`-Episode FAR-Gated `tier_meso2`)
 
-### Sequential 3D Editing Trajectory on Held-Out Paris (`600`-Episode Tier-Adaptive Policy)
+![400-episode FAR-gated tier_meso2 trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
 
-![600-episode tier-adaptive trained policy zero-shot rollout on held-out Paris m_prs_0315 showing occupied mass with crimson compact-core.v5 shafts, core-exempt direct sun proxy, and geodesic core travel distance](docs/media/episode-rollout.gif)
-
-*Zero-shot rollout of the **600-episode tier-adaptive shared policy** (`runs/real-aux-tier-600ep`, `seed=123`, `compact-core.v5`, target `FAR = 3.00 ± 0.10`, `spatial_aux_weight=1.2`, cosine LR `1.2e-3 → 2.0e-4`) on unseen **Paris (`m_prs_0315`, eval seed `9003`, matched decoding `temp=1.0, noise=1.0`)**: over 10 sculpting steps from `FAR 5.70` down to `FAR 3.10`, objective reaches `Obj 1.169` with `69.9%` (`3,013 m²`) usable floor area, `78.0%` `directSunProxy`, `15.9%` `diffuseFacadeProxy`, and `99.2%` core coverage across `4` continuous crimson cores. **Left:** translucent occupied voxels (`1 m × 1 m × 3 m`) with embedded vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without corner cutting. Full clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4).*
+*Zero-shot rollout of the **400-episode FAR-gated `tier_meso2` policy** (`runs/control_all_tiers`, `seed=4211`, validation-selected `best.pt`, `compact-core.v5`, target `FAR = 3.00 ± 0.10`, `spatial_aux_weight = 1.2`, cosine LR `1.2e-3 → 2.0e-4`) on untouched blind **Paris (`m_prs_0315`, eval seed `9003`, matched decoding `temp=1.0, noise=1.0`)**: over 19 sculpting edits (`20` states) from `FAR 5.70` down to `FAR 2.92`, objective reaches **`Obj 1.195`** with `71.1%` (`2,890 m²`) usable floor area, `79.3%` `directSunProxy`, `17.2%` `diffuseFacadeProxy`, and `99.7%` core coverage across `4` continuous crimson cores. **Left:** translucent occupied voxels (`1 m × 1 m × 3 m`) with embedded vertical core shafts. **Middle:** exposed-face `directSunProxy` solar visibility (core faces excluded from daylight averaging while casting shadows). **Right:** 8-neighbor geodesic floor-plate travel distance to nearest core without corner cutting. Full clip: [docs/media/episode-rollout.mp4](docs/media/episode-rollout.mp4).*
 
 ### Procedural Blender Architectural Maquette (`m_prs_0315`, Zero-AI Pipeline)
 
@@ -34,13 +32,13 @@ Urban building massing provides the concrete constraint structure, proxy physics
 
 ### Cross-Scale Trained Showcase (`XS` → `XL`) & Zero-Shot Unseen City Transfer
 
-![600-episode tier-adaptive trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL training sites](docs/media/multitier-showcase.png)
+![400-episode FAR-gated tier_meso2 trained layouts with compact-core.v5 shafts across XS, S, M, L, and XL parcels](docs/media/multitier-showcase.png)
 
-*Selected FAR-satisfied evaluation rollouts per training plot-size tier from the **600-episode tier-adaptive shared policy** (`XS/S/M`: direct `1×1×1`; `L`: `2×2×1 → 1×1×1`; `XL`: `4×4×1 → 2×2×1 → 1×1×1`; `target_far=3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, matched decoding `temp=1.0, noise=1.0`), spanning `xs_tokyo_0133` (`6F`, `0.497` obj, `100%` core coverage), `m_tokyo_0135` (`7F`, `1.082` obj, `2,259 m²` usable, `96%` coverage), `l_bcn_0074` (`1.025` obj, `4,803 m²` usable, `100%` coverage), and `xl_tokyo_0185` (`0.738` obj, `10` cores, `96%` coverage).*
+*Selected FAR-satisfied evaluation rollouts per plot-size tier from the **400-episode FAR-gated `tier_meso2` shared policy** (`runs/control_all_tiers`, `seed=4211`, `best.pt`; `XS/S/M`: `1×1×1`; `L/XL`: `2×2×1 → 1×1×1`; `target_far = 3.0 ± 0.10`, 20F ceiling, `compact-core.v5`, matched decoding `temp=1.0, noise=1.0`), spanning `xs_sgp_0346` (`7F`, `1.054` obj, `1` core, `94%` coverage, seed `9205`), `s_sgp_0345` (`6F`, `1.087` obj, `1,541 m²` usable, `2` cores, `99%` coverage, seed `9204`), `m_tokyo_0135` (`6F`, `1.129` obj, `2,153 m²` usable, `2` cores, `96%` coverage, seed `9204`), `l_bcn_0074` (`6F`, `1.022` obj, `4,675 m²` usable, `6` cores, `99%` coverage, seed `9204`), and `xl_tokyo_0185` (`6F`, `0.910` obj, `4,286 m²` usable, `8` cores, `96%` coverage, seed `9009`).*
 
-![Paired zero-shot comparison between untrained control and 600-episode tier-adaptive trained policy across unseen Hong Kong, New York, and Paris plots](docs/media/heldout-generalization.png)
+![Paired zero-shot comparison between untrained seed-4211 control and 400-episode FAR-gated tier_meso2 trained policy across unseen New York, Paris, and Singapore plots](docs/media/heldout-generalization.png)
 
-*Zero-shot generalization on unseen held-out cities under **matched evaluation decoding (`temp=1.0, noise=1.0`)**: identical seeds (`9005`, `9002`, `9003`) compare untrained seed-123 initialization (top) against the 600-episode tier-adaptive trained checkpoint (bottom).*
+*Zero-shot generalization on unseen held-out cities under **matched evaluation decoding (`temp=1.0, noise=1.0`)**: identical seeds (`9201`, `9203`, `9202`) compare untrained `seed-4211` initialization (top) against the 400-episode FAR-gated `tier_meso2` `best.pt` checkpoint (bottom) across **New York (`l_nyc_0019`, Val `2×2×1→1`: `0.280 → 0.994`, `5,963 m²` usable, `100%` coverage)**, **Paris (`m_prs_0320`, Test `1×1×1`: `0.411 → 0.755`, `1,913 m²` usable, `100%` coverage)**, and **Singapore (`l_sgp_0327`, Test `2×2×1→1`: `0.210 → 0.977`, `5,041 m²` usable, `99%` coverage)**.*
 
 <details>
 <summary>Local Web UI Screenshots (<code>main.py</code>)</summary>
@@ -122,7 +120,7 @@ Instead of memory-bound full-resolution 3D convolutions across arbitrary buildin
 
 The `vf-research` runner (`tools/research.py`, `voxelform/experiment.py`) enforces clean ML evaluation hygiene ([docs/EXPERIMENT_PROTOCOL.md](docs/EXPERIMENT_PROTOCOL.md)):
 
-- **Strict Split & Leakage Guards:** `configs/research-real.json` trains across 10 balanced XS–XL plots (Barcelona, Tokyo, Singapore), validates on Hong Kong (`m_hk_0199`), and tests on held-out New York and Paris (`m_nyc_0003`, `m_prs_0315`), rejecting overlapping Haversine context circles across splits.
+- **Strict Split & Leakage Guards:** The canonical L/XL configs train across `10` Barcelona, Tokyo, and Hong Kong plots, validate on `3` New York plots, and test on Paris and Singapore (with `8` additional blind sites having zero Haversine context overlap across splits); historical M-tier splits ([`configs/historical/research-real.json`](configs/historical/research-real.json)) remain archived.
 - **Controlled Baselines & Honest Accounting:** Evaluates untrained controls and fixed-budget final checkpoints on shared evaluation seeds (isolating evaluation RNG state), retains failed-FAR episodes in every mean, and computes `meanReferenceQuality` using a standardized `10 m / 12 m` `compact-core.v5` referee so core-on/off and travel-limit ablations remain comparable.
 - **Full Provenance & Exact CPU Resume:** Each run archives `config.json`, `manifest.json` (git SHA, source SHA-256s, hardware/packages), `source.tar.gz` (including dirty diffs), `scenes.json`, and atomic optimizer+RNG checkpoints with strict hash verification on `--resume`.
 
@@ -172,16 +170,17 @@ All three arms share the exact same `400`-episode budget, `5` model seeds (`4211
 
 With matched horizons and seeds, **pure RL without `des_c` (`λ_aux = 0.0`) stalls through episode `400`** (`0.420` Test; `0.531` blind), confirming the spatial auxiliary objective is essential for `14`-channel spatial credit assignment. **Linearly annealing `λ_aux: 1.2 → 0.0` matches constant `des_c` supervision** (`0.727` vs. `0.723` Val; `0.790` vs. `0.803` Test; beating Greedy on `4/4` blind `L/XL` sites at `0.883 ± 0.024` and `7/8` blind sites overall), while raising fixed-budget episode-`400` FAR compliance from `94.0% → 99.0%` (`0.767` vs. `0.762` Test; `0.688` vs. `0.667` Val) once training finishes under pure RL (`λ_aux = 0.0`), leaving constant `λ_aux = 1.2` slightly stronger only on tiny `xs_sgp_0346` (`0.798` vs. `0.534`).
 
-### 600-Episode M-Tier Baseline & Component Controls
+<details>
+<summary>Historical 600-Episode M-Tier Baseline &amp; Component Controls (<code>tier_adaptive</code>, Pre-<code>tier_meso2</code>)</summary>
 
 ![600-episode 5-seed tier-adaptive training and 50-episode validation curves plus matched held-out city comparison against scalar-reward RL, flat 1x1x1, and greedy physics-heuristic controls](docs/media/training-curves-600ep.png)
 
-Five earlier baseline runs used **600 episodes** (`443.5–945.3 s` per seed on Apple M4 MPS, `250–368` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, `checkpoint_interval = 50`, [configs/research-real-aux-tier-600ep.json](configs/research-real-aux-tier-600ep.json)) with model seeds `123, 456, 789, 202, 303` and uniform rotation over 10 XS–XL training sites, validated every 50 episodes on Hong Kong (`m_hk_0199`) and tested zero-shot on `m_nyc_0003` and `m_prs_0315` (`temp=1.0, noise=1.0`, five eval seeds per site, retaining all FAR failures):
+Five earlier baseline runs used **600 episodes** (`443.5–945.3 s` per seed on Apple M4 MPS, `250–368` synchronous GAE updates, cosine LR `1.2e-3 → 2.0e-4`, `checkpoint_interval = 50`, [configs/historical/research-real-aux-tier-600ep.json](configs/historical/research-real-aux-tier-600ep.json)) with model seeds `123, 456, 789, 202, 303` and uniform rotation over 10 XS–XL training sites, validated every 50 episodes on Hong Kong (`m_hk_0199`) and tested zero-shot on `m_nyc_0003` and `m_prs_0315` (`temp=1.0, noise=1.0`, five eval seeds per site, retaining all FAR failures):
 
-1. **Untrained Control (5 seeds):** Untrained initialization baseline ([results/real-aux-tier-600ep-mps-2026-11-21.json](results/real-aux-tier-600ep-mps-2026-11-21.json)).
-2. **Flat `1×1×1` (1,200 ep, seed `123`):** Fine-only baseline without coarse-to-fine stages ([results/real-aux-1200ep-mps-2026-11-21.json](results/real-aux-1200ep-mps-2026-11-21.json)).
-3. **RL Without Spatial Auxiliary Loss (`spatial_aux_weight = 0.0`, 600 ep, seed `123`):** Cascade trained from scalar reward with the same heuristic-informed decoder ([results/real-tier-600ep-mps-2026-11-21.json](results/real-tier-600ep-mps-2026-11-21.json)).
-4. **Greedy Physics-Heuristic (`0` learned parameters):** Ranks frontier edits using `compute_spatial_desirability` and the same projector $\Pi_{\text{valid}}$ ([Greedy results](results/greedy-heuristic-tier-mps-2026-11-21.json)).
+1. **Untrained Control (5 seeds):** Untrained initialization baseline ([results/historical/real-aux-tier-600ep-mps-2026-11-21.json](results/historical/real-aux-tier-600ep-mps-2026-11-21.json)).
+2. **Flat `1×1×1` (1,200 ep, seed `123`):** Fine-only baseline without coarse-to-fine stages ([results/historical/real-aux-1200ep-mps-2026-11-21.json](results/historical/real-aux-1200ep-mps-2026-11-21.json)).
+3. **RL Without Spatial Auxiliary Loss (`spatial_aux_weight = 0.0`, 600 ep, seed `123`):** Cascade trained from scalar reward with the same heuristic-informed decoder ([results/historical/real-tier-600ep-mps-2026-11-21.json](results/historical/real-tier-600ep-mps-2026-11-21.json)).
+4. **Greedy Physics-Heuristic (`0` learned parameters):** Ranks frontier edits using `compute_spatial_desirability` and the same projector $\Pi_{\text{valid}}$ ([Greedy results](results/historical/greedy-heuristic-tier-mps-2026-11-21.json)).
 
 | Method (`temp=1.0 / noise=1.0`) | Val `m_hk_0199` ($J$ / FAR / Sun / Sky) | Test `m_nyc_0003` ($J$) | Test `m_prs_0315` ($J$) | **Test Aggregate** ($J$ / FAR / Usable m² / Sun / Sky) |
 |---|---:|---:|---:|---:|
@@ -192,14 +191,16 @@ Five earlier baseline runs used **600 episodes** (`443.5–945.3 s` per seed on 
 | **Tier + Aux, 50-Ep Val (`best.pt`, 5 seeds)** | `1.129 ± 0.075` / **`1.00`** / `81.6%` / **`22.2%`** | `0.504 ± 0.133` | `1.047 ± 0.089` | `0.776 ± 0.103` / **`1.00`** / `2,097.3` / `51.3%` / `10.8%` |
 | **Greedy Physics-Heuristic** (`0` params) | **`1.131`** / `1.00` / `76.5%` / `18.3%` | `0.527` | `1.093` | **`0.810`** / `1.00` / **`2,190.5`** / `48.4%` / `9.5%` |
 
-Across these five M-tier runs, validation-selected checkpoints lowered inter-seed spread and raised mean test quality vs. episode 600; while `Greedy` held the highest scalar score (`0.810` vs. `0.776`), Guided RL averaged higher direct sun and diffuse sky proxies. Exploratory follow-up studies across L/XL plots (`30`-, `60`-, and `600`-ep pilots under legacy `tier_adaptive`) are archived in [results/README.md](results/README.md).
+Across these five M-tier runs, validation-selected checkpoints lowered inter-seed spread and raised mean test quality vs. episode 600; while `Greedy` held the highest scalar score (`0.810` vs. `0.776`), Guided RL averaged higher direct sun and diffuse sky proxies. Exploratory follow-up studies across L/XL plots (`30`-, `60`-, and `600`-ep pilots under legacy `tier_adaptive`) are archived under [`results/historical/`](results/historical/) and indexed in [results/README.md](results/README.md).
+
+</details>
 
 ### Infrastructure Verification & Compute Scaling
 
 | Measurement Scope | Dataset / Artifact | Key Observed Metrics | Interpretation Boundary |
 |---|---|---|---|
-| **Pipeline, Determinism & Core Integrals** (`compact-core.v5`, CPU + MPS) | [results/ml-infrastructure-final-check-2026-11-20.json](results/ml-infrastructure-final-check-2026-11-20.json) | 2-seed CPU exact resume (bitwise weight/trace equality); `farSuccessRate = 1.0`; `meanQuality = 0.593 ± 0.045`; `meanDirectSun = 0.293 ± 0.003`; `meanDiffuseSky = 0.177 ± 0.011`; native MPS 3-ep smoke (`mpsFallback=false`) | Software, gradient, and exact-resume pipeline validation on synthetic fixtures; small budgets do not test learned policy quality or convergence |
-| **Scene Cache & Vertical Scaling** (`coarse_2d1d_v3`, M4 MPS) | [results/scalable-height-speedup-2026-11-19.json](results/scalable-height-speedup-2026-11-19.json) | Cold→Warm SHA-256 cache setup: `8.16s→37ms` (`10F`), `8.53s→46ms` (`20F`), `4.57s→41ms` (`40F`); warm single-step eval stays `8.54–9.95 ms` across `10F→40F` | Historical pre-`compact-core.v5` compute benchmark; isolates scene cache and GPU/CPU field solver scaling |
+| **Pipeline, Determinism & Core Integrals** (`compact-core.v5`, CPU + MPS) | [results/historical/ml-infrastructure-final-check-2026-11-20.json](results/historical/ml-infrastructure-final-check-2026-11-20.json) | 2-seed CPU exact resume (bitwise weight/trace equality); `farSuccessRate = 1.0`; `meanQuality = 0.593 ± 0.045`; `meanDirectSun = 0.293 ± 0.003`; `meanDiffuseSky = 0.177 ± 0.011`; native MPS 3-ep smoke (`mpsFallback=false`) | Software, gradient, and exact-resume pipeline validation on synthetic fixtures; small budgets do not test learned policy quality or convergence |
+| **Scene Cache & Vertical Scaling** (`coarse_2d1d_v3`, M4 MPS) | [results/historical/scalable-height-speedup-2026-11-19.json](results/historical/scalable-height-speedup-2026-11-19.json) | Cold→Warm SHA-256 cache setup: `8.16s→37ms` (`10F`), `8.53s→46ms` (`20F`), `4.57s→41ms` (`40F`); warm single-step eval stays `8.54–9.95 ms` across `10F→40F` | Historical pre-`compact-core.v5` compute benchmark; isolates scene cache and GPU/CPU field solver scaling |
 
 All retained raw benchmark summaries, pipeline verification checks, and solver probes are indexed in [results/README.md](results/README.md).
 
@@ -261,10 +262,10 @@ uv run --frozen vf-research train \
 ```sh
 # Launch interactive inspector at http://127.0.0.1:8011 (core plans at /core-plans;
 # POST /api/policy accepts live checkpoints and voxelform.research.v2 / multiscale weights,
-# running fine 1x1x1 edits with learned_cap + the |FAR - FAR*| <= 0.75 exchange gate)
+# executing 2x2x1 -> 1x1x1 tier_meso2 cascades on >=2,500 m2 parcels with learned_cap + |FAR - FAR*| <= 0.75)
 uv run --frozen python main.py
 
-# Run complete verification suite (218 Python tests, 11 JS geometry tests, ruff + mypy)
+# Run complete verification suite (219 Python tests, 11 JS geometry tests, ruff + mypy)
 uv run --frozen --extra dev python -m unittest discover -s tests
 node --check public/*.js
 node --test tests/*.test.mjs
@@ -295,7 +296,7 @@ VoxelForm-RL/
 │   └── teachers/            # Bundled compact weight-only XS_M and L_XL teacher checkpoints
 ├── configs/                 # Canonical & historical experiment specs (see EXPERIMENT_PROTOCOL.md)
 ├── tools/                   # CLI entrypoints: research.py, render_core_plans.py, media & benchmarks
-├── tests/                   # 218 Python unittest specs + 11 Node geometry/syntax tests
+├── tests/                   # 219 Python unittest specs + 11 Node geometry/syntax tests
 ├── docs/                    # Protocol, Model Card, Data Card, Core Layouts & media figures
 ├── results/                 # Retained raw JSON benchmarks, core checks & solver probes
 ├── public/                  # Three.js inspector UI & standalone /core-plans viewer

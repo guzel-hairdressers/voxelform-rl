@@ -473,7 +473,7 @@ class CoarseToFineTests(unittest.TestCase):
 
 
 class BundledTeachersAndServerImportTests(unittest.TestCase):
-    def _organic_session(self):
+    def _organic_session(self, shape=(8, 12, 16), initial_storeys=4):
         import unified_server as server
         from voxelform.environment import Environment
         from voxelform.patch_policy import PatchConfig, PatchFacades
@@ -493,7 +493,7 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
             budget_reserve_fraction=0.2,
         )
         env = Environment(
-            (8, 12, 16),
+            shape,
             sun_count=4,
             device="cpu",
             far_tolerance=0.1,
@@ -502,10 +502,11 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
             ),
         )
         solid = env.allowed.clone()
-        solid[4:] = False
+        solid[initial_storeys:] = False
         env.restore_occupancy(solid)
         env.termination = None
         env.unified_limit = 12
+        env.unified_actions = 0
         env.precompute_external()
         env.organic_3d_growth = True
         env.floor_copy_growth = False
@@ -518,7 +519,12 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
             floor_copy=False,
             organic_3d=True,
         )
-        session = server.UnifiedSession(device="cpu", autostart=False)
+        session = server.UnifiedSession(
+            device="cpu",
+            autostart=False,
+            initial_storeys=initial_storeys,
+            ceiling_storeys=shape[0],
+        )
         session.env, session.policy, session.config = env, policy, cfg
         session.last_objective, session.last_diag = organic_objective(env)
         from voxelform.objectives import fine_potential
@@ -591,6 +597,60 @@ class BundledTeachersAndServerImportTests(unittest.TestCase):
             )
             bad_resp = client.post("/api/policy", content=bad_buf.getvalue())
             self.assertEqual(bad_resp.status_code, 400)
+
+    def test_server_runs_coarse_to_fine_stage_on_large_parcel(self):
+        import io
+        from fastapi.testclient import TestClient
+
+        server, session, cfg = self._organic_session(
+            shape=(8, 52, 52), initial_storeys=6
+        )
+        self.assertGreaterEqual(session.env.plot_area, 2500.0)
+        research_learner = CoarseToFineLearner(
+            "cpu",
+            79,
+            fine_config=cfg,
+            input_channels=14,
+            decoder_retry_schedule="learned_cap",
+        )
+        state = research_learner.state()
+        payload_buf = io.BytesIO()
+        torch.save({"format": "voxelform.research.v2", "policy": state}, payload_buf)
+
+        with patch.object(server, "session", session):
+            client = TestClient(server.app)
+            resp = client.post("/api/policy", content=payload_buf.getvalue())
+            self.assertEqual(resp.status_code, 200, resp.text)
+            self.assertIsNotNone(session.c2f_policy)
+            self.assertIsNotNone(session.coarse_env)
+            self.assertTrue(session.in_coarse_stage)
+            self.assertEqual(session.coarse_env.block, (1, 2, 2))
+            self.assertTrue(session.state()["coarseStageActive"])
+
+            # Step through the 2x2x1 coarse stage until handoff (or cap steps).
+            for _ in range(10):
+                if not session.in_coarse_stage:
+                    break
+                session.single = True
+                session.advance_one()
+            self.assertGreaterEqual(session.coarse_env.unified_actions, 1)
+            coarse_sources = [
+                row["maskSource"]
+                for row in session.edit_trace
+                if row["maskSource"].startswith("coarse_2x2x1_")
+            ]
+            self.assertTrue(
+                bool(coarse_sources) or not session.in_coarse_stage,
+                "Expected coarse_2x2x1_ edits or clean handoff to fine stage",
+            )
+            # Force handoff if still in coarse stage and confirm fine stage executes cleanly.
+            if session.in_coarse_stage:
+                session.coarse_env.unified_actions = session.coarse_env.unified_limit
+            before_fine_actions = session.env.unified_actions
+            session.single = True
+            session.advance_one()
+            self.assertFalse(session.in_coarse_stage)
+            self.assertEqual(session.env.unified_actions, before_fine_actions + 1)
 
     def test_server_audit_environment_applies_fine_potential_shaping(self):
         from voxelform.objectives import fine_potential

@@ -5,11 +5,12 @@ supplies one dense mask; these compiled CPU kernels enforce physical eligibility
 and prune unsafe selections without exposing another facade layer mid-action.
 """
 
-from dataclasses import dataclass, field
 import time
+from dataclasses import dataclass, field
+
 import numpy as np
-from scipy import ndimage as ndi
 import torch
+from scipy import ndimage as ndi
 
 STRUCTURE = ndi.generate_binary_structure(3, 1)
 DIRECTIONS = ((1, 0, 0), (-1, 0, 0), (0, 1, 0), (0, -1, 0), (0, 0, 1), (0, 0, -1))

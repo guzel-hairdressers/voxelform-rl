@@ -47,9 +47,11 @@ operation KL toward frozen tier experts along student trajectories alongside `0.
 GAE updates. `reward_profile="dense_potential"` adds scaled coarse/fine potential
 differences (`2.0 * delta fine_potential` on audited steps). Both terminal/step
 objectives and audited `fine_potential` shaping match the live app via
-`voxelform/objectives.py` (`POST /api/policy` also imports `voxelform.research.v2` /
-`voxelform.multiscale.v1` `14`-channel checkpoints into `UnifiedLearner` by projecting
-out the fine-stage zero `stage_feat` column). Terminal masks prevent return
+`voxelform/objectives.py` (`POST /api/policy` imports `voxelform.research.v2` /
+`voxelform.multiscale.v1` `14`-channel checkpoints into `UnifiedLearner` and
+`CoarseToFineLearner`, running `2×2×1 → 1×1×1` `tier_meso2` coarse-to-fine
+execution on `L/XL` parcels with `area >= 2,500 m²` as well as fine `1×1×1`
+refinement). Terminal masks prevent return
 propagation across episodes. The runner updates when a completed episode takes
 the rollout to `rollout_steps`, and uses any remaining transitions at the end
 of the training budget.
@@ -64,8 +66,9 @@ each consumed head is scored over its full latent grid. Only the drawn operation
 and spatial heads contribute to the score.
 
 An optional physics-shaped spatial auxiliary objective is weighted by
-`spatial_aux_weight`. The research reference config uses **0**. The separate
-`research-real-aux.json` uses **1.2** for an ablation (annealing linearly toward `0.0` when `spatial_aux_schedule="annealed"`). This term is a heuristic
+`spatial_aux_weight`. The canonical pure-RL ablation uses **0** (`research-pure-rl-all-tiers.json`),
+`research-control-all-tiers.json` uses **1.2** constant, and `research-annealed-all-tiers.json`
+anneals linearly `1.2 → 0.0` (`spatial_aux_schedule="annealed"`). This term is a heuristic
 auxiliary learning signal, **not an exact control variate for the original return**.
 The live UI retains 1.2 by default so its hybrid behaviour is explicit. Another
 corrected bug wrote step reward into dictionary key `3` while the trainer read
@@ -82,9 +85,10 @@ substantial uncertainty.
   duplicate/overlapping seeds and overlapping train/validation/test site IDs.
 - `research-smoke.json` is a self-contained CPU pipeline check with two model
   seeds and synthetic held-out shapes. It is not a quality benchmark.
-- `research-real.json` trains on ten Barcelona, Tokyo and Singapore plots (two
+- Legacy `configs/historical/research-real.json` trains on ten Barcelona, Tokyo and Singapore plots (two
   each for XS, S, M, L and XL), validates on Hong Kong, and tests on New York
-  and Paris. The runner rejects overlapping context circles across splits
+  and Paris, while the canonical L/XL configs train across Barcelona, Tokyo, and Hong Kong,
+  validate on New York, and test on Paris and Singapore. The runner rejects overlapping context circles across splits
   when coordinates and radii are available. The headless runner visits each
   training site once per ten episodes. The interactive rotation
   spends three consecutive episodes on each site with the same policy and
@@ -163,8 +167,8 @@ dependencies, not prerequisites for the synthetic smoke run.
 
 ## Next experiments
 
-The published five-seed comparison tests M-tier plots. The new bundled
-[held-out config](../configs/research-real-aux-tier-heldout.json) retains the
+The published five-seed comparison tests M-tier plots. The historical
+[held-out config](../configs/historical/research-real-aux-tier-heldout.json) retains the
 ten training plots and expands evaluation to these sites.
 
 | Split | M | L | XL |
@@ -199,7 +203,7 @@ include per-site and per-tier results so failures on a larger tier are visible.
 
 ## L/XL development screen and pilot
 
-[The confirmation config](../configs/research-confirmatory-l-xl.json) separates
+[The confirmation config](../configs/historical/research-confirmatory-l-xl.json) separates
 training in Barcelona, Tokyo, and Hong Kong, validation in New York, and test
 in Paris and Singapore. The training set has ten plots covering all five size
 tiers, including one XL plot. The New York XL validation and two Singapore XL
@@ -237,7 +241,7 @@ horizon. It can also evaluate the trained actor and heuristic from that start
 using their own generated masks and a common two-decision cap. The staged
 oracles use explicit action templates and exact volume conservation. The policy
 probe uses the production FAR band and allows finishing early.
-[Pilot results](../results/confirmatory-l-xl-2026-11-22.md)
+[Pilot results](../results/historical/confirmatory-l-xl-2026-11-22.md)
 
 ## 600-episode L/XL follow-up
 
@@ -249,9 +253,9 @@ checkpoints by validation FAR success, then common quality, and favors the
 earliest checkpoint in a tie. The comparison reports validation-selected and
 episode-600 results on the same four test plots as greedy, with every FAR
 failure included. The test sites were previously used in the 60-episode pilot.
-[Guided RL config](../configs/research-l-xl-600ep-guided.json) ·
-[Imitation config](../configs/research-l-xl-600ep-imitation.json) ·
-[Result](../results/l-xl-600ep-mps-2026-11-22.md)
+[Guided RL config](../configs/historical/research-l-xl-600ep-guided.json) ·
+[Imitation config](../configs/historical/research-l-xl-600ep-imitation.json) ·
+[Result](../results/historical/l-xl-600ep-mps-2026-11-22.md)
 
 ## 400-episode `tier_meso2` suite, blind 8-site holdout, and auxiliary ablation
 
@@ -271,6 +275,6 @@ To address L/XL performance without macro `4×4×1` loss of morphological width 
 | [`research-pure-rl-all-tiers.json`](../configs/research-pure-rl-all-tiers.json) | **Canonical** | 5-seed `400`-ep scalar/potential pure-RL control (`λ_aux = 0.0`) |
 | [`research-distill-all-tiers.json`](../configs/research-distill-all-tiers.json) | **Canonical** | 5-seed `400`-ep two-teacher `on_policy_distill` using bundled `data/teachers/*.pt` |
 | [`research-smoke.json`](../configs/research-smoke.json) | **Canonical (CI)** | Fast deterministic CPU synthetic smoke check |
-| [`research-real-aux-tier-600ep.json`](../configs/research-real-aux-tier-600ep.json), [`research-real-tier-600ep.json`](../configs/research-real-tier-600ep.json), [`research-real-aux-1200ep.json`](../configs/research-real-aux-1200ep.json) | Historical (M-tier) | Pre-`tier_meso2` `600`/`1200`-ep M-tier baseline & flat/aux controls |
-| [`research-real.json`](../configs/research-real.json), [`research-real-aux.json`](../configs/research-real-aux.json), [`research-real-aux-tier-heldout.json`](../configs/research-real-aux-tier-heldout.json) | Historical | Early M-tier single-stage and initial held-out transfer specs |
-| [`research-expert-l-xl.json`](../configs/research-expert-l-xl.json), [`research-confirmatory-l-xl.json`](../configs/research-confirmatory-l-xl.json), [`research-l-xl-600ep-guided.json`](../configs/research-l-xl-600ep-guided.json), [`research-l-xl-600ep-imitation.json`](../configs/research-l-xl-600ep-imitation.json) | Historical (L/XL pilots) | Pre-`tier_meso2` `tier_adaptive` L/XL expert, `60`-ep pilot, and `600`-ep follow-up |
+| [`research-real-aux-tier-600ep.json`](../configs/historical/research-real-aux-tier-600ep.json), [`research-real-tier-600ep.json`](../configs/historical/research-real-tier-600ep.json), [`research-real-aux-1200ep.json`](../configs/historical/research-real-aux-1200ep.json) | Historical (M-tier, under `configs/historical/`) | Pre-`tier_meso2` `600`/`1200`-ep M-tier baseline & flat/aux controls |
+| [`research-real.json`](../configs/historical/research-real.json), [`research-real-aux.json`](../configs/historical/research-real-aux.json), [`research-real-aux-tier-heldout.json`](../configs/historical/research-real-aux-tier-heldout.json) | Historical (under `configs/historical/`) | Early M-tier single-stage and initial held-out transfer specs |
+| [`research-expert-l-xl.json`](../configs/historical/research-expert-l-xl.json), [`research-confirmatory-l-xl.json`](../configs/historical/research-confirmatory-l-xl.json), [`research-l-xl-600ep-guided.json`](../configs/historical/research-l-xl-600ep-guided.json), [`research-l-xl-600ep-imitation.json`](../configs/historical/research-l-xl-600ep-imitation.json) | Historical (L/XL pilots, under `configs/historical/`) | Pre-`tier_meso2` `tier_adaptive` L/XL expert, `60`-ep pilot, and `600`-ep follow-up |

@@ -1,6 +1,6 @@
 # 400-episode two-teacher on-policy distillation
 
-Five matched model seeds (`4211–4215`) trained from scratch for `400` episodes on the same city-separated splits as the [600-episode L and XL follow-up](l-xl-600ep-mps-2026-11-22.md) ([configs/research-distill-all-tiers.json](../configs/research-distill-all-tiers.json)). The runner validated every `50` episodes on three unseen New York plots and selected checkpoints by FAR success rate first, then mean validation quality, breaking ties toward earlier episodes. Test scores retain every FAR failure. Note that the test plots were used previously in the 60-episode pilot and 600-episode follow-up.
+Five matched model seeds (`4211–4215`) trained from scratch for `400` episodes on the same city-separated splits as the [600-episode L and XL follow-up](historical/l-xl-600ep-mps-2026-11-22.md) ([configs/research-distill-all-tiers.json](../configs/research-distill-all-tiers.json)). The runner validated every `50` episodes on three unseen New York plots and selected checkpoints by FAR success rate first, then mean validation quality, breaking ties toward earlier episodes. Test scores retain every FAR failure. Note that the test plots were used previously in the 60-episode pilot and 600-episode follow-up.
 
 Relative to the 600-episode follow-up, this run combines four changes:
 
@@ -52,4 +52,4 @@ Every individual seed surpasses both `tier_adaptive` Greedy (`0.681`) and upgrad
 
 - [Machine-readable evidence](distill-all-tiers-400ep-mps-2026-11-22.json)
 - [Matched `tier_meso2` Greedy baseline](greedy-control-all-tiers-mps-2026-11-22.json)
-- [Matched `L/XL` Greedy baseline (`tier_meso2`)](greedy-expert-l-xl-mps-2026-11-22.json)
+- [Matched `L/XL` Greedy baseline (`tier_meso2`)](historical/greedy-expert-l-xl-mps-2026-11-22.json)

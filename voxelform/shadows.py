@@ -6,6 +6,8 @@ the direct slab query is the point-sun reference for this geometry.
 """
 
 import math
+from typing import Any
+
 import numpy as np
 import torch
 
@@ -30,7 +32,7 @@ def sync(device):
 def sun_path(count=12, azimuth=(90.0, 270.0), peak=55.0, grid_yaw=0.0):
     """Synthetic directions for method tests, NOT an astronomical ephemeris."""
     t = np.linspace(0.0, 1.0, count)
-    az = np.radians(np.linspace(*azimuth, count) - grid_yaw)
+    az = np.radians(np.linspace(float(azimuth[0]), float(azimuth[1]), count) - grid_yaw)
     elevation = np.radians(8.0 + (peak - 8.0) * np.sin(np.pi * t))
     return np.stack(
         (
@@ -128,7 +130,7 @@ class MeshShadows:
     """
 
     def __init__(self, buildings, suns, device="cpu"):
-        triangles = []
+        triangles: list[np.ndarray] = []
         for building in buildings:
             v = np.asarray(building["vertices"], dtype=np.float32)
             triangles.extend(v[np.asarray(building["faces"], dtype=np.int64)])
@@ -257,7 +259,7 @@ class BoundaryShadows(DirectShadows):
         self.intruder_count = len(inside)
         self.fallback = fallback
         lower, upper = np.asarray(bounds)
-        for raw, s in zip(np.asarray(suns), self.suns):
+        for raw, s in zip(np.asarray(suns), self.suns, strict=True):
             faces = {}
             for axis in range(3):
                 if abs(raw[axis]) < 1e-8:
@@ -286,7 +288,7 @@ class BoundaryShadows(DirectShadows):
 
     def query(self, points):
         result = []
-        for s, faces in zip(self.suns, self.maps):
+        for s, faces in zip(self.suns, self.maps, strict=True):
             endpoint = torch.where(s >= 0, self.bounds[1], self.bounds[0])
             denom = torch.where(s.abs() < 1e-8, torch.ones_like(s), s)
             t = torch.where(s.abs() < 1e-8, float("inf"), (endpoint - points) / denom)
@@ -335,8 +337,8 @@ class DepthShadows(DirectShadows):
             ]
         )
         geometry = box_corners(boxes)
-        self.anchor = np.mean(bounds, axis=0)
-        for raw, s in zip(np.asarray(suns), self.suns):
+        anchor_np = np.mean(bounds, axis=0)
+        for raw, s in zip(np.asarray(suns), self.suns, strict=True):
             u = (
                 np.cross(raw, [0, 0, 1])
                 if abs(raw[2]) < 0.99
@@ -345,12 +347,12 @@ class DepthShadows(DirectShadows):
             u = u / np.linalg.norm(u)
             v = np.cross(raw, u)
             basis = np.stack((u, v, raw), axis=1)
-            projected = (corners - self.anchor) @ basis
+            projected = (corners - anchor_np) @ basis
             low = projected[:, :2].min(0) - pitch
             high = projected[:, :2].max(0) + pitch
             sizes = np.ceil((high - low) / pitch).astype(int)
             w = (
-                float(np.max((geometry - self.anchor) @ raw) + 10)
+                float(np.max((geometry - anchor_np) @ raw) + 10)
                 if len(geometry)
                 else float(projected[:, 2].max() + 10)
             )
@@ -360,7 +362,7 @@ class DepthShadows(DirectShadows):
             b = low[1] + (torch.arange(int(sizes[1]), device=device) + 0.5) * pitch
             x, y = torch.meshgrid(a, b, indexing="ij")
             origin = (
-                torch.as_tensor(self.anchor, dtype=torch.float32, device=device)
+                torch.as_tensor(anchor_np, dtype=torch.float32, device=device)
                 + x.flatten()[:, None] * ut
                 + y.flatten()[:, None] * vt
                 + w * s
@@ -378,12 +380,14 @@ class DepthShadows(DirectShadows):
                     depth,
                 )
             )
-        self.anchor = torch.tensor(self.anchor, dtype=torch.float32, device=device)
+        self.anchor = torch.tensor(anchor_np, dtype=torch.float32, device=device)
 
     def query(self, points):
         result = []
         p = points - self.anchor
-        for s, (u, v, low, pitch, sizes, depth) in zip(self.suns, self.maps):
+        for s, (u, v, low, pitch, sizes, depth) in zip(
+            self.suns, self.maps, strict=True
+        ):
             a = ((p @ u - low[0]) / pitch).floor().long().clamp(0, int(sizes[0]) - 1)
             b = ((p @ v - low[1]) / pitch).floor().long().clamp(0, int(sizes[1]) - 1)
             result.append(p @ s >= depth[a, b] - 1e-4)
@@ -447,12 +451,12 @@ class SelfShadowMaps:
     """
 
     def __init__(self, shape, suns, pitch=1.0, spacing=(1.0, 1.0, 3.0), device="cpu"):
-        self.maps = []
+        self.maps: list[dict[str, Any]] = []
         bounds = np.array([[0, 0, 0], np.array(shape[::-1]) * spacing])
         self.suns = torch.tensor(suns, dtype=torch.float32, device=device)
         empty = DepthShadows([], suns, bounds, pitch, device)
         self.anchor = empty.anchor
-        for raw, parameters in zip(suns, empty.maps):
+        for raw, parameters in zip(suns, empty.maps, strict=True):
             u, v, low, pitch, sizes, _ = parameters
             un = u.cpu().numpy()
             vn = v.cpu().numpy()

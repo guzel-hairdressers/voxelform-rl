@@ -30,6 +30,12 @@ from fastapi.responses import HTMLResponse, Response, FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from voxelform.context import ContextLibrary, public_scene
+from voxelform.coarse_to_fine import (
+    CoarseEnv,
+    CoarseToFineLearner,
+    commit_fine,
+    tier_cascade_blocks,
+)
 from voxelform.cores import (
     DEFAULT_MAX_CORE_DIST,
     DEFAULT_MIN_CORE_SPACING,
@@ -149,6 +155,10 @@ class UnifiedSession:
         self.episode_recorded = False
         self.action_seconds = 0.0
         self.learning_seconds = 0.0
+        self.c2f_policy = None
+        self.coarse_env = None
+        self.in_coarse_stage = False
+        self._coarse_steps = 0
 
         self.archive = LayoutArchive(archive_dir) if archive_dir is not None else None
         self.training_sites = tuple(training_sites)
@@ -289,6 +299,25 @@ class UnifiedSession:
         )
         self.env = replacement
         self.target_far = replacement.target_far
+        self._sync_coarse_stage()
+
+    def _sync_coarse_stage(self):
+        self._coarse_steps = 0
+        c2f = getattr(self, "c2f_policy", None)
+        blocks = (
+            tier_cascade_blocks(self.env, schedule="tier_meso2")
+            if (c2f is not None and not self.training)
+            else ()
+        )
+        if c2f is not None and blocks:
+            cenv = CoarseEnv(self.env, blocks[0])
+            cenv.reset(self.initial_storeys)
+            self.env.start_count = cenv.start_count_fine
+            self.coarse_env = cenv
+            self.in_coarse_stage = not cenv.near_far
+        else:
+            self.coarse_env = None
+            self.in_coarse_stage = False
 
     def build(self):
         catalog = self.library.catalog()
@@ -560,6 +589,7 @@ class UnifiedSession:
                 self.env, self.last_objective, self.env.start_count
             )
             self._capture_initial_snapshot()
+        self._sync_coarse_stage()
         self.steps = 0
         self.episode_started = time.perf_counter()
         if clear_tape:
@@ -706,6 +736,8 @@ class UnifiedSession:
         self.episode_recorded = False
         self.edit_trace = []
         self.op_counts = {k: 0 for k in OPERATIONS}
+        if self.env.edits == 0:
+            self._sync_coarse_stage()
         self._capture_initial_snapshot()
         self._state_cache.clear()
         self.policy.clear()
@@ -864,6 +896,10 @@ class UnifiedSession:
         self.pause()
         self.pending_seed += 1
         old = self.policy
+        self.c2f_policy = None
+        self.coarse_env = None
+        self.in_coarse_stage = False
+        self._coarse_steps = 0
         self.policy = UnifiedLearner(
             device=self.device,
             seed=self.pending_seed,
@@ -910,11 +946,15 @@ class UnifiedSession:
         self.pause()
         self.policy.clear()
         self.config = self.policy.config = config
+        if self.c2f_policy is not None:
+            self.c2f_policy.fine_config = config
         self.env.frontier.config = config
         self.env.frontier.refresh()
         self.env.termination = None
         self.env.unified_actions = 0
         self.env.unified_limit = max(8, self.env.workload.limit + 8)
+        if self.env.edits == 0:
+            self._sync_coarse_stage()
         self._init_snap = None
         self._capture_initial_snapshot()
         self._state_cache.clear()
@@ -1035,18 +1075,134 @@ class UnifiedSession:
                 self.revision += 1
                 return
 
+        c2f = getattr(self, "c2f_policy", None)
+        use_c2f = bool(
+            c2f is not None and not self.training and self.force_operation is None
+        )
+        if (
+            use_c2f
+            and getattr(self, "in_coarse_stage", False)
+            and self.coarse_env is not None
+        ):
+            cenv = self.coarse_env
+            assert c2f is not None
+            if not (cenv.near_far or cenv.unified_actions >= cenv.unified_limit):
+                stamp = time.perf_counter()
+                c2f.evaluation_temperature = self.policy.evaluation_temperature
+                c2f.evaluation_noise_scale = self.policy.evaluation_noise_scale
+                move = c2f.choose_stage(cenv, is_coarse=True, training=False)
+                cenv.unified_actions += 1
+                sync(self.device)
+                self.action_seconds = time.perf_counter() - stamp
+                operation = getattr(c2f, "last_operation", None)
+                if operation in self.op_counts:
+                    self.op_counts[operation] += 1
+                if operation == "finish":
+                    cenv.upsample_to_fine()
+                    self.env.start_count = cenv.start_count_fine
+                    self.env.evaluate()
+                    self.last_objective, self.last_diag = organic_objective(self.env)
+                    self.last_fine_potential = fine_potential(
+                        self.env, self.last_objective, self.env.start_count
+                    )
+                    self.in_coarse_stage = False
+                    self.single = False
+                    self.revision += 1
+                    return
+                if move is not None:
+                    prev_occ = self.env.occupied.detach().cpu().numpy().copy()
+                    far_before = self.env.far
+                    cenv.apply_move(move)
+                    if c2f.fine_config.allocation == "feedback":
+                        dv_abs = int(move.remove.sum() + move.add.sum())
+                        cenv.workload.observe(dv_abs, dv_abs)
+                    cenv.upsample_to_fine()
+                    self.env.start_count = cenv.start_count_fine
+                    self.env.evaluate()
+                    self._coarse_steps += 1
+                    self.steps = self._coarse_steps
+                    self.last_objective, self.last_diag = organic_objective(self.env)
+                    self.last_fine_potential = fine_potential(
+                        self.env, self.last_objective, self.env.start_count
+                    )
+                    after_occ = self.env.occupied.detach().cpu().numpy()
+                    cells = np.argwhere(prev_occ != after_occ)
+                    if len(cells) > 0:
+                        low = cells.min(axis=0)
+                        high = cells.max(axis=0)
+                        op_label = (
+                            "exchange"
+                            if (move.remove.any() and move.add.any())
+                            else "grow"
+                            if move.add.any()
+                            else "subtract"
+                        )
+                        self.edit_trace.append(
+                            dict(
+                                step=self.steps,
+                                attempts=cenv.unified_actions,
+                                operation=op_label,
+                                changedVoxels=int(len(cells)),
+                                facadeSnapshot=move.version,
+                                maskSource=f"coarse_{cenv.bxy}x{cenv.bxy}x{cenv.bz}_"
+                                + str(operation),
+                                generatedVoxels=int(move.remove.sum() + move.add.sum()),
+                                projectionRounds=1,
+                                bounds=[low[::-1].tolist(), high[::-1].tolist()],
+                                mask=cells[:, ::-1].tolist(),
+                                facadeOnly=False,
+                                surfaceLayers=None,
+                                rawStructure={},
+                                appliedStructure={},
+                                farBefore=far_before,
+                                farAfter=self.env.far,
+                            )
+                        )
+                        self.edit_trace = self.edit_trace[-64:]
+                if cenv.near_far or cenv.unified_actions >= cenv.unified_limit:
+                    if move is None:
+                        cenv.upsample_to_fine()
+                        self.env.start_count = cenv.start_count_fine
+                        self.env.evaluate()
+                        self.last_objective, self.last_diag = organic_objective(
+                            self.env
+                        )
+                        self.last_fine_potential = fine_potential(
+                            self.env, self.last_objective, self.env.start_count
+                        )
+                    self.in_coarse_stage = False
+                self.single = False
+                self.revision += 1
+                return
+            cenv.upsample_to_fine()
+            self.env.start_count = cenv.start_count_fine
+            self.env.evaluate()
+            self.last_objective, self.last_diag = organic_objective(self.env)
+            self.last_fine_potential = fine_potential(
+                self.env, self.last_objective, self.env.start_count
+            )
+            self.in_coarse_stage = False
+
         stamp = time.perf_counter()
         force_op = self.force_operation if not self.training else None
-        move = self.policy.choose(
-            self.env, training=self.training, force_operation=force_op
-        )
+        if use_c2f:
+            assert c2f is not None
+            c2f.evaluation_temperature = self.policy.evaluation_temperature
+            c2f.evaluation_noise_scale = self.policy.evaluation_noise_scale
+            move = c2f.choose_stage(self.env, is_coarse=False, training=False)
+            active_policy = c2f
+        else:
+            move = self.policy.choose(
+                self.env, training=self.training, force_operation=force_op
+            )
+            active_policy = self.policy
         self.env.unified_actions += 1
         if not self.training:
             sync(self.device)
         self.action_seconds = time.perf_counter() - stamp
 
         is_organic = getattr(self.policy, "organic_3d", False)
-        operation = getattr(self.policy, "last_operation", None)
+        operation = getattr(active_policy, "last_operation", None)
         if operation in self.op_counts:
             self.op_counts[operation] += 1
         if operation == "finish":
@@ -1059,7 +1215,11 @@ class UnifiedSession:
             return
 
         if move is None:
-            if self.policy.amount_feedback and self.policy.last_generated_count:
+            if (
+                not use_c2f
+                and self.policy.amount_feedback
+                and self.policy.last_generated_count
+            ):
                 self.env.workload.observe(0, self.policy.last_generated_count)
             if self.training and self.policy.tape:
                 self.policy.record(-0.02 if is_organic else -0.03)
@@ -1088,14 +1248,20 @@ class UnifiedSession:
             float(self.last_diag.get("coreScore") or 0.0) if core_shaping else 0.0
         )
 
-        commit(self.env, move, validated=True)
-        self.steps = self.env.edits
-
-        if self.policy.amount_feedback and self.policy.last_generated_count:
-            self.env.workload.observe(
-                int(move.remove.sum() + move.add.sum()),
-                self.policy.last_generated_count,
-            )
+        if use_c2f:
+            commit_fine(self.env, move, validated=True)
+            self.steps = self._coarse_steps + self.env.edits
+            if c2f.fine_config.allocation == "feedback":
+                dv_abs = int(move.remove.sum() + move.add.sum())
+                self.env.workload.observe(dv_abs, dv_abs)
+        else:
+            commit(self.env, move, validated=True)
+            self.steps = self._coarse_steps + self.env.edits
+            if self.policy.amount_feedback and self.policy.last_generated_count:
+                self.env.workload.observe(
+                    int(move.remove.sum() + move.add.sum()),
+                    self.policy.last_generated_count,
+                )
 
         core_delta = 0.0
         if core_shaping:
@@ -1142,7 +1308,11 @@ class UnifiedSession:
                     changedVoxels=int(move.remove.sum() + move.add.sum()),
                     facadeSnapshot=move.version,
                     maskSource="unified_" + str(operation),
-                    generatedVoxels=self.policy.last_generated_count,
+                    generatedVoxels=getattr(
+                        active_policy,
+                        "last_generated_count",
+                        int(move.remove.sum() + move.add.sum()),
+                    ),
                     projectionRounds=1,
                     bounds=[low[::-1].tolist(), high[::-1].tolist()],
                     mask=cells[:, ::-1].tolist(),
@@ -1321,6 +1491,10 @@ class UnifiedSession:
                 )
                 self._env_static_cache = static
             _, allowed_list, boxes_list, ctx_pub = static
+            c2f_active = bool(
+                getattr(self, "c2f_policy", None) is not None and not self.training
+            )
+            active_policy = self.c2f_policy if c2f_active else self.policy
             payload = dict(
                 ready=True,
                 coreLayoutVersion=CORE_LAYOUT_VERSION,
@@ -1338,7 +1512,10 @@ class UnifiedSession:
                 episodes=self.episodes,
                 step=self.steps,
                 attempts=e.unified_actions,
-                lastRejection=self.policy.last_rejection,
+                lastRejection=getattr(active_policy, "last_rejection", None),
+                coarseStageActive=bool(
+                    c2f_active and getattr(self, "in_coarse_stage", False)
+                ),
                 maxSteps=getattr(e, "unified_limit", 16),
                 rolloutSteps=self.rollout_steps,
                 environmentAuditSteps=self.audit_steps,
@@ -1385,7 +1562,7 @@ class UnifiedSession:
                 if is_organic
                 else "unified_floor_copy",
                 maskStructure=dict(
-                    lastOperation=getattr(self.policy, "last_operation", None)
+                    lastOperation=getattr(active_policy, "last_operation", None)
                 ),
                 maskProfile=dict(
                     samplingSeconds=0.0,
@@ -1455,7 +1632,7 @@ from voxelform.devoxelize import devoxelize_occupancy
 library = ContextLibrary()
 # Reuse the declared training split and keep validation/test sites out of rotation.
 training_config = json.loads(
-    (VOXELFORM_ROOT / "configs/research-real.json").read_text()
+    (VOXELFORM_ROOT / "configs/research-control-all-tiers.json").read_text()
 )
 session = UnifiedSession(
     library=library,
@@ -1948,6 +2125,35 @@ async def load_policy(request: Request):
                     replacement.evaluation_noise_scale = float(
                         policy_state["evaluationNoiseScale"]
                     )
+                dec_sched = str(policy_state.get("decoderRetrySchedule", "learned_cap"))
+                if dec_sched not in ("fixed", "adaptive", "learned_cap"):
+                    dec_sched = "learned_cap"
+                train_obj = str(policy_state.get("trainingObjective", "actor_critic"))
+                if train_obj not in ("actor_critic", "imitation", "on_policy_distill"):
+                    train_obj = "actor_critic"
+                replacement_c2f = CoarseToFineLearner(
+                    session.device,
+                    block=(1, 2, 2),
+                    fine_config=fine_cfg,
+                    input_channels=14,
+                    spatial_aux_weight=float(policy_state.get("spatialAuxWeight", 1.2)),
+                    training_objective=train_obj,
+                    decoder_retry_schedule=dec_sched,
+                )
+                if "optimizer" in policy_state:
+                    replacement_c2f.load(policy_state)
+                else:
+                    replacement_c2f.model.load_state_dict(model_state)
+                    replacement_c2f.updates = int(policy_state.get("updates", 0))
+                    replacement_c2f.direct_updates = int(
+                        policy_state.get("directMaskUpdates", 0)
+                    )
+                    replacement_c2f.evaluation_temperature = (
+                        replacement.evaluation_temperature
+                    )
+                    replacement_c2f.evaluation_noise_scale = (
+                        replacement.evaluation_noise_scale
+                    )
             else:
                 if not (
                     policy_state.get("organic3d") or policy_state.get("floorCopy")
@@ -1957,17 +2163,29 @@ async def load_policy(request: Request):
                     )
                 replacement = UnifiedLearner(session.device)
                 replacement.load(policy_state)
+                replacement_c2f = None
             session.pause()
             session.policy = replacement
+            session.c2f_policy = replacement_c2f
             session.config = replacement.config
             session.env.organic_3d_growth = replacement.organic_3d
             session.env.floor_copy_growth = replacement.floor_copy
             session.env.frontier.config = replacement.config
             session.env.frontier.refresh()
+            if (
+                session.env.edits == 0
+                and getattr(session.env, "unified_actions", 0) == 0
+            ):
+                session._sync_coarse_stage()
+            else:
+                session.coarse_env = None
+                session.in_coarse_stage = False
             session._init_snap = None
             session._capture_initial_snapshot()
             session._state_cache.clear()
             session.policy.clear()
+            if session.c2f_policy is not None:
+                session.c2f_policy.clear()
             session.revision += 1
             session.stats.update(
                 updates=replacement.updates,
@@ -1993,7 +2211,12 @@ def save_policy():
         # Include learning from a paused partial rollout in a manual export.
         session.learn_rollout()
         buffer = io.BytesIO()
-        torch.save(session.policy.state(), buffer)
+        export_policy = (
+            session.c2f_policy
+            if getattr(session, "c2f_policy", None) is not None
+            else session.policy
+        )
+        torch.save(export_policy.state(), buffer)
     return Response(
         buffer.getvalue(),
         media_type="application/octet-stream",

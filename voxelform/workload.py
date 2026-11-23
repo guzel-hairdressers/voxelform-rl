@@ -1,7 +1,7 @@
 """A fixed episode deadline estimated from initial edit capacity, not site labels."""
 
-from dataclasses import dataclass, asdict
 import math
+from dataclasses import asdict, dataclass
 
 
 @dataclass
