@@ -1167,7 +1167,7 @@ def generate_trained_rollout_assets(
         for s_i, snap in enumerate(chosen):
             png = tmp_dir / f"step_{idx:03d}.png"
             _draw_state(snap, total_steps, azim=-52.0, out_png=png)
-            dur = 0.85 if s_i == 0 else (0.95 if s_i == len(chosen) - 1 else 0.70)
+            dur = 0.425 if s_i == 0 else (0.475 if s_i == len(chosen) - 1 else 0.35)
             frame_entries.append((png, dur))
             idx += 1
 
@@ -1177,16 +1177,16 @@ def generate_trained_rollout_assets(
             _draw_state(
                 last, total_steps, azim=float(a), out_png=png, tag_suffix=" [3D Orbit]"
             )
-            frame_entries.append((png, 0.09))
+            frame_entries.append((png, 0.045))
             idx += 1
         for a in np.linspace(-14.0, -52.0, 12)[1:]:
             png = tmp_dir / f"step_{idx:03d}.png"
             _draw_state(
                 last, total_steps, azim=float(a), out_png=png, tag_suffix=" [3D Orbit]"
             )
-            frame_entries.append((png, 0.09))
+            frame_entries.append((png, 0.045))
             idx += 1
-        frame_entries.append((frame_entries[-1][0], 1.1))
+        frame_entries.append((frame_entries[-1][0], 0.55))
 
         concat_txt = tmp_dir / "concat.txt"
         lines = []
@@ -1234,7 +1234,7 @@ def generate_trained_rollout_assets(
                 "-i",
                 str(mp4_out),
                 "-vf",
-                "fps=10,scale=880:-1:flags=lanczos,palettegen=max_colors=128:stats_mode=diff",
+                "fps=20,scale=880:-1:flags=lanczos,palettegen=max_colors=128:stats_mode=diff",
                 str(palette),
             ],
             check=True,
@@ -1250,7 +1250,7 @@ def generate_trained_rollout_assets(
                 "-i",
                 str(palette),
                 "-lavfi",
-                "fps=10,scale=880:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3",
+                "fps=20,scale=880:-1:flags=lanczos [x]; [x][1:v] paletteuse=dither=bayer:bayer_scale=3",
                 str(gif_out),
             ],
             check=True,
