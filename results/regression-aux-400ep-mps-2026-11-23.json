@@ -4280,6 +4280,56 @@
         206.19423930572148
       ]
     },
+    "validationCurve400": [
+      {
+        "episode": 50,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.2912759431721133,
+        "stdQuality": 0.03123248007987438
+      },
+      {
+        "episode": 100,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.3350220958865364,
+        "stdQuality": 0.057771363392731936
+      },
+      {
+        "episode": 150,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.38617423115458516,
+        "stdQuality": 0.12039628733610508
+      },
+      {
+        "episode": 200,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.4777508577946275,
+        "stdQuality": 0.05784955449734641
+      },
+      {
+        "episode": 250,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.4970229995966339,
+        "stdQuality": 0.03212569740476363
+      },
+      {
+        "episode": 300,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.5269408022026445,
+        "stdQuality": 0.03322116542534832
+      },
+      {
+        "episode": 350,
+        "meanFarSuccessRate": 1.0,
+        "meanQuality": 0.5538744820967327,
+        "stdQuality": 0.0178854419812475
+      },
+      {
+        "episode": 400,
+        "meanFarSuccessRate": 0.9866666666666667,
+        "meanQuality": 0.5498545643641402,
+        "stdQuality": 0.03297298703756983
+      }
+    ],
     "validationStochBest": {
       "mean": 0.5633384197981306,
       "stdAcrossModelSeeds": 0.02730458965038042,

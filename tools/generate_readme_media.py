@@ -2298,6 +2298,9 @@ def generate_blind_and_aux_ablation_figure():
     aux = json.loads(
         (RESULTS_DIR / "aux-ablation-400ep-mps-2026-11-23.json").read_text()
     )
+    reg = json.loads(
+        (RESULTS_DIR / "regression-aux-400ep-mps-2026-11-23.json").read_text()
+    )
     greedy = json.loads(
         (RESULTS_DIR / "greedy-control-all-tiers-mps-2026-11-22.json").read_text()
     )
@@ -2326,7 +2329,7 @@ def generate_blind_and_aux_ablation_figure():
     ]
     bars_spec = [
         ("Greedy (tier_meso2)", "greedy_tier_meso2", "#f59e0b", "#b45309"),
-        ("Two-Teacher Distill", "on_policy_distill", "#14b8a6", "#0f766e"),
+        ("Two-Teacher Distill†", "on_policy_distill", "#14b8a6", "#0f766e"),
         ("Ungated Actor-Critic", "ungated_actor_critic", "#94a3b8", "#475569"),
         ("FAR-Gated Actor-Critic", "far_gated_actor_critic", "#1d4ed8", "#1e3a8a"),
     ]
@@ -2434,19 +2437,27 @@ def generate_blind_and_aux_ablation_figure():
     arms_spec = [
         (
             "annealed_aux",
-            "Annealed Aux (1.2→0.0) [best Test 0.790 | Blind L–XL 0.883]",
+            "Annealed Reinforce (1.2→0.0) [best Test 0.790 | Blind L–XL 0.883]",
             "#1d4ed8",
             "-",
             "o",
-            0.020,
+            0.025,
         ),
         (
             "constant_aux",
-            "Constant Aux (λ=1.2) [best Test 0.803 | Blind L–XL 0.896]",
+            "Constant Reinforce (λ=1.2) [best Test 0.803 | Blind L–XL 0.896]",
             "#0f766e",
             "--",
             "s",
-            -0.024,
+            -0.025,
+        ),
+        (
+            "regression_aux",
+            "Regression Aux (mode=regression, λ=1.2) [best Test 0.641 | Blind L–XL 0.786]",
+            "#7c3aed",
+            ":",
+            "D",
+            0.0,
         ),
         (
             "pure_rl",
@@ -2458,20 +2469,28 @@ def generate_blind_and_aux_ablation_figure():
         ),
     ]
     for arm_key, label, color, ls, marker, y_off in arms_spec:
-        arm_doc = aux["arms"][arm_key]
-        curve = arm_doc["validationCurve400"]
+        if arm_key == "regression_aux":
+            ts = reg["trainingSummary"]
+            curve = ts["validationCurve400"]
+            ep400_test = float(ts["testStochEp400"]["mean"])
+            ep400_far = round(100.0 * float(ts["testStochEp400Far"]["mean"]))
+        else:
+            arm_doc = aux["arms"][arm_key]
+            curve = arm_doc["validationCurve400"]
+            ep400_test = float(
+                arm_doc["aggregate"]["finalTest"]["metrics"]["meanQuality"]["mean"]
+            )
+            ep400_far = round(
+                100.0
+                * float(
+                    arm_doc["aggregate"]["finalTest"]["metrics"]["farSuccessRate"][
+                        "mean"
+                    ]
+                )
+            )
         xs = np.array([row["episode"] for row in curve], dtype=np.float32)
         ym = np.array([row["meanQuality"] for row in curve], dtype=np.float32)
         ys = np.array([row["stdQuality"] for row in curve], dtype=np.float32)
-        ep400_test = float(
-            arm_doc["aggregate"]["finalTest"]["metrics"]["meanQuality"]["mean"]
-        )
-        ep400_far = round(
-            100.0
-            * float(
-                arm_doc["aggregate"]["finalTest"]["metrics"]["farSuccessRate"]["mean"]
-            )
-        )
         ax2.plot(
             xs,
             ym,
@@ -2483,20 +2502,21 @@ def generate_blind_and_aux_ablation_figure():
             linewidth=2.0,
             zorder=4 if arm_key == "annealed_aux" else 3,
         )
-        ax2.fill_between(xs, ym - ys, ym + ys, color=color, alpha=0.11)
+        ax2.fill_between(xs, ym - ys, ym + ys, color=color, alpha=0.10)
         ax2.text(
             408,
             float(ym[-1]) + y_off,
             f"ep400 Test: {ep400_test:.3f}\n({ep400_far}% FAR)",
             ha="left",
             va="center",
-            fontsize=7.1,
+            fontsize=7.0,
             fontweight="bold" if arm_key == "annealed_aux" else "normal",
             color=color,
         )
 
-    ax2.set_xlim(35, 500)
-    ax2.set_ylim(0.16, 0.84)
+    ax2.set_xlim(35, 505)
+    ax2.set_ylim(0.16, 1.04)
+    ax2.set_yticks(np.arange(0.2, 0.91, 0.1))
     ax2.set_xticks(np.arange(50, 401, 50))
     ax2.set_xlabel(
         "Training Episode (50-Ep Checkpoint)", fontsize=9.5, fontweight="bold"
@@ -2511,9 +2531,7 @@ def generate_blind_and_aux_ablation_figure():
         color="#0f172a",
     )
     ax2.grid(True, linestyle="--", alpha=0.45)
-    ax2.legend(
-        loc="center right", bbox_to_anchor=(0.98, 0.52), fontsize=7.1, frameon=True
-    )
+    ax2.legend(loc="upper left", fontsize=6.7, frameon=True)
 
     fig.suptitle(
         "Blind Cross-Scale Transfer (XS–XL) & Matched 400-Ep Auxiliary-Supervision Ablation (Apple M4 MPS)",
@@ -2525,9 +2543,9 @@ def generate_blind_and_aux_ablation_figure():
     fig.text(
         0.5,
         0.015,
-        "All learned arms share the exact same 400-episode horizon, cosine LR schedule (1.2e-3 -> 2.0e-4), 5 model seeds (4211-4215), and tier_meso2 + dense_potential + learned_cap settings.",
+        "All learned arms share 400-ep cosine LR (1.2e-3 -> 2.0e-4), 5 seeds (4211-4215), and tier_meso2 + dense_potential + learned_cap. †Distill teachers had prior split overlap; only Actor-Critic is zero-shot.",
         ha="center",
-        fontsize=8.0,
+        fontsize=7.8,
         color="#475569",
     )
     fig.tight_layout(rect=(0.0, 0.04, 1.0, 0.93))
