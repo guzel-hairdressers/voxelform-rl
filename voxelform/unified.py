@@ -5,18 +5,22 @@ The default floor_copy=False preserves the original roof-patch research decoder.
 Masks use frozen eligibility and whole-edit guards, without a phase gate.
 """
 
+import math
+import time
 from dataclasses import asdict
-import math, time
+from typing import Any
+
 import numpy as np
-from scipy import ndimage as ndi
 import torch
+from scipy import ndimage as ndi
 from torch import nn
-from torch.nn import functional as F
 from torch.distributions import Categorical, Normal
-from .policy import Learner, Network
-from .patch_policy import PatchConfig, gaussian_field
-from .redistribution import Exchange, growth_mask
+from torch.nn import functional as F
+
 from .actions import STRUCTURE, exterior_air
+from .patch_policy import PatchConfig, gaussian_field
+from .policy import Learner, Network
+from .redistribution import Exchange, growth_mask
 from .rollout import generalized_advantages
 
 OPERATIONS = ("remove", "grow", "exchange", "finish")
@@ -166,7 +170,7 @@ def copy_plates(env):
     """
     f = env.frontier
     labels, n = ndi.label(f.occupied, STRUCTURE)
-    plates = []
+    plates: list[Any] = []
     mw = min_room_width(env)
 
     def _add_plate(z, plate_2d):
@@ -929,8 +933,10 @@ class Organic3DNetwork(nn.Module):
             nn.init.uniform_(bias, -z_bound, z_bound)
         nn.init.zeros_(self.goal_encoder.weight)
         nn.init.zeros_(self.goal_encoder.bias)
-        nn.init.normal_(self.head[-1].weight, std=0.05)
-        nn.init.zeros_(self.head[-1].bias)
+        head_last = self.head[-1]
+        assert isinstance(head_last, nn.Conv2d) and head_last.bias is not None
+        nn.init.normal_(head_last.weight, std=0.05)
+        nn.init.zeros_(head_last.bias)
         nn.init.zeros_(self.operation_head.weight)
         nn.init.zeros_(self.operation_head.bias)
         with torch.no_grad():
@@ -1023,6 +1029,7 @@ class Organic3DNetwork(nn.Module):
                 cz_parts.append(self._head_slice(v_keep, obs_b[:, k0:k1], goal_exp))
                 k0 = k1
             coarse_z = torch.cat(cz_parts, dim=2)
+            assert floor_sum is not None and floor_max is not None
             context = torch.cat((floor_sum / Z, floor_max, goal_b), dim=-1)
         target = (
             max(1, math.ceil(Z / stride[0])),
@@ -1250,7 +1257,7 @@ class UnifiedLearner(Learner):
         self.organic_3d = bool(organic_3d)
         self.spatial_aux_weight = float(spatial_aux_weight)
         self.decoder_retry_schedule = str(decoder_retry_schedule)
-        self.evaluation_temperature = 2.5
+        self.evaluation_temperature = 0.4
         self.evaluation_noise_scale = 0.08
         if not math.isfinite(self.spatial_aux_weight) or self.spatial_aux_weight < 0:
             raise ValueError("Invalid auxiliary weight")
@@ -1449,7 +1456,7 @@ class UnifiedLearner(Learner):
                         ),
                     )
                 )
-                kernel = tuple(min(n, s) for n, s in zip(e.shape, self.config.stride))
+                kernel = tuple(min(n, s) for n, s in zip(e.shape, self.config.stride, strict=False))
                 mean = F.avg_pool3d(
                     fields[:, None],
                     kernel,
@@ -1627,6 +1634,7 @@ class UnifiedLearner(Learner):
                             )
                         base_score = field.sigmoid()
                         if self.floor_copy and channel == 0 and e.plot_area >= 400:
+                            assert skin is not None
                             light_combo = 0.5 * (
                                 e.external_potential + e.facade_light
                             ).clamp(0, 1)
@@ -1957,12 +1965,17 @@ class UnifiedLearner(Learner):
             if not bool(legal.any()):
                 self.last_rejection = "no_admissible_edits"
                 return None
-            eff_logits = logits if training else logits * self.evaluation_temperature
-            distribution = Categorical(
-                logits=eff_logits.masked_fill(~legal, float("-inf"))
-            )
             if force_operation is None:
-                op = distribution.sample()
+                if (not training) and self.evaluation_temperature <= 0.0:
+                    op = logits.masked_fill(~legal, float("-inf")).argmax()
+                else:
+                    eff_logits = (
+                        logits if training else (logits / self.evaluation_temperature)
+                    )
+                    distribution = Categorical(
+                        logits=eff_logits.masked_fill(~legal, float("-inf"))
+                    )
+                    op = distribution.sample()
             else:
                 if training:
                     raise ValueError(
@@ -1987,7 +2000,7 @@ class UnifiedLearner(Learner):
                 avail_add = int(add_np.sum())
                 occ_s = e.occupied[:z_act]
                 kernel = tuple(
-                    min(n, s) for n, s in zip(occ_s.shape, self.config.stride)
+                    min(n, s) for n, s in zip(occ_s.shape, self.config.stride, strict=False)
                 )
                 consumed = (
                     [0]
@@ -2097,6 +2110,7 @@ class UnifiedLearner(Learner):
                 )
                 ln6_before = None
                 if e.plot_area >= 400 and e.ny >= 6 and e.nx >= 6:
+                    assert allowed_ln6 is not None
                     cache = getattr(e, "_ln6_cache", None)
                     if cache is not None and cache[0] == (e.frontier.version, z_act):
                         ln6_before = cache[1]
@@ -2199,7 +2213,9 @@ class UnifiedLearner(Learner):
                         ids = s0.masked_fill(w_rem <= 0, -1).flatten().topk(n_r).indices
                         r_t.flatten()[ids] = True
                         if mw > 1:
+                            assert clean_occ is not None
                             if ln6_before is not None and attempt < 3:
+                                assert allowed_ln6 is not None
                                 after_t = occ_s & ~r_t
                                 new_ln6 = (
                                     long_narrow_mask(after_t, 6, 2)
@@ -2278,6 +2294,7 @@ class UnifiedLearner(Learner):
                             base_occ = occ_s & ~masks[0]
                             a_t = a_t & clean_floor_tensor(base_occ | a_t, mw)
                             if ln6_before is not None:
+                                assert allowed_ln6 is not None
                                 cand = base_occ | a_t
                                 has_core6 = (
                                     F.avg_pool2d(cand.float()[:, None], 6, stride=1)
@@ -2343,7 +2360,11 @@ class UnifiedLearner(Learner):
                         op=op.detach(),
                         legal=legal.detach(),
                         value=value.detach(),
-                        latent=latent.detach() if move is not None else None,
+                        latent=(
+                            latent.detach()
+                            if (move is not None and latent is not None)
+                            else None
+                        ),
                         latents=latent_draws,
                         drawn_channels=consumed,
                         consumed=consumed if move is not None else None,
@@ -2400,11 +2421,11 @@ class UnifiedLearner(Learner):
             )
         adv, returns = generalized_advantages(self.tape, bootstrap, self.device)
 
-        groups = {}
+        groups: dict[tuple[int, ...], list[int]] = {}
         for t, entry in enumerate(self.tape):
             groups.setdefault(tuple(entry["obs"].shape), []).append(t)
 
-        values_out = [None] * len(self.tape)
+        values_out: list[torch.Tensor | None] = [None] * len(self.tape)
         ent_terms = []
         actor_terms = []
         stds = self.model.patch_log_std.clamp(-1.4, -0.3).exp()
@@ -2450,7 +2471,7 @@ class UnifiedLearner(Learner):
                             (sp_lp * entry["local_adv"]).sum() / ecnt.sqrt()
                         )
                 actor_terms.append(term)
-        values_t = torch.stack(values_out)
+        values_t = torch.stack([v for v in values_out if v is not None])
         actor = torch.stack(actor_terms).mean()
         critic = F.smooth_l1_loss(values_t, returns)
         ent_coef = 0.02 if self.decoder_retry_schedule == "learned_cap" else 0.005
@@ -2523,6 +2544,6 @@ class UnifiedLearner(Learner):
         other.optimizer.load_state_dict(state["optimizer"])
         other.updates = int(state["updates"])
         other.direct_updates = int(state["directMaskUpdates"])
-        other.evaluation_temperature = float(state.get("evaluationTemperature", 2.5))
+        other.evaluation_temperature = float(state.get("evaluationTemperature", 0.4))
         other.evaluation_noise_scale = float(state.get("evaluationNoiseScale", 0.08))
         self.__dict__.update(other.__dict__)

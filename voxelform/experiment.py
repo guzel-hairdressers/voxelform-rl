@@ -60,6 +60,10 @@ class ExperimentConfig:
     decoder_retry_schedule: str = "legacy"
     reward_profile: str = "default"
     teacher_checkpoints: tuple[str, ...] = ()
+    spatial_aux_mode: str = "reinforce"
+    retry_logp_norm: str = "sum"
+    potential_shaping_gamma: float | None = None
+    continuous_entropy_coef: float = 0.0
 
     def __post_init__(self):
         for key in (
@@ -139,8 +143,8 @@ class ExperimentConfig:
             or self.target_far + self.far_tolerance > self.ceiling_storeys
         ):
             raise ValueError("Invalid FAR range")
-        if self.evaluation_temperature <= 0:
-            raise ValueError("Temperature multiplier must be positive")
+        if self.evaluation_temperature < 0:
+            raise ValueError("Evaluation temperature must be non-negative")
         if self.device not in ("cpu", "mps", "cuda", "auto"):
             raise ValueError("Unknown compute device")
         if self.multiscale_schedule not in (
@@ -182,16 +186,43 @@ class ExperimentConfig:
                 "teacher_checkpoints must be a sequence of nonempty strings"
             )
         object.__setattr__(self, "teacher_checkpoints", tuple(tc))
+        if self.spatial_aux_mode not in ("reinforce", "regression"):
+            raise ValueError("Unknown spatial auxiliary mode")
+        if self.retry_logp_norm not in ("sum", "mean"):
+            raise ValueError("Unknown retry log-probability normalization")
+        if self.potential_shaping_gamma is not None:
+            if (
+                type(self.potential_shaping_gamma) not in (int, float)
+                or not np.isfinite(self.potential_shaping_gamma)
+                or not (0.0 < float(self.potential_shaping_gamma) <= 1.0)
+            ):
+                raise ValueError("Invalid potential_shaping_gamma")
+            object.__setattr__(
+                self, "potential_shaping_gamma", float(self.potential_shaping_gamma)
+            )
+        if (
+            type(self.continuous_entropy_coef) not in (int, float)
+            or not np.isfinite(self.continuous_entropy_coef)
+            or float(self.continuous_entropy_coef) < 0.0
+        ):
+            raise ValueError("Invalid continuous_entropy_coef")
+        object.__setattr__(
+            self, "continuous_entropy_coef", float(self.continuous_entropy_coef)
+        )
         if self.training_objective == "imitation" and self.spatial_aux_weight:
             raise ValueError("Imitation uses its own supervised loss")
         if self.multiscale_schedule == "none" and (
             self.training_objective in ("imitation", "on_policy_distill")
             or self.decoder_retry_schedule != "legacy"
             or self.spatial_aux_schedule != "constant"
+            or self.spatial_aux_mode != "reinforce"
+            or self.retry_logp_norm != "sum"
+            or self.potential_shaping_gamma is not None
+            or self.continuous_entropy_coef != 0.0
             or bool(self.teacher_checkpoints)
         ):
             raise ValueError(
-                "Imitation, distillation, adaptive retries and annealing require multiscale"
+                "Imitation, distillation, adaptive retries, shaping and annealing require multiscale"
             )
 
     @classmethod
@@ -208,6 +239,14 @@ class ExperimentConfig:
         d = asdict(self)
         if not self.teacher_checkpoints:
             d.pop("teacher_checkpoints", None)
+        if self.spatial_aux_mode == "reinforce":
+            d.pop("spatial_aux_mode", None)
+        if self.retry_logp_norm == "sum":
+            d.pop("retry_logp_norm", None)
+        if self.potential_shaping_gamma is None:
+            d.pop("potential_shaping_gamma", None)
+        if self.continuous_entropy_coef == 0.0:
+            d.pop("continuous_entropy_coef", None)
         return d
 
     @property

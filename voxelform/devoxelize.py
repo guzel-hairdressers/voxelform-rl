@@ -3,7 +3,12 @@
 Occupancy, FAR and training metrics always remain voxel-based.
 """
 
-import hashlib, heapq, math, threading, time
+import hashlib
+import heapq
+import math
+import threading
+import time
+
 import numpy as np
 from scipy.ndimage import gaussian_filter
 from shapely import Polygon, constrained_delaunay_triangles
@@ -303,7 +308,7 @@ def _align_vertical_support_planes(
         else:
             d_rep = best["d"]
         for c in cluster:
-            snapped_lines[(c["z"], c["ei"])] = (nx_c, ny_c, d_rep)
+            snapped_lines[(int(c["z"]), int(c["ei"]))] = (nx_c, ny_c, d_rep)
 
     aligned = list(floor_polys)
     for z, pts in rings_by_z.items():
@@ -378,11 +383,11 @@ def _conform_edges(verts, faces):
     v = np.asarray(verts, dtype=np.float64)
     f = np.asarray(faces, dtype=np.int32)
     edges = Counter(
-        tuple(sorted((int(u), int(w))))
+        (min(int(u), int(w)), max(int(u), int(w)))
         for face in f
-        for u, w in zip(face, np.roll(face, -1))
+        for u, w in zip(face, np.roll(face, -1), strict=False)
     )
-    splits = {}
+    splits: dict[tuple[int, int], list[int]] = {}
     for (u, w), n in edges.items():
         if n == 2:
             continue
@@ -399,17 +404,17 @@ def _conform_edges(verts, faces):
     newf = []
     for face in f:
         boundary = []
-        for u, w in zip(face, np.roll(face, -1)):
+        for u, w in zip(face, np.roll(face, -1), strict=False):
             boundary.append(int(u))
-            key = tuple(sorted((int(u), int(w))))
-            ids = splits.get(key, [])
-            boundary.extend(ids if u < w else ids[::-1])
+            key = (min(int(u), int(w)), max(int(u), int(w)))
+            edge_ids = splits.get(key, [])
+            boundary.extend(edge_ids if u < w else edge_ids[::-1])
         if len(boundary) == 3:
             newf.append(face.tolist())
             continue
         center = len(newv)
         newv.append(v[face].mean(0).tolist())
-        for u, w in zip(boundary, boundary[1:] + boundary[:1]):
+        for u, w in zip(boundary, boundary[1:] + boundary[:1], strict=False):
             newf.append([u, w, center])
     return np.asarray(newv), np.asarray(newf, dtype=np.int32)
 
@@ -661,6 +666,7 @@ def _build_live_25d(
         if not is_smooth_bot:
             below = union_by_z[z - 1] if z > 0 else None
             curr = union_by_z[z]
+            assert curr is not None
             diff_dn = curr if below is None else curr.difference(below)
             bottom_caps.append((z, diff_dn))
 
@@ -668,6 +674,7 @@ def _build_live_25d(
         if not is_smooth_top:
             above = union_by_z[z + 1] if z + 1 < nz else None
             curr = union_by_z[z]
+            assert curr is not None
             diff_up = curr if above is None else curr.difference(above)
             top_caps.append((z + 1, diff_up))
 
@@ -922,7 +929,7 @@ def _qem_simplify(
         return max(0.0, cost), pos
 
     ver = [0] * n_v
-    heap = []
+    heap: list[tuple[float, int, int, int, int, float, float, float]] = []
     for u, v in edges_set:
         c, pos = eval_pair(u, v)
         heapq.heappush(
@@ -1070,7 +1077,7 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
     ezs, eys, exs = np.nonzero(ex)
     ezs += 1
     eys += 1
-    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
+    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist(), strict=False):
         if (
             z - 1 < 0
             or y - 1 < 0
@@ -1096,7 +1103,7 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
     ezs, eys, exs = np.nonzero(ey)
     ezs += 1
     exs += 1
-    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
+    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist(), strict=False):
         if (
             z - 1 < 0
             or x - 1 < 0
@@ -1122,7 +1129,7 @@ def _build_live_dc_qem(occ_np: np.ndarray, t0: float) -> dict:
     ezs, eys, exs = np.nonzero(ez)
     eys += 1
     exs += 1
-    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist()):
+    for z, y, x in zip(ezs.tolist(), eys.tolist(), exs.tolist(), strict=False):
         if (
             y - 1 < 0
             or x - 1 < 0

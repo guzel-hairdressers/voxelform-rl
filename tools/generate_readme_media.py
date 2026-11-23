@@ -959,8 +959,8 @@ def generate_trained_rollout_assets(
     candidates = [
         ("m_prs_0315", "Held-Out Blind Test: Paris (m_prs_0315)", 1.0, 1.0),
         ("m_prs_0320", "Held-Out Test: Paris (m_prs_0320)", 1.0, 1.0),
-        ("m_prs_0315", "Held-Out Blind Test: Paris (m_prs_0315)", 2.5, 0.08),
-        ("m_bcn_0093", "Barcelona Eixample (m_bcn_0093)", 2.5, 0.08),
+        ("m_prs_0315", "Held-Out Blind Test: Paris (m_prs_0315)", 0.4, 0.08),
+        ("m_bcn_0093", "Barcelona Eixample (m_bcn_0093)", 0.4, 0.08),
     ]
     chosen = None
     chosen_label = ""

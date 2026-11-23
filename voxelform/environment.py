@@ -1,34 +1,46 @@
 """Surface-anchored volume edits and explicit proxy evaluation."""
 
-import hashlib, math, os, random, time
+import hashlib
+import math
+import os
+import random
+import time
 from pathlib import Path
+from typing import Any
+
 import numpy as np
 import torch
+
+from .actions import ExteriorFacades
+from .cores import (
+    DEFAULT_MAX_CORE_DIST,
+    DEFAULT_MIN_CORE_SPACING,
+    PlacedCore,
+    solve_cores,
+)
+from .fields import (
+    depth_badness,
+    diffuse_access,
+    facade_depth,
+    facade_sky_access,
+    grid_points,
+    noise_prior,
+    receivers,
+    sky_boundary,
+    usable_depth_proxy,
+)
 from .shadows import (
-    DirectShadows,
     BoundaryShadows,
     DepthShadows,
-    SelfShadowMaps,
+    DirectShadows,
     FastVoxelShadows,
-    ReceiverCache,
     MeshShadows,
+    ReceiverCache,
+    SelfShadowMaps,
     sun_path,
     sync,
 )
-from .actions import ExteriorFacades
 from .workload import reset_budget
-from .fields import (
-    grid_points,
-    noise_prior,
-    sky_boundary,
-    diffuse_access,
-    facade_sky_access,
-    receivers,
-    usable_depth_proxy,
-    facade_depth,
-    depth_badness,
-)
-from .cores import solve_cores, DEFAULT_MIN_CORE_SPACING, DEFAULT_MAX_CORE_DIST
 
 
 def _scene_cache_path(
@@ -85,6 +97,19 @@ def context_boxes(nx, ny, count=16, seed=123, height=24.0):
 
 
 class Environment:
+    workload: Any
+    unified_limit: int
+    unified_actions: int
+    organic_3d_growth: bool
+    floor_copy_growth: bool
+    copy_labels: Any
+    _ln6_cache: Any
+    last_audit_edit: int | None
+    cores: tuple[PlacedCore, ...]
+    light: torch.Tensor
+    dynamic: FastVoxelShadows | SelfShadowMaps
+    values: dict[str, torch.Tensor]
+
     def __init__(
         self,
         shape=(6, 24, 32),
@@ -512,7 +537,7 @@ class Environment:
                 known=self.static_receivers.known.detach().cpu(),
                 values=self.static_receivers.values.detach().cpu(),
             )
-            if not self.fast_self_shadows:
+            if not self.fast_self_shadows and isinstance(self.dynamic, SelfShadowMaps):
                 payload["dynamic_anchor"] = self.dynamic.anchor.detach().cpu()
                 payload["dynamic_maps"] = [
                     dict(
@@ -654,7 +679,7 @@ class Environment:
             if getattr(self, "organic_3d_growth", False)
             else (self.z / self.nz)
         )
-        channels = (
+        channels: tuple[torch.Tensor, ...] = (
             self.occupied.float(),
             self.light,
             self.noise,
@@ -696,7 +721,7 @@ class Environment:
 
     def metrics(self):
         sync(self.device)
-        result = {k: float(v.detach().cpu()) for k, v in self.values.items()}
+        result: dict[str, Any] = {k: float(v.detach().cpu()) for k, v in self.values.items()}
         result.update(
             edits=self.edits,
             receivers=self.last_receiver_count,

@@ -2,6 +2,23 @@
 
 Current reproducible protocol: [experiment specification](../docs/EXPERIMENT_PROTOCOL.md).
 
+## Matched Greedy fairness parity, Deterministic MAP evaluation & significance tests — 2026-11-23
+
+Matched Apple M4 MPS evaluation (`eval seeds 9201–9205`, archived `400`-ep `far_gated_actor_critic` `best.pt` seeds `4211–4215`, bundled `VOXELFORM_CONTEXT_ROOT`) comparing Legacy `tier_meso2` Greedy (`greedy_learned_cap=False`) against **Fair Greedy (`greedy_learned_cap=True`)** given identical `_learned_quota` sizing and early coarse handoff, `5×`-compute Best-of-5 Stochastic Fair Greedy, and Deterministic MAP RL (`temp=0.0, noise=0.0`) ([Evidence](eval-fairness-parity-mps-2026-11-23.json)):
+
+| Method | Test $J$ (`4` sites) / FAR / `s/ep` | Blind `ALL` (`8` sites) / FAR / `s/ep` | Blind `XS–M` / FAR | Blind `L–XL` / FAR |
+|---|---:|---:|---:|---:|
+| Legacy Greedy (`greedy_learned_cap=False`, `noise=0.0`) | `0.734` / `100%` / `0.857` | `0.824` / `100%` / `0.647` | `0.833` / `100%` | `0.815` / `100%` |
+| Fair Greedy Det (`greedy_learned_cap=True`, `noise=0.0`) | `0.730` / `100%` / `0.897` | `0.833` / `100%` / `0.732` | `0.833` / `100%` | `0.832` / `100%` |
+| Fair Greedy Stoch Mean (`noise=1.0`, `5` seeds) | `0.737` / `95%` / `0.871` | `0.682` / `100%` / `0.641` | `0.568` / `100%` | `0.796` / `100%` |
+| Fair Greedy Best-of-5 (`5×` compute, `noise=1.0`) | `0.773` / `100%` / `4.355/site` | **`0.875`** / `100%` / `3.207/site` | **`0.900`** / `100%` | `0.850` / `100%` |
+| FAR-Gated `actor_critic` Stoch (`temp=1.0, noise=1.0`) | `0.803 ± 0.018` / **`100%`** / `1.024` | `0.864 ± 0.046` / `99.5%` | `0.833 ± 0.084` / `100%` | `0.896 ± 0.017` / `99.0%` |
+| **FAR-Gated `actor_critic` Det MAP (`temp=0.0, noise=0.0`)** | **`0.815 ± 0.034`** / `96%` / `1.262` | `0.872 ± 0.062` / `98.5%` / `0.847` | `0.815 ± 0.135` / `97%` | **`0.929 ± 0.027`** / **`100%`** |
+
+- **Exact Student-`t` 95% CIs & `t`/`p`-tests vs. Fair Greedy Det:**
+  - FAR-Gated RL Stoch: Test Student-`t4` CI `[0.781, 0.825]` (`t(4)=9.10, p=0.00081`); Blind `L–XL` (`t(4)=8.53, p=0.00104` seed / `t(3)=3.76, p=0.0330` paired site); Blind `ALL` (`t(4)=1.54, p=0.198` seed / `t(7)=0.81, p=0.444` paired site — not statistically significant overall due to `xs_sgp_0346`).
+  - FAR-Gated RL Det MAP: Test Student-`t4` CI `[0.772, 0.858]` (`t(4)=5.50, p=0.0053`); Blind `ALL` Student-`t4` CI `[0.795, 0.949]` (`p=0.229` seed / `p=0.525` paired site); Blind `L–XL` Student-`t4` CI **`[0.896, 0.962]`** (`t(4)=8.13, p=0.0012` seed / `t(3)=6.79, p=0.0065` paired site), outscoring `5×` Best-of-5 Fair Greedy (`0.850`) on **4/4** blind `L/XL` sites (`l_prs_0324: 0.925`, `l_sgp_0369: 1.021`, `xl_nyc_0048: 0.906`, `xl_sgp_0386: 0.863`).
+
 ## Blind 8-site zero-shot evaluation across XS–XL tiers — 2026-11-23
 
 Independent zero-shot evaluation (`640` episodes total across eval seeds
@@ -9,8 +26,8 @@ Independent zero-shot evaluation (`640` episodes total across eval seeds
 on eight untouched catalog parcels (`xs_sgp_0346`, `s_sgp_0345`, `m_nyc_0003`,
 `m_prs_0315`, `l_prs_0324`, `l_sgp_0369`, `xl_nyc_0048`, `xl_sgp_0386`) with
 verified zero Haversine context overlap against all `10` training sites and `3`
-NYC validation sites ([Evidence](blind-8site-all-tiers-mps-2026-11-23.json) ·
-[Figure](../docs/media/blind-8site-and-aux-ablation.png)).
+NYC validation sites for all single-stage `actor_critic` arms ([Evidence](blind-8site-all-tiers-mps-2026-11-23.json) ·
+[Figure](../docs/media/blind-8site-and-aux-ablation.png)). *Note on `on_policy_distill`:* embedded `"provenance"` metadata in bundled [`data/teachers/`](../data/teachers/) shows those historical teachers earlier trained/tested on several holdout sites across cities ([distillation report](distill-all-tiers-400ep-mps-2026-11-22.md)), so only single-stage `actor_critic` is zero-shot here.
 Across all `5` archived `400`-ep seeds (`4211–4215`), FAR-Gated `actor_critic`
 outscores `tier_meso2` Greedy on **all `4/4` blind `L/XL` parcels** and **`6/8`
 blind parcels overall**, cutting `XS_M` cross-seed SD from `±0.206` (ungated)
@@ -49,7 +66,8 @@ the full `400`-episode cosine LR schedule (`1.2e-3 → 2.0e-4`) across
 | **`constant_aux` (`λ_aux = 1.2`)** | `0.723 ± 0.025` / `100%` | **`0.803 ± 0.018`** / **`100%`** / `4,263.8` | `0.667 ± 0.054` / `97.3%` | `0.762 ± 0.036` / `94.0%` / `4,499.7` | **`0.864`** / **`0.896`** |
 
 With matched `400`-episode cosine LR horizons and `5` seeds, pure RL without `des_c`
-(`λ_aux = 0.0`) stalls (`0.420` Test; `0.531` blind), whereas annealing `1.2 → 0.0`
+(`λ_aux = 0.0`) stalls (`0.420` Test; `0.531` blind), whereas holding `1.2` for a
+`20%` warmup then cosine-annealing `1.2 → 0.0`
 reaches constant-aux quality (`0.727` Val, `0.790` Test, `0.883` blind `L/XL`, winning
 `7/8` blind sites over Greedy) while keeping episode-`400` Test at `0.767` with **`99.0%`
 FAR** (vs. `94.0%` for constant `λ_aux = 1.2`).
@@ -65,14 +83,16 @@ Without gating `exchange`, `actor_critic` improves from legacy `0.613` to
 `exchange` spam (`m_prs_0320 = 0.105`). Adding the `|FAR - FAR*| <= 0.75`
 `exchange` gate and `0.02` operation-entropy regularization eliminates that
 failure mode and lifts validation-selected `actor_critic` (`best.pt`) to
-**`0.803 ± 0.018`** (**`100%` FAR**, 95% CI `[0.789, 0.817]`), sweeping all `7/7`
+**`0.803 ± 0.018`** (**`100%` FAR**, bootstrap 95% CI `[0.789, 0.817]`, Student-`t4`
+CI `[0.781, 0.825]`, `1.024 s/ep` vs. Legacy Greedy `0.857 s/ep`), sweeping all `7/7`
 validation (`0.723 ± 0.025`, `100%` FAR) and test plots over `tier_meso2` Greedy
 (`0.599` Val / `0.734` Test) and surpassing two-teacher distillation (`0.752 ± 0.013`).
 Without validation selection, episode `400` (`latest.pt`) drifts to `0.762 ± 0.036`
 (`94%` FAR).
 [Report](control-all-tiers-400ep-mps-2026-11-22.md) ·
 [Evidence](control-all-tiers-400ep-mps-2026-11-22.json) ·
-[Matched Greedy](greedy-control-all-tiers-mps-2026-11-22.json)
+[Matched Greedy](greedy-control-all-tiers-mps-2026-11-22.json) ·
+[Fairness & MAP Parity](eval-fairness-parity-mps-2026-11-23.json)
 
 ## 400-episode two-teacher on-policy distillation — 2026-11-22
 

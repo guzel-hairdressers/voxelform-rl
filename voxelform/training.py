@@ -1,9 +1,10 @@
 """Headless training reward experiment; production session reward is unchanged."""
 
-from .workload import action_reward
 import torch
 from torch import nn
-from .patch_policy import PatchLearner, PatchConfig
+
+from .patch_policy import PatchConfig, PatchLearner
+from .workload import action_reward
 
 
 def step_reward(env, before, mode="current"):
@@ -57,11 +58,13 @@ class EnvironmentLearner(PatchLearner):
         if self.config.allocation != "feedback":
             raise ValueError("Informed pilot requires adaptive edit amounts")
         old = self.model.encoder[0]
+        assert isinstance(old, nn.Conv2d) and old.bias is not None
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(seed)
             expanded = nn.Conv2d(
                 9 if self.include_facade_sky else 8, 16, 3, padding=1
             ).to(device)
+        assert expanded.bias is not None
         with torch.no_grad():
             expanded.weight.zero_()
             expanded.weight[:, :5].copy_(old.weight)
@@ -86,7 +89,7 @@ class EnvironmentLearner(PatchLearner):
         eligible = torch.as_tensor(
             env.frontier.eligible(operation), dtype=torch.float32, device=self.device
         )
-        channels = (
+        channels: tuple[torch.Tensor, ...] = (
             env.observation(include_depth=True),
             eligible[:, None],
             env.external_potential[:, None],

@@ -33,12 +33,15 @@ select = ["F", "E9"]
 [tool.mypy]
 files = [
     "tools/research.py",
+    "unified_server.py",
     "voxelform/actions.py",
     "voxelform/coarse_to_fine.py",
     "voxelform/context.py",
     "voxelform/core_plans.py",
     "voxelform/cores.py",
     "voxelform/decoder_diagnostics.py",
+    "voxelform/devoxelize.py",
+    "voxelform/environment.py",
     "voxelform/experiment.py",
     "voxelform/fields.py",
     "voxelform/layout_archive.py",
@@ -47,7 +50,11 @@ files = [
     "voxelform/policy.py",
     "voxelform/redistribution.py",
     "voxelform/rollout.py",
+    "voxelform/server.py",
+    "voxelform/session.py",
     "voxelform/shadows.py",
+    "voxelform/training.py",
+    "voxelform/unified.py",
     "voxelform/workload.py",
 ]
 follow_imports = "silent"

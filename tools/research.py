@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 import torch
+from scipy import stats as scipy_stats
 
 from voxelform.coarse_to_fine import (
     CoarseEnv,
@@ -214,6 +215,9 @@ def make_policy(config, device, seed):
             lr=1.2e-3,
             training_objective=config.training_objective,
             decoder_retry_schedule=config.decoder_retry_schedule,
+            spatial_aux_mode=config.spatial_aux_mode,
+            retry_logp_norm=config.retry_logp_norm,
+            continuous_entropy_coef=config.continuous_entropy_coef,
         )
         if config.teacher_checkpoints:
             teachers: dict[str, CoarseToFineNetwork] = {}
@@ -285,6 +289,7 @@ def episode(policy, env, config, training, coarse_envs=()):
             step_reward_fn=organic_step_reward,
             terminal_reward_fn=organic_terminal_reward,
             reward_profile=config.reward_profile,
+            potential_shaping_gamma=config.potential_shaping_gamma,
         )
         return dict(
             reference=_reference_eval(env) if not training else None,
@@ -491,14 +496,25 @@ def aggregate(summaries: list[dict[str, Any]]) -> dict[str, Any]:
             "meanDiffuseSky",
         ):
             vals = [r[key] for r in rows]
+            mean_val = statistics.mean(vals)
+            sd = statistics.stdev(vals) if len(vals) > 1 else None
             ci = None
+            t_ci = None
+            if sd is not None and len(vals) >= 2:
+                half = (
+                    float(scipy_stats.t.ppf(0.975, df=len(vals) - 1))
+                    * sd
+                    / math.sqrt(len(vals))
+                )
+                t_ci = [mean_val - half, mean_val + half]
             if len(vals) >= 3:
                 rng = np.random.default_rng(2026)
                 boots = rng.choice(vals, size=(5000, len(vals))).mean(1)
                 ci = np.quantile(boots, [0.025, 0.975]).tolist()
             stats[key] = dict(
-                mean=statistics.mean(vals),
-                stdAcrossModelSeeds=statistics.stdev(vals) if len(vals) > 1 else None,
+                mean=mean_val,
+                stdAcrossModelSeeds=sd,
+                tCi95AcrossModelSeeds=t_ci,
                 bootstrap95AcrossModelSeeds=ci,
             )
         out[split] = dict(modelSeeds=len(rows), metrics=stats)

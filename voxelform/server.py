@@ -1,13 +1,16 @@
 """Local-only demo with a persistent worker and an active-time clock."""
 
-import io, os
+import io
+import os
 from pathlib import Path
+
 import torch
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, Response
 from fastapi.staticfiles import StaticFiles
-from .session import Session
+
 from .context import ContextLibrary
+from .session import Session
 
 ROOT = Path(__file__).resolve().parents[1]
 library = ContextLibrary()

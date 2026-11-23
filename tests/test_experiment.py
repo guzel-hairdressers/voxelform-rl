@@ -1,8 +1,10 @@
+import contextlib
+import io
 import json
-from pathlib import Path
 import random
 import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 import numpy as np
 import torch
@@ -124,6 +126,9 @@ class Experiment(unittest.TestCase):
         a = aggregate([dict(test=s), dict(test=s)])["test"]
         self.assertEqual(a["modelSeeds"], 2)
         self.assertIsNone(a["metrics"]["meanQuality"]["bootstrap95AcrossModelSeeds"])
+        self.assertEqual(a["metrics"]["meanQuality"]["tCi95AcrossModelSeeds"], [1.0, 1.0])
+        a1 = aggregate([dict(test=s)])["test"]
+        self.assertIsNone(a1["metrics"]["meanQuality"]["tCi95AcrossModelSeeds"])
 
     def test_periodic_validation_checkpointing_selects_best_checkpoint(self):
         from types import SimpleNamespace
@@ -150,16 +155,17 @@ class Experiment(unittest.TestCase):
                     )
                 )
             )
-            train(
-                SimpleNamespace(
-                    config=str(cfg_path),
-                    output=str(out_dir),
-                    resume=None,
-                    stop_after=None,
-                    only_seed=None,
-                    finalize_only=False,
+            with contextlib.redirect_stdout(io.StringIO()):
+                train(
+                    SimpleNamespace(
+                        config=str(cfg_path),
+                        output=str(out_dir),
+                        resume=None,
+                        stop_after=None,
+                        only_seed=None,
+                        finalize_only=False,
+                    )
                 )
-            )
             seed_dir = out_dir / "seed-123"
             for fname in (
                 "checkpoint-000001.pt",
@@ -235,14 +241,15 @@ class Experiment(unittest.TestCase):
             def run(name, interval, resume=None, stop_after=None):
                 config_path = root / f"interval-{interval}.json"
                 write_json(config_path, dict(cfg, checkpoint_interval=interval))
-                train(
-                    SimpleNamespace(
-                        config=config_path,
-                        output=root / name,
-                        resume=resume,
-                        stop_after=stop_after,
+                with contextlib.redirect_stdout(io.StringIO()):
+                    train(
+                        SimpleNamespace(
+                            config=config_path,
+                            output=root / name,
+                            resume=resume,
+                            stop_after=stop_after,
+                        )
                     )
-                )
                 return root / name / "seed-123"
 
             scheduled = run("scheduled", 1)
@@ -333,3 +340,41 @@ class Experiment(unittest.TestCase):
                 torch.testing.assert_close(
                     val, student.teachers["L_XL"].state_dict()[key]
                 )
+
+    def test_opt_in_research_flags_preserve_default_fingerprint_and_teacher_provenance(self):
+        from dataclasses import replace
+
+        base = ExperimentConfig()
+        explicit_defaults = ExperimentConfig(
+            spatial_aux_mode="reinforce",
+            retry_logp_norm="sum",
+            potential_shaping_gamma=None,
+            continuous_entropy_coef=0.0,
+        )
+        self.assertEqual(base.fingerprint, explicit_defaults.fingerprint)
+
+        zero_temp = replace(base, evaluation_temperature=0.0)
+        self.assertEqual(zero_temp.evaluation_temperature, 0.0)
+        with self.assertRaises(ValueError):
+            replace(base, evaluation_temperature=-0.1)
+
+        opt = replace(
+            base,
+            multiscale_schedule="tier_meso2",
+            spatial_aux_mode="regression",
+            retry_logp_norm="mean",
+            potential_shaping_gamma=0.99,
+            continuous_entropy_coef=0.01,
+        )
+        d = opt.to_dict()
+        self.assertEqual(d["spatial_aux_mode"], "regression")
+        self.assertEqual(d["retry_logp_norm"], "mean")
+        self.assertEqual(d["potential_shaping_gamma"], 0.99)
+        self.assertEqual(d["continuous_entropy_coef"], 0.01)
+
+        for tname in ("teacher_xs_m_seed789.pt", "teacher_l_xl_ep100.pt"):
+            tpath = Path(__file__).resolve().parents[1] / "data" / "teachers" / tname
+            ckpt = torch.load(tpath, map_location="cpu", weights_only=True)
+            self.assertIn("provenance", ckpt)
+            self.assertIn("trainSites", ckpt["provenance"])
+            self.assertIn("modelSHA256", ckpt["provenance"])

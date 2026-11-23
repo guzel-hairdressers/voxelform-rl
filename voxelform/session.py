@@ -1,22 +1,22 @@
 """A FAR episode contains many facade-mask edits and many optimizer rollouts."""
 
-import json
 import functools
+import json
 import os
-from pathlib import Path
 import threading
 import time
 import traceback
+from pathlib import Path
 
-import torch
 import numpy as np
+import torch
 
 from .context import ContextLibrary, public_scene
 from .environment import Environment
+from .patch_policy import PatchConfig, PatchFacades, PatchLearner
 from .policy import Learner
-from .patch_policy import PatchLearner, PatchConfig, PatchFacades
 from .shadows import device_name, sync
-from .workload import reset_budget, WorkloadBudget, action_reward
+from .workload import WorkloadBudget, action_reward, reset_budget
 
 DENSITY_PRESETS = {"low": 1.5, "medium": 3.0, "high": 4.5}
 
@@ -337,6 +337,7 @@ class Session:
         self.save_checkpoint()
 
     def load_policy(self, state):
+        replacement: Learner
         if state.get("format") == "voxelform.patch.v1" or isinstance(
             self.policy, PatchLearner
         ):

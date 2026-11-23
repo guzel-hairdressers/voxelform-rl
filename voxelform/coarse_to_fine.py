@@ -1065,12 +1065,16 @@ class CoarseToFineLearner:
         fine_config=None,
         input_channels=12,
         spatial_aux_weight=1.2,
-        evaluation_temperature=2.5,
+        evaluation_temperature=0.4,
         evaluation_noise_scale=0.08,
         lr=1.2e-3,
         heuristic_only=False,
         training_objective="actor_critic",
         decoder_retry_schedule="legacy",
+        spatial_aux_mode="reinforce",
+        retry_logp_norm="sum",
+        continuous_entropy_coef=0.0,
+        greedy_learned_cap=True,
     ):
         self.device = torch.device(device)
         self.seed = int(seed)
@@ -1084,9 +1088,27 @@ class CoarseToFineLearner:
         self.heuristic_only = bool(heuristic_only)
         self.training_objective = training_objective
         self.decoder_retry_schedule = decoder_retry_schedule
+        self.spatial_aux_mode = str(spatial_aux_mode)
+        self.retry_logp_norm = str(retry_logp_norm)
+        self.continuous_entropy_coef = float(continuous_entropy_coef)
+        self.greedy_learned_cap = bool(greedy_learned_cap)
         self.decoder_diagnostics: DecoderDiagnostics | None = None
         if not math.isfinite(self.spatial_aux_weight) or self.spatial_aux_weight < 0.0:
             raise ValueError("Invalid auxiliary weight")
+        if (
+            not math.isfinite(self.evaluation_temperature)
+            or self.evaluation_temperature < 0.0
+        ):
+            raise ValueError("Evaluation temperature must be non-negative")
+        if self.spatial_aux_mode not in ("reinforce", "regression"):
+            raise ValueError("Unknown spatial auxiliary mode")
+        if self.retry_logp_norm not in ("sum", "mean"):
+            raise ValueError("Unknown retry log-probability normalization")
+        if (
+            not math.isfinite(self.continuous_entropy_coef)
+            or self.continuous_entropy_coef < 0.0
+        ):
+            raise ValueError("Invalid continuous entropy coefficient")
         self.fine_config = fine_config or PatchConfig(
             mode="combined",
             allocation="feedback",
@@ -1341,6 +1363,9 @@ class CoarseToFineLearner:
         on_policy_distill = training and self.training_objective == "on_policy_distill"
         greedy_rollout = self.heuristic_only or imitation
         learned_cap = self.decoder_retry_schedule == "learned_cap"
+        learned_cap_active = learned_cap and not (
+            imitation or (self.heuristic_only and not self.greedy_learned_cap)
+        )
         cfg = env_or_cenv.config if is_coarse else self.fine_config
         stride = cfg.stride
         scale = int(env_or_cenv.bxy) if is_coarse else 1
@@ -1395,8 +1420,7 @@ class CoarseToFineLearner:
                 can_finish = bool(
                     env_or_cenv.near_far
                     or (
-                        learned_cap
-                        and not greedy_rollout
+                        learned_cap_active
                         and env_or_cenv.edits >= 2
                         and abs(env_or_cenv.far - env_or_cenv.target_far) <= 0.70
                     )
@@ -1444,7 +1468,9 @@ class CoarseToFineLearner:
                     high_f,
                     remove,
                     grow,
-                    bool(env_or_cenv.near_far) if is_coarse else can_finish,
+                    can_finish
+                    if learned_cap_active
+                    else (bool(env_or_cenv.near_far) if is_coarse else can_finish),
                 )
                 if training:
                     heuristic_op = torch.tensor(
@@ -1453,9 +1479,11 @@ class CoarseToFineLearner:
 
             if greedy_rollout:
                 op = torch.tensor(h_op_idx, device=self.device, dtype=torch.long)
+            elif (not training) and self.evaluation_temperature <= 0.0:
+                op = logits.masked_fill(~legal, float("-inf")).argmax()
             else:
                 eff_logits = (
-                    logits if training else (logits * self.evaluation_temperature)
+                    logits if training else (logits / self.evaluation_temperature)
                 )
                 dist_op = Categorical(
                     logits=eff_logits.masked_fill(~legal, float("-inf"))
@@ -1470,6 +1498,7 @@ class CoarseToFineLearner:
             consumed = None
             elig_c = None
             local_adv = None
+            des_target = None
             teacher_mean = None
             teacher_logits = None
             teacher_net = None
@@ -1656,7 +1685,7 @@ class CoarseToFineLearner:
                             _learned_quota(
                                 s0, w_rem, max_r, min_step, floor_frac=quota_floor
                             )
-                            if (learned_cap and not greedy_rollout)
+                            if learned_cap_active
                             else max_r
                         )
                         scores[0] = s0
@@ -1710,7 +1739,7 @@ class CoarseToFineLearner:
                             _learned_quota(
                                 s1, w_add, max_a, min_step, floor_frac=quota_floor
                             )
-                            if (learned_cap and not greedy_rollout)
+                            if learned_cap_active
                             else max_a
                         )
                         scores[1] = s1
@@ -1802,21 +1831,24 @@ class CoarseToFineLearner:
                                 stride,
                                 z_slice=z_act,
                             )
-                            la_raw = (
-                                (latent.sigmoid() - mean.detach().sigmoid())
-                                * des_c
-                                * elig_c
-                            )
-                            local_adv = torch.zeros_like(la_raw)
-                            for c in range(la_raw.shape[0]):
-                                w_c = elig_c[c]
-                                n_c = w_c.sum().clamp_min(1.0)
-                                sd_c = (
-                                    (la_raw[c].square().sum() / n_c)
-                                    .sqrt()
-                                    .clamp_min(1e-4)
+                            if self.spatial_aux_mode == "regression":
+                                des_target = (2.0 * des_c).clamp(-2.8, 2.8).detach()
+                            else:
+                                la_raw = (
+                                    (latent.sigmoid() - mean.detach().sigmoid())
+                                    * des_c
+                                    * elig_c
                                 )
-                                local_adv[c] = la_raw[c] / sd_c
+                                local_adv = torch.zeros_like(la_raw)
+                                for c in range(la_raw.shape[0]):
+                                    w_c = elig_c[c]
+                                    n_c = w_c.sum().clamp_min(1.0)
+                                    sd_c = (
+                                        (la_raw[c].square().sum() / n_c)
+                                        .sqrt()
+                                        .clamp_min(1e-4)
+                                    )
+                                    local_adv[c] = la_raw[c] / sd_c
                         break
                 if move is None:
                     self.last_rejection = "mask_generation_failed"
@@ -1842,6 +1874,7 @@ class CoarseToFineLearner:
                         consumed=consumed if move is not None else None,
                         elig_c=elig_c.detach() if elig_c is not None else None,
                         local_adv=local_adv.detach() if local_adv is not None else None,
+                        des_target=des_target,
                         teacher_mean=teacher_mean,
                         teacher_logits=teacher_logits,
                         heuristic_op=heuristic_op,
@@ -1896,6 +1929,7 @@ class CoarseToFineLearner:
 
         values_out: list[torch.Tensor | None] = [None] * len(self.tape)
         ent_terms = []
+        cont_ent_terms = []
         actor_terms = []
         stds = self.model.patch_log_std.clamp(-1.4, -0.3).exp()
         for (is_c, st_scale, stride, _shape), idxs in groups.items():
@@ -1934,11 +1968,15 @@ class CoarseToFineLearner:
                     mean = mean_b[k, consumed]
                     std = stds[consumed][:, None, None, None]
                     dist_s = Normal(mean, std, validate_args=False)
+                    if self.continuous_entropy_coef > 0.0:
+                        cont_ent_terms.append(dist_s.entropy().mean())
                     # Scale-normalize path log-prob so XS/S/M/L/XL keep balanced gradients.
                     scale_norm = math.sqrt(max(1, draws[0].numel()))
                     path_logp = torch.stack(
                         [dist_s.log_prob(draw).sum() / scale_norm for draw in draws]
                     ).sum()
+                    if self.retry_logp_norm == "mean":
+                        path_logp = path_logp / len(draws)
                     term = term - path_logp * a_ep * rl_scale
                     if aux_weight > 0.0 and entry["elig_c"] is not None:
                         if on_policy_distill and entry.get("teacher_mean") is not None:
@@ -1946,6 +1984,13 @@ class CoarseToFineLearner:
                                 4.0 * aux_weight
                             ) * self._masked_spatial_loss(
                                 mean, entry["teacher_mean"], entry["elig_c"]
+                            )
+                        elif (
+                            not on_policy_distill
+                            and entry.get("des_target") is not None
+                        ):
+                            term = term + aux_weight * self._masked_spatial_loss(
+                                mean, entry["des_target"], entry["elig_c"]
                             )
                         elif (
                             not on_policy_distill
@@ -1991,6 +2036,11 @@ class CoarseToFineLearner:
             critic = F.smooth_l1_loss(torch.stack(val_tensors), returns)
             ent_coef = 0.02 if self.decoder_retry_schedule == "learned_cap" else 0.005
             loss = loss + 0.5 * critic - ent_coef * torch.stack(ent_terms).mean()
+            if self.continuous_entropy_coef > 0.0 and cont_ent_terms:
+                loss = (
+                    loss
+                    - self.continuous_entropy_coef * torch.stack(cont_ent_terms).mean()
+                )
         self.optimizer.zero_grad(set_to_none=True)
         loss.backward()
         norm = nn.utils.clip_grad_norm_(
@@ -2016,6 +2066,9 @@ class CoarseToFineLearner:
             block=list(self.block),
             inputChannels=self.input_channels,
             spatialAuxWeight=self.spatial_aux_weight,
+            spatialAuxMode=self.spatial_aux_mode,
+            retryLogpNorm=self.retry_logp_norm,
+            continuousEntropyCoef=self.continuous_entropy_coef,
             trainingObjective=self.training_objective,
             decoderRetrySchedule=self.decoder_retry_schedule,
             evaluationTemperature=self.evaluation_temperature,
@@ -2042,6 +2095,13 @@ class CoarseToFineLearner:
         self.spatial_aux_weight = float(
             state.get("spatialAuxWeight", self.spatial_aux_weight)
         )
+        self.spatial_aux_mode = str(
+            state.get("spatialAuxMode", self.spatial_aux_mode)
+        )
+        self.retry_logp_norm = str(state.get("retryLogpNorm", self.retry_logp_norm))
+        self.continuous_entropy_coef = float(
+            state.get("continuousEntropyCoef", self.continuous_entropy_coef)
+        )
         self.evaluation_temperature = float(
             state.get("evaluationTemperature", self.evaluation_temperature)
         )
@@ -2067,12 +2127,16 @@ def run_cascade_episode(
     step_reward_fn=None,
     terminal_reward_fn=None,
     reward_profile="default",
+    potential_shaping_gamma: float | None = None,
 ):
     """Run an arbitrary N-stage coarse -> ... -> fine episode and return timing + exact fine metrics."""
     t0 = time.perf_counter()
     tape_start = len(learner.tape)
     coarse_envs = list(coarse_envs)
     dense_potential = reward_profile == "dense_potential"
+    shaping_gamma = (
+        1.0 if potential_shaping_gamma is None else float(potential_shaping_gamma)
+    )
     stage_steps = []
     trace = []
     attempt_idx = 0
@@ -2136,7 +2200,7 @@ def run_cascade_episode(
                 if dense_potential:
                     if training:
                         cur_pot = coarse_potential(ce)
-                        rew = 1.5 * (cur_pot - prev_pot) - 0.002
+                        rew = 1.5 * (shaping_gamma * cur_pot - prev_pot) - 0.002
                         prev_pot = cur_pot
                     else:
                         rew = -0.002
@@ -2246,7 +2310,7 @@ def run_cascade_episode(
             if training:
                 cur_obj, _ = objective_fn(env)
                 cur_fine_pot = fine_potential(env, cur_obj, start_fine)
-                rew = 2.0 * (cur_fine_pot - prev_fine_pot) + (
+                rew = 2.0 * (shaping_gamma * cur_fine_pot - prev_fine_pot) + (
                     -0.005 if env.far_satisfied else 0.0
                 )
                 prev_fine_pot = cur_fine_pot

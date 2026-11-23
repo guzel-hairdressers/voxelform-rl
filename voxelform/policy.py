@@ -6,6 +6,7 @@ of masks. Two convolutional output channels define the mask distribution itself.
 
 import math
 import time
+from typing import Any
 
 import numpy as np
 import torch
@@ -56,7 +57,7 @@ class Learner:
         self.device = torch.device(device)
         with torch.random.fork_rng(devices=[]):
             torch.manual_seed(seed)
-            self.model = Network().to(device)
+            self.model: Any = Network().to(device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=1e-3)
         self.updates = 0
         self.direct_updates = 0

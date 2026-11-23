@@ -26,24 +26,30 @@ import numpy as np
 import torch
 import uvicorn
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response, FileResponse, JSONResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 
-from voxelform.context import ContextLibrary, public_scene
 from voxelform.coarse_to_fine import (
     CoarseEnv,
     CoarseToFineLearner,
     commit_fine,
     tier_cascade_blocks,
 )
+from voxelform.context import ContextLibrary, public_scene
+from voxelform.core_plans import CORE_LAYOUT_VERSION, plan_library, render_plan_svg
 from voxelform.cores import (
     DEFAULT_MAX_CORE_DIST,
     DEFAULT_MIN_CORE_SPACING,
     core_templates_summary,
 )
-from voxelform.core_plans import plan_library, render_plan_svg, CORE_LAYOUT_VERSION
 from voxelform.environment import Environment
 from voxelform.layout_archive import LayoutArchive, layout_scope
+from voxelform.objectives import (
+    fine_potential,
+    organic_objective,
+    organic_step_reward,
+    organic_terminal_reward,
+)
 from voxelform.patch_policy import PatchConfig, PatchFacades
 from voxelform.session import DENSITY_PRESETS
 from voxelform.shadows import device_name, sync
@@ -52,14 +58,6 @@ from voxelform.unified import (
     OPERATIONS,
     UnifiedLearner,
     commit,
-)
-
-
-from voxelform.objectives import (
-    fine_potential,
-    organic_objective,
-    organic_step_reward,
-    organic_terminal_reward,
 )
 
 
@@ -1249,6 +1247,7 @@ class UnifiedSession:
         )
 
         if use_c2f:
+            assert c2f is not None
             commit_fine(self.env, move, validated=True)
             self.steps = self._coarse_steps + self.env.edits
             if c2f.fine_config.allocation == "feedback":
@@ -2216,6 +2215,7 @@ def save_policy():
             if getattr(session, "c2f_policy", None) is not None
             else session.policy
         )
+        assert export_policy is not None
         torch.save(export_policy.state(), buffer)
     return Response(
         buffer.getvalue(),

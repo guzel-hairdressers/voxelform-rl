@@ -19,7 +19,7 @@ from voxelform.decoder_diagnostics import DecoderDiagnostics
 from voxelform.environment import Environment
 from voxelform.objectives import organic_step_reward, organic_terminal_reward
 from voxelform.patch_policy import PatchConfig, PatchFacades
-from voxelform.unified import clean_floor_tensor, min_room_width
+from voxelform.unified import UnifiedLearner, clean_floor_tensor, min_room_width
 
 
 class CoarseToFineTests(unittest.TestCase):
@@ -470,6 +470,224 @@ class CoarseToFineTests(unittest.TestCase):
         cenv.count_fine = int(round(3.6 * cenv.plot_area))
         learner.choose_stage(cenv, is_coarse=True, training=False, retries=1)
         self.assertEqual(learner.last_operation, "exchange")
+
+    def test_evaluation_temperature_scaling_and_deterministic_argmax(self):
+        env, cfg = self._make_env(shape=(8, 16, 16))
+        env.unified_limit = 12
+        env.unified_actions = 0
+        env.organic_3d_growth = True
+        env.floor_copy_growth = False
+        env._ln6_cache = None
+        learner = CoarseToFineLearner("cpu", 17, fine_config=cfg, input_channels=12)
+        flat = UnifiedLearner("cpu", 17, config=cfg, organic_3d=True, net_guided=True)
+        fixed_logits = torch.tensor([[3.0, 1.0, 0.5, -4.0]])
+
+        def fake_c2f(obs_b, goal_b, is_coarse=False, stride=(1, 1, 1), scale=1):
+            b = obs_b.shape[0]
+            h, w = max(1, obs_b.shape[-2] // 4), max(1, obs_b.shape[-1] // 4)
+            z = max(1, obs_b.shape[1] // 2)
+            return (
+                torch.zeros((b, 2, z, h, w)),
+                torch.zeros((b,)),
+                fixed_logits.expand(b, -1),
+            )
+
+        with patch.object(learner.model, "forward_stage_batch", side_effect=fake_c2f):
+            learner.evaluation_temperature = 0.0
+            for s in range(5):
+                torch.manual_seed(100 + s)
+                learner.choose_stage(env, is_coarse=False, training=False)
+                self.assertEqual(learner.last_operation, "remove")
+
+            seen_probs = {}
+            from torch.distributions import Categorical as RealCat
+
+            for temp in (0.5, 2.0):
+                captured = {}
+
+                def capture_cat(*, logits):
+                    captured["logits"] = logits.detach().clone()
+                    return RealCat(logits=logits)
+
+                learner.evaluation_temperature = temp
+                with patch(
+                    "voxelform.coarse_to_fine.Categorical", side_effect=capture_cat
+                ):
+                    learner.choose_stage(env, is_coarse=False, training=False)
+                probs = torch.softmax(captured["logits"], dim=-1)
+                seen_probs[temp] = float(probs[0])
+            self.assertGreater(seen_probs[0.5], seen_probs[2.0])
+
+        def fake_flat(obs, goal, stride=(2, 4, 4)):
+            z = max(1, math.ceil(obs.shape[0] / stride[0]))
+            h = max(1, math.ceil(obs.shape[-2] / stride[1]))
+            w = max(1, math.ceil(obs.shape[-1] / stride[2]))
+            return (
+                torch.zeros((2, z, h, w)),
+                torch.zeros(()),
+                fixed_logits[0],
+            )
+
+        with patch.object(flat.model, "forward_coarse", side_effect=fake_flat):
+            flat.evaluation_temperature = 0.0
+            for s in range(5):
+                torch.manual_seed(200 + s)
+                flat.choose(env, training=False)
+                self.assertEqual(flat.last_operation, "remove")
+
+    def test_fair_greedy_learned_cap_uses_quota_and_early_handoff(self):
+        env, cfg = self._make_env(shape=(10, 48, 48))
+        env.unified_limit = 12
+        env.unified_actions = 0
+        env.organic_3d_growth = True
+        env.floor_copy_growth = False
+        env._ln6_cache = None
+        ce = CoarseEnv(env, (1, 2, 2))
+        ce.reset(6)
+        # Put coarse FAR within (0.45, 0.70] of target_far=3.0 so near_far=False yet early handoff is legal.
+        occ = ce.occupied.clone()
+        occ[3:6] = False
+        occ[3, :14, :] = True  # roughly 3.0 + 0.58 FAR
+        ce.restore_occupancy(occ)
+        ce.edits = 2
+        self.assertFalse(ce.near_far)
+        self.assertLessEqual(abs(ce.far - ce.target_far), 0.70)
+
+        fair_g = CoarseToFineLearner(
+            "cpu",
+            11,
+            fine_config=cfg,
+            input_channels=14,
+            heuristic_only=True,
+            decoder_retry_schedule="learned_cap",
+            greedy_learned_cap=True,
+        )
+        legacy_g = CoarseToFineLearner(
+            "cpu",
+            11,
+            fine_config=cfg,
+            input_channels=14,
+            heuristic_only=True,
+            decoder_retry_schedule="learned_cap",
+            greedy_learned_cap=False,
+        )
+        self.assertIsNone(fair_g.choose_stage(ce, is_coarse=True, training=False))
+        self.assertEqual(fair_g.last_operation, "finish")
+
+        legacy_g.choose_stage(ce, is_coarse=True, training=False)
+        self.assertNotEqual(legacy_g.last_operation, "finish")
+
+        with patch(
+            "voxelform.coarse_to_fine._learned_quota", return_value=2
+        ) as mock_quota:
+            fair_g.choose_stage(env, is_coarse=False, training=False)
+            self.assertGreaterEqual(mock_quota.call_count, 1)
+
+    def test_spatial_aux_regression_retry_mean_entropy_and_shaping_gamma(self):
+        env, cfg = self._make_env(shape=(8, 16, 16))
+        env.unified_limit = 12
+        env.unified_actions = 0
+        env.organic_3d_growth = True
+        env.floor_copy_growth = False
+        env._ln6_cache = None
+        learner = CoarseToFineLearner(
+            "cpu",
+            29,
+            fine_config=cfg,
+            input_channels=12,
+            spatial_aux_weight=1.0,
+            spatial_aux_mode="regression",
+            retry_logp_norm="mean",
+            continuous_entropy_coef=0.1,
+        )
+        learner.choose_stage(env, is_coarse=False, training=True)
+        self.assertEqual(len(learner.tape), 1)
+        entry = learner.tape[0]
+        if entry["elig_c"] is not None:
+            self.assertIsNotNone(entry["des_target"])
+            self.assertIsNone(entry["local_adv"])
+            with torch.no_grad():
+                mean_b, _, _ = learner.model.forward_stage_batch(
+                    entry["obs"][None],
+                    entry["goal"][None],
+                    is_coarse=entry["is_coarse"],
+                    stride=entry["stride"],
+                    scale=entry["scale"],
+                )
+            consumed = entry["drawn_channels"]
+            loss_exact = learner._masked_spatial_loss(
+                mean_b[0, consumed], mean_b[0, consumed].detach(), entry["elig_c"]
+            )
+            self.assertAlmostEqual(float(loss_exact.item()), 0.0, places=6)
+
+        learner.record(0.5)
+        learner.mark_done()
+        learner.finish(0.0)
+        # Positive continuous_entropy_coef encourages larger patch_log_std (grad < 0 before optimizer step).
+        learner2 = CoarseToFineLearner(
+            "cpu",
+            31,
+            fine_config=cfg,
+            input_channels=12,
+            spatial_aux_weight=0.0,
+            retry_logp_norm="mean",
+            continuous_entropy_coef=0.5,
+        )
+        learner2.choose_stage(env, is_coarse=False, training=True)
+        obs0 = learner2.tape[0]["obs"]
+        goal0 = learner2.tape[0]["goal"]
+        draw0 = learner2.tape[0]["latents"][0]
+        base_entry = dict(
+            obs=obs0,
+            goal=goal0,
+            is_coarse=False,
+            scale=1,
+            stride=learner2.fine_config.stride,
+            op=torch.tensor(0),
+            legal=torch.tensor([True, True, True, False]),
+            value=torch.tensor(0.0),
+            latent=draw0,
+            latents=[draw0],
+            drawn_channels=[0],
+            consumed=[0],
+            elig_c=None,
+            local_adv=None,
+            des_target=None,
+            teacher_mean=None,
+            teacher_logits=None,
+            heuristic_op=None,
+            aux_weight=0.0,
+            reward=torch.tensor(1.0),
+            done=True,
+        )
+        learner2.tape = [
+            dict(base_entry),
+            dict(base_entry, latents=[draw0, draw0, draw0, draw0]),
+        ]
+        stats = learner2.finish(0.0)
+        self.assertTrue(math.isfinite(stats["loss"]))
+        self.assertIsNotNone(learner2.model.patch_log_std.grad)
+        self.assertLess(float(learner2.model.patch_log_std.grad[0].item()), 0.0)
+
+        env_s, cfg_s = self._make_env(shape=(10, 24, 24))
+        pol_s = CoarseToFineLearner(
+            "cpu", 33, fine_config=cfg_s, input_channels=12, spatial_aux_weight=0.0
+        )
+        res = run_cascade_episode(
+            env_s,
+            (),
+            pol_s,
+            4,
+            organic_objective,
+            training=True,
+            rollout_steps=32,
+            audit_steps=1,
+            step_reward_fn=organic_step_reward,
+            terminal_reward_fn=organic_terminal_reward,
+            reward_profile="dense_potential",
+            potential_shaping_gamma=0.99,
+        )
+        self.assertIn("rawObjective", res)
 
 
 class BundledTeachersAndServerImportTests(unittest.TestCase):
