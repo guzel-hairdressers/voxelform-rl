@@ -27,7 +27,6 @@ from tools.render_portfolio_atlas import (
     _chain_segments_to_polylines,
     _clip_segments_against_voxels,
     _clip_segments_hlr,
-    _extract_hero_silhouette_segs,
     _extract_prism_occluders,
     _extract_voxel_crease_segs,
     _extrude_prism_minimal_shade,
@@ -72,14 +71,22 @@ def draw_voxels(occupied, cores, payload, camera, size):
     shell_mask = occ & ~core_mask
 
     polygons, depths, colors, edges, edge_lws = [], [], [], [], []
+    hero_screen_polys: list[Polygon] = []
 
-    def add_poly(vertices, rgba, edge=(0.0, 0.0, 0.0, 0.0), lw=0.0):
+    def add_poly(vertices, rgba, edge=(0.0, 0.0, 0.0, 0.0), lw=0.0, is_hero=False):
         screen = np.asarray(vertices, dtype=np.float64) @ axes + origin
-        polygons.append(screen[:, :2])
+        poly_2d = screen[:, :2]
+        polygons.append(poly_2d)
         depths.append(float(screen[:, 2].mean()))
         colors.append(rgba)
         edges.append(edge)
         edge_lws.append(lw)
+        if is_hero:
+            p = Polygon(poly_2d)
+            if not p.is_valid:
+                p = p.buffer(0)
+            if not p.is_empty and p.area > 1e-10:
+                hero_screen_polys.append(p)
 
     # Compute shifted hero hull for foreground/background context classification
     zz, yy, xx = np.nonzero(occ)
@@ -98,7 +105,6 @@ def draw_voxels(occupied, cores, payload, camera, size):
     hero_uv = np.column_stack([hu, hv])
     hero_hull = MultiPoint(hero_uv).convex_hull.buffer(0.8)
 
-    sil_segs, _sil_geom, _d_sil = _extract_hero_silhouette_segs(occ, 3.0, u_ax, v_ax, view_ax)
     bg_items, fg_items = [], []
     bg_occluders, fg_occluders = [], []
 
@@ -162,7 +168,7 @@ def draw_voxels(occupied, cores, payload, camera, size):
         g = gains_6[fq]
         for verts, f_idx, shade in zip(quads, fq, g, strict=True):
             alpha = 1.0 if int(f_idx) == 4 else 0.96
-            add_poly(verts, (float(shade), float(shade), float(shade), alpha))
+            add_poly(verts, (float(shade), float(shade), float(shade), alpha), is_hero=True)
 
     # Vivid yellow cores (#FADE24)
     if core_mask.any():
@@ -170,7 +176,7 @@ def draw_voxels(occupied, cores, payload, camera, size):
         c_quads = _to_shifted_hero_pts(c_quads, cx, cy, gf_delta)
         c_rgba = _shade_rgba((0.98, 0.87, 0.14), cf, 0.98)
         for verts, col in zip(c_quads, c_rgba, strict=True):
-            add_poly(verts, col)
+            add_poly(verts, col, is_hero=True)
 
     width, height = size
     paper = "#ffffff"
@@ -260,7 +266,34 @@ def draw_voxels(occupied, cores, payload, camera, size):
     )
     _add_lines(hero_creases, (0.18, 0.21, 0.26), 0.45, alpha=0.84, zorder=3.3, shift_hero=True)
     _add_lines(core_creases, (0.45, 0.37, 0.04), 0.40, alpha=0.75, zorder=3.4, shift_hero=True)
-    _add_lines(sil_segs, "#111827", 1.75, alpha=0.98, zorder=3.6, shift_hero=True)
+    hero_sil_lines: list[np.ndarray] = []
+    if hero_screen_polys:
+        hero_union = unary_union(hero_screen_polys).buffer(1.5e-4).buffer(-1.5e-4)
+        stack = [hero_union]
+        while stack:
+            geom = stack.pop()
+            if geom.is_empty:
+                continue
+            if geom.geom_type == "Polygon":
+                if geom.area > 1e-6:
+                    for ring in (geom.exterior, *geom.interiors):
+                        coords = np.asarray(ring.coords, dtype=np.float64)
+                        if len(coords) >= 2:
+                            hero_sil_lines.append(coords)
+            elif hasattr(geom, "geoms"):
+                stack.extend(geom.geoms)
+    if hero_sil_lines:
+        ax.add_collection(
+            LineCollection(
+                hero_sil_lines,
+                colors="#111827",
+                linewidths=1.75,
+                alpha=0.98,
+                capstyle="round",
+                joinstyle="round",
+                zorder=3.6,
+            )
+        )
 
     if fg_items:
         fg_occ = fg_occluders + bg_occluders
