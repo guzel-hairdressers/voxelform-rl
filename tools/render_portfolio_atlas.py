@@ -71,7 +71,7 @@ DEFAULT_ELEV = 31.0
 DEFAULT_PICKS_24: tuple[int, ...] = (
     35, 2, 46, 12,    # Row 1: L(BCN), XS(Paris), XL(Tokyo), S(SGP)
     23, 47, 15, 38,   # Row 2: M(HK), XL(NYC), S(BCN), L(Paris)
-    9, 34, 28, 40,    # Row 3: XS(HK), L(Tokyo), M(NYC), L(SGP)
+    9, 34, 40, 28,    # Row 3: XS(HK), L(Tokyo), L(SGP), M(NYC)
     48, 26, 18, 5,    # Row 4: XL(SGP), M(BCN), S(NYC), XS(BCN)
     27, 37, 13, 49,   # Row 5: M(Paris), L(HK), S(Tokyo), XL(NYC)
     39, 7, 29, 25,    # Row 6: L(NYC), XS(BCN), M(SGP), M(Tokyo)
