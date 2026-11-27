@@ -10,7 +10,7 @@ import {voxelSilhouetteEdges} from './voxel-contours.js?v=3';
 let initialized=false,mass=null,coreMass=null,coreShafts=null,lastRevision=-1,lastView=null,geometry=null,outline=null,outlineRevision=-1,outlineWorldWidth=null;
 const dummy=new THREE.Object3D();
 const outlineDark=new THREE.Color('#111827'),creaseDark=new THREE.Color('#1f242d'),gridSlate=new THREE.Color('#3a4250');
-const lightWhite=new THREE.Color(1,1,1),shadeWhite=new THREE.Color('#f0f1f4').convertLinearToSRGB();
+const lightWhite=new THREE.Color(1,1,1),shadeWhite=new THREE.Color('#ebebeb').convertLinearToSRGB();
 const lightCore=new THREE.Color('#fdee66').convertLinearToSRGB(),shadeCore=new THREE.Color('#e0c210').convertLinearToSRGB();
 const solid=new THREE.Color('#ffffff'),usable=new THREE.Color('#59a59d'),unusable=new THREE.Color('#d4dce0'),coreColor=new THREE.Color('#fade24'),unreachableCol=new THREE.Color('#6b21a8');
 function heat(t){return new THREE.Color().setHSL(.65-Math.max(0,Math.min(1,t))*.61,.58,.54);}

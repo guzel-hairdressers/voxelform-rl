@@ -996,7 +996,7 @@ def render_voxel_scene_on_ax(
     dz: float = 3.0,
     carved_delta: np.ndarray | None = None,
     hero_base_rgb: tuple[float, float, float] = (1.0, 1.0, 1.0),
-    hero_alpha: float = 0.88,
+    hero_alpha: float = 0.96,
     silhouette_lw: float = 1.25,
     inner_lw: float = 0.24,
     half_override: float | None = None,
@@ -1190,15 +1190,15 @@ def render_voxel_scene_on_ax(
                 rgba = np.ones((len(vq), 4), dtype=np.float32)
             else:
                 if hero_base_rgb == (1.0, 1.0, 1.0):
-                    # Minimal 1-face shading matching context buildings: only camera-right vertical face is #F4F4F4
+                    # Top roof stays 100% pure white (#FFFFFF); vertical facades: 96% white (left) and 92% white (right)
                     fn = np.array(
                         [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]],
                         dtype=np.float64,
                     )
                     gains_6 = np.ones(6, dtype=np.float32)
                     for d_i in range(4):
-                        if float(fn[d_i] @ view_ax) > 1e-3 and float(fn[d_i] @ u_ax) > 0.1:
-                            gains_6[d_i] = 0.958
+                        if float(fn[d_i] @ view_ax) > 1e-3:
+                            gains_6[d_i] = 0.92 if float(fn[d_i] @ u_ax) > 0.1 else 0.96
                 else:
                     gains_6 = np.array([0.94, 0.88, 0.91, 0.97, 1.0, 0.84], dtype=np.float32)
                 gains = gains_6[fq][:, None]

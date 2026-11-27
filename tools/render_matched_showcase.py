@@ -157,11 +157,12 @@ def draw_voxels(occupied, cores, payload, camera, size):
         fn = np.array([[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]], dtype=np.float64)
         gains_6 = np.ones(6, dtype=np.float32)
         for d_i in range(4):
-            if float(fn[d_i] @ view_ax) > 1e-3 and float(fn[d_i] @ u_ax) > 0.1:
-                gains_6[d_i] = 0.958
+            if float(fn[d_i] @ view_ax) > 1e-3:
+                gains_6[d_i] = 0.92 if float(fn[d_i] @ u_ax) > 0.1 else 0.96
         g = gains_6[fq]
-        for verts, shade in zip(quads, g, strict=True):
-            add_poly(verts, (float(shade), float(shade), float(shade), 0.92))
+        for verts, f_idx, shade in zip(quads, fq, g, strict=True):
+            alpha = 1.0 if int(f_idx) == 4 else 0.96
+            add_poly(verts, (float(shade), float(shade), float(shade), alpha))
 
     # Vivid yellow cores (#FADE24)
     if core_mask.any():
