@@ -49,9 +49,9 @@ The evaluation keeps three design questions distinct. **Plan depth** measures ho
 
 ## What transfers across sites
 
-![24-site multi-tier architectural massing atlas across XS through XL urban parcels](docs/media/atlas-4x6-massing.png)
+![24-site atlas of voxel massing, direct sun, and geodesic core distance](docs/media/atlas-4x6-mixed.png)
 
-*Clean 4×6 multi-city evaluation atlas spanning `XS` through `XL` parcels across Barcelona, Hong Kong, New York, Paris, Singapore, and Tokyo, pairing shaded massing and yellow vertical cores with continuous outer silhouettes and hidden-line-removed context.*
+*4×6 evaluation atlas spanning XS to XL parcels across Barcelona, Hong Kong, New York, Paris, Singapore, and Tokyo. Twelve panels show massing with yellow cores, six show direct-sun exposure from pale yellow to red, and six show geodesic distance to the nearest core from yellow to purple.*
 
 ![Selected FAR-compliant layouts across five parcel tiers, from small infill to urban blocks](docs/media/multitier-showcase.png)
 
