@@ -10,25 +10,17 @@
 
 The sequence shows three moments in a massing study. An initial extrusion establishes the envelope, a carve opens a court, and successive edits refine the perimeter towards the target floor area ratio (FAR).
 
-## Paris · A break in the street frontage
+## Paris · From voxel massing to maquette
 
 ![Paris voxel axonometric, aerial Blender maquette, and view from the street](docs/media/blender-maquette-showcase.png)
 
 The Paris study divides the street frontage into two volumes at **FAR 3.09**. The gap makes the two masses readable from the street. The procedural maquette shows how the model’s core reservations and floor plates carry through to the façade.
 
-## Barcelona · Opening the middle of the block
+## Different sites
 
-![Barcelona comparison plate with the voxel axonometric at left and the Blender maquette from the same camera at right](docs/media/barcelona-axo-comparison.jpg)
+![Animated 16-site atlas cycling through white voxel massing, direct sun, and geodesic core distance](docs/media/atlas-4x4-visualizations.gif)
 
-The Eixample study keeps mass along the street edges and opens the middle of the block. Yellow identifies the space reserved for stairs and lifts. In the maquette, the envelope becomes recessed window bays and a ground-floor arcade.
-
-As FAR fell from **5.82 to 2.90**, the share of floor area within **8 m of a façade** rose from **62% to 100%**. The direct-sun and diffuse-sky scores fell over the same edits. The court shortened floor-plate depth, while exposure to light still depended on orientation, enclosure, and neighboring buildings.
-
-## Singapore · Stepped wings on a larger site
-
-![Singapore comparison plate with the voxel axonometric at left and the Blender maquette from the same camera at right](docs/media/singapore-axo-comparison.jpg)
-
-The **3,845 m²** parcel reaches **FAR 2.90** by carving the block into a curved perimeter wing and a companion courtyard volume (**68% direct-sun proxy**, **7 cores**). Recessed curtain-frame bays, solid structural piers, and a ground-floor plinth give the faceted massing a legible façade rhythm.
+*Sixteen parcels across five size tiers in Barcelona, Hong Kong, New York, Paris, Singapore, and Tokyo. Each view cycles through white voxel massing with yellow cores, direct sun with white cores, and geodesic distance to the nearest core.*
 
 ## Architectural precedents
 
@@ -39,8 +31,6 @@ The **3,845 m²** parcel reaches **FAR 2.90** by carving the block into a curved
 
 A floor area target leaves the shape of a building open. VoxelForm-RL uses reinforcement learning to test how courts, stepped wings, and breaks in street frontage emerge from successive edits that account for density, daylight, and circulation.
 
-In the Barcelona and Singapore plates, the voxel diagram and the maquette share the same orthographic projection, crop, and voxel state. The left panel isolates the envelope and cores against simplified context. The Blender exporter adds slabs, parapets, a façade system, and streetscape detail. [Geometry export](tools/export_blender_site.py) · [Comparison plate renderer](tools/render_matched_showcase.py)
-
 Each voxel is **1 × 1 × 3 m** and contributes **1 m²** of gross floor area. FAR divides the total by the original parcel area. The policy proposes where to remove, add, or exchange groups of voxels. A geometric decoder checks those patches, and larger parcels pass through a coarse stage before finer edits. Each committed edit updates the occupancy used in the next evaluation. [Experiment protocol](docs/EXPERIMENT_PROTOCOL.md)
 
 ![Sequential editing loop and coarse-to-fine network architecture](docs/media/mdp-architecture.png)
@@ -48,10 +38,6 @@ Each voxel is **1 × 1 × 3 m** and contributes **1 m²** of gross floor area. F
 The evaluation keeps three design questions distinct. **Plan depth** measures horizontal distance to the nearest exterior wall on the same storey. **Direct sun and diffuse sky access** are separate exposure estimates that account for self-shading and neighbors. **Circulation** is represented by height-graded stair and lift reservations and a same-floor walking-distance check. These are schematic design measures. Detailed daylight, structure, and egress require separate studies. [Core layout library](docs/CORE_LAYOUTS.md)
 
 ## What transfers across sites
-
-![Animated 20-site atlas cycling through white voxel massing, direct sun, and geodesic core distance](docs/media/atlas-4x5-visualizations.gif)
-
-*Twenty parcels across five size tiers in Barcelona, Hong Kong, New York, Paris, Singapore, and Tokyo. Each view cycles through white voxel massing with yellow cores, direct sun with white cores, and geodesic distance to the nearest core.*
 
 ![Selected FAR-compliant layouts across five parcel tiers, from small infill to urban blocks](docs/media/multitier-showcase.png)
 
