@@ -363,9 +363,9 @@ function render(){
 }
 function updateLayerLegend(){
  const maxD=data?.settings?.maxCoreDist??12;
- const labels={solid:'Occupied volume · crimson cores',usable:'Potential usable area · crimson cores',coreDistance:`Core (red) · ≤${maxD} vox (green→amber) · Over (magenta/purple)`,light:'Low → high diffuse sky access',noise:'Low → high relative noise',depthBadness:'Depth: ≤8 m → ≥16 m'};
+ const labels={solid:'Occupied volume · yellow cores',usable:'Potential usable area · yellow cores',coreDistance:`Core (yellow) · ≤${maxD} vox (green→amber) · Over (magenta/purple)`,light:'Low → high diffuse sky access',noise:'Low → high relative noise',depthBadness:'Depth: ≤8 m → ≥16 m'};
  $('layerLegend').className='layer-legend'+(['light','noise','depthBadness','coreDistance'].includes(view)?' heat':'');$('layerLegend').lastElementChild.textContent=labels[view];
- $('layerLegend').firstElementChild.style.background=view==='usable'?'#86b4ad':view==='coreDistance'?'linear-gradient(90deg,#dc2626 0%,#28a869 25%,#d97706 65%,#e11d48 85%,#6b21a8 100%)':'';
+ $('layerLegend').firstElementChild.style.background=view==='usable'?'#86b4ad':view==='coreDistance'?'linear-gradient(90deg,#fade24 0%,#28a869 25%,#d97706 65%,#e11d48 85%,#6b21a8 100%)':'';
 }
 async function control(command,extra={}){
  if(busy)return false;busy=true;error('');

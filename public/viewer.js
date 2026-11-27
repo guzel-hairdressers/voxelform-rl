@@ -9,11 +9,10 @@ import {voxelSilhouetteEdges} from './voxel-contours.js?v=3';
 
 let initialized=false,mass=null,coreMass=null,coreShafts=null,lastRevision=-1,lastView=null,geometry=null,outline=null,outlineRevision=-1,outlineWorldWidth=null;
 const dummy=new THREE.Object3D();
-const blueHsl=new THREE.Color('#1645ff').getHSL({},THREE.SRGBColorSpace),outlineBlue=new THREE.Color().setHSL(blueHsl.h,blueHsl.s,.50,THREE.SRGBColorSpace);
-const lightBlue=new THREE.Color().setHSL(blueHsl.h,blueHsl.s,.95,THREE.SRGBColorSpace).convertLinearToSRGB(),shadeBlue=new THREE.Color().setHSL(blueHsl.h,blueHsl.s,.70,THREE.SRGBColorSpace).convertLinearToSRGB();
-const redHsl=new THREE.Color('#dc2626').getHSL({},THREE.SRGBColorSpace);
-const lightCore=new THREE.Color().setHSL(redHsl.h,redHsl.s,.66,THREE.SRGBColorSpace).convertLinearToSRGB(),shadeCore=new THREE.Color().setHSL(redHsl.h,redHsl.s,.42,THREE.SRGBColorSpace).convertLinearToSRGB();
-const solid=new THREE.Color('#ffffff'),usable=new THREE.Color('#59a59d'),unusable=new THREE.Color('#d4dce0'),coreColor=new THREE.Color('#dc2626'),unreachableCol=new THREE.Color('#6b21a8');
+const outlineDark=new THREE.Color('#111827'),creaseDark=new THREE.Color('#1f242d'),gridSlate=new THREE.Color('#3a4250');
+const lightWhite=new THREE.Color(1,1,1),shadeWhite=new THREE.Color('#f0f1f4').convertLinearToSRGB();
+const lightCore=new THREE.Color('#fdee66').convertLinearToSRGB(),shadeCore=new THREE.Color('#e0c210').convertLinearToSRGB();
+const solid=new THREE.Color('#ffffff'),usable=new THREE.Color('#59a59d'),unusable=new THREE.Color('#d4dce0'),coreColor=new THREE.Color('#fade24'),unreachableCol=new THREE.Color('#6b21a8');
 function heat(t){return new THREE.Color().setHSL(.65-Math.max(0,Math.min(1,t))*.61,.58,.54);}
 function coreDistanceColor(d,maxDist){
  if(d>=900)return unreachableCol;
@@ -53,6 +52,26 @@ function addContextTrees(data){
  positions.forEach((p,i)=>{const tree=new THREE.Sprite(material),h=6.5+(i%4)*.6;tree.center.set(.5,0);tree.scale.set(h*160/256,h,1);tree.position.set(p[0],p[2]+.2,-p[1]);group.add(tree);});
  (window.scene.getObjectByName('surroundingContext')||window.scene).add(group);
 }
+function voxelExposedFaceGridEdges(occupied,shape){
+ const [nz,ny,nx]=shape,edgeSet=new Set(),positions=[];
+ const at=(x,y,z)=>x>=0&&x<nx&&y>=0&&y<ny&&z>=0&&z<nz&&!!occupied[(z*ny+y)*nx+x];
+ const addEdge=(ax,ay,az,bx,by,bz)=>{
+  const swap=ax>bx||(ax===bx&&ay>by)||(ax===bx&&ay===by&&az>bz);
+  const key=swap?`${bx},${by},${bz}:${ax},${ay},${az}`:`${ax},${ay},${az}:${bx},${by},${bz}`;
+  if(edgeSet.has(key))return;
+  edgeSet.add(key);
+  positions.push(ax,ay,az,bx,by,bz);
+ };
+ for(let z=0;z<nz;z++)for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)if(at(x,y,z)){
+  if(!at(x+1,y,z)){addEdge(x+1,y,z,x+1,y+1,z);addEdge(x+1,y+1,z,x+1,y+1,z+1);addEdge(x+1,y+1,z+1,x+1,y,z+1);addEdge(x+1,y,z+1,x+1,y,z);}
+  if(!at(x-1,y,z)){addEdge(x,y,z,x,y+1,z);addEdge(x,y+1,z,x,y+1,z+1);addEdge(x,y+1,z+1,x,y,z+1);addEdge(x,y,z+1,x,y,z);}
+  if(!at(x,y+1,z)){addEdge(x,y+1,z,x+1,y+1,z);addEdge(x+1,y+1,z,x+1,y+1,z+1);addEdge(x+1,y+1,z+1,x,y+1,z+1);addEdge(x,y+1,z+1,x,y+1,z);}
+  if(!at(x,y-1,z)){addEdge(x,y,z,x+1,y,z);addEdge(x+1,y,z,x+1,y,z+1);addEdge(x+1,y,z+1,x,y,z+1);addEdge(x,y,z+1,x,y,z);}
+  if(!at(x,y,z+1)){addEdge(x,y,z+1,x+1,y,z+1);addEdge(x+1,y,z+1,x+1,y+1,z+1);addEdge(x+1,y+1,z+1,x,y+1,z+1);addEdge(x,y+1,z+1,x,y,z+1);}
+  if(z===0||!at(x,y,z-1)){addEdge(x,y,z,x+1,y,z);addEdge(x+1,y,z,x+1,y+1,z);addEdge(x+1,y+1,z,x,y+1,z);addEdge(x,y+1,z,x,y,z);}
+ }
+ return new Float32Array(positions);
+}
 function prepareGroundPlanes(){
  for(const child of window.scene?.children||[]){
   if(child.isMesh&&!child.receiveShadow&&child.geometry?.type==='PlaneGeometry'){
@@ -63,16 +82,28 @@ function prepareGroundPlanes(){
  const context=window.scene?.getObjectByName('surroundingContext');
  if(context){
   for(const group of context.children){
-   if(group.children.some(child=>child.userData?.isBuilding))continue;
+   if(group.children.some(child=>child.userData?.isBuilding)){
+    group.traverse(obj=>{
+     if(obj.isLineSegments&&obj.material){obj.material.color?.setHex(0x8c95a2);obj.material.needsUpdate=true;}
+    });
+    continue;
+   }
    group.traverse(obj=>{
     if(obj.isMesh&&obj.material){obj.renderOrder=-5;if(obj.material.depthWrite!==false){obj.material.depthWrite=false;obj.material.needsUpdate=true;}}
+    else if((obj.isLine||obj.isLineSegments)&&obj.material){obj.renderOrder=-4;obj.material.color?.setHex(0x8c95a2);obj.material.transparent=true;obj.material.opacity=0.72;obj.material.needsUpdate=true;}
    });
   }
  }
  const parcel=window.scene?.getObjectByName('testingSiteParcel');
  if(parcel){
   parcel.traverse(obj=>{
-   if(obj.isMesh&&obj.material&&obj.material.depthWrite!==false){obj.material.depthWrite=false;obj.material.needsUpdate=true;}
+   if(obj.isMesh&&obj.material){
+    if(obj.userData?.isSite){obj.material.vertexColors=false;obj.material.color?.setHex(0xffffff);}
+    else if(!obj.material.transparent)obj.material.color?.setHex(0xffffff);
+    if(obj.material.depthWrite!==false){obj.material.depthWrite=false;obj.material.needsUpdate=true;}
+   }else if((obj.isLine||obj.isLineSegments)&&obj.material){
+    obj.material.color?.setHex(0x6b7584);obj.material.transparent=true;obj.material.opacity=0.85;obj.material.needsUpdate=true;
+   }
   });
  }
 }
@@ -133,7 +164,7 @@ function updateMassing(state,view){
   }
  }
  const material=view==='solid'
-  ? createSolidInkMaterial(lightBlue,shadeBlue,'solid-ink-mass')
+  ? createSolidInkMaterial(lightWhite,shadeWhite,'solid-ink-mass-atlas')
   : new THREE.MeshBasicMaterial({vertexColors:true,transparent:view==='light',opacity:view==='light' ? .72 : 1});
  mass=new THREE.InstancedMesh(geometry,material,ids.length);
  mass.name='VoxelForm massing';mass.castShadow=true;mass.receiveShadow=view==='solid';
@@ -181,7 +212,7 @@ function updateMassing(state,view){
    }
    const shaftGeo=new THREE.BufferGeometry();
    shaftGeo.setAttribute('position',new THREE.Float32BufferAttribute(cVerts,3));
-   const shaftMat=new THREE.LineBasicMaterial({color:0xdc2626,transparent:true,opacity:0.42,depthTest:false,depthWrite:false,toneMapped:false});
+   const shaftMat=new THREE.LineBasicMaterial({color:0xb48c0a,transparent:true,opacity:0.36,depthTest:false,depthWrite:false,toneMapped:false});
    coreShafts=new THREE.LineSegments(shaftGeo,shaftMat);
    coreShafts.name='Core shaft bounding edges';coreShafts.renderOrder=25;
    window.optimizerGroup.add(coreShafts);
@@ -192,6 +223,12 @@ function updateMassing(state,view){
   }
   const started=performance.now(),cosA=Math.cos(angle),sinA=Math.sin(angle);
   const {positions:rawPos,faceA,faceB,concave}=voxelSilhouetteEdges(state.occupied,state.shape);
+  const rawGridPos=voxelExposedFaceGridEdges(state.occupied,state.shape);
+  const gridPositions=new Float32Array(rawGridPos.length);
+  for(let idx=0;idx<rawGridPos.length;idx+=3){
+   const [x,y]=gridToWorld(rawGridPos[idx],rawGridPos[idx+1],offset,angle),wy=rawGridPos[idx+2]*3+displayLift;
+   gridPositions[idx]=x;gridPositions[idx+1]=wy;gridPositions[idx+2]=-y;
+  }
   let kept=0;for(let s=0;s<concave.length;s++)if(!concave[s])kept++;
   const allPositions=new Float32Array(rawPos.length),silPositions=new Float32Array(kept*6),normalsA=new Float32Array(kept*3),normalsB=new Float32Array(kept*3);
   for(let s=0,w=0;s<concave.length;s++){
@@ -215,7 +252,7 @@ function updateMassing(state,view){
   silLines.setPositions(silPositions);
   silLines.setAttribute('instanceNormalA',new THREE.InstancedBufferAttribute(normalsA,3));
   silLines.setAttribute('instanceNormalB',new THREE.InstancedBufferAttribute(normalsB,3));
-  const lineMaterial=new LineMaterial({color:outlineBlue,linewidth:1,worldUnits:true,transparent:true,opacity:1,depthTest:true,depthWrite:true,toneMapped:false,stencilWrite:true,stencilWriteMask:0x00,stencilFunc:THREE.NotEqualStencilFunc,stencilRef:1,stencilFuncMask:0xff,stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.KeepStencilOp});
+  const lineMaterial=new LineMaterial({color:outlineDark,linewidth:1,worldUnits:true,transparent:true,opacity:0.98,depthTest:true,depthWrite:true,toneMapped:false,stencilWrite:true,stencilWriteMask:0x00,stencilFunc:THREE.NotEqualStencilFunc,stencilRef:1,stencilFuncMask:0xff,stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.KeepStencilOp});
   lineMaterial.customProgramCacheKey=()=>'voxel-silhouette-1';
   lineMaterial.onBeforeCompile=shader=>{
    const attrAnchor='attribute vec3 instanceEnd;';
@@ -235,18 +272,24 @@ function updateMassing(state,view){
     const size=silLines.boundingBox.getSize(new THREE.Vector3());
     outlineWorldWidth=3*Math.max(size.x,size.y,size.z)/400;
    }
-   if(outlineWorldWidth!==null)lineMaterial.linewidth=outlineWorldWidth*2;
+   if(outlineWorldWidth!==null)lineMaterial.linewidth=outlineWorldWidth*2.2;
   };
+  const gridGeo=new LineSegmentsGeometry();
+  gridGeo.setPositions(gridPositions);
+  const gridMaterial=new LineMaterial({color:gridSlate,linewidth:1.05,worldUnits:false,transparent:true,opacity:0.45,depthTest:true,depthWrite:false,toneMapped:false,stencilWrite:true,stencilWriteMask:0x00,stencilFunc:THREE.EqualStencilFunc,stencilRef:1,stencilFuncMask:0xff,stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.KeepStencilOp});
+  const gridLines=new LineSegments2(gridGeo,gridMaterial);
+  gridLines.renderOrder=15;
+  gridLines.onBeforeRender=renderer=>{renderer.getSize(gridMaterial.resolution);};
   const innerGeo=new LineSegmentsGeometry();
   innerGeo.setPositions(allPositions);
-  const innerMaterial=new LineMaterial({color:outlineBlue,linewidth:1.7,worldUnits:false,transparent:true,opacity:0.65,depthTest:true,depthWrite:false,toneMapped:false,stencilWrite:true,stencilWriteMask:0x00,stencilFunc:THREE.EqualStencilFunc,stencilRef:1,stencilFuncMask:0xff,stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.KeepStencilOp});
+  const innerMaterial=new LineMaterial({color:creaseDark,linewidth:1.6,worldUnits:false,transparent:true,opacity:0.80,depthTest:true,depthWrite:false,toneMapped:false,stencilWrite:true,stencilWriteMask:0x00,stencilFunc:THREE.EqualStencilFunc,stencilRef:1,stencilFuncMask:0xff,stencilFail:THREE.KeepStencilOp,stencilZFail:THREE.KeepStencilOp,stencilZPass:THREE.KeepStencilOp});
   const innerLines=new LineSegments2(innerGeo,innerMaterial);
-  innerLines.renderOrder=15;
+  innerLines.renderOrder=16;
   innerLines.onBeforeRender=renderer=>{renderer.getSize(innerMaterial.resolution);};
   outline=new THREE.Group();
   outline.name='Silhouette and interior voxel outlines';
-  outline.add(innerLines,silhouetteLines);
-  outline.userData={segments:allPositions.length/6,silhouetteSegments:silPositions.length/6,buildMilliseconds:performance.now()-started};
+  outline.add(gridLines,innerLines,silhouetteLines);
+  outline.userData={segments:allPositions.length/6,gridSegments:gridPositions.length/6,silhouetteSegments:silPositions.length/6,buildMilliseconds:performance.now()-started};
   window.optimizerGroup.add(outline);outlineRevision=state.revision;
  }
  outline.visible=view==='solid';

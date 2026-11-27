@@ -74,7 +74,7 @@ function rebuildDevoxSceneObjects() {
     geo.setAttribute('color', new THREE.BufferAttribute(cols, 3));
   }
 
-  const mat = mass.material ? mass.material.clone() : new THREE.MeshLambertMaterial({ color: lightBlue });
+  const mat = mass.material ? mass.material.clone() : new THREE.MeshLambertMaterial({ color: solid });
   mat.onBeforeCompile = mass.material.onBeforeCompile;
   devoxMeshObj = new THREE.Mesh(geo, mat);
   devoxMeshObj.castShadow = true;
@@ -93,7 +93,7 @@ function rebuildDevoxSceneObjects() {
       linePos[i * 6 + 5] = worldVerts[v * 3 + 2];
     }
     const lineGeo = new LineSegmentsGeometry();lineGeo.setPositions(linePos);
-    const lineMat = new LineMaterial({color:outlineBlue,worldUnits:true,linewidth:outlineWorldWidth || .15,depthWrite:false,toneMapped:false});
+    const lineMat = new LineMaterial({color:outlineDark,worldUnits:true,linewidth:outlineWorldWidth || .15,depthWrite:false,toneMapped:false});
     devoxLinesObj = new LineSegments2(lineGeo,lineMat);
     devoxLinesObj.onBeforeRender = renderer => {renderer.getSize(lineMat.resolution);lineMat.linewidth=outlineWorldWidth || .15;};
     devoxGroup.add(devoxLinesObj);

@@ -292,9 +292,13 @@ button:focus-visible,a:focus-visible,select:focus-visible,summary:focus-visible,
 .layer-legend i {
   width:9px;
   height:9px;
-  background:#b5a3bb
+  background:#ffffff;
+  border:1.5px solid #111827;
+  box-shadow:inset 3px 0 0 #fade24
 }
 .layer-legend.heat i {
+  border:none;
+  box-shadow:none;
   background:linear-gradient(90deg,#597cdb,#de644b);
   width:45px
 }

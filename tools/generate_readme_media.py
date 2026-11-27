@@ -17,7 +17,7 @@ from matplotlib import cm as mpl_cm, colors as mcolors, gridspec, patches
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d.art3d import Line3DCollection, Poly3DCollection
 import numpy as np
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point, Polygon, box
 from shapely.ops import triangulate, unary_union
 import torch
 
@@ -343,70 +343,210 @@ def _render_voxel_panel(
     dist_map: np.ndarray | None = None,
     max_dist: float = 12.0,
     elev: float = 28.0,
-    azim: float = -52.0,
+    azim: float | None = -52.0,
     xray_mass: bool = True,
     context: dict | None = None,
     context_geom: dict | None = None,
     bounds_occ: np.ndarray | None = None,
+    dz: float = 3.0,
+    zoom: float = 1.0,
 ):
-    """Render exposed faces of mass, compact-core shafts, and optional ghosted urban context."""
-    ref_occ = occ if bounds_occ is None else bounds_occ
-    use_ctx = context_geom is not None or (
-        context is not None and bool(context.get("buildings"))
+    """Render voxel panels using the atlas monochrome-white + yellow-core architectural style."""
+    from tools.render_portfolio_atlas import (
+        _camera_basis,
+        _chain_segments_to_polylines,
+        _classify_context_buildings,
+        _clean_road_geometry,
+        _clip_segments_against_voxels,
+        _clip_segments_hlr,
+        _extract_hero_silhouette_segs,
+        _extract_voxel_crease_segs,
+        _iter_polygons as _atlas_iter_polygons,
+        render_voxel_scene_on_ax,
     )
-    xb, yb, z_top = _setup_3d_axes(
-        ax, ref_occ, dz=3.0, elev=elev, azim=azim, context_pad=use_ctx
-    )
-    if context_geom is None and use_ctx:
-        context_geom = _build_context_geometry(context, xb, yb, z_top)
 
-    if context_geom is not None:
-        if len(context_geom["perim"]) > 0:
-            p_coll = Line3DCollection(
-                context_geom["perim"],
-                colors=[(0.22, 0.42, 0.78, 0.36)],
-                linewidths=0.75,
-                linestyles="--",
+    del xray_mass, context_geom  # Legacy signature compatibility
+    ctx = context or {}
+    ref_occ = occ if bounds_occ is None else bounds_occ
+    zz, yy, xx = np.nonzero(ref_occ)
+    if len(xx):
+        cx = 0.5 * (float(xx.min()) + float(xx.max() + 1))
+        cy = 0.5 * (float(yy.min()) + float(yy.max() + 1))
+        span_x = float(xx.max() - xx.min() + 1)
+        span_y = float(yy.max() - yy.min() + 1)
+        span_z = float(zz.max() + 1) * dz
+        half_s = max(span_x, span_y, span_z) * 0.62
+    else:
+        cx = 0.5 * float(ref_occ.shape[2])
+        cy = 0.5 * float(ref_occ.shape[1])
+        half_s = (
+            max(
+                float(ref_occ.shape[2]),
+                float(ref_occ.shape[1]),
+                float(ref_occ.shape[0]) * dz,
             )
-            ax.add_collection3d(p_coll)
-        if len(context_geom["faces"]) > 0:
-            c_poly = Poly3DCollection(
-                context_geom["faces"],
-                facecolors=context_geom["rgba"],
-                edgecolors="none",
-                zsort="average",
+            * 0.62
+        )
+    half_s = half_s / max(0.1, float(zoom))
+
+    if mode == "mass":
+        render_voxel_scene_on_ax(
+            ax,
+            occ,
+            core_mask,
+            ctx,
+            elev_deg=elev,
+            azim_deg=azim,
+            dz=dz,
+            half_override=half_s,
+            center_xy=(cx, cy) if bounds_occ is not None else None,
+            render_mode="combined",
+        )
+        return
+
+    # Scientific heatmap modes ("sun", "core_dist") on matching architectural canvas & linework
+    az_val = float(azim if azim is not None else -52.0)
+    u_ax, v_ax, view_ax = _camera_basis(elev, az_val)
+    vis_bg, occ_fg, _ = _classify_context_buildings(
+        ctx, ref_occ, cx, cy, half_s, elev, az_val, dz=dz
+    )
+    sil_segs, sil_geom, d_sil = _extract_hero_silhouette_segs(
+        occ, dz, u_ax, v_ax, view_ax
+    )
+    bg_occluders = [occ_face for item in vis_bg for occ_face in item["occluders"]]
+    fg_occluders = [occ_face for item in occ_fg for occ_face in item["occluders"]]
+    hero_occ_list = []
+    if not sil_geom.is_empty:
+        eroded = sil_geom.buffer(-0.08)
+        for p in _atlas_iter_polygons(eroded):
+            if p.area > 0.1:
+                hero_occ_list.append((p, p.bounds, 0.0, 0.0, d_sil, d_sil))
+
+    perim = ctx.get("perimeter") or []
+    perim_raw_segs: list[np.ndarray] = []
+    if len(perim) >= 3:
+        p_poly = Polygon(perim).buffer(0)
+        if not p_poly.is_empty:
+            clip_sq = box(
+                cx - half_s * 2.5,
+                cy - half_s * 2.5,
+                cx + half_s * 2.5,
+                cy + half_s * 2.5,
             )
-            ax.add_collection3d(c_poly)
-        if len(context_geom["segs"]) > 0:
-            c_lines = Line3DCollection(
-                context_geom["segs"],
-                colors=[(0.42, 0.48, 0.56, 0.18)],
-                linewidths=0.45,
+            for p in _atlas_iter_polygons(p_poly.intersection(clip_sq)):
+                pts = np.asarray(p.exterior.coords, dtype=np.float32)
+                for i in range(len(pts) - 1):
+                    perim_raw_segs.append(
+                        np.array(
+                            [
+                                [pts[i, 0], pts[i, 1], 0.10],
+                                [pts[i + 1, 0], pts[i + 1, 1], 0.10],
+                            ],
+                            dtype=np.float32,
+                        )
+                    )
+
+    _road_fills, road_curbs = _clean_road_geometry(ctx, cx, cy, half_s)
+    ax.set_facecolor("#FFFFFF")
+    ax.computed_zorder = False
+    ax.view_init(elev=elev, azim=az_val)
+    ax.set_proj_type("ortho")
+    ax.set_xlim(cx - half_s, cx + half_s)
+    ax.set_ylim(cy - half_s, cy + half_s)
+    ax.set_zlim(0.0, 2.0 * half_s * 0.66)
+    try:
+        ax.set_box_aspect((1.0, 1.0, 0.66))
+    except Exception:
+        pass
+    ax.set_axis_off()
+
+    inner_lw = 0.24
+    if road_curbs:
+        vis_curbs = _clip_segments_hlr(
+            road_curbs, bg_occluders + hero_occ_list, u_ax, v_ax, view_ax
+        )
+        if vis_curbs:
+            ax.add_collection3d(
+                Line3DCollection(
+                    _chain_segments_to_polylines(vis_curbs),
+                    colors="#8C95A2",
+                    linewidths=inner_lw,
+                    alpha=0.72,
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=1.2,
+                )
             )
-            ax.add_collection3d(c_lines)
+    if perim_raw_segs:
+        vis_perim = _clip_segments_hlr(
+            perim_raw_segs, bg_occluders, u_ax, v_ax, view_ax, eps=0.08
+        )
+        vis_perim = _clip_segments_against_voxels(
+            vis_perim, occ, dz, u_ax, v_ax, view_ax, eps=0.65
+        )
+        if vis_perim:
+            ax.add_collection3d(
+                Line3DCollection(
+                    _chain_segments_to_polylines(vis_perim),
+                    colors=(0.42, 0.46, 0.52, 0.72),
+                    linewidths=0.42,
+                    linestyles="-",
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=2.2,
+                )
+            )
+    if vis_bg:
+        bg_faces = [f for item in vis_bg for f in item["faces"]]
+        sh = np.asarray([s for item in vis_bg for s in item["shades"]], dtype=np.float32)
+        bg_fc = np.column_stack((sh, sh, sh, np.ones(len(bg_faces), dtype=np.float32)))
+        ax.add_collection3d(
+            Poly3DCollection(
+                bg_faces, facecolors=bg_fc, edgecolors="none", zsort="average", zorder=2.0
+            )
+        )
+        bg_occ = bg_occluders + hero_occ_list
+        bg_inner = _clip_segments_hlr(
+            [seg for item in vis_bg for seg in item["inner_segs"]],
+            bg_occ,
+            u_ax,
+            v_ax,
+            view_ax,
+        )
+        if bg_inner:
+            ax.add_collection3d(
+                Line3DCollection(
+                    np.asarray(bg_inner, dtype=np.float32),
+                    colors=(0.42, 0.46, 0.52, 0.65),
+                    linewidths=inner_lw,
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=2.1,
+                )
+            )
+        bg_sil = _clip_segments_hlr(
+            [seg for item in vis_bg for seg in item["sil_segs"]],
+            bg_occ,
+            u_ax,
+            v_ax,
+            view_ax,
+        )
+        if bg_sil:
+            ax.add_collection3d(
+                Line3DCollection(
+                    _chain_segments_to_polylines(bg_sil),
+                    colors=(0.42, 0.46, 0.52, 0.72),
+                    linewidths=0.42,
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=2.15,
+                )
+            )
 
     core_occ = occ & core_mask
     shell_occ = occ & ~core_occ
-    dz = 3.0
-
-    verts_all, rgba_all, edge_all = [], [], []
-    if mode == "mass":
-        if shell_occ.any():
-            vq, fq, _ = _surface_quads(shell_occ, dz=dz)
-            verts_all.append(vq)
-            alpha = 0.52 if xray_mass else 0.96
-            base = (0.36, 0.54, 0.98) if xray_mass else (0.40, 0.58, 0.99)
-            e_rgba = [0.12, 0.25, 0.65, 0.20] if xray_mass else [0.10, 0.22, 0.58, 0.30]
-            rgba_all.append(_shade_rgba(base, fq, alpha=alpha))
-            edge_all.append(np.tile(np.array([e_rgba], np.float32), (len(vq), 1)))
-        if core_occ.any():
-            cq, cf, _ = _surface_quads(core_occ, dz=dz, zero_z=False)
-            verts_all.append(cq)
-            rgba_all.append(_shade_rgba((0.86, 0.15, 0.15), cf, alpha=0.98))
-            edge_all.append(
-                np.tile(np.array([[0.45, 0.05, 0.05, 0.55]], np.float32), (len(cq), 1))
-            )
-    elif mode == "sun":
+    verts_all, rgba_all = [], []
+    if mode == "sun":
         cmap = matplotlib.colormaps["YlOrRd"]
         if shell_occ.any():
             vq, fq, cells = _surface_quads(shell_occ, dz=dz)
@@ -423,16 +563,10 @@ def _render_voxel_panel(
             rgba[:, 3] = 0.96
             verts_all.append(vq)
             rgba_all.append(rgba)
-            edge_all.append(
-                np.tile(np.array([[0.22, 0.18, 0.16, 0.18]], np.float32), (len(vq), 1))
-            )
         if core_occ.any():
             cq, cf, _ = _surface_quads(core_occ, dz=dz)
             verts_all.append(cq)
             rgba_all.append(_shade_rgba((0.39, 0.45, 0.55), cf, alpha=0.92))
-            edge_all.append(
-                np.tile(np.array([[0.15, 0.18, 0.24, 0.35]], np.float32), (len(cq), 1))
-            )
     elif mode == "core_dist":
         cmap = matplotlib.colormaps["viridis_r"]
         if shell_occ.any():
@@ -451,25 +585,104 @@ def _render_voxel_panel(
             rgba[:, 3] = 0.95
             verts_all.append(vq)
             rgba_all.append(rgba)
-            edge_all.append(
-                np.tile(np.array([[0.15, 0.18, 0.20, 0.16]], np.float32), (len(vq), 1))
-            )
         if core_occ.any():
             cq, cf, _ = _surface_quads(core_occ, dz=dz)
             verts_all.append(cq)
-            rgba_all.append(_shade_rgba((0.86, 0.15, 0.15), cf, alpha=0.98))
-            edge_all.append(
-                np.tile(np.array([[0.45, 0.05, 0.05, 0.55]], np.float32), (len(cq), 1))
-            )
+            rgba_all.append(_shade_rgba((0.98, 0.87, 0.14), cf, alpha=0.98))
 
     if verts_all:
-        verts = np.concatenate(verts_all, 0)
-        rgba = np.concatenate(rgba_all, 0)
-        edges = np.concatenate(edge_all, 0)
         poly = Poly3DCollection(
-            verts, facecolors=rgba, edgecolors=edges, linewidths=0.25, zsort="average"
+            np.concatenate(verts_all, 0),
+            facecolors=np.concatenate(rgba_all, 0),
+            edgecolors="none",
+            linewidths=0.0,
+            antialiaseds=False,
+            zsort="average",
+            zorder=3.0,
         )
         ax.add_collection3d(poly)
+
+    hero_creases = _clip_segments_against_voxels(
+        _extract_voxel_crease_segs(occ, dz, view_ax),
+        occ,
+        dz,
+        u_ax,
+        v_ax,
+        view_ax,
+        eps=0.08,
+    )
+    if hero_creases:
+        ax.add_collection3d(
+            Line3DCollection(
+                _chain_segments_to_polylines(hero_creases),
+                colors=(0.18, 0.21, 0.26, 0.84),
+                linewidths=inner_lw,
+                capstyle="round",
+                joinstyle="round",
+                zorder=3.3,
+            )
+        )
+    if sil_segs:
+        ax.add_collection3d(
+            Line3DCollection(
+                _chain_segments_to_polylines(sil_segs),
+                colors="#111827",
+                linewidths=1.25,
+                alpha=0.98,
+                capstyle="round",
+                joinstyle="round",
+                zorder=3.6,
+            )
+        )
+
+    if occ_fg:
+        fg_faces = [f for item in occ_fg for f in item["faces"]]
+        sh_fg = np.asarray([s for item in occ_fg for s in item["shades"]], dtype=np.float32)
+        fg_rgba = np.column_stack(
+            (sh_fg, sh_fg, sh_fg, np.full(len(fg_faces), 0.36, dtype=np.float32))
+        )
+        ax.add_collection3d(
+            Poly3DCollection(
+                fg_faces, facecolors=fg_rgba, edgecolors="none", zsort="average", zorder=4.0
+            )
+        )
+        fg_occ = fg_occluders + bg_occluders
+        fg_inner = _clip_segments_hlr(
+            [seg for item in occ_fg for seg in item["inner_segs"]],
+            fg_occ,
+            u_ax,
+            v_ax,
+            view_ax,
+        )
+        if fg_inner:
+            ax.add_collection3d(
+                Line3DCollection(
+                    np.asarray(fg_inner, dtype=np.float32),
+                    colors=(0.42, 0.47, 0.54, 0.42),
+                    linewidths=inner_lw,
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=4.1,
+                )
+            )
+        fg_sil = _clip_segments_hlr(
+            [seg for item in occ_fg for seg in item["sil_segs"]],
+            fg_occ,
+            u_ax,
+            v_ax,
+            view_ax,
+        )
+        if fg_sil:
+            ax.add_collection3d(
+                Line3DCollection(
+                    _chain_segments_to_polylines(fg_sil),
+                    colors=(0.42, 0.47, 0.54, 0.48),
+                    linewidths=0.36,
+                    capstyle="round",
+                    joinstyle="round",
+                    zorder=4.15,
+                )
+            )
 
 
 def _patch_cfg() -> PatchConfig:
@@ -1003,11 +1216,7 @@ def generate_trained_rollout_assets(
     )
 
     rollout_occ = np.logical_or.reduce([s["occ"] for s in chosen])
-    tmp_fig = plt.figure()
-    tmp_ax = tmp_fig.add_subplot(111, projection="3d")
-    xb, yb, z_top = _setup_3d_axes(tmp_ax, rollout_occ, dz=3.0, context_pad=True)
-    plt.close(tmp_fig)
-    rollout_ctx = _build_context_geometry(envs[chosen_site].context, xb, yb, z_top)
+    rollout_ctx_raw = envs[chosen_site].context
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
@@ -1040,8 +1249,7 @@ def generate_trained_rollout_assets(
                 snap["core_mask"],
                 mode="mass",
                 azim=azim,
-                xray_mass=True,
-                context_geom=rollout_ctx,
+                context=rollout_ctx_raw,
                 bounds_occ=rollout_occ,
             )
             axes[0].set_title(
@@ -1059,7 +1267,7 @@ def generate_trained_rollout_assets(
                 mode="sun",
                 sun_map=snap["sun_grid"],
                 azim=azim,
-                context_geom=rollout_ctx,
+                context=rollout_ctx_raw,
                 bounds_occ=rollout_occ,
             )
             axes[1].set_title(
@@ -1078,7 +1286,7 @@ def generate_trained_rollout_assets(
                 dist_map=snap["core_dist"],
                 max_dist=float(cfg.max_core_dist),
                 azim=azim,
-                context_geom=rollout_ctx,
+                context=rollout_ctx_raw,
                 bounds_occ=rollout_occ,
             )
             axes[2].set_title(
@@ -1114,7 +1322,7 @@ def generate_trained_rollout_assets(
             )
             cb2.ax.tick_params(labelsize=7.5)
             cb2.set_label(
-                "Distance to nearest core (m, red = core)",
+                "Distance to nearest core (m, yellow = core)",
                 fontsize=8.0,
                 color="#334155",
                 labelpad=2,
@@ -1309,9 +1517,9 @@ def generate_trained_multitier_showcase(
             cmask,
             mode="mass",
             elev=29.0,
-            azim=-48.0,
-            xray_mass=True,
+            azim=None,
             context=env.context,
+            zoom=1.25 if tier in ("L", "XL") else 1.0,
         )
         z_top = int(np.flatnonzero(occ.any((1, 2)))[-1]) + 1 if occ.any() else 0
         nc = best["core_count"]
@@ -1458,8 +1666,24 @@ def generate_heldout_generalization(
         t_res, _ = _run_eval_episode(
             trained, env, cfg, best_seed, temp=1.0, noise=1.0, record_trace=False
         )
+        from tools.render_portfolio_atlas import pick_best_azimuth
+
         pair_axes = []
         union_occ = np.logical_or(u_res["occ"], t_res["occ"])
+        zz_u, yy_u, xx_u = np.nonzero(union_occ)
+        cx_u = 0.5 * (float(xx_u.min()) + float(xx_u.max() + 1))
+        cy_u = 0.5 * (float(yy_u.min()) + float(yy_u.max() + 1))
+        col_zoom = 1.25 if site_id.startswith(("l_", "xl_")) else 1.0
+        half_u = (
+            max(
+                float(xx_u.max() - xx_u.min() + 1),
+                float(yy_u.max() - yy_u.min() + 1),
+                float(zz_u.max() + 1) * 3.0,
+            )
+            * 0.62
+            / col_zoom
+        )
+        col_azim = pick_best_azimuth(env.context, t_res["occ"], cx_u, cy_u, half_u, 29.0)
         for row, (res, row_tag) in enumerate(
             ((u_res, "Untrained"), (t_res, "Trained"))
         ):
@@ -1471,10 +1695,10 @@ def generate_heldout_generalization(
                 res["core_mask"],
                 mode="mass",
                 elev=29.0,
-                azim=-48.0,
-                xray_mass=True,
+                azim=col_azim,
                 context=env.context,
                 bounds_occ=union_occ,
+                zoom=col_zoom,
             )
             z_top = (
                 int(np.flatnonzero(res["occ"].any((1, 2)))[-1]) + 1
@@ -1528,7 +1752,7 @@ def generate_heldout_generalization(
             xytext=(cx, arrow_y0),
             arrowprops=dict(
                 arrowstyle="-|>,head_width=0.45,head_length=0.55",
-                color="#1d4ed8",
+                color="#111827",
                 lw=2.0,
             ),
         )
@@ -1555,7 +1779,7 @@ def generate_heldout_generalization(
         f"Trained ({total_eps} ep\nbest.pt) Zero-Shot",
         fontsize=10.2,
         fontweight="bold",
-        color="#1d4ed8",
+        color="#111827",
         rotation=90,
         va="center",
     )
